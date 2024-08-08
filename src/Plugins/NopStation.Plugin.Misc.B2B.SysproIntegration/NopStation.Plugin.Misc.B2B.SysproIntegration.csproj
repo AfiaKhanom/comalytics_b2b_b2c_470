@@ -43,7 +43,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Presentation\Nop.Web\Nop.Web.csproj" />
+    <ProjectReference Include="..\..\Presentation\Nop.Web\Nop.Web.csproj">
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\NopStation.Plugin.B2B.ERPIntegrationCore\NopStation.Plugin.B2B.ERPIntegrationCore.csproj">
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\NopStation.Plugin.Misc.Actions\NopStation.Plugin.Misc.Actions.csproj">
+      <Private>False</Private>
+    </ProjectReference>
     <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\Build\ClearPluginAssemblies.proj" />
   </ItemGroup>
 

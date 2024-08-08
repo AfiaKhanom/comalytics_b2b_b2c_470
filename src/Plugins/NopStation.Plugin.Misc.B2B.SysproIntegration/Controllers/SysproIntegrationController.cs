@@ -6,11 +6,12 @@ using Nop.Services.Messages;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.Misc.B2B.SysproIntegration.Models;
+using NopStation.Plugin.Misc.B2B.SysproIntegration.Services;
 
 namespace NopStation.Plugin.Misc.B2B.SysproIntegration.Controllers;
 
-[AutoValidateAntiforgeryToken]
 public class SysproIntegrationController : BasePluginController
 {
 
@@ -20,6 +21,7 @@ public class SysproIntegrationController : BasePluginController
     private readonly ISettingService _settingService;
     private readonly INotificationService _notificationService;
     private readonly ILocalizationService _localizationService;
+    private readonly IErpAccountService _erpAccountService;
 
     #endregion
 
@@ -28,12 +30,14 @@ public class SysproIntegrationController : BasePluginController
     public SysproIntegrationController(IStoreContext storeContext,
         ISettingService settingService,
         INotificationService notificationService,
-        ILocalizationService localizationService)
+        ILocalizationService localizationService,
+        IErpAccountService erpAccountService)
     {
         _storeContext = storeContext;
         _settingService = settingService;
         _notificationService = notificationService;
         _localizationService = localizationService;
+        _erpAccountService = erpAccountService;
     }
 
     #endregion
@@ -55,7 +59,7 @@ public class SysproIntegrationController : BasePluginController
         model.BaseUrl = sysproIntegrationSettings.BaseUrl;
         model.Token = sysproIntegrationSettings.Token;
         model.HttpCallMaxRetries = sysproIntegrationSettings.HttpCallMaxRetries;
-        model.HttpCallRestTimeInMinutes = sysproIntegrationSettings.HttpCallRestTimeInMinutes;
+        model.HttpCallRestTimeInSeconds = sysproIntegrationSettings.HttpCallRestTimeInSeconds;
     }
 
     #endregion
@@ -88,17 +92,29 @@ public class SysproIntegrationController : BasePluginController
         sysproIntegrationSettings.BaseUrl = model.BaseUrl;
         sysproIntegrationSettings.Token = model.Token;
         sysproIntegrationSettings.HttpCallMaxRetries = model.HttpCallMaxRetries;
-        sysproIntegrationSettings.HttpCallRestTimeInMinutes = model.HttpCallRestTimeInMinutes;
+        sysproIntegrationSettings.HttpCallRestTimeInSeconds = model.HttpCallRestTimeInSeconds;
 
         await _settingService.SaveSettingAsync(sysproIntegrationSettings, settings => settings.BaseUrl, storeId, clearCache: false);
         await _settingService.SaveSettingAsync(sysproIntegrationSettings, settings => settings.Token, storeId, clearCache: false);
         await _settingService.SaveSettingAsync(sysproIntegrationSettings, settings => settings.HttpCallMaxRetries, storeId, clearCache: false);
-        await _settingService.SaveSettingAsync(sysproIntegrationSettings, settings => settings.HttpCallRestTimeInMinutes, storeId, clearCache: false);
+        await _settingService.SaveSettingAsync(sysproIntegrationSettings, settings => settings.HttpCallRestTimeInSeconds, storeId, clearCache: false);
         await _settingService.ClearCacheAsync();
 
         _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));
 
         return await Configure();
+    }
+
+    #endregion
+
+    #region TestActions
+
+    [HttpPost]
+    public async Task<IActionResult> TestAccount([FromBody] ErpGetRequestModel erpRequest)
+    {
+        var result = await _erpAccountService.GetAccountsFromErpAsync(erpRequest);
+
+        return Ok(result);
     }
 
     #endregion

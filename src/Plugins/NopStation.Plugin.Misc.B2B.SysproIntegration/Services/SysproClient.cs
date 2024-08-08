@@ -1,66 +1,105 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
+using Newtonsoft.Json;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
 namespace NopStation.Plugin.Misc.B2B.SysproIntegration.Services;
 public class SysproClient
 {
     private readonly SysproIntegrationSettings _sysproIntegrationSettings;
     private readonly HttpClient _httpClient;
+    private readonly IErpLogsService _erpLogsService;
 
     public SysproClient(SysproIntegrationSettings sysproIntegrationSettings,
-        HttpClient httpClient)
+        HttpClient httpClient,
+        IErpLogsService erpLogsService)
     {
-        httpClient.BaseAddress = new Uri(sysproIntegrationSettings.BaseUrl);
-        httpClient.Timeout = TimeSpan.FromSeconds(sysproIntegrationSettings.ErpCallTimeOut > 0 ? sysproIntegrationSettings.ErpCallTimeOut : SysproIntegrationDefaults.DefaultTimeOutPeriod);
-        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("BearerToken", sysproIntegrationSettings.Token);
         _sysproIntegrationSettings = sysproIntegrationSettings;
         _httpClient = httpClient;
+        _erpLogsService = erpLogsService;
     }
 
     #region Method
 
-    public async Task<HttpResponseMessage> HttpCall(string payloadData)
+    public async Task<HttpResponseMessage> HttpCall(object payloadData, ErpSyncLavel erpSyncLevel)
     {
         try
         {
             var currentRetries = 0;
+            HttpResponseMessage httpResponse = new HttpResponseMessage();
 
-            var httpReqContent = new StringContent(payloadData, Encoding.UTF8, "test/xml");
+            if (string.IsNullOrWhiteSpace(_sysproIntegrationSettings.BaseUrl))
+            {
+                httpResponse.StatusCode = System.Net.HttpStatusCode.BadRequest;
+                httpResponse.Content = new StringContent("BaseUrl cannot be null or empty.");
+                return httpResponse;
+            }
 
-            var httpResponse = new HttpResponseMessage();
+            // Prepare HttpClient properties
+            _httpClient.BaseAddress = new Uri(_sysproIntegrationSettings.BaseUrl);
+            _httpClient.Timeout = TimeSpan.FromSeconds(_sysproIntegrationSettings.ErpCallTimeOut > 0 ? _sysproIntegrationSettings.ErpCallTimeOut : SysproIntegrationDefaults.DefaultTimeOutPeriod);
+            //_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Authorization", _sysproIntegrationSettings.Token);
 
-            // The loop should run atleast once. Therefore, count started from 0.
+            // Serialize the JSON object to a JSON string
+            var jsonPayload = JsonConvert.SerializeObject(payloadData);
+            var httpReqContent = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, _sysproIntegrationSettings.BaseUrl)
+            {
+                Headers = { Authorization = new AuthenticationHeaderValue("Bearer", _sysproIntegrationSettings.Token) }
+            };
+
+            if (payloadData != null)
+            {
+                requestMessage.Content = httpReqContent;
+            }
+
+            // Retry loop
             while (currentRetries <= _sysproIntegrationSettings.HttpCallMaxRetries)
             {
-                httpResponse = await _httpClient.PostAsync(_httpClient.BaseAddress, httpReqContent);
+                httpResponse = await _httpClient.SendAsync(requestMessage);
 
                 if (!httpResponse.IsSuccessStatusCode)
                 {
-                    //await _erpLogsService.InformationAsync(
-                    //    message: $"HTTP Response status is unsuccessful. " +
-                    //    ((_sysproIntegrationSettings.HttpCallMaxRetries - currentRetries > 0) ?
-                    //    $"HTTP call will be retried after {_sysproIntegrationSettings.HttpCallRestTimeInMinutes} minutes. Retry attempts left: {_sysproIntegrationSettings.HttpCallMaxRetries - currentRetries}" :
-                    //    "No retry attempts left."),
-                    //    syncLavel: erpSyncLabel);
+                    await _erpLogsService.InformationAsync(
+                        message: $"HTTP Response status is unsuccessful. " +
+                        ((_sysproIntegrationSettings.HttpCallMaxRetries - currentRetries > 0) ?
+                        $"HTTP call will be retried after {_sysproIntegrationSettings.HttpCallRestTimeInSeconds} minutes. Retry attempts left: {_sysproIntegrationSettings.HttpCallMaxRetries - currentRetries}" :
+                        "No retry attempts left."),
+                        syncLavel: erpSyncLevel);
 
-                    if (_sysproIntegrationSettings.HttpCallMaxRetries - currentRetries <= 0)
-                        httpResponse.EnsureSuccessStatusCode();
+                    if (currentRetries == _sysproIntegrationSettings.HttpCallMaxRetries)
+                    {
+                        // Construct an error response
+                        var errorResponse = new HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError)
+                        {
+                            Content = new StringContent($"Failed after {currentRetries} retries. Last error message: {httpResponse.ReasonPhrase}")
+                        };
+                        return errorResponse;
+                    }
 
-                    await Task.Delay(_sysproIntegrationSettings.HttpCallRestTimeInMinutes * 60 * 1000); // Converting the minute time into milliseconds.
+                    await Task.Delay(_sysproIntegrationSettings.HttpCallRestTimeInSeconds * 1000); // Converting the time into milliseconds.
                 }
                 else
-                    break;
+                {
+                    return httpResponse;
+                }
 
                 currentRetries++;
             }
 
             return httpResponse;
         }
-        catch (AggregateException exception)
+        catch (Exception ex)
         {
-            throw exception.InnerException;
+            return new HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError)
+            {
+                Content = new StringContent($"Exception occurred: {ex.Message}")
+            };
         }
     }
+
 
     #endregion
 }

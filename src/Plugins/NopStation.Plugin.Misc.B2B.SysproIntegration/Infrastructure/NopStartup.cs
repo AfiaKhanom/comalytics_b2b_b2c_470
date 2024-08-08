@@ -19,6 +19,9 @@ public class NopStartup : INopStartup
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<ISysproIntegrationService, SysproIntegrationService>();
+        services.AddScoped<IErpNopMapperService, ErpNopMapperService>();
+        services.AddScoped<IErpAccountService, ErpAccountService>();
+        services.AddScoped<SysproClient>();
     }
 
     /// <summary>

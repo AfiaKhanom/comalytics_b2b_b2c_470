@@ -12,8 +12,8 @@ public class ConfigurationModel
     [NopResourceDisplayName("NopStation.Plugin.Misc.B2B.SysproIntegration.Fields.HttpCallMaxRetries")]
     public int HttpCallMaxRetries { get; set; }
 
-    [NopResourceDisplayName("NopStation.Plugin.Misc.B2B.SysproIntegration.Fields.HttpCallRestTimeInMinutes")]
-    public int HttpCallRestTimeInMinutes { get; set; }
+    [NopResourceDisplayName("NopStation.Plugin.Misc.B2B.SysproIntegration.Fields.HttpCallRestTimeInSeconds")]
+    public int HttpCallRestTimeInSeconds { get; set; }
 
     public bool HideGeneralBlock { get; set; }
 }

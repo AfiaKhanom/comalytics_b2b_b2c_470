@@ -22,5 +22,5 @@ public class SysproIntegrationSettings : ISettings
     /// </summary>
     public int ErpCallTimeOut { get; set; }
     public int HttpCallMaxRetries { get; set; }
-    public int HttpCallRestTimeInMinutes { get; set; }
+    public int HttpCallRestTimeInSeconds { get; set; }
 }
