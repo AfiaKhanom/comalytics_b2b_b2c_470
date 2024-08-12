@@ -68,6 +68,12 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
     /// <returns>A task that represents the asynchronous operation</returns>
     public override async Task InstallAsync()
     {
+        var keyValuePairs = PluginResouces().ToDictionary(kv => kv.Key, kv => kv.Value);
+        foreach (var keyValuePair in keyValuePairs)
+        {
+            await _localizationService.AddOrUpdateLocaleResourceAsync(keyValuePair.Key, keyValuePair.Value);
+        }
+
         //settings
         await _settingService.SaveSettingAsync(new SysproIntegrationSettings
         {
@@ -121,7 +127,7 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
             new KeyValuePair<string, string>("NopStation.Plugin.Misc.B2B.SysproIntegration.Fields.HttpCallMaxRetries", "Max retries"),
             new KeyValuePair<string, string>("NopStation.Plugin.Misc.B2B.SysproIntegration.Fields.HttpCallMaxRetries.Hint", "Max retries to connect with syspro"),
             new KeyValuePair<string, string>("NopStation.Plugin.Misc.B2B.SysproIntegration.Fields.HttpCallRestTimeInSeconds", "Delay between each retry"),
-            new KeyValuePair<string, string>("NopStation.Plugin.Misc.B2B.SysproIntegration.Fields.HttpCallRestTimeInSeconds.Hint", "Delay between each retry in minutes")
+            new KeyValuePair<string, string>("NopStation.Plugin.Misc.B2B.SysproIntegration.Fields.HttpCallRestTimeInSeconds.Hint", "Delay between each retry in seconds")
         };
 
         return resources;
@@ -158,7 +164,7 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
 
     public async Task<ErpResponseData<IList<ErpAccountDataModel>>> GetAccountsFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        throw new NotImplementedException();
+        return await _erpAccountService.GetAccountsFromErpAsync(erpRequest);
     }
 
     #endregion
@@ -273,6 +279,11 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
     #region ship to address
 
     public async Task<ErpResponseData<IList<ErpShipToAddressDataModel>>> GetShipToAddressByAccountNumberFromErpAsync(ErpGetRequestModel erpRequest)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> GetSalesOrgCodeFromIntegrationSettings()
     {
         throw new NotImplementedException();
     }

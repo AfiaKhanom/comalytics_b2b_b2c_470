@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
@@ -110,9 +111,22 @@ public class SysproIntegrationController : BasePluginController
     #region TestActions
 
     [HttpPost]
-    public async Task<IActionResult> TestAccount([FromBody] ErpGetRequestModel erpRequest)
+    public async Task<IActionResult> GetAccounts([FromBody] ErpGetRequestModel erpRequest)
     {
         var result = await _erpAccountService.GetAccountsFromErpAsync(erpRequest);
+
+        if (result == null)
+        {
+            // Return 404 Not Found if the result is null
+            return NotFound(new { Message = "No accounts found or service returned no data." });
+        }
+
+        if (result.ErpResponseModel.IsError)
+        {
+            // Return 500 Internal Server Error if there was an error in the response
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                              new { Message = $"Short message: {result.ErpResponseModel.ErrorShortMessage}. Ful message: {result.ErpResponseModel.ErrorFullMessage}" });
+        }
 
         return Ok(result);
     }

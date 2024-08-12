@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.Misc.B2B.SysproIntegration.Models;
@@ -60,12 +61,35 @@ public class ErpAccountService : IErpAccountService
             }
 
             responseContent = await response.Content.ReadAsStringAsync();
-            var erpAccountsResponseData = JsonConvert.DeserializeObject<List<ErpAccountSysproResponseModel>>(responseContent);
-            erpResponseData.Data = await _erpNopMapperService.ErpAccountMapNop(erpAccountsResponseData);
-            erpResponseData.ErpResponseModel = new ErpResponseModel
+            var jsonResponse = JObject.Parse(responseContent);
+            List<ErpAccountSysproResponseModel> erpAccountsResponseData = null;
+            // Check if the 'Data' field exists and is not null
+            if (jsonResponse["Data"] != null)
             {
-                Next = (int.Parse(erpRequest.Start) + 1).ToString(),
-            };
+                erpAccountsResponseData = jsonResponse["Data"].ToObject<List<ErpAccountSysproResponseModel>>();
+            }
+            else
+            {
+                // If 'Data' is missing, try deserializing directly
+                erpAccountsResponseData = JsonConvert.DeserializeObject<List<ErpAccountSysproResponseModel>>(responseContent);
+            }
+
+            if (erpAccountsResponseData != null)
+            {
+                erpResponseData.Data = await _erpNopMapperService.ErpAccountMapNop(erpAccountsResponseData);
+                erpResponseData.ErpResponseModel = new ErpResponseModel
+                {
+                    Next = (int.Parse(erpRequest.Start) + 1).ToString(),
+                };
+            }
+            else
+            {
+                erpResponseData.ErpResponseModel = new ErpResponseModel
+                {
+                    Next = null,
+                };
+            }
+
         }
         catch (Exception ex)
         {
