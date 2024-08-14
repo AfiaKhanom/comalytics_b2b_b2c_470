@@ -283,9 +283,9 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
         throw new NotImplementedException();
     }
 
-    public Task<string> GetSalesOrgCodeFromIntegrationSettings()
+    public async Task<string> GetSalesOrgCodeFromIntegrationSettings()
     {
-        throw new NotImplementedException();
+        return string.Empty;
     }
 
     #endregion

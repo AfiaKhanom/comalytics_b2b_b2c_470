@@ -89,11 +89,11 @@ public class SysproClient
         }
         catch (Exception ex)
         {
-            await _erpLogsService.ErrorAsync($"Exception occurred: {ex.Message}", erpSyncLevel);
+            await _erpLogsService.ErrorAsync($"Exception occurred: {ex.Message}", erpSyncLevel, ex);
 
             return new HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError)
             {
-                Content = new StringContent($"Exception occurred: {ex.Message}")
+                Content = new StringContent($"Exception message: {ex.Message}. Stacktrace: {ex.StackTrace}")
             };
         }
     }

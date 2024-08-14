@@ -74,7 +74,7 @@ public class ErpAccountService : IErpAccountService
                 erpAccountsResponseData = JsonConvert.DeserializeObject<List<ErpAccountSysproResponseModel>>(responseContent);
             }
 
-            if (erpAccountsResponseData != null)
+            if (erpAccountsResponseData != null && erpAccountsResponseData.Any())
             {
                 erpResponseData.Data = await _erpNopMapperService.ErpAccountMapNop(erpAccountsResponseData);
                 erpResponseData.ErpResponseModel = new ErpResponseModel
@@ -84,6 +84,7 @@ public class ErpAccountService : IErpAccountService
             }
             else
             {
+                erpResponseData.Data = null;
                 erpResponseData.ErpResponseModel = new ErpResponseModel
                 {
                     Next = null,
