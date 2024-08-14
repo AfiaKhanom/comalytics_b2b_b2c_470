@@ -4,99 +4,97 @@ using Newtonsoft.Json;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
-namespace NopStation.Plugin.Misc.B2B.SysproIntegration.Services;
-public class SysproClient
+namespace NopStation.Plugin.Misc.B2B.SysproIntegration.Services
 {
-    private readonly SysproIntegrationSettings _sysproIntegrationSettings;
-    private readonly HttpClient _httpClient;
-    private readonly IErpLogsService _erpLogsService;
-
-    public SysproClient(SysproIntegrationSettings sysproIntegrationSettings,
-        HttpClient httpClient,
-        IErpLogsService erpLogsService)
+    public class SysproClient
     {
-        _sysproIntegrationSettings = sysproIntegrationSettings;
-        _httpClient = httpClient;
-        _erpLogsService = erpLogsService;
-    }
+        private readonly SysproIntegrationSettings _sysproIntegrationSettings;
+        private readonly HttpClient _httpClient;
+        private readonly IErpLogsService _erpLogsService;
 
-    #region Method
-
-    public async Task<HttpResponseMessage> HttpCall(object payloadData, ErpSyncLavel erpSyncLevel)
-    {
-        try
+        public SysproClient(SysproIntegrationSettings sysproIntegrationSettings,
+            HttpClient httpClient,
+            IErpLogsService erpLogsService)
         {
-            var currentRetries = 0;
-            HttpResponseMessage httpResponse = new HttpResponseMessage();
+            _sysproIntegrationSettings = sysproIntegrationSettings;
+            _httpClient = httpClient;
+            _erpLogsService = erpLogsService;
 
-            if (string.IsNullOrWhiteSpace(_sysproIntegrationSettings.BaseUrl))
+            // Set HttpClient properties in the constructor, so they are set only once.
+            if (!string.IsNullOrWhiteSpace(_sysproIntegrationSettings.BaseUrl))
             {
-                httpResponse.StatusCode = System.Net.HttpStatusCode.BadRequest;
-                httpResponse.Content = new StringContent("BaseUrl cannot be null or empty.");
-                return httpResponse;
+                _httpClient.BaseAddress = new Uri(_sysproIntegrationSettings.BaseUrl);
             }
-
-            // Prepare HttpClient properties
-            _httpClient.BaseAddress = new Uri(_sysproIntegrationSettings.BaseUrl);
             _httpClient.Timeout = TimeSpan.FromSeconds(_sysproIntegrationSettings.ErpCallTimeOut > 0 ? _sysproIntegrationSettings.ErpCallTimeOut : SysproIntegrationDefaults.DefaultTimeOutPeriod);
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _sysproIntegrationSettings.Token);
+        }
 
-            // Serialize the JSON object to a JSON string
-            var jsonPayload = JsonConvert.SerializeObject(payloadData);
+        #region Method
 
-            // Log the payload
-            await _erpLogsService.InformationAsync($"Serialized JSON Payload: {jsonPayload}", erpSyncLevel);
-
-            var httpReqContent = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-
-            // Retry loop
-            while (currentRetries <= _sysproIntegrationSettings.HttpCallMaxRetries)
+        public async Task<HttpResponseMessage> HttpCall(object payloadData, ErpSyncLavel erpSyncLevel)
+        {
+            try
             {
-                httpResponse = await _httpClient.PostAsync("", httpReqContent);
+                var currentRetries = 0;
+                HttpResponseMessage httpResponse = new HttpResponseMessage();
 
-                if (!httpResponse.IsSuccessStatusCode)
+                // Serialize the JSON object to a JSON string
+                var jsonPayload = JsonConvert.SerializeObject(payloadData);
+
+                // Log the payload
+                await _erpLogsService.InformationAsync($"Serialized JSON Payload: {jsonPayload}", erpSyncLevel);
+
+                var httpReqContent = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+                // Retry loop
+                while (currentRetries <= _sysproIntegrationSettings.HttpCallMaxRetries)
                 {
-                    var errorMessage = await httpResponse.Content.ReadAsStringAsync();
-                    await _erpLogsService.InformationAsync(
-                        message: $"HTTP Response status is unsuccessful. " +
-                        $"Response: {errorMessage}. " +
-                        ((_sysproIntegrationSettings.HttpCallMaxRetries - currentRetries > 0) ?
-                        $"HTTP call will be retried after {_sysproIntegrationSettings.HttpCallRestTimeInSeconds} seconds. Retry attempts left: {_sysproIntegrationSettings.HttpCallMaxRetries - currentRetries}" :
-                        "No retry attempts left."),
-                        syncLavel: erpSyncLevel);
+                    httpResponse = await _httpClient.PostAsync("", httpReqContent);
 
-                    if (currentRetries == _sysproIntegrationSettings.HttpCallMaxRetries)
+                    if (!httpResponse.IsSuccessStatusCode)
                     {
-                        // Construct an error response
-                        var errorResponse = new HttpResponseMessage(httpResponse.StatusCode)
+                        var errorMessage = await httpResponse.Content.ReadAsStringAsync();
+                        await _erpLogsService.InformationAsync(
+                            message: $"HTTP Response status is unsuccessful. " +
+                            $"Response: {errorMessage}. " +
+                            ((_sysproIntegrationSettings.HttpCallMaxRetries - currentRetries > 0) ?
+                            $"HTTP call will be retried after {_sysproIntegrationSettings.HttpCallRestTimeInSeconds} seconds. Retry attempts left: {_sysproIntegrationSettings.HttpCallMaxRetries - currentRetries}" :
+                            "No retry attempts left."),
+                            syncLavel: erpSyncLevel);
+
+                        if (currentRetries == _sysproIntegrationSettings.HttpCallMaxRetries)
                         {
-                            Content = new StringContent($"Failed after {currentRetries} retries. Last error message: {httpResponse.ReasonPhrase}. Response: {errorMessage}")
-                        };
-                        return errorResponse;
+                            // Construct an error response
+                            var errorResponse = new HttpResponseMessage(httpResponse.StatusCode)
+                            {
+                                Content = new StringContent($"Failed after {currentRetries} retries. Last error message: {httpResponse.ReasonPhrase}. Response: {errorMessage}")
+                            };
+                            return errorResponse;
+                        }
+
+                        await Task.Delay(_sysproIntegrationSettings.HttpCallRestTimeInSeconds * 1000); // Converting the time into milliseconds.
+                    }
+                    else
+                    {
+                        return httpResponse;
                     }
 
-                    await Task.Delay(_sysproIntegrationSettings.HttpCallRestTimeInSeconds * 1000); // Converting the time into milliseconds.
-                }
-                else
-                {
-                    return httpResponse;
+                    currentRetries++;
                 }
 
-                currentRetries++;
+                return httpResponse;
             }
-
-            return httpResponse;
-        }
-        catch (Exception ex)
-        {
-            await _erpLogsService.ErrorAsync($"Exception occurred: {ex.Message}", erpSyncLevel, ex);
-
-            return new HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError)
+            catch (Exception ex)
             {
-                Content = new StringContent($"Exception message: {ex.Message}. Stacktrace: {ex.StackTrace}")
-            };
-        }
-    }
+                await _erpLogsService.ErrorAsync($"Exception occurred: {ex.Message}", erpSyncLevel, ex);
 
-    #endregion
+                return new HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError)
+                {
+                    Content = new StringContent($"Exception message: {ex.Message}. Stacktrace: {ex.StackTrace}")
+                };
+            }
+        }
+
+        #endregion
+    }
 }
