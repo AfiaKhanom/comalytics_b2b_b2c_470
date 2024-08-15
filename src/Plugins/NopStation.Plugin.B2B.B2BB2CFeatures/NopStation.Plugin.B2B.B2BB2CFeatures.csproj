@@ -135,6 +135,7 @@
     <None Remove="Views\B2BB2CCustomer\_CreateOrUpdateGMAddress.cshtml" />
     <None Remove="Views\B2BB2CCustomer\_CreateOrUpdateGMPTAddress.cshtml" />
     <None Remove="Views\B2BB2CCustomer\_ErpAccountCustomerRegistrationForm.cshtml" />
+    <None Remove="Views\Shared\_OldInternetExplorerWarning.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="NopStation.Plugin.Misc.Actions">
@@ -544,6 +545,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\B2BB2CCustomer\_ErpAccountCustomerRegistrationForm.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Shared\_OldInternetExplorerWarning.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
