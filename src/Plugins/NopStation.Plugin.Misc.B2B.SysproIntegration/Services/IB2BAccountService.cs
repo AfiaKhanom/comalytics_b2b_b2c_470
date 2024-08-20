@@ -2,7 +2,7 @@
 
 namespace NopStation.Plugin.Misc.B2B.SysproIntegration.Services;
 
-public interface IErpAccountService
+public interface IB2BAccountService
 {
     Task<ErpResponseModel> CreateAccountNoErpAsync(ErpCreateAccountModel erpCreateAccountModel);
     Task<ErpResponseData<ErpAccountDataModel>> GetAccountFromErpAsync(ErpGetRequestModel erpRequest);

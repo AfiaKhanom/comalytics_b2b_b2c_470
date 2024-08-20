@@ -5,13 +5,13 @@ using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.Misc.B2B.SysproIntegration.Models;
 
 namespace NopStation.Plugin.Misc.B2B.SysproIntegration.Services;
-public class ErpAccountService : IErpAccountService
+public class B2BAccountService : IB2BAccountService
 {
     private readonly ISysproIntegrationService _sysproIntegrationService;
     private readonly SysproClient _sysproClient;
     private readonly IErpNopMapperService _erpNopMapperService;
 
-    public ErpAccountService(ISysproIntegrationService sysproIntegrationService,
+    public B2BAccountService(ISysproIntegrationService sysproIntegrationService,
         SysproClient sysproClient,
         IErpNopMapperService erpNopMapperService)
     {

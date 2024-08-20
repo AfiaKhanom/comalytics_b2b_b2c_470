@@ -1,11 +1,15 @@
 ﻿using Nop.Core;
+using Nop.Core.Domain.Catalog;
+using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Plugins;
 using Nop.Web.Framework.Menu;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
+using NopStation.Plugin.Misc.B2B.SysproIntegration.Services;
 using NopStation.Plugin.Misc.Core.Services;
 
 namespace NopStation.Plugin.Misc.B2B.SysproIntegration;
@@ -20,7 +24,8 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
     private readonly ILocalizationService _localizationService;
     private readonly ISettingService _settingService;
     private readonly IWebHelper _webHelper;
-    private readonly SysproIntegration.Services.IErpAccountService _erpAccountService;
+    private readonly IB2BAccountService _b2BAccountService;
+    private readonly IB2BProductService _b2BProductService;
     private const string THIRD_PARTY_PLUGINS = "Third party plugins";
     private const string PLUGIN_SYSTEM_NAME = "Misc.B2B.SysproIntegration";
     private const string PLUGIN_TITLE = "Syspro Integration";
@@ -41,12 +46,14 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
         ILocalizationService localizationService,
         ISettingService settingService,
         IWebHelper webHelper,
-        SysproIntegration.Services.IErpAccountService erpAccountService)
+        IB2BAccountService b2BAccountService,
+        IB2BProductService b2BProductService)
     {
         _localizationService = localizationService;
         _settingService = settingService;
         _webHelper = webHelper;
-        _erpAccountService = erpAccountService;
+        _b2BAccountService = b2BAccountService;
+        _b2BProductService = b2BProductService;
     }
 
     #endregion
@@ -159,12 +166,12 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
 
     public async Task<ErpResponseData<ErpAccountDataModel>> GetAccountFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        return await _erpAccountService.GetAccountFromErpAsync(erpRequest);
+        return await _b2BAccountService.GetAccountFromErpAsync(erpRequest);
     }
 
     public async Task<ErpResponseData<IList<ErpAccountDataModel>>> GetAccountsFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        return await _erpAccountService.GetAccountsFromErpAsync(erpRequest);
+        return await _b2BAccountService.GetAccountsFromErpAsync(erpRequest);
     }
 
     #endregion
@@ -215,11 +222,11 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
 
     public async Task<ErpResponseData<ErpProductDataModel>> GetProductByItemNoFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        throw new NotImplementedException();
+        return await _b2BProductService.GetProductByItemNoFromErpAsync(erpRequest);
     }
     public async Task<ErpResponseData<IList<ErpProductDataModel>>> GetProductsFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        throw new NotImplementedException();
+        return await _b2BProductService.GetProductsFromErpAsync(erpRequest);
     }
 
     #endregion
@@ -286,6 +293,11 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
     public async Task<string> GetSalesOrgCodeFromIntegrationSettings()
     {
         return string.Empty;
+    }
+
+    public Task ProductListLiveStockDataAsync(ErpAccount erpAccount, IList<Product> products, IProductService productService)
+    {
+        throw new NotImplementedException();
     }
 
     #endregion

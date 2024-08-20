@@ -37,4 +37,52 @@ public class ErpNopMapperService : IErpNopMapperService
 
         return Task.FromResult<IList<ErpAccountDataModel>>(erpAccounts);
     }
+
+    public async Task<IList<ErpProductDataModel>> ErpProductMapNop(IList<ErpProductSysproResponseModel> erpProductResponseData)
+    {
+        var erpProducts = (await Task.WhenAll(erpProductResponseData.Select(async product =>
+        {
+            return new ErpProductDataModel
+            {
+                Name = product.ProductName ?? string.Empty,
+                ItemNo = product.StockCode ?? string.Empty,
+                MasterCode = product.ManufacturerPartNumber ?? string.Empty,
+                Description = product.Description ?? string.Empty,
+                IsSpecial = false,
+                FullDescription = product.Description ?? string.Empty,
+                SellingPriceA = product.SellPrice1,
+                UnitOfMeasure = string.Empty,
+                VatRate = product.VatRate ?? string.Empty,
+                Active = string.Empty,
+                VendorName = string.Empty,
+                Brand = product.BrandName,
+                BrandDesc = product.AlternativeDescription ?? string.Empty,
+                Categories = new List<ErpProductCategory>()
+                    {
+                        new ()
+                        {
+                            CategoryCode =  string.Empty,
+                            CategoryName = product.DepartmentName ?? string.Empty
+                        },
+                        new ()
+                        {
+                            CategoryCode =  string.Empty,
+                            CategoryName = product.GroupName ?? string.Empty
+                        },
+                        new ()
+                        {
+                            CategoryCode =  string.Empty,
+                            CategoryName = product.CategoryName ?? string.Empty
+                        }
+                    },
+                Attributes = new List<KeyValuePair<string, string>>()
+                    {
+                        new (nameof(ErpStockRecordModel.Colour), product.Colour),
+                        new (nameof(ErpStockRecordModel.Size), product.Size)
+                    }
+            };
+        }))).ToList();
+
+        return erpproduct;
+    }
 }
