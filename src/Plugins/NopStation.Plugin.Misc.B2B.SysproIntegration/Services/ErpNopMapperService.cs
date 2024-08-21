@@ -11,31 +11,46 @@ public class ErpNopMapperService : IErpNopMapperService
 
         var erpAccounts = erpAccountSysproResponses.Select(account => new ErpAccountDataModel
         {
-            AccNo = account.Customer ?? string.Empty,
-            Name = account.Name ?? string.Empty,
+            AccountNumber = account.Customer ?? string.Empty,
+            AccountName = account.Name ?? string.Empty,
             Branch = account.Company ?? string.Empty,
-            Notes = account.PaymentTermsDescription ?? string.Empty,
+            PaymentTypeCode = account.PaymentTermsCode ?? string.Empty,
             Address1 = account.BillingAddress1 ?? string.Empty,
             Address2 = account.BillingAddress2 ?? string.Empty,
             Address3 = account.BillingAddress1 ?? string.Empty,
-            Province = account.BillingProvince ?? string.Empty,
+            StateProvince = account.BillingProvince ?? string.Empty,
             Country = account.BillingCountry ?? string.Empty,
-            PostalCode = account.BillingPostalCode ?? string.Empty,
-            TelNo = account.BillingPhoneNumber ?? string.Empty,
-            EMail = account.BillingEmail ?? string.Empty,
-            EMail1 = account.BillingEmail ?? string.Empty,
-            DelName = account.BillingName ?? string.Empty,
+            ZipPostalCode = account.BillingPostalCode ?? string.Empty,
+            PhoneNumber = account.BillingPhoneNumber ?? string.Empty,
+            Email = account.BillingEmail ?? string.Empty,
+            BillingName = account.BillingName ?? string.Empty,
             CompanyNo = string.Empty,
-            PrefilterFacets = string.Empty,
+            PreFilterFacets = string.Empty,
             VatNumber = account.VatNumber ?? string.Empty,
             PriceGroupCode = account.PriceGroupCode ?? string.Empty,
-            CreditLimit = account.CreditLimit.HasValue ? account.CreditLimit.Value : decimal.Zero,
-            CreditLimitUsed = account.CurrentBalance,
-            CreditLimitAvailable = account.AvailableCredit,
-            Balance = account.CurrentBalance
+            CreditLimitAvailableStr = account.CreditLimit.HasValue ? account.CreditLimit.Value.ToString() : "0",
+            CreditLimitUsed = account.CurrentBalance ?? decimal.Zero,
+            CreditLimitAvailable = account.AvailableCredit ?? decimal.Zero,
+            CurrentBalance = account.CurrentBalance ?? decimal.Zero
         }).ToList();
 
-        return Task.FromResult<IList<ErpAccountDataModel>>(erpAccounts);
+        return erpAccounts;
+    }
+
+    public async Task<IList<ErpPriceSpecialPricingDataModel>> ErpPriceSpecialPricingMapNop(List<ErpPriceSpecialPricingSysproResponseModel> erpPriceSpecialPricingsResponseData)
+    {
+        if (erpPriceSpecialPricingsResponseData == null)
+            return new List<ErpPriceSpecialPricingDataModel>();
+
+        var specialPricing = erpPriceSpecialPricingsResponseData.Select(price => new ErpPriceSpecialPricingDataModel
+        {
+            AccountNumber = price.Customer ?? string.Empty,
+            Branch = price.Company ?? string.Empty,
+            Sku = price.StockCode ?? string.Empty,
+            SpecialPrice = price.Price ?? decimal.Zero
+        }).ToList();
+
+        return specialPricing;
     }
 
     public async Task<IList<ErpProductDataModel>> ErpProductMapNop(IList<ErpProductSysproResponseModel> erpProductResponseData)
@@ -45,14 +60,13 @@ public class ErpNopMapperService : IErpNopMapperService
             return new ErpProductDataModel
             {
                 Name = product.ProductName ?? string.Empty,
-                ItemNo = product.StockCode ?? string.Empty,
-                MasterCode = product.ManufacturerPartNumber ?? string.Empty,
-                Description = product.Description ?? string.Empty,
-                IsSpecial = false,
-                FullDescription = product.Description ?? string.Empty,
-                SellingPriceA = product.SellPrice1,
+                Sku = product.StockCode ?? string.Empty,
+                ManufacturerPartNumber = product.ManufacturerPartNumber ?? string.Empty,
+                ShortDescription = product.ShortDescription ?? string.Empty,
+                FullDescription = product.LongDescription ?? string.Empty,
+                Price = decimal.zer,
                 UnitOfMeasure = string.Empty,
-                VatRate = product.VatRate ?? string.Empty,
+                tax = product.VatRate ?? string.Empty,
                 Active = string.Empty,
                 VendorName = string.Empty,
                 Brand = product.BrandName,

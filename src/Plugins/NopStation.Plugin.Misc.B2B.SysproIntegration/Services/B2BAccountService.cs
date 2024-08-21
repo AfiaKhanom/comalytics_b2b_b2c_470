@@ -25,10 +25,6 @@ public class B2BAccountService : IB2BAccountService
         throw new NotImplementedException();
     }
 
-    public async Task<ErpResponseData<ErpAccountDataModel>> GetAccountFromErpAsync(ErpGetRequestModel erpRequest)
-    {
-        throw new NotImplementedException();
-    }
 
     public async Task<ErpResponseData<IList<ErpAccountDataModel>>> GetAccountsFromErpAsync(ErpGetRequestModel erpRequest)
     {

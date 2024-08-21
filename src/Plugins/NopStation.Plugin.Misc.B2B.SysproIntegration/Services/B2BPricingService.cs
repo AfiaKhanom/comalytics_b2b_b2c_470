@@ -5,13 +5,13 @@ using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.Misc.B2B.SysproIntegration.Models;
 
 namespace NopStation.Plugin.Misc.B2B.SysproIntegration.Services;
-public class B2BProductService : IB2BProductService
+public class B2BPricingService : IB2BPricingService
 {
     private readonly ISysproIntegrationService _sysproIntegrationService;
     private readonly SysproClient _sysproClient;
     private readonly IErpNopMapperService _erpNopMapperService;
 
-    public B2BProductService(ISysproIntegrationService sysproIntegrationService,
+    public B2BPricingService(ISysproIntegrationService sysproIntegrationService,
         SysproClient sysproClient,
         IErpNopMapperService erpNopMapperService)
     {
@@ -19,10 +19,9 @@ public class B2BProductService : IB2BProductService
         _sysproClient = sysproClient;
         _erpNopMapperService = erpNopMapperService;
     }
-
-    public async Task<ErpResponseData<IList<ErpProductDataModel>>> GetProductsFromErpAsync(ErpGetRequestModel erpRequest)
+    public async Task<ErpResponseData<IList<ErpPriceSpecialPricingDataModel>>> GetPerAccountProductPricingFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        var erpResponseData = new ErpResponseData<IList<ErpProductDataModel>>();
+        var erpResponseData = new ErpResponseData<IList<ErpPriceSpecialPricingDataModel>>();
         var responseContent = string.Empty;
 
         try
@@ -33,7 +32,7 @@ public class B2BProductService : IB2BProductService
                 erpResponseData.ErpResponseModel.ErrorShortMessage = "Request body content no data";
                 return erpResponseData;
             }
-            var serialized = await _sysproIntegrationService.PrepareErpProductRequestBody(erpRequest);
+            var serialized = await _sysproIntegrationService.PrepareErpPriceSpecialPricingsRequestBody(erpRequest);
 
             if (!await _sysproIntegrationService.IsValidSysproIntegrationSettings())
             {
@@ -42,7 +41,7 @@ public class B2BProductService : IB2BProductService
                 return erpResponseData;
             }
 
-            var response = await _sysproClient.HttpCall(serialized, ErpSyncLavel.Product);
+            var response = await _sysproClient.HttpCall(serialized, ErpSyncLavel.Account);
             if (!response.IsSuccessStatusCode)
             {
                 erpResponseData.ErpResponseModel.IsError = true;
@@ -52,22 +51,21 @@ public class B2BProductService : IB2BProductService
 
             responseContent = await response.Content.ReadAsStringAsync();
             var jsonResponse = JObject.Parse(responseContent);
-            List<ErpProductSysproResponseModel> erpProductResponseData = null;
-
+            List<ErpPriceSpecialPricingSysproResponseModel> ErpPriceSpecialPricingsResponseData = null;
             // Check if the 'Data' field exists and is not null
             if (jsonResponse["Data"] != null)
             {
-                erpProductResponseData = jsonResponse["Data"].ToObject<List<ErpProductSysproResponseModel>>();
+                ErpPriceSpecialPricingsResponseData = jsonResponse["Data"].ToObject<List<ErpPriceSpecialPricingSysproResponseModel>>();
             }
             else
             {
                 // If 'Data' is missing, try deserializing directly
-                erpProductResponseData = JsonConvert.DeserializeObject<List<ErpProductSysproResponseModel>>(responseContent);
+                ErpPriceSpecialPricingsResponseData = JsonConvert.DeserializeObject<List<ErpPriceSpecialPricingSysproResponseModel>>(responseContent);
             }
 
-            if (erpProductResponseData != null && erpProductResponseData.Any())
+            if (ErpPriceSpecialPricingsResponseData != null && ErpPriceSpecialPricingsResponseData.Any())
             {
-                erpResponseData.Data = await _erpNopMapperService.ErpProductMapNop(erpProductResponseData);
+                erpResponseData.Data = await _erpNopMapperService.ErpPriceSpecialPricingMapNop(ErpPriceSpecialPricingsResponseData);
                 erpResponseData.ErpResponseModel = new ErpResponseModel
                 {
                     Next = (int.Parse(erpRequest.Start) + 1).ToString(),
