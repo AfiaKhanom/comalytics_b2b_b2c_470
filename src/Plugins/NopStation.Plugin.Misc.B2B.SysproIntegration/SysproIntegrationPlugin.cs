@@ -229,6 +229,11 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
         return await _b2BProductService.GetProductsFromErpAsync(erpRequest);
     }
 
+    public Task ProductListLiveStockDataAsync(ErpAccount erpAccount, IList<Product> products, IProductService productService)
+    {
+        throw new NotImplementedException();
+    }
+
     #endregion
 
     #region pricing
