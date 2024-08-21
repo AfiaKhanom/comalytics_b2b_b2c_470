@@ -1,4 +1,13 @@
-﻿.shopping-cart-page .cart {
+﻿.admin-header-links {
+  position: relative;
+}
+
+.admin-header-links + .header .skip {
+  position: absolute;
+  top: -20px;
+}
+
+.shopping-cart-page .cart {
   margin: 0 auto;
 }
 
