@@ -129,6 +129,8 @@
     <None Remove="Themes\DefaultClean\Views\Shared\Components\QuickOrderHeaderLink\Default.cshtml" />
     <None Remove="Themes\DefaultClean\Views\_OldInternetExplorerWarning.cshtml" />
     <None Remove="Themes\DefaultClean\Views\_ViewImports.cshtml" />
+    <None Remove="Themes\Smart\Views\Shared\Components\Logo\Default.cshtml" />
+    <None Remove="Themes\Smart\Views\_ViewImports.cshtml" />
     <None Remove="Views\B2BB2CCustomer\ErpAccountCustomerRegistrationForm.cshtml" />
     <None Remove="Views\B2BB2CCustomer\_CreateOrUpdateGMAddress.cshtml" />
     <None Remove="Views\B2BB2CCustomer\_CreateOrUpdateGMPTAddress.cshtml" />
@@ -526,6 +528,14 @@
     <Content Include="Themes\DefaultClean\Views\_ViewImports.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Themes\Smart\Views\Shared\Components\Logo\Default.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Themes\Smart\Views\_ViewImports.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Include="Views\B2BB2CCustomer\ErpAccountCustomerRegistrationForm.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -579,6 +589,15 @@
     </None>
     <None Update="Themes\FreshLand\Views\_ViewImports.cshtml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Themes\Smart\Content\css\styles.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Themes\Smart\Content\css\theme-custom.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Themes\Smart\Content\img\logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Views\B2BB2CCustomer\B2BRegister.cshtml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
