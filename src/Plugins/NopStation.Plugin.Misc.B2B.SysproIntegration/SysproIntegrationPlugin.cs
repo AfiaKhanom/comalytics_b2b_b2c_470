@@ -28,6 +28,7 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
     private readonly IB2BAccountService _b2BAccountService;
     private readonly IB2BProductService _b2BProductService;
     private readonly IB2BPricingService _b2BPricingService;
+    private readonly IB2BStockService _b2BStockService;
     private const string THIRD_PARTY_PLUGINS = "Third party plugins";
     private const string PLUGIN_SYSTEM_NAME = "Misc.B2B.SysproIntegration";
     private const string PLUGIN_TITLE = "Syspro Integration";
@@ -59,6 +60,7 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
         _b2BAccountService = b2BAccountService;
         _b2BProductService = b2BProductService;
         _b2BPricingService = b2BPricingService;
+        _b2BStockService = B2BStockService;
     }
 
     #endregion

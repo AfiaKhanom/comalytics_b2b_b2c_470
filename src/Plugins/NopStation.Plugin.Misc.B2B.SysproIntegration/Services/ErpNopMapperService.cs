@@ -4,16 +4,16 @@ using NopStation.Plugin.Misc.B2B.SysproIntegration.Models;
 namespace NopStation.Plugin.Misc.B2B.SysproIntegration.Services;
 public class ErpNopMapperService : IErpNopMapperService
 {
-    public Task<IList<ErpAccountDataModel>> ErpAccountMapNop(IList<ErpAccountSysproResponseModel> erpAccountSysproResponses)
+    public async Task<IList<ErpAccountDataModel>> ErpAccountMapNop(IList<ErpAccountSysproResponseModel> erpAccountSysproResponses)
     {
         if (erpAccountSysproResponses == null)
-            return Task.FromResult<IList<ErpAccountDataModel>>(new List<ErpAccountDataModel>());
+            return new List<ErpAccountDataModel>();
 
         var erpAccounts = erpAccountSysproResponses.Select(account => new ErpAccountDataModel
         {
             AccountNumber = account.Customer ?? string.Empty,
             AccountName = account.Name ?? string.Empty,
-            Branch = account.Company ?? string.Empty,
+            ErpSalesOrgCode = account.Company ?? string.Empty,
             PaymentTypeCode = account.PaymentTermsCode ?? string.Empty,
             Address1 = account.BillingAddress1 ?? string.Empty,
             Address2 = account.BillingAddress2 ?? string.Empty,
@@ -28,10 +28,17 @@ public class ErpNopMapperService : IErpNopMapperService
             PreFilterFacets = string.Empty,
             VatNumber = account.VatNumber ?? string.Empty,
             PriceGroupCode = account.PriceGroupCode ?? string.Empty,
-            CreditLimitAvailableStr = account.CreditLimit.HasValue ? account.CreditLimit.Value.ToString() : "0",
+            CreditLimit = account.CreditLimit.HasValue ? account.CreditLimit.Value : decimal.Zero,
             CreditLimitUsed = account.CurrentBalance ?? decimal.Zero,
             CreditLimitAvailable = account.AvailableCredit ?? decimal.Zero,
-            CurrentBalance = account.CurrentBalance ?? decimal.Zero
+            CurrentBalance = account.CurrentBalance ?? decimal.Zero,
+            AllowOverspend = account.AllowOverspend,
+            IsDeleted = account.isDeleted,
+            UpdatedOnUtc = account.LastChanged,
+            OverrideBackOrderingConfigSetting = account.AllowbackOrdering,
+            AllowAccountsBackOrdering = account.AllowbackOrdering,
+            AllowAccountsAddressEditOnCheckout = account.AllowAddressChangeOnCheckout
+
         }).ToList();
 
         return erpAccounts;
@@ -64,39 +71,44 @@ public class ErpNopMapperService : IErpNopMapperService
                 ManufacturerPartNumber = product.ManufacturerPartNumber ?? string.Empty,
                 ShortDescription = product.ShortDescription ?? string.Empty,
                 FullDescription = product.LongDescription ?? string.Empty,
-                Price = decimal.zer,
-                UnitOfMeasure = string.Empty,
-                tax = product.VatRate ?? string.Empty,
-                Active = string.Empty,
-                VendorName = string.Empty,
-                Brand = product.BrandName,
-                BrandDesc = product.AlternativeDescription ?? string.Empty,
-                Categories = new List<ErpProductCategory>()
+                Price = decimal.Zero,
+                TaxCategoryName = product.TaxCategory ?? string.Empty,
+                Published = product.Published,
+                VendorCode = product.VendorCode ?? string.Empty,
+                VendorName = product.VendorName ?? string.Empty,
+                Weight = decimal.TryParse(product.Weight, out var weight) ? weight : 0,
+                Height = decimal.TryParse(product.Weight, out var height) ? height : 0,
+                Length = decimal.TryParse(product.Weight, out var length) ? length : 0,
+                Width = decimal.TryParse(product.Weight, out var width) ? width : 0,
+                ManufacturerCode = product.ManufacturerCode ?? string.Empty,
+                ManufacturerName = product.ManufacturerName ?? string.Empty,
+                LastChangedDate = product.LastChangeDate,
+                ProductCategories = new List<ErpCategoryDataModel>()
                     {
                         new ()
                         {
-                            CategoryCode =  string.Empty,
-                            CategoryName = product.DepartmentName ?? string.Empty
+                            CategoryName = product.CategoryName1 ?? string.Empty
                         },
                         new ()
                         {
-                            CategoryCode =  string.Empty,
-                            CategoryName = product.GroupName ?? string.Empty
+                            CategoryName = product.CategoryName2 ?? string.Empty
                         },
                         new ()
                         {
-                            CategoryCode =  string.Empty,
-                            CategoryName = product.CategoryName ?? string.Empty
+                            CategoryName = product.CategoryName3 ?? string.Empty
                         }
                     },
-                Attributes = new List<KeyValuePair<string, string>>()
-                    {
-                        new (nameof(ErpStockRecordModel.Colour), product.Colour),
-                        new (nameof(ErpStockRecordModel.Size), product.Size)
-                    }
+                ProductAttributes = new List<KeyValuePair<string, string>>()
+                {
+                    new ("UnitOfMeasure", product.UnitOfMeasure),
+                    new ("PrefilterFacet", product.PrefilterFacet),
+                    new ("Colour", product.Colour),
+                    new ("Size", product.Size),
+                    new ("Thickness", product.Thickness)
+                }
             };
         }))).ToList();
 
-        return erpproduct;
+        return erpProducts;
     }
 }
