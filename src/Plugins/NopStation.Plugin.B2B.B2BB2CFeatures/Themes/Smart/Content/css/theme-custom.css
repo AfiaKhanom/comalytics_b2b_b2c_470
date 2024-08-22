@@ -32,7 +32,7 @@ button,
 .variant-overview .add-to-cart-panel,
 .block .list a:before,
 .block .year strong:before {
-  background-color: #353434;
+  background-color: #121c23;
 }
 
 .cart a,
@@ -83,7 +83,7 @@ button,
 .block .list > li.active > a,
 .block .view-all a,
 .block .list a:hover {
-  color: #353434;
+  color: #121c23;
 }
 
 .eu-cookie-bar-notification,
@@ -101,7 +101,7 @@ button,
 .ajax-cart-button-wrapper,
 .miniProductDetailsView .add-to-cart,
 .quickViewWindow .overview .right button {
-  border-color: #353434;
+  border-color: #121c23;
 }
 
 @media all and (max-width: 1024px) {
@@ -109,26 +109,26 @@ button,
   .header-menu .close-menu,
   .header-menu .back-button,
   .nopAjaxFilters7Spikes .close-filters {
-    background-color: #353434;
+    background-color: #121c23;
   }
 
   .header-menu > ul li,
   .header-menu .plus-button {
-    border-color: #353434;
+    border-color: #121c23;
   }
 }
 
 @media all and (min-width: 1025px) {
   .header-menu {
-    background-color: #353434;
+    background-color: #121c23;
   }
 
   .mega-menu .box li a:hover {
-    color: #353434;
+    color: #121c23;
   }
 
   .mega-menu .title {
-    border-color: #353434;
+    border-color: #121c23;
   }
 }
 
