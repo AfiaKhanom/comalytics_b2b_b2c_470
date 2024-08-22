@@ -7,6 +7,7 @@ using Nop.Services.Localization;
 using Nop.Services.Plugins;
 using Nop.Web.Framework.Menu;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
+using NopStation.Plugin.B2B.ERPIntegrationCore.ErpInterface;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 using NopStation.Plugin.Misc.Core.Services;
@@ -294,6 +295,16 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
     public async Task<string> GetSalesOrgCodeFromIntegrationSettings()
     {
         return string.Empty;
+    }
+
+    Task<ErpResponseData<ErpStockDataModel>> IErpIntegrationProductService.GetStockByItemNoFromErpAsync(ErpGetRequestModel erpRequest)
+    {
+        throw new NotImplementedException();
+    }
+
+    Task<ErpResponseData<IList<ErpStockDataModel>>> IErpIntegrationProductService.GetStocksFromErpAsync(ErpGetRequestModel erpRequest)
+    {
+        throw new NotImplementedException();
     }
 
     #endregion
