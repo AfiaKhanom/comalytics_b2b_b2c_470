@@ -10,6 +10,7 @@ using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.ErpInterface;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
+using NopStation.Plugin.Misc.B2B.SysproIntegration.Services;
 using NopStation.Plugin.Misc.Core.Services;
 
 namespace NopStation.Plugin.Misc.B2B.SysproIntegration;
@@ -24,7 +25,10 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
     private readonly ILocalizationService _localizationService;
     private readonly ISettingService _settingService;
     private readonly IWebHelper _webHelper;
-    private readonly SysproIntegration.Services.IErpAccountService _erpAccountService;
+    private readonly IB2BAccountService _b2BAccountService;
+    private readonly IB2BProductService _b2BProductService;
+    private readonly IB2BPricingService _b2BPricingService;
+    private readonly IB2BStockService _b2BStockService;
     private const string THIRD_PARTY_PLUGINS = "Third party plugins";
     private const string PLUGIN_SYSTEM_NAME = "Misc.B2B.SysproIntegration";
     private const string PLUGIN_TITLE = "Syspro Integration";
@@ -45,12 +49,18 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
         ILocalizationService localizationService,
         ISettingService settingService,
         IWebHelper webHelper,
-        SysproIntegration.Services.IErpAccountService erpAccountService)
+        IB2BAccountService b2BAccountService,
+        IB2BProductService b2BProductService,
+        IB2BPricingService b2BPricingService,
+        IB2BStockService B2BStockService)
     {
         _localizationService = localizationService;
         _settingService = settingService;
         _webHelper = webHelper;
-        _erpAccountService = erpAccountService;
+        _b2BAccountService = b2BAccountService;
+        _b2BProductService = b2BProductService;
+        _b2BPricingService = b2BPricingService;
+        _b2BStockService = B2BStockService;
     }
 
     #endregion
@@ -163,12 +173,34 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
 
     public async Task<ErpResponseData<ErpAccountDataModel>> GetAccountFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        return await _erpAccountService.GetAccountFromErpAsync(erpRequest);
+        var erpAccounts = await _b2BAccountService.GetAccountsFromErpAsync(erpRequest);
+        var response = new ErpResponseData<ErpAccountDataModel>
+        {
+            ErpResponseModel = new ErpResponseModel
+            {
+                IsError = erpAccounts.ErpResponseModel.IsError,
+                StatusCode = erpAccounts.ErpResponseModel.StatusCode,
+                ErrorShortMessage = erpAccounts.ErpResponseModel.ErrorShortMessage,
+                ErrorFullMessage = erpAccounts.ErpResponseModel.ErrorFullMessage,
+            }
+        };
+
+        if (erpAccounts.Data != null && erpAccounts.Data.Any())
+        {
+            var pricing = erpAccounts.Data.FirstOrDefault();
+            response.Data = pricing;
+        }
+        else
+        {
+            response.Data = new ErpAccountDataModel();
+        }
+
+        return response;
     }
 
     public async Task<ErpResponseData<IList<ErpAccountDataModel>>> GetAccountsFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        return await _erpAccountService.GetAccountsFromErpAsync(erpRequest);
+        return await _b2BAccountService.GetAccountsFromErpAsync(erpRequest);
     }
 
     #endregion
@@ -219,11 +251,33 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
 
     public async Task<ErpResponseData<ErpProductDataModel>> GetProductByItemNoFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        throw new NotImplementedException();
+        var erpProducts = await _b2BProductService.GetProductsFromErpAsync(erpRequest);
+        var response = new ErpResponseData<ErpProductDataModel>
+        {
+            ErpResponseModel = new ErpResponseModel
+            {
+                IsError = erpProducts.ErpResponseModel.IsError,
+                StatusCode = erpProducts.ErpResponseModel.StatusCode,
+                ErrorShortMessage = erpProducts.ErpResponseModel.ErrorShortMessage,
+                ErrorFullMessage = erpProducts.ErpResponseModel.ErrorFullMessage,
+            }
+        };
+
+        if (erpProducts.Data != null && erpProducts.Data.Any())
+        {
+            var pricing = erpProducts.Data.FirstOrDefault();
+            response.Data = pricing;
+        }
+        else
+        {
+            response.Data = new ErpProductDataModel();
+        }
+
+        return response;
     }
     public async Task<ErpResponseData<IList<ErpProductDataModel>>> GetProductsFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        throw new NotImplementedException();
+        return await _b2BProductService.GetProductsFromErpAsync(erpRequest);
     }
 
     public Task ProductListLiveStockDataAsync(ErpAccount erpAccount, IList<Product> products, IProductService productService)
@@ -247,12 +301,34 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
 
     public async Task<ErpResponseData<ErpPriceSpecialPricingDataModel>> GetProductSpecialPriceFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        throw new NotImplementedException();
+        var perAccountProductPricings = await _b2BPricingService.GetPerAccountProductPricingFromErpAsync(erpRequest);
+        var response = new ErpResponseData<ErpPriceSpecialPricingDataModel>
+        {
+            ErpResponseModel = new ErpResponseModel
+            {
+                IsError = perAccountProductPricings.ErpResponseModel.IsError,
+                StatusCode = perAccountProductPricings.ErpResponseModel.StatusCode,
+                ErrorShortMessage = perAccountProductPricings.ErpResponseModel.ErrorShortMessage,
+                ErrorFullMessage = perAccountProductPricings.ErpResponseModel.ErrorFullMessage,
+            }
+        };
+
+        if (perAccountProductPricings.Data != null && perAccountProductPricings.Data.Any())
+        {
+            var pricing = perAccountProductPricings.Data.FirstOrDefault();
+            response.Data = pricing;
+        }
+        else
+        {
+            response.Data = new ErpPriceSpecialPricingDataModel();
+        }
+
+        return response;
     }
 
-    public Task<ErpResponseData<IList<ErpPriceSpecialPricingDataModel>>> GetProductSpecialPricesFromErpAsync(ErpGetRequestModel erpRequest)
+    public async Task<ErpResponseData<IList<ErpPriceSpecialPricingDataModel>>> GetProductSpecialPricesFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        throw new NotImplementedException();
+        return await _b2BPricingService.GetPerAccountProductPricingFromErpAsync(erpRequest);
     }
 
     #endregion

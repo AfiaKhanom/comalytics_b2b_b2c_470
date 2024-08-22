@@ -1,5 +1,5 @@
-﻿using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
-using NopStation.Plugin.Misc.B2B.SysproIntegration.Models;
+﻿using System.Dynamic;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 
 namespace NopStation.Plugin.Misc.B2B.SysproIntegration.Services;
 
@@ -31,25 +31,97 @@ public partial class SysproIntegrationService : ISysproIntegrationService
         return Task.FromResult(true);
     }
 
-    public async Task<SysproRequestModel> PrepareErpAccountsRequestBody(ErpGetRequestModel erpRequest)
+    //public async Task<SysproRequestModel> PrepareErpAccountsRequestBody(ErpGetRequestModel erpRequest)
+    //{
+    //    if (erpRequest != null)
+    //    {
+    //        var start = int.Parse(erpRequest.Start);
+    //        return new SysproRequestModel()
+    //        {
+    //            action = "SQL",
+    //            name = "Online_GetCustomer",
+    //            args = new ErpRequestArgs
+    //            {
+    //                LastChangeDate = erpRequest.DateFrom,
+    //                Customer = string.IsNullOrWhiteSpace(erpRequest.AccountNumber) ? null : erpRequest.AccountNumber,
+    //                PageNumber = start > 0 ? start : 1,
+    //                RowsPerPage = erpRequest.Limit > 0 ? erpRequest.Limit : 100
+    //            }
+    //        };
+    //    }
+
+    //    return new SysproRequestModel();
+    //}
+
+    public async Task<dynamic> PrepareErpAccountsRequestBody(ErpGetRequestModel erpRequest)
     {
         if (erpRequest != null)
         {
             var start = int.Parse(erpRequest.Start);
-            return new SysproRequestModel()
-            {
-                action = "SQL",
-                name = "Online_GetCustomer",
-                args = new ErpRequestArgs
-                {
-                    LastChangeDate = erpRequest.DateFrom,
-                    Customer = string.IsNullOrWhiteSpace(erpRequest.AccountNumber) ? null : erpRequest.AccountNumber,
-                    PageNumber = start > 0 ? start : 1,
-                    RowsPerPage = erpRequest.Limit > 0 ? erpRequest.Limit : 100
-                }
-            };
+
+            dynamic sysproRequest = new ExpandoObject();
+            sysproRequest.action = "SQL";
+            sysproRequest.name = "Online_GetCustomer";
+
+            dynamic args = new ExpandoObject();
+            args.LastChangeDate = erpRequest.DateFrom;
+            args.Customer = string.IsNullOrWhiteSpace(erpRequest.AccountNumber) ? null : erpRequest.AccountNumber;
+            args.PageNumber = start > 0 ? start : 1;
+            args.RowsPerPage = erpRequest.Limit > 0 ? erpRequest.Limit : 100;
+
+            sysproRequest.args = args;
+
+            return sysproRequest;
         }
 
-        return new SysproRequestModel();
+        return new ExpandoObject();
+    }
+
+    public async Task<dynamic> PrepareErpPriceSpecialPricingsRequestBody(ErpGetRequestModel erpRequest)
+    {
+        if (erpRequest != null)
+        {
+            var start = int.Parse(erpRequest.Start);
+
+            dynamic sysproRequest = new ExpandoObject();
+            sysproRequest.action = "SQL";
+            sysproRequest.name = "Online_GetCustomer";
+
+            dynamic args = new ExpandoObject();
+            args.LastChangeDate = erpRequest.DateFrom;
+            args.StockCode = string.IsNullOrWhiteSpace(erpRequest.ProductSku) ? null : erpRequest.ProductSku;
+            args.PageNumber = start > 0 ? start : 1;
+            args.RowsPerPage = erpRequest.Limit > 0 ? erpRequest.Limit : 100;
+
+            sysproRequest.args = args;
+
+            return sysproRequest;
+        }
+
+        return new ExpandoObject();
+    }
+
+    public async Task<dynamic> PrepareErpProductRequestBody(ErpGetRequestModel erpRequest)
+    {
+        if (erpRequest != null)
+        {
+            var start = int.Parse(erpRequest.Start);
+
+            dynamic sysproRequest = new ExpandoObject();
+            sysproRequest.action = "SQL";
+            sysproRequest.name = "Online_GetCustomer";
+
+            dynamic args = new ExpandoObject();
+            args.LastChangeDate = erpRequest.DateFrom;
+            args.StockCode = string.IsNullOrWhiteSpace(erpRequest.ProductSku) ? null : erpRequest.ProductSku;
+            args.PageNumber = start > 0 ? start : 1;
+            args.RowsPerPage = erpRequest.Limit > 0 ? erpRequest.Limit : 100;
+
+            sysproRequest.args = args;
+
+            return sysproRequest;
+        }
+
+        return new ExpandoObject();
     }
 }

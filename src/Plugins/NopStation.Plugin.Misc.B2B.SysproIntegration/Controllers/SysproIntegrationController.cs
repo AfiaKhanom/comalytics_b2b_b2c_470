@@ -22,7 +22,7 @@ public class SysproIntegrationController : BasePluginController
     private readonly ISettingService _settingService;
     private readonly INotificationService _notificationService;
     private readonly ILocalizationService _localizationService;
-    private readonly IErpAccountService _erpAccountService;
+    private readonly IB2BAccountService _erpAccountService;
 
     #endregion
 
@@ -32,7 +32,7 @@ public class SysproIntegrationController : BasePluginController
         ISettingService settingService,
         INotificationService notificationService,
         ILocalizationService localizationService,
-        IErpAccountService erpAccountService)
+        IB2BAccountService erpAccountService)
     {
         _storeContext = storeContext;
         _settingService = settingService;

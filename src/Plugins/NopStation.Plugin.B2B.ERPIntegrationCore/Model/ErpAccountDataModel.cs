@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 
@@ -8,8 +9,9 @@ public class ErpAccountDataModel
     public string AccountName { get; set; }
     public string ErpSalesOrgCode { get; set; }
     public string BillingSuburb { get; set; }
-    public ErpAddressModel BillingName { get; set; }
+    public string BillingName { get; set; }
     public string VatNumber { get; set; }
+    public decimal CreditLimit { get; set; }
     public decimal CreditLimitUsed { get; set; }
     public decimal CreditLimitAvailable { get; set; }
     public decimal CurrentBalance { get; set; }
@@ -17,6 +19,7 @@ public class ErpAccountDataModel
     public string PreFilterFacets { get; set; }
     public string PaymentTypeCode { get; set; }
     public string PriceGroupCode { get; set; }
+    public string CreditLimitStr { get; set; }
     public string CreditLimitUsedStr { get; set; }
     public string CreditLimitAvailableStr { get; set; }
     public string CurrentBalanceStr { get; set; }
@@ -34,4 +37,9 @@ public class ErpAccountDataModel
     public string CompanyNo { get; set; }
     public bool IsActive { get; set; }
     public List<KeyValuePair<string, string>> ErpAccountAttributes { get; set; }
+    public bool IsDeleted { get; set; }
+    public DateTime? UpdatedOnUtc { get; set; }
+    public bool OverrideBackOrderingConfigSetting { get; set; }
+    public bool AllowAccountsBackOrdering { get; set; }
+    public bool AllowAccountsAddressEditOnCheckout { get; set; }
 }

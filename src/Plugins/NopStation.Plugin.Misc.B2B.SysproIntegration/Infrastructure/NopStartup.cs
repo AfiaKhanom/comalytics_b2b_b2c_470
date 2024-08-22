@@ -20,7 +20,8 @@ public class NopStartup : INopStartup
     {
         services.AddScoped<ISysproIntegrationService, SysproIntegrationService>();
         services.AddScoped<IErpNopMapperService, ErpNopMapperService>();
-        services.AddScoped<IErpAccountService, ErpAccountService>();
+        services.AddScoped<IB2BAccountService, B2BAccountService>();
+        services.AddScoped<IB2BProductService, B2BProductService>();
         services.AddScoped<SysproClient>();
     }
 
