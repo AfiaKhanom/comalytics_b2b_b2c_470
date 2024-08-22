@@ -11,28 +11,27 @@ public class ErpNopMapperService : IErpNopMapperService
 
         var erpAccounts = erpAccountSysproResponses.Select(account => new ErpAccountDataModel
         {
-            AccNo = account.Customer ?? string.Empty,
-            Name = account.Name ?? string.Empty,
-            Branch = account.Company ?? string.Empty,
-            Notes = account.PaymentTermsDescription ?? string.Empty,
+            AccountNumber = account.Customer ?? string.Empty,
+            AccountName = account.Name ?? string.Empty,
+            ErpSalesOrgCode = account.Company ?? string.Empty,
+            PaymentTypeCode = account.PaymentTermsCode ?? string.Empty,
             Address1 = account.BillingAddress1 ?? string.Empty,
             Address2 = account.BillingAddress2 ?? string.Empty,
             Address3 = account.BillingAddress1 ?? string.Empty,
-            Province = account.BillingProvince ?? string.Empty,
+            StateProvince = account.BillingProvince ?? string.Empty,
             Country = account.BillingCountry ?? string.Empty,
-            PostalCode = account.BillingPostalCode ?? string.Empty,
-            TelNo = account.BillingPhoneNumber ?? string.Empty,
-            EMail = account.BillingEmail ?? string.Empty,
-            EMail1 = account.BillingEmail ?? string.Empty,
-            DelName = account.BillingName ?? string.Empty,
+            ZipPostalCode = account.BillingPostalCode ?? string.Empty,
+            PhoneNumber = account.BillingPhoneNumber ?? string.Empty,
+            Email = account.BillingEmail ?? string.Empty,
+            BillingName = account.BillingName ?? string.Empty,
             CompanyNo = string.Empty,
-            PrefilterFacets = string.Empty,
+            PreFilterFacets = string.Empty,
             VatNumber = account.VatNumber ?? string.Empty,
             PriceGroupCode = account.PriceGroupCode ?? string.Empty,
-            CreditLimit = account.CreditLimit.HasValue ? account.CreditLimit.Value : decimal.Zero,
-            CreditLimitUsed = account.CurrentBalance,
-            CreditLimitAvailable = account.AvailableCredit,
-            Balance = account.CurrentBalance
+             = account.CreditLimit.HasValue ? account.CreditLimit.Value : decimal.Zero,
+            CreditLimitUsed = account.CurrentBalance ?? decimal.Zero,
+            CreditLimitAvailable = account.AvailableCredit ?? decimal.Zero,
+            CurrentBalance = account.CurrentBalance ?? decimal.Zero
         }).ToList();
 
         return Task.FromResult<IList<ErpAccountDataModel>>(erpAccounts);
