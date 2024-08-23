@@ -1655,12 +1655,16 @@ div.product-viewmode select {
 	background: url('../img/rating2.gif') left center repeat-x;
     height: 16px;
 }
-.item-box .description {
-	height: 32px;
-	margin: 5% 0;
-	overflow: hidden;
+  .item-box .description {
+    height: 32px;
+    margin: 5% 0;
+    overflow: hidden;
     font-size: 13px;
-}
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    text-overflow: ellipsis;
+  }
 .item-box .description:empty {
 	display: none;
 }
