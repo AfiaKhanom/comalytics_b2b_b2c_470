@@ -7,4 +7,5 @@ public interface ISysproIntegrationService
     Task<bool> IsValidSysproIntegrationSettings();
     Task<dynamic> PrepareErpProductRequestBody(ErpGetRequestModel erpRequest);
     Task<dynamic> PrepareErpPriceSpecialPricingsRequestBody(ErpGetRequestModel erpRequest);
+    Task<dynamic> PrepareErpStockRequestBody(ErpGetRequestModel erpRequest);
 }

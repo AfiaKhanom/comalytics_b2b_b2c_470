@@ -85,10 +85,11 @@ public partial class SysproIntegrationService : ISysproIntegrationService
 
             dynamic sysproRequest = new ExpandoObject();
             sysproRequest.action = "SQL";
-            sysproRequest.name = "Online_GetCustomer";
+            sysproRequest.name = "Online_GetPrice";
 
             dynamic args = new ExpandoObject();
             args.LastChangeDate = erpRequest.DateFrom;
+            args.Customer = string.IsNullOrWhiteSpace(erpRequest.AccountNumber) ? null : erpRequest.AccountNumber;
             args.StockCode = string.IsNullOrWhiteSpace(erpRequest.ProductSku) ? null : erpRequest.ProductSku;
             args.PageNumber = start > 0 ? start : 1;
             args.RowsPerPage = erpRequest.Limit > 0 ? erpRequest.Limit : 100;
@@ -109,7 +110,31 @@ public partial class SysproIntegrationService : ISysproIntegrationService
 
             dynamic sysproRequest = new ExpandoObject();
             sysproRequest.action = "SQL";
-            sysproRequest.name = "Online_GetCustomer";
+            sysproRequest.name = "Online_GetStockData";
+
+            dynamic args = new ExpandoObject();
+            args.LastChangeDate = erpRequest.DateFrom;
+            args.StockCode = string.IsNullOrWhiteSpace(erpRequest.ProductSku) ? null : erpRequest.ProductSku;
+            args.PageNumber = start > 0 ? start : 1;
+            args.RowsPerPage = erpRequest.Limit > 0 ? erpRequest.Limit : 100;
+
+            sysproRequest.args = args;
+
+            return sysproRequest;
+        }
+
+        return new ExpandoObject();
+    }
+
+    public async Task<dynamic> PrepareErpStockRequestBody(ErpGetRequestModel erpRequest)
+    {
+        if (erpRequest != null)
+        {
+            var start = int.Parse(erpRequest.Start);
+
+            dynamic sysproRequest = new ExpandoObject();
+            sysproRequest.action = "SQL";
+            sysproRequest.name = "Online_GetStockOnHand";
 
             dynamic args = new ExpandoObject();
             args.LastChangeDate = erpRequest.DateFrom;

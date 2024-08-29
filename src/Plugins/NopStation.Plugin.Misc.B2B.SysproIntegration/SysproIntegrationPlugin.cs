@@ -7,7 +7,6 @@ using Nop.Services.Localization;
 using Nop.Services.Plugins;
 using Nop.Web.Framework.Menu;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
-using NopStation.Plugin.B2B.ERPIntegrationCore.ErpInterface;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 using NopStation.Plugin.Misc.B2B.SysproIntegration.Services;
@@ -52,7 +51,7 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
         IB2BAccountService b2BAccountService,
         IB2BProductService b2BProductService,
         IB2BPricingService b2BPricingService,
-        IB2BStockService B2BStockService)
+        IB2BStockService b2BStockService)
     {
         _localizationService = localizationService;
         _settingService = settingService;
@@ -60,7 +59,7 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
         _b2BAccountService = b2BAccountService;
         _b2BProductService = b2BProductService;
         _b2BPricingService = b2BPricingService;
-        _b2BStockService = B2BStockService;
+        _b2BStockService = b2BStockService;
     }
 
     #endregion
@@ -187,8 +186,7 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
 
         if (erpAccounts.Data != null && erpAccounts.Data.Any())
         {
-            var pricing = erpAccounts.Data.FirstOrDefault();
-            response.Data = pricing;
+            response.Data = erpAccounts.Data.FirstOrDefault();
         }
         else
         {
@@ -265,8 +263,7 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
 
         if (erpProducts.Data != null && erpProducts.Data.Any())
         {
-            var pricing = erpProducts.Data.FirstOrDefault();
-            response.Data = pricing;
+            response.Data = erpProducts.Data.FirstOrDefault();
         }
         else
         {
@@ -349,14 +346,35 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
 
     #region stock
 
-    public async Task<ErpResponseData<ErpProductDataModel>> GetStockByItemNoFromErpAsync(ErpGetRequestModel erpRequest)
+    public async Task<ErpResponseData<ErpStockDataModel>> GetStockByItemNoFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        throw new NotImplementedException();
+        var erpStock = await _b2BStockService.GetStockFromErpAsync(erpRequest);
+        var response = new ErpResponseData<ErpStockDataModel>
+        {
+            ErpResponseModel = new ErpResponseModel
+            {
+                IsError = erpStock.ErpResponseModel.IsError,
+                StatusCode = erpStock.ErpResponseModel.StatusCode,
+                ErrorShortMessage = erpStock.ErpResponseModel.ErrorShortMessage,
+                ErrorFullMessage = erpStock.ErpResponseModel.ErrorFullMessage,
+            }
+        };
+
+        if (erpStock.Data != null && erpStock.Data.Any())
+        {
+            response.Data = erpStock.Data.FirstOrDefault();
+        }
+        else
+        {
+            response.Data = new ErpStockDataModel();
+        }
+
+        return response;
     }
 
-    public async Task<ErpResponseData<IList<ErpProductDataModel>>> GetStocksFromErpAsync(ErpGetRequestModel erpRequest)
+    public async Task<ErpResponseData<IList<ErpStockDataModel>>> GetStocksFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        throw new NotImplementedException();
+        return await _b2BStockService.GetStockFromErpAsync(erpRequest);
     }
 
     #endregion
@@ -371,16 +389,6 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
     public async Task<string> GetSalesOrgCodeFromIntegrationSettings()
     {
         return string.Empty;
-    }
-
-    Task<ErpResponseData<ErpStockDataModel>> IErpIntegrationProductService.GetStockByItemNoFromErpAsync(ErpGetRequestModel erpRequest)
-    {
-        throw new NotImplementedException();
-    }
-
-    Task<ErpResponseData<IList<ErpStockDataModel>>> IErpIntegrationProductService.GetStocksFromErpAsync(ErpGetRequestModel erpRequest)
-    {
-        throw new NotImplementedException();
     }
 
     #endregion

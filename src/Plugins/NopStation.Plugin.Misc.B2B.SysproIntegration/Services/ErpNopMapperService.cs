@@ -62,6 +62,10 @@ public class ErpNopMapperService : IErpNopMapperService
 
     public async Task<IList<ErpProductDataModel>> ErpProductMapNop(IList<ErpProductSysproResponseModel> erpProductResponseData)
     {
+        if (erpProductResponseData == null)
+        {
+            return new List<ErpProductDataModel>();
+        }
         var erpProducts = (await Task.WhenAll(erpProductResponseData.Select(async product =>
         {
             return new ErpProductDataModel
@@ -110,5 +114,25 @@ public class ErpNopMapperService : IErpNopMapperService
         }))).ToList();
 
         return erpProducts;
+    }
+
+    public async Task<IList<ErpStockDataModel>> ErpStockMapNop(List<ErpStockSysproResponseModel> erpStockResponseData)
+    {
+        if (erpStockResponseData == null)
+            return new List<ErpStockDataModel>();
+
+        var erpStock = (await Task.WhenAll(erpStockResponseData.Select(async stock =>
+        {
+            return new ErpStockDataModel
+            {
+                SalesOrgCode = stock.Company ?? string.Empty,
+                WarehouseNameOrCode = stock.Warehouse ?? string.Empty,
+                Sku = stock.StockCode ?? string.Empty,
+                QuantityOnHand = stock.QtyOnHand ?? 0,
+                LastChangedDate = stock.LastChangeDate ?? null
+            };
+        }))).ToList();
+
+        return erpStock;
     }
 }
