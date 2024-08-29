@@ -2,10 +2,10 @@
   position: relative;
 }
 
-.admin-header-links + .header .skip {
-  position: absolute;
-  top: -20px;
-}
+  .admin-header-links + .header .skip {
+    position: absolute;
+    top: -20px;
+  }
 
 .checkout-page .cart,
 .shopping-cart-page .cart {
@@ -21,9 +21,212 @@
   margin: 10px 0;
 }
 
+.checkout-page .checkout-data:after {
+  display: none;
+  justify-content: space-between;
+}
+
+.checkout-page .checkout-data {
+  display: flex;
+  justify-content: space-between;
+}
+
+.checkout-page .checkout-title {
+  border-bottom: 1px solid #121c23;
+  margin-bottom: 30px;
+}
+
+  .checkout-page .checkout-title h1, form#ErpShiptoAddressForm h1#delivery-header-text {
+    display: inline-block;
+    position: relative;
+    border-radius: 5px 5px 0 0;
+    padding: 12px 0;
+    overflow: hidden;
+    text-transform: capitalize;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-weight: normal;
+    font-size: 17px;
+    color: #000;
+    background: none;
+  }
+
+.title.delivery-date-title, .title.special-instructions-title {
+  border-bottom: 1px solid #121c23;
+  margin-bottom: 30px;
+  background: none;
+  color: #000;
+  padding-left: 0;
+  width: 100%;
+  text-align: left;
+}
+
+  .title.delivery-date-title strong, .title.special-instructions-title strong {
+    background: none;
+    color: #000;
+    padding-left: 0;
+  }
+
+form#ErpShiptoAddressForm {
+  flex: 1;
+  text-align: left;
+}
+
+  form#ErpShiptoAddressForm .tab-links {
+    padding: 10px;
+    background: #f6f6f6;
+    margin-bottom: 20px;
+  }
+
+  form#ErpShiptoAddressForm h1#delivery-header-text {
+  }
+
+  form#ErpShiptoAddressForm .select-shipping-address .title {
+    display: none;
+  }
+
+  form#ErpShiptoAddressForm .select-shipping-address .shipping-address-body {
+    text-align: left !important;
+  }
+
+  form#ErpShiptoAddressForm .select-shipping-address label#shipping-address-select {
+    padding: 10px;
+    background: #f6f6f6;
+    margin-bottom: 10px;
+    width: 100%;
+    display: inline-block;
+  }
+
+  form#ErpShiptoAddressForm .select-shipping-address button.edit-ship-to {
+    padding: 10px;
+    padding-inline: 20px;
+  }
+
+  form#ErpShiptoAddressForm div#select-delivery-date {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+    form#ErpShiptoAddressForm div#select-delivery-date .delivery-date-body {
+      width: 100%;
+    }
+
+  form#ErpShiptoAddressForm div#deliveryDateDropdown {
+    width: 100%;
+    background: #f6f6f6;
+    text-align: left;
+    margin-left: 0;
+    padding: 2px;
+  }
+
+    form#ErpShiptoAddressForm div#deliveryDateDropdown select#DeliveryDateString {
+      border: none;
+      background: #f6f6f6;
+      width: auto;
+    }
+
+  form#ErpShiptoAddressForm .section.special-instructions {
+    display: flex;
+    flex-direction: column;
+    align-items: self-start;
+  }
+
+  form#ErpShiptoAddressForm .special-instructions-body {
+    width: 100%;
+  }
+
+  form#ErpShiptoAddressForm textarea#SpecialInstructions {
+    width: 100%;
+  }
+
+  form#ErpShiptoAddressForm div#specialInstructionsTextarea {
+    margin-inline: 0;
+  }
+
+  form#ErpShiptoAddressForm .modal-content {
+    max-width: 50%;
+    border-radius: 10px;
+  }
+
+    form#ErpShiptoAddressForm .modal-content .edit-address {
+      border: none;
+    }
+
+.checkout-page .checkout-data .order-summary-content .table-wrapper {
+  display: none;
+}
+
+.checkout-page .checkout-data .order-summary .title {
+  display: none;
+}
+
+.checkout-page .order-summary {
+  margin-top: 0;
+}
+
+.checkout-page .checkout-data .section.payment-method {
+  flex: 1;
+}
+
+.checkout-page .checkout-data .section.payment-info {
+  flex: 1;
+}
+
+.checkout-page .checkout-data .section.payment-method .method-list {
+  margin: 0 0 30px;
+}
+
+.checkout-page .checkout-data .section.payment-info .info {
+  margin: 0 0 30px;
+}
+
+.order-completed-page .page-title {
+  display: flex;
+  flex-direction: column;
+}
+
+.order-completed-page .order-details-area {
+  display: flex;
+  justify-content: space-around;
+  margin-inline: 0;
+}
+
+  .order-completed-page .order-details-area ul.info-list {
+    text-align: left;
+    padding-left: 0;
+    padding-top: 0;
+  }
+
+.order-completed-page .order-details-products {
+  display: flex;
+  gap: 30px;
+}
+
+  .order-completed-page .order-details-products .section.products {
+    flex: 1;
+  }
+
+    .order-completed-page .order-details-products .section.products .table-wrapper {
+      width: 100% !important;
+    }
+
+  .order-completed-page .order-details-products button.button-1.re-order-button {
+    margin-top: 20px;
+  }
+
+.checkout-buttons.hide-checkout-btn {
+  display: flex;
+  gap: 20px;
+}
+
+  .checkout-buttons.hide-checkout-btn .checkout-button {
+    min-width: auto;
+    width: 47%;
+  }
+
 @media(min-width: 1025px) {
-  .checkout-page .cart-footer,
-  .shopping-cart-page .cart-footer {
+  .checkout-page .cart-footer, .shopping-cart-page .cart-footer {
     width: 360px;
   }
 
