@@ -41,7 +41,7 @@ public class B2BPricingService : IB2BPricingService
                 return erpResponseData;
             }
 
-            var response = await _sysproClient.HttpCall(serialized, ErpSyncLavel.Account);
+            var response = await _sysproClient.HttpCall(serialized, ErpSyncLevel.Account);
             if (!response.IsSuccessStatusCode)
             {
                 erpResponseData.ErpResponseModel.IsError = true;

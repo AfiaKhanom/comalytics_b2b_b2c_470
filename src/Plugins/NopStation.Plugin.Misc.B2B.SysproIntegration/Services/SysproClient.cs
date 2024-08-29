@@ -31,7 +31,7 @@ namespace NopStation.Plugin.Misc.B2B.SysproIntegration.Services
 
         #region Method
 
-        public async Task<HttpResponseMessage> HttpCall(object payloadData, ErpSyncLavel erpSyncLevel)
+        public async Task<HttpResponseMessage> HttpCall(object payloadData, ErpSyncLevel erpSyncLevel)
         {
             try
             {

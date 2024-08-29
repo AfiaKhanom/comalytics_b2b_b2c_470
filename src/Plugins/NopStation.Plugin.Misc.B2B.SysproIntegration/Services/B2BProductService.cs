@@ -42,7 +42,7 @@ public class B2BProductService : IB2BProductService
                 return erpResponseData;
             }
 
-            var response = await _sysproClient.HttpCall(serialized, ErpSyncLavel.Product);
+            var response = await _sysproClient.HttpCall(serialized, ErpSyncLevel.Product);
             if (!response.IsSuccessStatusCode)
             {
                 erpResponseData.ErpResponseModel.IsError = true;
