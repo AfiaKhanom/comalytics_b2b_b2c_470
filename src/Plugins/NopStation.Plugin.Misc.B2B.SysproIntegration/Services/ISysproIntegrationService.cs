@@ -8,4 +8,5 @@ public interface ISysproIntegrationService
     Task<dynamic> PrepareErpProductRequestBody(ErpGetRequestModel erpRequest);
     Task<dynamic> PrepareErpPriceSpecialPricingsRequestBody(ErpGetRequestModel erpRequest);
     Task<dynamic> PrepareErpStockRequestBody(ErpGetRequestModel erpRequest);
+    Task<dynamic> PrepareErpShipToAddressRequestBody(ErpGetRequestModel erpRequest);
 }

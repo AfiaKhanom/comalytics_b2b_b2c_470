@@ -116,6 +116,43 @@ public class ErpNopMapperService : IErpNopMapperService
         return erpProducts;
     }
 
+    public async Task<IList<ErpShipToAddressDataModel>> ErpShipToAddressMapNop(List<ErpShipToAddressSysproResponseModel> erpShipToAddressResponseData)
+    {
+        if (erpShipToAddressResponseData == null)
+            return new List<ErpShipToAddressDataModel>();
+
+        var erpShipTo = (await Task.WhenAll(erpShipToAddressResponseData.Select(async shipto =>
+        {
+            return new ErpShipToAddressDataModel
+            {
+                AccountNumber = shipto.Customer,
+                ProvinceCode = shipto.Province,
+                ShipToCode = shipto.ShipToCode,
+                ShipToName = shipto.ShipToName,
+                Company = shipto.CompanyName,
+                Address1 = shipto.Address1,
+                Address2 = shipto.Address2,
+                City = shipto.City,
+                StateProvince = shipto.Province,
+                Suburb = shipto.Suburb,
+                Country = shipto.Country,
+                ZipPostalCode = shipto.PostalCode,
+                PhoneNumber = shipto.ShipToPhoneNumber,
+                FaxNumber = string.Empty,
+                CustomAttributes = string.Empty,
+                DeliveryNotes = shipto.DeliveryNotes,
+                EmailAddress = shipto.ShipToEmailAddress,
+                RepNumber = shipto.SalesRepNumber,
+                RepFullName = shipto.SalesRepName,
+                RepPhoneNumber = shipto.SalesRepPhoneNumber,
+                RepEmail = shipto.SalesRepEmailAddress,
+                SalesOrgCode = shipto.Company
+            };
+        }))).ToList();
+
+        return erpShipTo;
+    }
+
     public async Task<IList<ErpStockDataModel>> ErpStockMapNop(List<ErpStockSysproResponseModel> erpStockResponseData)
     {
         if (erpStockResponseData == null)

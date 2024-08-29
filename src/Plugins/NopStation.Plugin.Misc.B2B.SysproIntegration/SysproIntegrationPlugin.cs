@@ -28,6 +28,7 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
     private readonly IB2BProductService _b2BProductService;
     private readonly IB2BPricingService _b2BPricingService;
     private readonly IB2BStockService _b2BStockService;
+    private readonly IShipToAddressService _shipToAddressService;
     private const string THIRD_PARTY_PLUGINS = "Third party plugins";
     private const string PLUGIN_SYSTEM_NAME = "Misc.B2B.SysproIntegration";
     private const string PLUGIN_TITLE = "Syspro Integration";
@@ -51,7 +52,8 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
         IB2BAccountService b2BAccountService,
         IB2BProductService b2BProductService,
         IB2BPricingService b2BPricingService,
-        IB2BStockService b2BStockService)
+        IB2BStockService b2BStockService,
+        IShipToAddressService shipToAddressService)
     {
         _localizationService = localizationService;
         _settingService = settingService;
@@ -60,6 +62,7 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
         _b2BProductService = b2BProductService;
         _b2BPricingService = b2BPricingService;
         _b2BStockService = b2BStockService;
+        _shipToAddressService = shipToAddressService;
     }
 
     #endregion
@@ -383,7 +386,7 @@ public class SysproIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegra
 
     public async Task<ErpResponseData<IList<ErpShipToAddressDataModel>>> GetShipToAddressByAccountNumberFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        throw new NotImplementedException();
+        return await _shipToAddressService.GetShipToAddressFromErpAsync(erpRequest);
     }
 
     public async Task<string> GetSalesOrgCodeFromIntegrationSettings()
