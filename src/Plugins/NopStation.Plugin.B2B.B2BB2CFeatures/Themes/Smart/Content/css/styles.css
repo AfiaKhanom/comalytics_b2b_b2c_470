@@ -36,20 +36,60 @@
   margin-bottom: 30px;
 }
 
-  .checkout-page .checkout-title h1, form#ErpShiptoAddressForm h1#delivery-header-text {
-    display: inline-block;
-    position: relative;
-    border-radius: 5px 5px 0 0;
-    padding: 12px 0;
-    overflow: hidden;
-    text-transform: capitalize;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    font-weight: normal;
-    font-size: 17px;
-    color: #000;
-    background: none;
-  }
+.checkout-page #collect-header-text {
+  border-bottom: 1px solid #121c23;
+  margin-bottom: 30px;
+  display: inline-block;
+  position: relative;
+  border-radius: 5px 5px 0 0;
+  padding: 13px 0;
+  overflow: hidden;
+  text-transform: capitalize;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: normal;
+  font-size: 17px;
+  color: #000;
+  background: none;
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.pickup-point-title {
+  display: none !important;
+}
+
+.checkout-page .pickup-points {
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 30px 15px 15px;
+  padding-top: 0 !important;
+  padding-left: 0;
+}
+
+.pickup-point-body {
+  background: #f6f6f6;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+}
+
+.checkout-page .checkout-title h1, form#ErpShiptoAddressForm h1#delivery-header-text {
+  display: inline-block;
+  position: relative;
+  border-radius: 5px 5px 0 0;
+  padding: 12px 0;
+  overflow: hidden;
+  text-transform: capitalize;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: normal;
+  font-size: 17px;
+  color: #000;
+  background: none;
+}
 
 .title.delivery-date-title, .title.special-instructions-title {
   border-bottom: 1px solid #121c23;
