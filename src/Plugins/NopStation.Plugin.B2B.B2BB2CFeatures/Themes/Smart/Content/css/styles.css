@@ -240,6 +240,18 @@ form#ErpShiptoAddressForm {
   margin-top: 6px;
 }
 
+.payment-info-page .info-block {
+  border: none;
+  padding: 0;
+  margin: 0;
+  background-color: #fff;
+  box-shadow: none;
+}
+
+  .payment-info-page .info-block h2 {
+    padding-bottom: 5px;
+  }
+
 @media(min-width: 1025px) {
   .checkout-page .cart-footer, .shopping-cart-page .cart-footer {
     width: 360px;
