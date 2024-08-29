@@ -231,6 +231,15 @@ form#ErpShiptoAddressForm {
   font-size: 16px;
 }
 
+.payment-method-page .method-name img {
+  max-width: 100%;
+  width: 55px;
+}
+
+.payment-method-page .method-name .payment-description {
+  margin-top: 6px;
+}
+
 @media(min-width: 1025px) {
   .checkout-page .cart-footer, .shopping-cart-page .cart-footer {
     width: 360px;
