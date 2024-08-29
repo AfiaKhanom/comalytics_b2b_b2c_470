@@ -252,6 +252,11 @@ form#ErpShiptoAddressForm {
     padding-bottom: 5px;
   }
 
+.order-completed .title {
+  display: flex;
+  gap: 6px;
+}
+
 @media(min-width: 1025px) {
   .checkout-page .cart-footer, .shopping-cart-page .cart-footer {
     width: 360px;
