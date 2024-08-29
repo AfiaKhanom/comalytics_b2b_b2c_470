@@ -22,7 +22,6 @@ using Nop.Web.Framework.Controllers;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Factories.ErpOrderDetails;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
@@ -97,7 +96,7 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Controllers
             IErpLogsService erpLogsService,
             IErpOrderDetailsModelFactory erpOrderDetailsModelFactory,
             IProductService productService,
-            IErpActivityLogsService erpActivityLogsService) : 
+            IErpActivityLogsService erpActivityLogsService) :
 
             base(customerService,
                 localizationService,
@@ -454,7 +453,7 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Controllers
                     var msg = await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Reorder.Error");
                     _logger.Error(msg + " " + ex.Message, ex);
                     _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Reorder.Error"));
-                    await _erpLogsService.ErrorAsync(msg, ErpSyncLevel.Order, ex, customer: customer);
+                    await _erpLogsService.ErrorAsync(msg, ErpSyncLavel.Order, ex, customer: customer);
                 }
                 finally
                 {
