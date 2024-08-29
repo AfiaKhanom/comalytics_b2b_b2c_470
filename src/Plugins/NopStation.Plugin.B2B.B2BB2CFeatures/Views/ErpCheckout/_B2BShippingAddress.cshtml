@@ -13,13 +13,14 @@
 
 <div class="page checkout-page shipping-address-page">
     @await Component.InvokeAsync(typeof(CheckoutProgressViewComponent), new { step = CheckoutProgressStep.Shipping })
-    <div class="page-title">
-        <h1>@T("Checkout.ShippingAddress.SelectDeliverOrCollect")</h1>
-    </div>
+
     <div class="page-body checkout-data">
         <form id="ErpShiptoAddressForm" asp-controller="ErpCheckout" asp-action="ErpShippingAddress" method="post">
 
             <div class="checkout-shipping-tab checkout-left-section" id="checkoutShippingTabs">
+                <div class="checkout-title">
+                    <h1>@T("Checkout.ShippingAddress.SelectDeliverOrCollect")</h1>
+                </div>
                 <ul class="tab-links">
                     <li class="tab-item deliver">
                         <label for="deliver"><input type="radio" name="shippingTab" id="deliver" checked>@T("B2B.Shipping.Deliver")</label>
@@ -30,7 +31,10 @@
                 </ul>
 
                 <div id="shippingTabDeliver" class="tab-content deliver">
-                    <h1 id="delivery-header-text">@T("Checkout.ShippingAddress.SelectYourDeliveryAddress")</h1>
+                    <div class="checkout-title">
+                        <h1 id="delivery-header-text">@T("Checkout.ShippingAddress.SelectYourDeliveryAddress")</h1>
+
+                    </div>
                     @if (Model.PickupPointsModel == null || !Model.PickupPointsModel.PickupInStoreOnly)
                     {
                         <!-- Address Modal -->
@@ -109,13 +113,13 @@
                                         @foreach (var item in Model.ExistingErpShipToAddresses)
                                         {
                                             var addressLine = string.Join(", ", new string[] {
-                                                        item.ShipToName,
-                                                        item.Address1,
-                                                        item.Address2,
-                                                        item.Suburb,
-                                                        item.City,
-                                                        item.StateProvinceName,
-                                                        item.ZipPostalCode
+                                item.ShipToName,
+                                item.Address1,
+                                item.Address2,
+                                item.Suburb,
+                                item.City,
+                                item.StateProvinceName,
+                                item.ZipPostalCode
                                                     }.Where(s => !string.IsNullOrEmpty(s)));
 
                                             <label id="shipping-address-select" class="address-select-radio">
@@ -130,9 +134,9 @@
                                                 <span class="checkmark"></span>
                                                 @(addressLine)
                                                 @* @if (Model.AllowAddressEdit)
-                                                {
-                                                    <button class="edit-ship-to" onclick="loadB2BShipToAddress(@item.Id);return false;">Edit Address</button>
-                                                } *@
+                                    {
+                                    <button class="edit-ship-to" onclick="loadB2BShipToAddress(@item.Id);return false;">Edit Address</button>
+                                    } *@
                                             </label>
                                             <br />
                                         }
