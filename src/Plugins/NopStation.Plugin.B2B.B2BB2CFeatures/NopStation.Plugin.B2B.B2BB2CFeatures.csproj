@@ -216,6 +216,8 @@
     <None Remove="Views\B2BB2CCustomer\_ExternalAuthentication.Errors.cshtml" />
     <None Remove="Views\Catalog\CategoryTemplate.ProductsInGridOrLines.cshtml" />
     <None Remove="Views\Checkout\Completed.cshtml" />
+    <None Remove="Views\Checkout\PaymentInfo.cshtml" />
+    <None Remove="Views\Checkout\PaymentMethod.cshtml" />
     <None Remove="Views\Checkout\QuoteOrderCompleted.cshtml" />
     <None Remove="Views\Checkout\_PickupPoints.cshtml" />
     <None Remove="Views\CustomerImpersonate\List.cshtml" />
@@ -915,6 +917,16 @@
     </Content>
     <Content Include="Views\Checkout\Completed.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Checkout\PaymentInfo.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Checkout\PaymentMethod.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Checkout\QuoteOrderCompleted.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
