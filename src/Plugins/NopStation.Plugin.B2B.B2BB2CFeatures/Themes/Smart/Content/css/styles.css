@@ -169,6 +169,12 @@ form#ErpShiptoAddressForm div#deliveryDateDropdown {
   padding: 2px;
 }
 
+  form#ErpShiptoAddressForm div#deliveryDateDropdown label {
+    margin: 0;
+    text-align: left;
+    margin-left: 10px;
+  }
+
   form#ErpShiptoAddressForm div#deliveryDateDropdown select#DeliveryDateString {
     border: none;
     background: #f6f6f6;
@@ -315,6 +321,19 @@ button#shippingaddress-next-button, button.button-1.payment-method-next-step-but
   margin-left: 40px;
 }
 
+.order-details-page .actions {
+  text-align: center !important;
+}
+
+.header-upper .ddl-erp-account-options {
+  display: none;
+}
+
+.header-links-wrapper.lower {
+  display: flex;
+  gap: 10px;
+}
+
 @media(min-width: 1025px) {
   .checkout-page .cart-footer, .shopping-cart-page .cart-footer {
     width: 360px;
@@ -345,6 +364,18 @@ button#shippingaddress-next-button, button.button-1.payment-method-next-step-but
   .shopping-cart-page .common-buttons a {
     margin: 0 15px 0 0;
   }
+}
+
+@media(max-width: 1400px) {
+  .header-logo {
+    max-width: 320px;
+    margin: 0;
+  }
+
+    .header-logo a img {
+      max-width: 70%;
+      float: left;
+    }
 }
 
 @media(max-width: 767px) {
@@ -401,6 +432,56 @@ button#shippingaddress-next-button, button.button-1.payment-method-next-step-but
 
   button#shippingaddress-next-button, button.button-1.payment-method-next-step-button, button.button-1.payment-info-next-step-button {
     margin-left: 10px;
+  }
+
+  .header-lower .center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .header-links-wrapper.lower {
+    display: flex;
+    gap: 20px;
+    flex-direction: column;
+    width: 100%;
+    background: #adadad;
+    align-items: center;
+    padding: 12px;
+  }
+
+    .header-links-wrapper.lower .header-links ul {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+      .header-links-wrapper.lower .header-links ul li:first-child {
+        margin: 0;
+      }
+
+        .header-links-wrapper.lower .header-links ul li:first-child a {
+          width: 75px;
+          height: auto;
+        }
+
+      .header-links-wrapper.lower .header-links ul li:nth-child(2) {
+        margin-right: 0;
+      }
+
+        .header-links-wrapper.lower .header-links ul li:nth-child(2) a {
+          width: 54px;
+          height: auto;
+        }
+
+      .header-links-wrapper.lower .header-links ul li a {
+        color: #000;
+      }
+
+  .header-logo a img {
+    max-width: 50%;
+    float: unset;
   }
 }
 
