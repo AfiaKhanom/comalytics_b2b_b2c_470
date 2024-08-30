@@ -106,96 +106,101 @@
     font-weight: bold;
   }
 
-form#ErpShiptoAddressForm {
+form#ErpShiptoAddressForm, .payment-method form, .payment-info form {
   flex: 1;
   text-align: left;
+  display: flex;
 }
 
-  form#ErpShiptoAddressForm .section {
-    position: relative;
-    margin: 0 0 18px;
+div#checkoutShippingTabs, ul#payment-method-block, .payment-info .info {
+  flex: 1;
+}
+
+form#ErpShiptoAddressForm .section {
+  position: relative;
+  margin: 0 0 18px;
+}
+
+form#ErpShiptoAddressForm .tab-links {
+  padding: 10px;
+  background: #f6f6f6;
+  margin-bottom: 20px;
+}
+
+form#ErpShiptoAddressForm h1#delivery-header-text {
+}
+
+form#ErpShiptoAddressForm .select-shipping-address .title {
+  display: none;
+}
+
+form#ErpShiptoAddressForm .select-shipping-address .shipping-address-body {
+  text-align: left !important;
+}
+
+form#ErpShiptoAddressForm .select-shipping-address label#shipping-address-select {
+  padding: 10px;
+  background: #f6f6f6;
+  margin-bottom: 10px;
+  width: 100%;
+  display: inline-block;
+}
+
+form#ErpShiptoAddressForm .select-shipping-address button.edit-ship-to {
+  padding: 10px;
+  padding-inline: 20px;
+}
+
+form#ErpShiptoAddressForm div#select-delivery-date {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+  form#ErpShiptoAddressForm div#select-delivery-date .delivery-date-body {
+    width: 100%;
   }
 
-  form#ErpShiptoAddressForm .tab-links {
-    padding: 10px;
+form#ErpShiptoAddressForm div#deliveryDateDropdown {
+  width: 100%;
+  background: #f6f6f6;
+  text-align: left;
+  margin-left: 0;
+  padding: 2px;
+}
+
+  form#ErpShiptoAddressForm div#deliveryDateDropdown select#DeliveryDateString {
+    border: none;
     background: #f6f6f6;
-    margin-bottom: 20px;
+    width: auto;
   }
 
-  form#ErpShiptoAddressForm h1#delivery-header-text {
+form#ErpShiptoAddressForm .section.special-instructions {
+  display: flex;
+  flex-direction: column;
+  align-items: self-start;
+}
+
+form#ErpShiptoAddressForm .special-instructions-body {
+  width: 100%;
+}
+
+form#ErpShiptoAddressForm textarea#SpecialInstructions {
+  width: 100%;
+}
+
+form#ErpShiptoAddressForm div#specialInstructionsTextarea {
+  margin-inline: 0;
+}
+
+form#ErpShiptoAddressForm .modal-content {
+  max-width: 50%;
+  border-radius: 10px;
+}
+
+  form#ErpShiptoAddressForm .modal-content .edit-address {
+    border: none;
   }
-
-  form#ErpShiptoAddressForm .select-shipping-address .title {
-    display: none;
-  }
-
-  form#ErpShiptoAddressForm .select-shipping-address .shipping-address-body {
-    text-align: left !important;
-  }
-
-  form#ErpShiptoAddressForm .select-shipping-address label#shipping-address-select {
-    padding: 10px;
-    background: #f6f6f6;
-    margin-bottom: 10px;
-    width: 100%;
-    display: inline-block;
-  }
-
-  form#ErpShiptoAddressForm .select-shipping-address button.edit-ship-to {
-    padding: 10px;
-    padding-inline: 20px;
-  }
-
-  form#ErpShiptoAddressForm div#select-delivery-date {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-    form#ErpShiptoAddressForm div#select-delivery-date .delivery-date-body {
-      width: 100%;
-    }
-
-  form#ErpShiptoAddressForm div#deliveryDateDropdown {
-    width: 100%;
-    background: #f6f6f6;
-    text-align: left;
-    margin-left: 0;
-    padding: 2px;
-  }
-
-    form#ErpShiptoAddressForm div#deliveryDateDropdown select#DeliveryDateString {
-      border: none;
-      background: #f6f6f6;
-      width: auto;
-    }
-
-  form#ErpShiptoAddressForm .section.special-instructions {
-    display: flex;
-    flex-direction: column;
-    align-items: self-start;
-  }
-
-  form#ErpShiptoAddressForm .special-instructions-body {
-    width: 100%;
-  }
-
-  form#ErpShiptoAddressForm textarea#SpecialInstructions {
-    width: 100%;
-  }
-
-  form#ErpShiptoAddressForm div#specialInstructionsTextarea {
-    margin-inline: 0;
-  }
-
-  form#ErpShiptoAddressForm .modal-content {
-    max-width: 50%;
-    border-radius: 10px;
-  }
-
-    form#ErpShiptoAddressForm .modal-content .edit-address {
-      border: none;
-    }
 
 .checkout-page .checkout-data .order-summary-content .table-wrapper {
   display: none;
@@ -227,6 +232,7 @@ form#ErpShiptoAddressForm {
 
 .checkout-page .checkout-data .section.payment-info .info {
   margin: 0 0 30px;
+  padding: 10px;
 }
 
 .order-completed-page .page-title {
@@ -305,6 +311,10 @@ form#ErpShiptoAddressForm {
   gap: 6px;
 }
 
+button#shippingaddress-next-button, button.button-1.payment-method-next-step-button, button.button-1.payment-info-next-step-button {
+  margin-left: 40px;
+}
+
 @media(min-width: 1025px) {
   .checkout-page .cart-footer, .shopping-cart-page .cart-footer {
     width: 360px;
@@ -381,6 +391,17 @@ form#ErpShiptoAddressForm {
       justify-content: space-between;
       width: 100%;
     }
+
+  form#ErpShiptoAddressForm, .payment-method form, .payment-info form {
+    flex: 1;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+  }
+
+  button#shippingaddress-next-button, button.button-1.payment-method-next-step-button, button.button-1.payment-info-next-step-button {
+    margin-left: 10px;
+  }
 }
 
 @media(max-width: 500px) {
