@@ -348,6 +348,39 @@ form#ErpShiptoAddressForm {
     max-width: 70%;
     border-radius: 10px;
   }
+
+  .order-completed-page .order-details-area {
+    flex-direction: column;
+  }
+
+  .order-completed-page .order-details-products {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .order-completed .title {
+    border: none;
+  }
+
+  .order-completed-page .section {
+    margin-bottom: 0;
+  }
+
+  .order-completed-page .data-table td {
+    padding-inline: 2px;
+  }
+
+  .order-progress {
+    margin-left: unset !important;
+  }
+
+    .order-progress ul {
+      font-size: 0;
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+    }
 }
 
 @media(max-width: 500px) {
