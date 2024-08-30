@@ -17,9 +17,7 @@
   margin-bottom: 20px;
 }
 
-.checkout-page .order-summary-content {
-  margin: 10px 0;
-}
+
 
 .checkout-page .checkout-data:after {
   display: none;
@@ -47,7 +45,7 @@
   text-transform: capitalize;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-weight: normal;
+  font-weight: bold;
   font-size: 17px;
   color: #000;
   background: none;
@@ -85,7 +83,7 @@
   text-transform: capitalize;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-weight: normal;
+  font-weight: bold;
   font-size: 17px;
   color: #000;
   background: none;
@@ -105,12 +103,18 @@
     background: none;
     color: #000;
     padding-left: 0;
+    font-weight: bold;
   }
 
 form#ErpShiptoAddressForm {
   flex: 1;
   text-align: left;
 }
+
+  form#ErpShiptoAddressForm .section {
+    position: relative;
+    margin: 0 0 18px;
+  }
 
   form#ErpShiptoAddressForm .tab-links {
     padding: 10px;
@@ -202,6 +206,10 @@ form#ErpShiptoAddressForm {
 }
 
 .checkout-page .order-summary {
+  margin-top: 0;
+}
+
+.checkout-page .order-summary-content {
   margin-top: 0;
 }
 
@@ -326,5 +334,31 @@ form#ErpShiptoAddressForm {
   .shopping-cart-page .common-buttons button,
   .shopping-cart-page .common-buttons a {
     margin: 0 15px 0 0;
+  }
+}
+
+@media(max-width: 767px) {
+  .checkout-page .checkout-data {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+  }
+
+  form#ErpShiptoAddressForm .modal-content {
+    max-width: 70%;
+    border-radius: 10px;
+  }
+}
+
+@media(max-width: 500px) {
+  .checkout-page .checkout-data {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+  }
+
+  form#ErpShiptoAddressForm .modal-content {
+    max-width: 90%;
+    border-radius: 10px;
   }
 }

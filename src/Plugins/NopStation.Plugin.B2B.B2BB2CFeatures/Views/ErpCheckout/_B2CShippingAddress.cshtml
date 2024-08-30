@@ -188,8 +188,11 @@
                         </div>
                     }
                 </div>
-                <div id="shippingTabCollect" class="tab-content collect">
-                    <h1 id="collect-header-text"></h1>
+                <div id="shippingTabCollect" class="tab-content collect" style="display: none;">
+                    <div class="checkout-title">
+                        <h1 id="collect-header-text"></h1>
+
+                    </div>
 
                     @if (Model.DisplayPickupInStore && Model.PickupPointsModel.AllowPickupInStore)
                     {
