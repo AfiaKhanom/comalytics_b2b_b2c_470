@@ -207,3 +207,5 @@ src/packages/*
 src/Tests/Nop.Tests/Connections.resx
 /src/Plugins/NopStation.Plugin.Misc.Core/NopStation.Plugin.Misc.Actions.dll
 /src/Presentation/Nop.Web/wwwroot/SyncLogs
+/NopSmartTheme
+/src/Presentation/Nop.Web/App_Data/plugin.json
