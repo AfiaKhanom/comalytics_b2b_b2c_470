@@ -59,6 +59,7 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure
             services.AddScoped<IErpPriceSyncFunctionalityService, ErpPriceSyncFunctionalityService>();
             services.AddScoped<IPriceCalculationService, OverridenPriceCalculationService>();
             services.AddScoped<IProductService, OverridenProductService>();
+            services.AddScoped<ICustomerService, OverridenCustomerService>();
             services.AddScoped<IErpSpecificationAttributeService, ErpSpecificationAttributeService>();
 
 

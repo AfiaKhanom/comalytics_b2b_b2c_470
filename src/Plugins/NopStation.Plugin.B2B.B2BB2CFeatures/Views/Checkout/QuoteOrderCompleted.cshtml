@@ -61,6 +61,7 @@
     NopHtml.AddTitleParts(T("PageTitle.QuoteOrderDetails").Text);
     //page class
     NopHtml.AppendPageCssClassParts("html-order-details-page");
+    NopHtml.AppendScriptParts(ResourceLocation.Footer, "~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Content/scripts/b2bajaxcart.js");
 }
 <div class="page order-details-page">
 
@@ -352,17 +353,15 @@
                                         </li>
                                     }
                                     @if (AddressSettings.CityEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.City) ||
-                                   AddressSettings.CountyEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.County) ||
-
-                                   AddressSettings.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.ZipPostalCode))
+                                    AddressSettings.CountyEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.County) ||
+                                    AddressSettings.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.ZipPostalCode))
                                     {
                                         <li class="city-state-zip">
                                             @if (AddressSettings.CityEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.City))
                                             {
                                                 @Model.ErpShippingAddressModel.City
                                                 @if (AddressSettings.CountyEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.County) ||
-
-                                               AddressSettings.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.ZipPostalCode))
+                                                AddressSettings.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.ZipPostalCode))
                                                 {
                                                     <text>,</text>
                                                 }
@@ -370,13 +369,11 @@
                                             @if (AddressSettings.CountyEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.County))
                                             {
                                                 @Model.ErpShippingAddressModel.County
-                                                @if (
-                                               AddressSettings.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.ZipPostalCode))
+                                                @if (AddressSettings.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.ZipPostalCode))
                                                 {
                                                     <text>,</text>
                                                 }
                                             }
-
                                             @if (AddressSettings.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.ZipPostalCode))
                                             {
                                                 @Model.ErpShippingAddressModel.ZipPostalCode
@@ -402,8 +399,8 @@
                                             {
                                                 @Model.ErpPickUpAddressModel.City
                                                 @if (!string.IsNullOrEmpty(Model.ErpPickUpAddressModel.County) ||
-                                               !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.StateProvinceName) ||
-                                               !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.ZipPostalCode))
+                                                !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.StateProvinceName) ||
+                                                !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.ZipPostalCode))
                                                 {
                                                     <text>,</text>
                                                 }
@@ -412,7 +409,7 @@
                                             {
                                                 @Model.ErpPickUpAddressModel.County
                                                 @if (!string.IsNullOrEmpty(Model.ErpPickUpAddressModel.StateProvinceName) ||
-                                               !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.ZipPostalCode))
+                                                !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.ZipPostalCode))
                                                 {
                                                     <text>,</text>
                                                 }
@@ -904,24 +901,19 @@
                                         }
                                     }
 
-                                    @*     @if (orderSettings.IsReturnRequestAllowed && !isQuoteOrder)
-                                {
-                                <input type="button" value="@T("Order.ReturnItems")" class="button-2 return-items-button" onclick="setLocation('@Url.RouteUrl("ReturnRequest", new { orderId=Model.Id }) ')" />
-                                }*@
+                                    @*@if (orderSettings.IsReturnRequestAllowed && !isQuoteOrder)
+                                    {
+                                        <input type="button" value="@T("Order.ReturnItems")" class="button-2 return-items-button" onclick="setLocation('@Url.RouteUrl("ReturnRequest", new { orderId=Model.Id }) ')" />
+                                    }*@
 
-                                    @*  <button type="button" class="button-1 re-order-button" onclick="setLocation('@Url.RouteUrl("ReOrder", new { orderId = Model.Id })')">@T("Order.Reorder")</button>
-
-                                <button type="button" class="button-2 return-items-button" onclick="setLocation('@Url.RouteUrl("ReturnRequest", new { orderId = Model.Id })')">@T("Order.ReturnItems")</button>
-                                *@
+                                    @*<button type="button" class="button-1 re-order-button" onclick="setLocation('@Url.RouteUrl("ReOrder", new { orderId = Model.Id })')">@T("Order.Reorder")</button>
+                                    <button type="button" class="button-2 return-items-button" onclick="setLocation('@Url.RouteUrl("ReturnRequest", new { orderId = Model.Id })')">@T("Order.ReturnItems")</button>*@
                                 </div>
-
                             </div>
-
                         </div>
                     </div>
                 </div>
             }
-
         </div>
     </div>
 
@@ -954,7 +946,6 @@
                     $("#orderId").val("")
                 }
 
-
                 function clearCartAndReoder() {
                     var orderId = $("#orderId").val();
                     B2BAjaxCart.disableAddToCartButton(orderId);
@@ -981,7 +972,6 @@
             </script>
         </form>
     </div>
-
 </div>
 
 
@@ -995,7 +985,6 @@
             dataType: "json",
             url: "/IsItemsInCart/",
             success: function (response) {
-
                 if (!response.success) {
                     B2BAjaxCart.disableReorderButton(orderId);
                     var reorderActionUrl = "/ReOrder/" + orderId + "";

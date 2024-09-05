@@ -148,6 +148,10 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models
         [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.ShipToAddressCount")]
         public int ShipToAddressCount { get; set; }
 
+        [UIHint("Picture")]
+        [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.Picture")]
+        public int PictureId { get; set; }
+
         public ErpSalesOrgModel ErpSalesOrgModel { get; set; }
 
 

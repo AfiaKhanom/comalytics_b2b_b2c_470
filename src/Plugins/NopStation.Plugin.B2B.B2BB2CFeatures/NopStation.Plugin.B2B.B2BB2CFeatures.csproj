@@ -36,6 +36,8 @@
     <None Remove="Areas\Admin\Views\ErpActivityLog\View.cshtml" />
     <None Remove="Areas\Admin\Views\ErpInvoice\_Details.cshtml" />
     <None Remove="Areas\Admin\Views\ErpInvoice\_Details.Info.cshtml" />
+    <None Remove="Areas\Admin\Views\ErpProductPricing\_CreateOrUpdateGroupPrice.cshtml" />
+    <None Remove="Areas\Admin\Views\ErpProductPricing\_GroupPriceEditPopUp.cshtml" />
     <None Remove="Areas\Admin\Views\ErpRegistrationApplication\ApplicationEdit.cshtml" />
     <None Remove="Areas\Admin\Views\ErpRegistrationApplication\Create.cshtml" />
     <None Remove="Areas\Admin\Views\ErpRegistrationApplication\List.cshtml" />
@@ -238,6 +240,7 @@
     <None Remove="Views\ErpCheckout\_CreateOrUpdateErpBillingAddresses.cshtml" />
     <None Remove="Views\ErpCheckout\_CreateOrUpdateErpShiptoAddresses.cshtml" />
     <None Remove="Views\ErpCheckout\_OpcCreateOrUpdateErpShiptoAddresses.cshtml" />
+    <None Remove="Views\Home\Index.cshtml" />
     <None Remove="Views\Order\Details.cshtml" />
     <None Remove="Views\Order\ErpB2bOrderDetails.cshtml" />
     <None Remove="Views\QuickOrder\CreateQuickOrder.cshtml" />
@@ -273,12 +276,12 @@
     <Content Include="Areas\Admin\Views\B2BB2CFeatures\_Configure.GoogleMaps.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Areas\Admin\Views\ErpActivityLogs\ERPActivityLogs.cshtml">
+    <Content Include="Areas\Admin\Views\ErpActivityLogs\ErpActivityLogs.cshtml">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Areas\Admin\Views\ErpActivityLogs\ERPActivityTypes.cshtml">
+    <Content Include="Areas\Admin\Views\ErpActivityLogs\ErpActivityTypes.cshtml">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -322,6 +325,12 @@
     <Content Include="Areas\Admin\Views\ErpActivityLog\View.cshtml">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\ErpProductPricing\_CreateOrUpdateGroupPrice.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\ErpProductPricing\_GroupPriceEditPopUp.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\ErpRegistrationApplication\ApplicationEdit.cshtml">
@@ -990,6 +999,9 @@
     </Content>
     <Content Include="Views\ErpCheckout\_OpcCreateOrUpdateErpShiptoAddresses.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Views\Home\Index.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\Order\Details.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

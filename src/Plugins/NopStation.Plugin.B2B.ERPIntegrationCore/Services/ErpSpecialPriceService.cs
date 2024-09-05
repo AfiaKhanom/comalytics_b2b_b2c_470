@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Identity.Client;
 using Nop.Core;
+using Nop.Core.Caching;
 using Nop.Data;
+using Nop.Services.Catalog;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
 namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
@@ -12,14 +15,18 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
         #region Fields
 
         private readonly IRepository<ErpSpecialPrice> _erpSpecialPriceRepository;
+        protected readonly IStaticCacheManager _staticCacheManager;
+
+
 
         #endregion
 
         #region ctor
 
-        public ErpSpecialPriceService(IRepository<ErpSpecialPrice> erpSpecialPriceRepository)
+        public ErpSpecialPriceService(IRepository<ErpSpecialPrice> erpSpecialPriceRepository, IStaticCacheManager staticCacheManager)
         {
             _erpSpecialPriceRepository = erpSpecialPriceRepository;
+            _staticCacheManager = staticCacheManager;
         }
 
         #endregion
@@ -72,10 +79,10 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
         {
             var erpSpecialPrice = await _erpSpecialPriceRepository.GetAllPagedAsync(query =>
             {
-                if(productId > 0)
+                if (productId > 0)
                     query = query.Where(ei => ei.NopProductId == productId);
 
-                if(accountId > 0)
+                if (accountId > 0)
                     query = query.Where(ei => ei.ErpAccountId == accountId);
 
                 query = query.OrderBy(ei => ei.Id);
@@ -106,15 +113,20 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
         {
             if (nopProductId == 0)
                 return null;
+            var cache = _staticCacheManager.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpProductPricingByProductIdbyAccountIdCacheKey, nopProductId);
 
-            var erpSpecialPrices = await _erpSpecialPriceRepository.GetAllAsync(query =>
+            var erpSpecialPrices = await _staticCacheManager.GetAsync(cache, async () =>
             {
-                query = query.Where(ei => ei.NopProductId == nopProductId);
-                query = query.OrderBy(ei => ei.Id);
-                return query;
+                var erpSpecialPrices = await _erpSpecialPriceRepository.GetAllAsync(query =>
+                {
+                    query = query.Where(ei => ei.NopProductId == nopProductId);
+                    query = query.OrderBy(ei => ei.Id);
+                    return query;
 
+                });
+
+                return erpSpecialPrices;
             });
-
             return erpSpecialPrices;
         }
 

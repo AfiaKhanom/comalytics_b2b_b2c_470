@@ -17,6 +17,7 @@ using Nop.Core.Domain.Gdpr;
 using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Media;
 using Nop.Core.Domain.Messages;
+using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Tax;
 using Nop.Core.Events;
@@ -63,6 +64,7 @@ public class B2BB2CCustomerController : CustomerController
     #region Fields
 
     private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
+    private readonly IShoppingCartService _shoppingCartService;
     private readonly IB2BRegisterModelFactory _b2BRegisterModelFactory;
     private readonly IErpAccountService _erpAccountService;
     private readonly IErpNopUserService _erpNopUserService;
@@ -147,7 +149,8 @@ public class B2BB2CCustomerController : CustomerController
         IErpAccountCustomerRegistrationPremisesService erpAccountCustomerRegistrationPremisesService,
         IErpAccountCustomerRegistrationPhysicalTradingAddressService erpAccountCustomerRegistrationPhysicalTradingAddressService,
         IErpAccountCustomerRegistrationTradeReferencesService erpAccountCustomerRegistrationTradeReferencesService,
-        IErpWorkflowMessageService erpWorkflowMessageService) :  base(addressSettings,
+        IErpWorkflowMessageService erpWorkflowMessageService,
+        IShoppingCartService shoppingCartService) :  base(addressSettings,
              captchaSettings,
              customerSettings,
              dateTimeSettings,
@@ -196,6 +199,7 @@ public class B2BB2CCustomerController : CustomerController
     {
         
         _b2BB2CWorkContext = b2BB2CWorkContext;
+        _shoppingCartService = shoppingCartService;
         _b2BRegisterModelFactory = b2BRegisterModelFactory;
         _erpAccountService = erpAccountService;
         _erpNopUserService = erpNopUserService;
@@ -1316,6 +1320,30 @@ public class B2BB2CCustomerController : CustomerController
                 await _b2BB2CWorkContext.SetCurrentERPCustomerAsync(erpAccountId: model.ErpAccountId);
 
                 await _erpLogsService.InformationAsync($"Erp Account (Id: {erpUser.ErpAccountId}) set to Erp User Id: {erpUser.Id}", ErpSyncLevel.Account, customer: currentCustomer);
+
+                var productsHomepageCacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopCatalogDefaults.ProductsHomepageCacheKey);
+                await _staticCacheManager.RemoveAsync(productsHomepageCacheKey);
+
+                // Clear product price cache
+                await _staticCacheManager.RemoveByPrefixAsync(NopCatalogDefaults.ProductPricePrefix);
+
+                // Clear product category IDs cache
+                await _staticCacheManager.RemoveByPrefixAsync(NopCatalogDefaults.ProductCategoriesByProductPrefix);
+
+                // Clear product manufacturer IDs cache
+                await _staticCacheManager.RemoveByPrefixAsync(NopCatalogDefaults.ProductManufacturersPrefix);
+
+                var store = await _storeContext.GetCurrentStoreAsync();
+                var cart = await _shoppingCartService.GetShoppingCartAsync(await _workContext.GetCurrentCustomerAsync(), ShoppingCartType.ShoppingCart, store.Id);
+                foreach (var sci in cart)
+                {
+                    var product = await _productService.GetProductByIdAsync(sci.ProductId);
+
+                    if (product == null)
+                    {
+                        await _shoppingCartService.DeleteShoppingCartItemAsync(sci);
+                    }
+                }
 
                 //erp activity log
                 await _erpActivityLogsService.InsertErpActivityAsync("Erp_ErpNopUserAccountSwitch",

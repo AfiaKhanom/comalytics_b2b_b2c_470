@@ -35,6 +35,7 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Data
             { typeof(ErpAccountCustomerRegistrationPhysicalTradingAddress), "Erp_Account_CustomerRegistration_PhysicalTradingAddress" },
             { typeof(ErpAccountCustomerRegistrationPremises), "Erp_Account_CustomerRegistration_Premises" },
             { typeof(ErpAccountCustomerRegistrationTradeReferences), "Erp_Account_CustomerRegistration_TradeReferences" },
+            { typeof(ErpAccountPictureMapping), "Erp_Account_Picture_Mapping"},
         };
 
         public Dictionary<(Type, string), string> ColumnName => new()
@@ -63,7 +64,7 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Data
             { (typeof(ErpSalesRepSalesOrgMap),"ErpSalesRepId"), "ErpSalesRep_Id" },
             { (typeof(ErpSalesRepSalesOrgMap),"ErpSalesOrgId"), "ErpSalesOrg_Id" },
             { (typeof(ErpSalesRepErpAccountMap),"ErpSalesRepId"), "ErpSalesRep_Id" },
-            { (typeof(ErpSalesRepErpAccountMap),"ErpAccountId"), "ErpAccount_Id" }, 
+            { (typeof(ErpSalesRepErpAccountMap),"ErpAccountId"), "ErpAccount_Id" },
             { (typeof(ErpShipToAddress),"AddressId"), "Address_Id" },
             { (typeof(ErpSpecialPrice),"ErpAccountId"), "ErpAccount_Id" },
             { (typeof(ErpWarehouseAdditionalData),"NopProductId"), "NopProduct_Id" },

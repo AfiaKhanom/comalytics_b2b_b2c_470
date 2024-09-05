@@ -441,12 +441,11 @@ public class ErpOrderDetailsModelFactory : IErpOrderDetailsModelFactory
             if (product == null)
                 continue;
             var vendor = await _vendorService.GetVendorByProductIdAsync(product.Id);
-            var pictures = await _pictureService.GetPicturesByProductIdAsync(product.Id);
             var picture = await _pictureService.GetProductPictureAsync(product, nopOrderItem.AttributesXml);
 
             var pictureModel = new PictureModel
             {
-                ImageUrl = await _pictureService.GetPictureUrlAsync(product.Id),
+                ImageUrl = await _pictureService.GetPictureUrlAsync(picture.Id),
                 ThumbImageUrl = await _pictureService.GetThumbLocalPathAsync(picture),
                 FullSizeImageUrl = string.Empty,
                 Title = string.Format(await _localizationService.GetResourceAsync("Media.Product.ImageLinkTitleFormat.Details"), product.Name),

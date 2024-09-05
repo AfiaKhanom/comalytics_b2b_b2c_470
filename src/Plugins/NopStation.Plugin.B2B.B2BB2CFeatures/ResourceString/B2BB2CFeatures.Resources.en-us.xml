@@ -5928,6 +5928,16 @@
     <LocaleResource Name="B2B.BackOrderProducts.ProductHasBeenAddedToTheCart.Link">
         <Value><![CDATA[The product has been added to your <a href="{0}">shopping cart</a>]]></Value>
     </LocaleResource>
+
+
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.Picture">
+        <Value>Picture</Value>
+    </LocaleResource>
+
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.Picture.Hint">
+        <Value>Erp Account Picture</Value>
+    </LocaleResource>
+
     
     <!-- Card:2804-Fix-checkout-steps-structure-on-top-of-standard-b2b-4.70  -  29-Aug-2024 -->
     
@@ -5957,6 +5967,14 @@
     
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.DeliveryDatesErpFailedDialog.Close">
         <Value>Close</Value>
+    </LocaleResource>
+
+    <LocaleResource Name="NopStation.Plugin.B2B.ERPIntegrationCore.ErpGroupPrice.PageTitle.Edit">
+        <Value>Edit Group Price</Value>
+    </LocaleResource>
+    
+    <LocaleResource Name="NopStation.Plugin.B2B.ERPIntegrationCore.ErpGroupPrice.EditGroupPrice">
+        <Value>Edit Group Price</Value>
     </LocaleResource>
     
 </Language>

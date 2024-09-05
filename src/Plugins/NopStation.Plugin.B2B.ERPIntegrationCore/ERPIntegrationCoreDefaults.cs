@@ -12,8 +12,7 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore
         public static string B2BQuoteAssistantRoleSystemName => "B2BQuoteAssistant";
         public static string B2BCustomerAccountingPersonnelRoleSystemName => "B2BCustomerAccountingPersonnel";
         public static string B2BSalesRepRoleSystemName => "ERPSalesRep";
-
-        public static string QuickOrderUserRoleSystemName = "QuickOrderUser";
+        public static string QuickOrderUserRoleSystemName => "QuickOrderUser";
         public static string ErpGroupPriceCodeInsert => "GroupPriceCodeInserted";
         public static string ErpGroupPriceCodeUpdate => "GroupPriceCodeUpdated";
         public static string ErpGroupPriceCodeDelete => "GroupPriceCodeDeleted";
@@ -30,8 +29,10 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore
 
         public static CacheKey SalesRepOrgCacheKey => new("Nop.salesrep.salesreporgs.{0}-{1}", SalesRepOrgBySalesRepPrefix, SalesRepOrgPrefix);
         public static CacheKey ShipToAddressCacheKey => new("Nop.Account.ShiptoAddress.{0}-{1}", ErpAccountPrefix, ShiptoAddressesByAccountrPrefix);
-        public static string ErpAccountPrefix => "B2B.ErpAccount."; 
+        public static string ErpAccountPrefix => "B2B.ErpAccount.";
         public static string ShiptoAddressesByAccountrPrefix => "Nop.account.shiptoaddresses.{0}";
+
+        public static CacheKey ErpProductPricingByProductIdbyAccountIdCacheKey => new("ErpProductPricingCommonCacheKey.{0}", ErpProductPricingCommonPrefix);
 
         /// <summary>
         /// Gets a key pattern to clear cache

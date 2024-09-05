@@ -10,7 +10,6 @@
         {
             Name = "price-group-product-pricing-grid",
             UrlRead = new DataUrl("PriceGroupProductPricingList", "ErpProductPricing", new RouteValueDictionary { [nameof(ErpPriceGroupProductPricingSearchModel.ProductId)] = Model.ProductId }),
-            UrlUpdate = new DataUrl("EditPriceGroupProductPricing", "ErpProductPricing", null),
             UrlDelete = new DataUrl("DeletePriceGroupProductPricing", "ErpProductPricing", null),
             Length = Model.PageSize,
             LengthMenu = Model.AvailablePageSizes,
@@ -41,7 +40,7 @@
                     Title = T("Admin.Common.Edit").Text,
                     Width = "100",
                     ClassName = NopColumnClassDefaults.Button,
-                    Render = new RenderButtonsInlineEdit()
+                    Render = new RenderCustom("renderColumnGroupPriceEdit")
                 },
                 new ColumnProperty(nameof(ErpPriceGroupProductPricingModel.Id))
                 {
@@ -127,5 +126,21 @@
                 </script>            
             </div>
         </div>
+        <button type="submit" id="btnRefreshGroupPrices" style="display: none"></button>
+        <script>
+            $(document).ready(function () {
+                $('#btnRefreshGroupPrices').click(function () {
+                    updateTable('#price-group-product-pricing-grid');
+                    //return false to don't reload a page
+                    return false;
+                });
+            });
+        </script>
     </div>
 </div>
+
+<script>
+    function renderColumnGroupPriceEdit(data, type, row, meta) {
+        return '<button onclick=\"javascript:OpenWindow(\'@Url.Content("~/Admin/ErpProductPricing/GroupPriceEditPopUp/")' + data + '?btnId=btnRefreshGroupPrices&formId=product-form\', 800, 400, true); return false;\" class="btn btn-default"><i class="fas fa-pencil-alt"></i>@T("Admin.Common.Edit")</button>';
+    }
+</script>

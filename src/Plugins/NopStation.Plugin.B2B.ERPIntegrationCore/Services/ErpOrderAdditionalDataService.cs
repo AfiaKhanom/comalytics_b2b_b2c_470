@@ -207,7 +207,9 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
         if (erpOrderAdditionalData.QuoteSalesOrderId.HasValue && erpOrderAdditionalData.QuoteSalesOrderId.Value > 0)
             return false;
 
-        return (erpOrderAdditionalData.ERPOrderStatus == ERPIntegrationCoreDefaults.ERPOrderStatusApproved || erpOrderAdditionalData.ERPOrderStatus == ERPIntegrationCoreDefaults.ERPOrderStatusPendingApproval) ? true : false;
+        return (erpOrderAdditionalData.ERPOrderStatus == ERPIntegrationCoreDefaults.ERPOrderStatusApproved 
+            || erpOrderAdditionalData.ERPOrderStatus == ERPIntegrationCoreDefaults.ERPOrderStatusPendingApproval 
+            || erpOrderAdditionalData.ERPOrderStatus == nameof(OrderStatus.Complete));
     }
     public async Task<IDictionary<string, string>> GetAllCustomerReferencesByERPOrderNumbersAsync(IList<string> erpOrderNumbers)
     {

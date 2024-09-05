@@ -113,13 +113,13 @@
                                         @foreach (var item in Model.ExistingErpShipToAddresses)
                                         {
                                             var addressLine = string.Join(", ", new string[] {
-                                item.ShipToName,
-                                item.Address1,
-                                item.Address2,
-                                item.Suburb,
-                                item.City,
-                                item.StateProvinceName,
-                                item.ZipPostalCode
+                                                        item.ShipToName,
+                                                        item.Address1,
+                                                        item.Address2,
+                                                        item.Suburb,
+                                                        item.City,
+                                                        item.StateProvinceName,
+                                                        item.ZipPostalCode
                                                     }.Where(s => !string.IsNullOrEmpty(s)));
 
                                             <label id="shipping-address-select" class="address-select-radio">
@@ -134,9 +134,9 @@
                                                 <span class="checkmark"></span>
                                                 @(addressLine)
                                                 @* @if (Model.AllowAddressEdit)
-                                    {
-                                    <button class="edit-ship-to" onclick="loadB2BShipToAddress(@item.Id);return false;">Edit Address</button>
-                                    } *@
+                                                {
+                                                    <button class="edit-ship-to" onclick="loadB2BShipToAddress(@item.Id);return false;">Edit Address</button>
+                                                } *@
                                             </label>
                                             <br />
                                         }

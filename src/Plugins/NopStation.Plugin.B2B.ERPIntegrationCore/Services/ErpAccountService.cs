@@ -20,6 +20,7 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
         private readonly IRepository<ErpOrderAdditionalData> _erpOrderAdditionalRepository;
         private readonly IRepository<Address> _addressRepository;
         private readonly IErpNopUserService _erpNopUserService;
+        private readonly IRepository<ErpAccountPictureMapping> _erpAccountPictureRepository;
 
         #endregion
 
@@ -30,7 +31,8 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
             IRepository<Address> addressRepository,
             IErpNopUserService erpNopUserService,
             IRepository<ErpSalesRepErpAccountMap> erpSalesRepErpAccountMapRepository,
-            IRepository<ErpShiptoAddressErpAccountMap> erpShiptoAddressErpAccountMapRepository)
+            IRepository<ErpShiptoAddressErpAccountMap> erpShiptoAddressErpAccountMapRepository,
+            IRepository<ErpAccountPictureMapping> erpAccountPictureRepository)
         {
             _erpAccountRepository = erpAccountRepository;
             _erpOrderAdditionalRepository = erpOrderAdditionalRepository;
@@ -38,6 +40,7 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
             _erpNopUserService = erpNopUserService;
             _erpSalesRepErpAccountMapRepository = erpSalesRepErpAccountMapRepository;
             _erpShiptoAddressErpAccountMapRepository = erpShiptoAddressErpAccountMapRepository;
+            _erpAccountPictureRepository = erpAccountPictureRepository;
         }
 
         #endregion
@@ -60,6 +63,16 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
         public async Task UpdateErpAccountAsync(ErpAccount erpAccount)
         {
             await _erpAccountRepository.UpdateAsync(erpAccount);
+        }
+
+        public async Task InsertErpAccountPictureAsync(ErpAccountPictureMapping erpAccountPicture)
+        {
+            await _erpAccountPictureRepository.InsertAsync(erpAccountPicture);
+        }
+
+        public async Task UpdateErpAccountPictureAsync(ErpAccountPictureMapping pictureMapping)
+        {
+            await _erpAccountPictureRepository.UpdateAsync(pictureMapping);
         }
 
         #endregion
@@ -87,6 +100,19 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
             await _erpSalesRepErpAccountMapRepository.DeleteAsync(salesRepErpAccountMap);
         }
 
+        private async Task DeleteErpAccountPictureAsync(ErpAccountPictureMapping erpAccountPicture)
+        {
+            await _erpAccountPictureRepository.DeleteAsync(erpAccountPicture);
+        }
+        public async Task DeleteErpAccountPictureByIdAsync(int id)
+        {
+            var erpAccountPicture = await GetErpAccountPictureByIdAsync(id);
+            if (erpAccountPicture != null)
+            {
+                await DeleteErpAccountPictureAsync(erpAccountPicture);
+            }
+        }
+
         #endregion
 
         #region Read
@@ -112,9 +138,9 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
             if (erpShipToAddress == null)
                 return null;
             var query = from erpAccount in _erpAccountRepository.Table
-                    join cam in _erpShiptoAddressErpAccountMapRepository.Table on erpAccount.Id equals cam.ErpAccountId
-                    where cam.ErpShiptoAddressId == erpShipToAddress.Id
-                    select erpAccount;
+                        join cam in _erpShiptoAddressErpAccountMapRepository.Table on erpAccount.Id equals cam.ErpAccountId
+                        where cam.ErpShiptoAddressId == erpShipToAddress.Id
+                        select erpAccount;
 
             return query.FirstOrDefault();
         }
@@ -338,16 +364,34 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
                 return;
             var erpAccounts = await _erpAccountRepository.GetAllAsync(query =>
             {
-                query = query.Where(a => a.UpdatedOnUtc < syncStartTime); 
+                query = query.Where(a => a.UpdatedOnUtc < syncStartTime);
                 return query;
             });
-            foreach ( var erpAccount in erpAccounts)
+            foreach (var erpAccount in erpAccounts)
             {
                 erpAccount.IsActive = false;
             }
             await _erpAccountRepository.UpdateAsync(erpAccounts);
         }
 
+        public async Task<ErpAccountPictureMapping> GetErpAccountPictureByAccountIdAsync(int erpAccountId)
+        {
+            if (erpAccountId <= 0)
+                return null;
+            var query = from erpAccountPicture in _erpAccountPictureRepository.Table
+                        where erpAccountPicture.ErpAccountId == erpAccountId
+                        select erpAccountPicture;
+
+            return query.FirstOrDefault();
+        }
+
+        public async Task<ErpAccountPictureMapping> GetErpAccountPictureByIdAsync(int id)
+        {
+            if (id == 0)
+                return null;
+
+            return await _erpAccountPictureRepository.GetByIdAsync(id, cache => default);
+        }
 
         #endregion
 

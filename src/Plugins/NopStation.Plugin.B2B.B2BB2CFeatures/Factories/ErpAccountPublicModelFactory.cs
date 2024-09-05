@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.EMMA;
 using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Services.Catalog;
@@ -10,11 +11,13 @@ using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
+using Nop.Services.Media;
 using Nop.Services.Orders;
 using Nop.Services.Shipping;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Web.Framework.Models.Extensions;
+using Nop.Web.Models.Media;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.ErpAccountPublic;
@@ -50,6 +53,7 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Factories
         private readonly IErpCustomerFunctionalityService _erpCustomerFunctionalityService;
         private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
         private readonly IErpNopUserService _erpNopUserService;
+        private readonly IPictureService _pictureService;
 
         #endregion
 
@@ -75,7 +79,8 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Factories
             IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMapService,
             IErpCustomerFunctionalityService erpCustomerFunctionalityService,
             IB2BB2CWorkContext b2BB2CWorkContext,
-            IErpNopUserService erpNopUserService
+            IErpNopUserService erpNopUserService,
+            IPictureService pictureService
             )
         {
             _workContext = workContext;
@@ -99,6 +104,7 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Factories
             _erpCustomerFunctionalityService = erpCustomerFunctionalityService;
             _b2BB2CWorkContext = b2BB2CWorkContext;
             _erpNopUserService = erpNopUserService;
+            _pictureService = pictureService;
         }
 
         #endregion
@@ -424,12 +430,12 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Factories
 
             if (searchModel.SearchOrderDateFrom.HasValue)
             {
-                orderPlacedOnDateFrom = searchModel.SearchOrderDateFrom.Value; 
+                orderPlacedOnDateFrom = searchModel.SearchOrderDateFrom.Value;
             }
 
             if (searchModel.SearchOrderDateTo.HasValue)
             {
-                orderPlacedOnDateTo = searchModel.SearchOrderDateTo.Value.AddHours(23).AddMinutes(59).AddSeconds(59);  
+                orderPlacedOnDateTo = searchModel.SearchOrderDateTo.Value.AddHours(23).AddMinutes(59).AddSeconds(59);
             }
 
             var erpNopUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(currCustomer.Id);
@@ -643,6 +649,45 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Factories
         //    }
         //    return model;
         //}
+
+        public async Task<PictureModel> PrepareErpAccountPictureModelAsync()
+        {
+            var currCustomer = await _workContext.GetCurrentCustomerAsync();
+            var pictureModel = new PictureModel();
+
+            if (await _customerService.IsRegisteredAsync(currCustomer))
+            {
+                var erpAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
+                if (erpAccount != null)
+                {
+                    var erpAccountPicture = await _erpAccountService.GetErpAccountPictureByAccountIdAsync(erpAccount.Id);
+
+                    if (erpAccountPicture != null)
+                    {
+                        var picture = await _pictureService.GetPictureByIdAsync(erpAccountPicture.PictureId);
+                        string fullSizeImageUrl, imageUrl;
+
+                        (fullSizeImageUrl, picture) = await _pictureService.GetPictureUrlAsync(picture);
+                        (imageUrl, _) = await _pictureService.GetPictureUrlAsync(picture);
+
+                        var picModel = new PictureModel
+                        {
+                            FullSizeImageUrl = fullSizeImageUrl,
+                            ImageUrl = imageUrl,
+                            Title = string.Format(erpAccount.AccountName),
+                            AlternateText = string.Format(erpAccount.AccountName)
+                        };
+
+                        pictureModel = picModel;
+                    }
+                }
+            }
+
+            if (pictureModel.ImageUrl != null)
+                return pictureModel;
+            else
+                return null;
+        }
 
         #endregion
 
