@@ -77,6 +77,7 @@ public partial class SysproIntegrationService : ISysproIntegrationService
         return new ExpandoObject();
     }
 
+
     public async Task<dynamic> PrepareErpPriceSpecialPricingsRequestBody(ErpGetRequestModel erpRequest)
     {
         if (erpRequest != null)
@@ -162,6 +163,28 @@ public partial class SysproIntegrationService : ISysproIntegrationService
             dynamic args = new ExpandoObject();
             args.LastChangeDate = erpRequest.DateFrom;
             args.StockCode = string.IsNullOrWhiteSpace(erpRequest.ProductSku) ? null : erpRequest.ProductSku;
+            args.PageNumber = start > 0 ? start : 1;
+            args.RowsPerPage = erpRequest.Limit > 0 ? erpRequest.Limit : 100;
+
+            sysproRequest.args = args;
+
+            return sysproRequest;
+        }
+
+        return new ExpandoObject();
+    }
+    public async Task<dynamic> PrepareErpInvoiceRequestBody(ErpGetRequestModel erpRequest)
+    {
+        if (erpRequest != null)
+        {
+            var start = int.Parse(erpRequest.Start);
+
+            dynamic sysproRequest = new ExpandoObject();
+            sysproRequest.action = "SQL";
+            sysproRequest.name = "Online_GetCustomerAddr";
+
+            dynamic args = new ExpandoObject();
+            args.Customer = string.IsNullOrWhiteSpace(erpRequest.AccountNumber) ? null : erpRequest.AccountNumber;
             args.PageNumber = start > 0 ? start : 1;
             args.RowsPerPage = erpRequest.Limit > 0 ? erpRequest.Limit : 100;
 
