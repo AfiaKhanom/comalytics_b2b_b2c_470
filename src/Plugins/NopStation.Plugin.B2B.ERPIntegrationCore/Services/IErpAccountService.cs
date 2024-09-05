@@ -49,6 +49,11 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
         Task InActiveAllOldAccount(DateTime syncStartTime);
 
         Task<ErpAccount> GetErpAccountByErpShipToAddressAsync(ErpShipToAddress erpShipToAddress);
+        Task InsertErpAccountPictureAsync(ErpAccountPictureMapping erpAccountPicture);
+        Task<ErpAccountPictureMapping> GetErpAccountPictureByAccountIdAsync(int erpAccountId);
+        Task<ErpAccountPictureMapping> GetErpAccountPictureByIdAsync(int id);
+        Task UpdateErpAccountPictureAsync(ErpAccountPictureMapping pictureMapping);
+        Task DeleteErpAccountPictureByIdAsync(int id);
     }
 }
 

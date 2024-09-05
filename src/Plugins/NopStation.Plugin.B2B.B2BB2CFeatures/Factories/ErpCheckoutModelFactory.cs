@@ -177,6 +177,10 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
         {
             var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
             var shipToAddressAccountMap = await _erpShipToAddressService.GetErpShipToAddressErpAccountMapByErpShipToAddressIdAsync(b2BShipToAddress.Id);
+
+            if (shipToAddressAccountMap == null)
+                return;
+            
             var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(shipToAddressAccountMap.ErpAccountId);
             b2BShipToAddressModel = b2BShipToAddressModel ?? new ErpShipToAddressModelForCheckout();
             b2BShipToAddressModel.Id = b2BShipToAddress.Id;

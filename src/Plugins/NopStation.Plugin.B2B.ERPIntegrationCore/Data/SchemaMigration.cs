@@ -41,6 +41,7 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Data
             Create.TableFor<ErpAccountCustomerRegistrationPhysicalTradingAddress>();
             Create.TableFor<ErpAccountCustomerRegistrationTradeReferences>();
             Create.TableFor<ErpAccountCustomerRegistrationPremises>();
+            Create.TableFor<ErpAccountPictureMapping>();
         }
 
         #endregion

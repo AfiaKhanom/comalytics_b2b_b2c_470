@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Nop.Web.Models.Media;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.ErpAccountPublic;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
@@ -21,5 +22,7 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Factories
         Task<ErpAccountQuoteOrderSearchModel> PrepareErpAccountQuoteOrderSearchModelAsync(ErpAccount erpAccount, ErpNopUser erpNopUser, ErpAccountQuoteOrderSearchModel searchModel);
 
         Task<ErpQuoteOrderListModel> PrepareErpQuoteOrderListModelAsync(ErpAccountQuoteOrderSearchModel searchModel);
+
+        Task<PictureModel> PrepareErpAccountPictureModelAsync();
     }
 }

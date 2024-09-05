@@ -2485,22 +2485,9 @@ public class ErpCheckoutController : CheckoutController
         var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currentCustomer.Id);
         if (b2BAccount == null)
         {
-            b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currentCustomer.Id);
-            var b2cShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdWithActiveAsync(shipToId);
-            if (b2BAccount == null || b2cShipToAddress == null)
-            {
-                return Json(new
-                {
-                    isSucceed = false
-                });
-            }
-
-            var b2BShipToAddressModel = new ErpShipToAddressModelForCheckout();
-            await _erpCheckoutModelFactory.PrepareB2CShipToAddressModelAsync(b2BShipToAddressModel, b2cShipToAddress, b2BAccount, loadAvailableAreas: true, loadCountriesAndStates: true);
             return Json(new
             {
-                Data = await RenderPartialViewToStringAsync("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Views/ErpCheckout/LoadErpShipToAddress", b2BShipToAddressModel),
-                isSucceed = true
+                isSucceed = false
             });
         }
         else

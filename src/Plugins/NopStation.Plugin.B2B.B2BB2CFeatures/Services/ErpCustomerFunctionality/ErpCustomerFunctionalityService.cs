@@ -251,7 +251,9 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality
             if (erpOrder.QuoteSalesOrderId.HasValue && erpOrder.QuoteSalesOrderId.Value > 0)
                 return false;
 
-            return (erpOrder.ERPOrderStatus == B2BB2CFeaturesDefaults.ErpOrderStatusApproved || erpOrder.ERPOrderStatus == B2BB2CFeaturesDefaults.ErpOrderStatusPendingApproval) ? true : false;
+            return (erpOrder.ERPOrderStatus == B2BB2CFeaturesDefaults.ErpOrderStatusApproved 
+                || erpOrder.ERPOrderStatus == B2BB2CFeaturesDefaults.ErpOrderStatusPendingApproval 
+                || erpOrder.ERPOrderStatus == nameof(OrderStatus.Complete));
         }
 
         public async Task<bool> CheckAllowAddressEdit(ErpAccount b2BAccount)

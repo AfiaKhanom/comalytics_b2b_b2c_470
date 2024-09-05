@@ -229,7 +229,7 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories
                         UpdatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(erpAccount.UpdatedOnUtc, DateTimeKind.Utc),
                         IsActive = erpAccount.IsActive
                     };
-                     
+
                     var erpAccountSalesOrgInfo = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount.ErpSalesOrgId);
                     if (erpAccountSalesOrgInfo != null)
                     {
@@ -239,7 +239,7 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories
                         erpAccountModel.ErpSalesOrgName = erpAccountSalesOrgInfo.Name;
                     }
                     erpAccountModel.ERPNopUserCount = (await _erpNopUserAccountMapService.GetAllErpNopUserAccountMapsByAccountIdAsync(erpAccount.Id)).Count;
-                    erpAccountModel.ShipToAddressCount= (await _erpShipToAddressService.GetErpShipToAddressesByErpAccountIdAsync(erpAccount.Id)).Count;
+                    erpAccountModel.ShipToAddressCount = (await _erpShipToAddressService.GetErpShipToAddressesByErpAccountIdAsync(erpAccount.Id)).Count;
                     return erpAccountModel;
                 });
             });
@@ -390,6 +390,9 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories
                 model.ErpShipToAddressSearchModel.SearchErpAccountId = model.Id;
                 model.ErpShipToAddressSearchModel = await _erpShipToAddressModelFactory.PrepareErpShipToAddressSearchModelAsync(searchModel: model.ErpShipToAddressSearchModel);
 
+                var erpAccountPicture = await _erpAccountService.GetErpAccountPictureByAccountIdAsync(model.Id);
+                model.PictureId = erpAccountPicture != null ? erpAccountPicture.PictureId : 0;
+ 
                 return model;
             }
         }

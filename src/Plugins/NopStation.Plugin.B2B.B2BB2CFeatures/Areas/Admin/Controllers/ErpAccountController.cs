@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -9,6 +10,7 @@ using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Directory;
 using Nop.Services.Localization;
+using Nop.Services.Media;
 using Nop.Services.Messages;
 using Nop.Services.Security;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
@@ -47,6 +49,7 @@ public class ErpAccountController : NopStationAdminController
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
     private readonly IErpShipToAddressModelFactory _erpShipToAddressModelFactory;
     private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
+    private readonly IPictureService _pictureService;
 
     #endregion
 
@@ -69,7 +72,8 @@ public class ErpAccountController : NopStationAdminController
         IErpActivityLogsService erpActivityLogsService,
         IErpIntegrationPluginManager erpIntegrationPluginManager,
         IErpShipToAddressModelFactory erpShipToAddressModelFactory,
-        IB2BB2CWorkContext b2BB2CWorkContext)
+        IB2BB2CWorkContext b2BB2CWorkContext,
+        IPictureService pictureService)
     {
         _storeContext = storeContext;
         _addressService = addressService;
@@ -88,6 +92,7 @@ public class ErpAccountController : NopStationAdminController
         _erpIntegrationPluginManager = erpIntegrationPluginManager;
         _erpShipToAddressModelFactory = erpShipToAddressModelFactory;
         _b2BB2CWorkContext = b2BB2CWorkContext;
+        _pictureService = pictureService;
     }
 
     #endregion
@@ -100,6 +105,12 @@ public class ErpAccountController : NopStationAdminController
             return null;
         var tmp = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(salesOrgId);
         return tmp.Name + '-' + tmp.Code;
+    }
+    protected virtual async Task UpdatePictureSeoNamesAsync(int pictureId, string accountName)
+    {
+        var picture = await _pictureService.GetPictureByIdAsync(pictureId);
+        if (picture != null)
+            await _pictureService.SetSeoFilenameAsync(picture.Id, await _pictureService.GetPictureSeNameAsync(accountName));
     }
 
     #endregion
@@ -209,6 +220,22 @@ public class ErpAccountController : NopStationAdminController
 
             await _erpAccountService.InsertErpAccountAsync(erpAccount);
 
+            //Erp Account Picture Insert
+
+            if (model.PictureId > 0)
+            {
+                var erpAccountPicture = new ErpAccountPictureMapping();
+
+                erpAccountPicture.PictureId = model.PictureId;
+                erpAccountPicture.ErpAccountId = erpAccount.Id;
+
+                await _erpAccountService.InsertErpAccountPictureAsync(erpAccountPicture);
+
+                var erpAccountName = $"{erpAccount.Id}{erpAccount.AccountName}";
+
+                await UpdatePictureSeoNamesAsync(model.PictureId, erpAccountName);
+            }
+
             //address
             var address = model.BillingAddress.ToEntity<Address>();
             address.CreatedOnUtc = DateTime.UtcNow;
@@ -306,6 +333,52 @@ public class ErpAccountController : NopStationAdminController
 
                 await _erpAccountService.UpdateErpAccountAsync(erpAccount);
 
+                // Picture Update
+
+                var erpAccountPicture = await _erpAccountService.GetErpAccountPictureByAccountIdAsync(model.Id);
+                var erpAccountName = $"{erpAccount.AccountName}-{erpAccount.Id}";
+
+                if (model.PictureId > 0)
+                {
+                    if (erpAccountPicture == null)
+                    {
+                        // uploading new picture
+
+                        var newErpAccountPicture = new ErpAccountPictureMapping();
+
+                        newErpAccountPicture.PictureId = model.PictureId;
+                        newErpAccountPicture.ErpAccountId = erpAccount.Id;
+
+                        await _erpAccountService.InsertErpAccountPictureAsync(newErpAccountPicture);
+
+                        await UpdatePictureSeoNamesAsync(model.PictureId, erpAccountName);
+                    }
+
+                    else if (erpAccountPicture.PictureId != model.PictureId)
+                    {
+                        // updating existing picture
+
+                        var prevPicture = await _pictureService.GetPictureByIdAsync(erpAccountPicture.PictureId);
+                        if (prevPicture != null)
+                            await _pictureService.DeletePictureAsync(prevPicture);
+
+                        erpAccountPicture.PictureId = model.PictureId;
+                        await _erpAccountService.UpdateErpAccountPictureAsync(erpAccountPicture);
+
+                        await UpdatePictureSeoNamesAsync(model.PictureId, erpAccountName);
+                    }
+                }
+                else
+                {
+                    if (erpAccountPicture != null)
+                    {
+                        var prevPicture = await _pictureService.GetPictureByIdAsync(erpAccountPicture.PictureId);
+                        if (prevPicture != null)
+                            await _pictureService.DeletePictureAsync(prevPicture);
+
+                        await _erpAccountService.DeleteErpAccountPictureByIdAsync(erpAccountPicture.Id);
+                    }
+                }
 
                 //address
                 var address = await _addressService.GetAddressByIdAsync(erpAccount.BillingAddressId ?? 0);

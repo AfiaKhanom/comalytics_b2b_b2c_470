@@ -9,7 +9,7 @@
          @await Html.PartialAsync("Table", new DataTablesModel
          {
              Name = "product-special-price-grid",
-             UrlRead = new DataUrl("ProductPricingList", "ErpProductPricing", new RouteValueDictionary { [nameof(ErpSpecialPriceSearchModel.ProductId)]  =Model.ProductId }),
+             UrlRead = new DataUrl("ProductPricingList", "ErpProductPricing", new RouteValueDictionary { [nameof(ErpSpecialPriceSearchModel.ProductId)] = Model.ProductId }),
              UrlDelete = new DataUrl("DeleteSpecialPrice", "ErpProductPricing", null),
              Length = Model.PageSize,
              LengthMenu = Model.AvailablePageSizes,
@@ -42,7 +42,7 @@
                      Title = T("Admin.Common.Edit").Text,
                      Width = "100",
                      ClassName = NopColumnClassDefaults.Button,
-                     Render = new RenderCustom("renderColumnEdit")
+                     Render = new RenderCustom("renderColumnSpecialPriceEdit")
                  },
                  new ColumnProperty(nameof(ErpSpecialPriceModel.Id))
                  {
@@ -78,7 +78,7 @@
 </div>
 
 <script>
-    function renderColumnEdit(data, type, row, meta) {
-        return '<button onclick=\"javascript:OpenWindow(\'@Url.Content("~/Admin/ErpProductPricing/SpecialPriceEditPopUp/")' + data + '?btnId=btnRefresh&formId=product-form\', 800, 400, true); return false;\" class="btn btn-default"><i class="fas fa-pencil"></i>@T("Admin.Common.Edit")</button>';
+    function renderColumnSpecialPriceEdit(data, type, row, meta) {
+        return '<button onclick=\"javascript:OpenWindow(\'@Url.Content("~/Admin/ErpProductPricing/SpecialPriceEditPopUp/")' + data + '?btnId=btnRefresh&formId=product-form\', 800, 400, true); return false;\" class="btn btn-default"><i class="fas fa-pencil-alt"></i>@T("Admin.Common.Edit")</button>';
     }
 </script>

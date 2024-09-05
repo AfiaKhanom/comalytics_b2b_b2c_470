@@ -91,60 +91,60 @@
         <div class="card-body">
             @{
                 var gridModel = new DataTablesModel
-                {
-                    Name = "special-price-grid",
-                    UrlRead = new DataUrl("ProductPricingList", "ErpProductPricing", new RouteValueDictionary { [nameof(ErpSpecialPriceSearchModel.ProductId)] = Model.ProductId }),
-                    UrlDelete = new DataUrl("DeleteSpecialPrice", "ErpProductPricing", null),
-                    SearchButtonId = "search-special-price",
-                    Length = Model.PageSize,
-                    LengthMenu = Model.AvailablePageSizes,
-                    Filters = new List<FilterParameter>
-                    {
-                        new FilterParameter(nameof(Model.SearchErpAccountId))
-                    }
-                };
-                    
+            {
+                Name = "special-price-grid",
+                UrlRead = new DataUrl("ProductPricingList", "ErpProductPricing", new RouteValueDictionary { [nameof(ErpSpecialPriceSearchModel.ProductId)] = Model.ProductId }),
+                UrlDelete = new DataUrl("DeleteSpecialPrice", "ErpProductPricing", null),
+                SearchButtonId = "search-special-price",
+                Length = Model.PageSize,
+                LengthMenu = Model.AvailablePageSizes,
+                Filters = new List<FilterParameter>
+            {
+            new FilterParameter(nameof(Model.SearchErpAccountId))
+            }
+            };
+
                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpSpecialPriceModel.ErpAccountNumber))
-                {
-                    Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.ErpAccount").Text,
-                    Width = "200",
-                    Render = new RenderLink(new DataUrl("~/Admin/ErpAccount/ErpAccountEdit", nameof(ErpSpecialPriceModel.ErpAccountId)))
-                });
-                    
+            {
+                Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.ErpAccount").Text,
+                Width = "200",
+                Render = new RenderLink(new DataUrl("~/Admin/ErpAccount/ErpAccountEdit", nameof(ErpSpecialPriceModel.ErpAccountId)))
+            });
+
                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpSpecialPriceModel.ErpAccountSalesOrgName))
-                {
-                    Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.ErpAccountSalesOrg").Text,
-                    Width = "200",
-                    Render = new RenderLink(new DataUrl("~/Admin/ErpSalesOrg/ErpSalesOrgEdit", nameof(ErpSpecialPriceModel.ErpAccountSalesOrgId)))
-                });
-                    
+            {
+                Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.ErpAccountSalesOrg").Text,
+                Width = "200",
+                Render = new RenderLink(new DataUrl("~/Admin/ErpSalesOrg/ErpSalesOrgEdit", nameof(ErpSpecialPriceModel.ErpAccountSalesOrgId)))
+            });
+
                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpSpecialPriceModel.Price))
-                {
-                    Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.Price").Text,
-                    Width = "200"
-                });
-                    
+            {
+                Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.Price").Text,
+                Width = "200"
+            });
+
                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpSpecialPriceModel.PricingNote))
-                {
-                    Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.PricingNote").Text,
-                    Width = "200"
-                });
-                                      
+            {
+                Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.PricingNote").Text,
+                Width = "200"
+            });
+
                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpSpecialPriceModel.Id))
-                {
-                    Title = T("Admin.Common.Edit").Text,
-                    Width = "100",
-                    ClassName = NopColumnClassDefaults.Button,
-                    Render = new RenderCustom("renderColumnEdit")
-                });
-                    
+            {
+                Title = T("Admin.Common.Edit").Text,
+                Width = "100",
+                ClassName = NopColumnClassDefaults.Button,
+                Render = new RenderCustom("renderColumnSpecialPriceEdit")
+            });
+
                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpSpecialPriceModel.Id))
-                {
-                    Title = T("Admin.Common.Delete").Text,
-                    Width = "100",
-                    Render = new RenderButtonRemove(T("Admin.Common.Delete").Text),
-                    ClassName = NopColumnClassDefaults.Button
-                });
+            {
+                Title = T("Admin.Common.Delete").Text,
+                Width = "100",
+                Render = new RenderButtonRemove(T("Admin.Common.Delete").Text),
+                ClassName = NopColumnClassDefaults.Button
+            });
             }
             @await Html.PartialAsync("Table", gridModel)
         </div>
@@ -173,8 +173,8 @@
 </div>
 
 <script>
-    function renderColumnEdit(data, type, row, meta) {
-        return '<button onclick=\"javascript:OpenWindow(\'@Url.Content("~/Admin/ErpProductPricing/SpecialPriceEditPopUp/")' + data + '?btnId=btnRefresh&formId=product-pricing-form\', 800, 400, true); return false;\" class="btn btn-default"><i class="fas fa-pencil"></i>@T("Admin.Common.Edit")</button>';
+    function renderColumnSpecialPriceEdit(data, type, row, meta) {
+        return '<button onclick=\"javascript:OpenWindow(\'@Url.Content("~/Admin/ErpProductPricing/SpecialPriceEditPopUp/")' + data + '?btnId=btnRefresh&formId=product-pricing-form\', 800, 400, true); return false;\" class="btn btn-default"><i class="fas fa-pencil-alt"></i>@T("Admin.Common.Edit")</button>';
     }
 </script>
 
