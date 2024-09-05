@@ -22,7 +22,6 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Factories
         Task<ErpAccountQuoteOrderSearchModel> PrepareErpAccountQuoteOrderSearchModelAsync(ErpAccount erpAccount, ErpNopUser erpNopUser, ErpAccountQuoteOrderSearchModel searchModel);
 
         Task<ErpQuoteOrderListModel> PrepareErpQuoteOrderListModelAsync(ErpAccountQuoteOrderSearchModel searchModel);
-
-        Task<PictureModel> PrepareErpAccountPictureModelAsync();
+         
     }
 }

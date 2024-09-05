@@ -649,46 +649,7 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Factories
         //    }
         //    return model;
         //}
-
-        public async Task<PictureModel> PrepareErpAccountPictureModelAsync()
-        {
-            var currCustomer = await _workContext.GetCurrentCustomerAsync();
-            var pictureModel = new PictureModel();
-
-            if (await _customerService.IsRegisteredAsync(currCustomer))
-            {
-                var erpAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
-                if (erpAccount != null)
-                {
-                    var erpAccountPicture = await _erpAccountService.GetErpAccountPictureByAccountIdAsync(erpAccount.Id);
-
-                    if (erpAccountPicture != null)
-                    {
-                        var picture = await _pictureService.GetPictureByIdAsync(erpAccountPicture.PictureId);
-                        string fullSizeImageUrl, imageUrl;
-
-                        (fullSizeImageUrl, picture) = await _pictureService.GetPictureUrlAsync(picture);
-                        (imageUrl, _) = await _pictureService.GetPictureUrlAsync(picture);
-
-                        var picModel = new PictureModel
-                        {
-                            FullSizeImageUrl = fullSizeImageUrl,
-                            ImageUrl = imageUrl,
-                            Title = string.Format(erpAccount.AccountName),
-                            AlternateText = string.Format(erpAccount.AccountName)
-                        };
-
-                        pictureModel = picModel;
-                    }
-                }
-            }
-
-            if (pictureModel.ImageUrl != null)
-                return pictureModel;
-            else
-                return null;
-        }
-
+ 
         #endregion
 
     }

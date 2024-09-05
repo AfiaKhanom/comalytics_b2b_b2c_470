@@ -34,8 +34,7 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Data
             { typeof(ErpAccountCustomerRegistrationBankingDetails), "Erp_Account_CustomerRegistration_BankingDetails" },
             { typeof(ErpAccountCustomerRegistrationPhysicalTradingAddress), "Erp_Account_CustomerRegistration_PhysicalTradingAddress" },
             { typeof(ErpAccountCustomerRegistrationPremises), "Erp_Account_CustomerRegistration_Premises" },
-            { typeof(ErpAccountCustomerRegistrationTradeReferences), "Erp_Account_CustomerRegistration_TradeReferences" },
-            { typeof(ErpAccountPictureMapping), "Erp_Account_Picture_Mapping"},
+            { typeof(ErpAccountCustomerRegistrationTradeReferences), "Erp_Account_CustomerRegistration_TradeReferences" }, 
         };
 
         public Dictionary<(Type, string), string> ColumnName => new()

@@ -19,8 +19,7 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
         private readonly IRepository<ErpShiptoAddressErpAccountMap> _erpShiptoAddressErpAccountMapRepository;
         private readonly IRepository<ErpOrderAdditionalData> _erpOrderAdditionalRepository;
         private readonly IRepository<Address> _addressRepository;
-        private readonly IErpNopUserService _erpNopUserService;
-        private readonly IRepository<ErpAccountPictureMapping> _erpAccountPictureRepository;
+        private readonly IErpNopUserService _erpNopUserService; 
 
         #endregion
 
@@ -31,16 +30,14 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
             IRepository<Address> addressRepository,
             IErpNopUserService erpNopUserService,
             IRepository<ErpSalesRepErpAccountMap> erpSalesRepErpAccountMapRepository,
-            IRepository<ErpShiptoAddressErpAccountMap> erpShiptoAddressErpAccountMapRepository,
-            IRepository<ErpAccountPictureMapping> erpAccountPictureRepository)
+            IRepository<ErpShiptoAddressErpAccountMap> erpShiptoAddressErpAccountMapRepository )
         {
             _erpAccountRepository = erpAccountRepository;
             _erpOrderAdditionalRepository = erpOrderAdditionalRepository;
             _addressRepository = addressRepository;
             _erpNopUserService = erpNopUserService;
             _erpSalesRepErpAccountMapRepository = erpSalesRepErpAccountMapRepository;
-            _erpShiptoAddressErpAccountMapRepository = erpShiptoAddressErpAccountMapRepository;
-            _erpAccountPictureRepository = erpAccountPictureRepository;
+            _erpShiptoAddressErpAccountMapRepository = erpShiptoAddressErpAccountMapRepository; 
         }
 
         #endregion
@@ -64,16 +61,7 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
         {
             await _erpAccountRepository.UpdateAsync(erpAccount);
         }
-
-        public async Task InsertErpAccountPictureAsync(ErpAccountPictureMapping erpAccountPicture)
-        {
-            await _erpAccountPictureRepository.InsertAsync(erpAccountPicture);
-        }
-
-        public async Task UpdateErpAccountPictureAsync(ErpAccountPictureMapping pictureMapping)
-        {
-            await _erpAccountPictureRepository.UpdateAsync(pictureMapping);
-        }
+         
 
         #endregion
 
@@ -99,19 +87,7 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
         {
             await _erpSalesRepErpAccountMapRepository.DeleteAsync(salesRepErpAccountMap);
         }
-
-        private async Task DeleteErpAccountPictureAsync(ErpAccountPictureMapping erpAccountPicture)
-        {
-            await _erpAccountPictureRepository.DeleteAsync(erpAccountPicture);
-        }
-        public async Task DeleteErpAccountPictureByIdAsync(int id)
-        {
-            var erpAccountPicture = await GetErpAccountPictureByIdAsync(id);
-            if (erpAccountPicture != null)
-            {
-                await DeleteErpAccountPictureAsync(erpAccountPicture);
-            }
-        }
+  
 
         #endregion
 
@@ -373,25 +349,7 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
             }
             await _erpAccountRepository.UpdateAsync(erpAccounts);
         }
-
-        public async Task<ErpAccountPictureMapping> GetErpAccountPictureByAccountIdAsync(int erpAccountId)
-        {
-            if (erpAccountId <= 0)
-                return null;
-            var query = from erpAccountPicture in _erpAccountPictureRepository.Table
-                        where erpAccountPicture.ErpAccountId == erpAccountId
-                        select erpAccountPicture;
-
-            return query.FirstOrDefault();
-        }
-
-        public async Task<ErpAccountPictureMapping> GetErpAccountPictureByIdAsync(int id)
-        {
-            if (id == 0)
-                return null;
-
-            return await _erpAccountPictureRepository.GetByIdAsync(id, cache => default);
-        }
+ 
 
         #endregion
 

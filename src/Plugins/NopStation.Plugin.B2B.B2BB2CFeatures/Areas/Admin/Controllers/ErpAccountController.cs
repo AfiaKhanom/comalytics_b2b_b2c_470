@@ -218,23 +218,7 @@ public class ErpAccountController : NopStationAdminController
             erpAccount.CreatedOnUtc = DateTime.UtcNow;
             erpAccount.CreatedById = currentCustomer.Id;
 
-            await _erpAccountService.InsertErpAccountAsync(erpAccount);
-
-            //Erp Account Picture Insert
-
-            if (model.PictureId > 0)
-            {
-                var erpAccountPicture = new ErpAccountPictureMapping();
-
-                erpAccountPicture.PictureId = model.PictureId;
-                erpAccountPicture.ErpAccountId = erpAccount.Id;
-
-                await _erpAccountService.InsertErpAccountPictureAsync(erpAccountPicture);
-
-                var erpAccountName = $"{erpAccount.Id}{erpAccount.AccountName}";
-
-                await UpdatePictureSeoNamesAsync(model.PictureId, erpAccountName);
-            }
+            await _erpAccountService.InsertErpAccountAsync(erpAccount); 
 
             //address
             var address = model.BillingAddress.ToEntity<Address>();
@@ -332,53 +316,7 @@ public class ErpAccountController : NopStationAdminController
                 erpAccount.UpdatedById = (await _b2BB2CWorkContext.GetCurrentCustomerAsync()).Id;
 
                 await _erpAccountService.UpdateErpAccountAsync(erpAccount);
-
-                // Picture Update
-
-                var erpAccountPicture = await _erpAccountService.GetErpAccountPictureByAccountIdAsync(model.Id);
-                var erpAccountName = $"{erpAccount.AccountName}-{erpAccount.Id}";
-
-                if (model.PictureId > 0)
-                {
-                    if (erpAccountPicture == null)
-                    {
-                        // uploading new picture
-
-                        var newErpAccountPicture = new ErpAccountPictureMapping();
-
-                        newErpAccountPicture.PictureId = model.PictureId;
-                        newErpAccountPicture.ErpAccountId = erpAccount.Id;
-
-                        await _erpAccountService.InsertErpAccountPictureAsync(newErpAccountPicture);
-
-                        await UpdatePictureSeoNamesAsync(model.PictureId, erpAccountName);
-                    }
-
-                    else if (erpAccountPicture.PictureId != model.PictureId)
-                    {
-                        // updating existing picture
-
-                        var prevPicture = await _pictureService.GetPictureByIdAsync(erpAccountPicture.PictureId);
-                        if (prevPicture != null)
-                            await _pictureService.DeletePictureAsync(prevPicture);
-
-                        erpAccountPicture.PictureId = model.PictureId;
-                        await _erpAccountService.UpdateErpAccountPictureAsync(erpAccountPicture);
-
-                        await UpdatePictureSeoNamesAsync(model.PictureId, erpAccountName);
-                    }
-                }
-                else
-                {
-                    if (erpAccountPicture != null)
-                    {
-                        var prevPicture = await _pictureService.GetPictureByIdAsync(erpAccountPicture.PictureId);
-                        if (prevPicture != null)
-                            await _pictureService.DeletePictureAsync(prevPicture);
-
-                        await _erpAccountService.DeleteErpAccountPictureByIdAsync(erpAccountPicture.Id);
-                    }
-                }
+ 
 
                 //address
                 var address = await _addressService.GetAddressByIdAsync(erpAccount.BillingAddressId ?? 0);

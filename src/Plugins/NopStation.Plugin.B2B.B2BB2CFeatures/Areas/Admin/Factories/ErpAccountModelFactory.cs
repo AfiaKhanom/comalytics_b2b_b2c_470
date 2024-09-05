@@ -389,9 +389,7 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories
                 //prepare erp ship to address search model
                 model.ErpShipToAddressSearchModel.SearchErpAccountId = model.Id;
                 model.ErpShipToAddressSearchModel = await _erpShipToAddressModelFactory.PrepareErpShipToAddressSearchModelAsync(searchModel: model.ErpShipToAddressSearchModel);
-
-                var erpAccountPicture = await _erpAccountService.GetErpAccountPictureByAccountIdAsync(model.Id);
-                model.PictureId = erpAccountPicture != null ? erpAccountPicture.PictureId : 0;
+                 
  
                 return model;
             }
