@@ -22,6 +22,11 @@ public class NopStartup : INopStartup
         services.AddScoped<IErpNopMapperService, ErpNopMapperService>();
         services.AddScoped<IB2BAccountService, B2BAccountService>();
         services.AddScoped<IB2BProductService, B2BProductService>();
+        services.AddScoped<IB2BPricingService, B2BPricingService>();
+        services.AddScoped<IB2BInvoiceService, B2BInvoiceService>(); 
+        services.AddScoped<IB2BStockService, B2BStockService>();
+        services.AddScoped<IShipToAddressService, ShipToAddressService>();
+
         services.AddScoped<SysproClient>();
     }
 

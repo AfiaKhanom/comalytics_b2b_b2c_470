@@ -141,7 +141,8 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                         {
                             Start = start,
                             Location = salesOrg.Code,
-                            DateFrom = erpAccount.LastPriceRefresh ?? dateFrom
+                            DateFrom = erpAccount.LastPriceRefresh ?? dateFrom,
+                            AccountNumber= erpAccount.AccountNumber,
                         };
 
                         var response = await erpIntegrationPlugin.GetProductSpecialPricesFromErpAsync(erpGetRequestModel);

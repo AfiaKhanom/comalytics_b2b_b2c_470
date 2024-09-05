@@ -44,6 +44,7 @@ public class ErpNopMapperService : IErpNopMapperService
         return erpAccounts;
     }
 
+
     public async Task<IList<ErpPriceSpecialPricingDataModel>> ErpPriceSpecialPricingMapNop(List<ErpPriceSpecialPricingSysproResponseModel> erpPriceSpecialPricingsResponseData)
     {
         if (erpPriceSpecialPricingsResponseData == null)
@@ -171,5 +172,9 @@ public class ErpNopMapperService : IErpNopMapperService
         }))).ToList();
 
         return erpStock;
+    }
+    public Task<IList<ErpInvoiceDataModel>> ErpInvoiceMapNop(List<ErpInvoiceSysproResponseModel> erpShipToAddressResponseData)
+    {
+        throw new NotImplementedException();
     }
 }
