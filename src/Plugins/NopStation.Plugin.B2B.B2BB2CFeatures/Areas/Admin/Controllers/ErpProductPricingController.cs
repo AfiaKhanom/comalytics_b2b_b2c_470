@@ -376,6 +376,58 @@ public class ErpProductPricingController : NopStationAdminController
         return Json(new { Result = true });
     }
 
+    public async Task<IActionResult> EditPriceGroupProductPricing(int id)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
+            return AccessDeniedView();
+
+        var erpProductPricing = await _erpGroupPriceService.GetErpGroupPriceByIdWithActiveAsync(id);
+        if (erpProductPricing == null)
+            return RedirectToAction("AllProductList");
+
+        var model = await _erpPriceGroupProductPricingModelFactory.PrepareErpProductPricingModel(null, erpProductPricing);
+        return View("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Areas/Admin/Views/ErpProductPricing/Edit.cshtml", model);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> EditPriceGroupProductPricing(ErpPriceGroupProductPricingModel model)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
+            return AccessDeniedView();
+
+        var erpProductPricing = await _erpGroupPriceService.GetErpGroupPriceByIdWithActiveAsync(model.Id);
+        if (erpProductPricing == null)
+            return RedirectToAction("ProductPricingByProduct", new { id = model.ProductId });
+
+        ModelState.Remove(nameof(model.ErpGroupPriceCode));
+        ModelState.Remove(nameof(model.ErpGroupPriceCodeId));
+
+        if (!ModelState.IsValid)
+        {
+            return ErrorJson(ModelState.SerializeErrors());
+        }
+        erpProductPricing.Price = model.Price;
+        erpProductPricing.UpdatedOnUtc = DateTime.UtcNow;
+        erpProductPricing.UpdatedById = (await _b2BB2CWorkContext.GetCurrentCustomerAsync()).Id;
+
+        await _erpGroupPriceService.UpdateErpGroupPriceAsync(erpProductPricing);
+
+        await _staticCacheManager.RemoveAsync(_staticCacheManager.PrepareKeyForDefaultCache(NopEntityCacheDefaults<ErpGroupPrice>.ByIdCacheKey, erpProductPricing.Id));
+
+        var successMsg = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpGroupPrice.ActivityLog.ErpPriceGroupProductPricing.Update");
+
+        await _erpLogsService.InformationAsync($"{successMsg}. Group Price Code Id: {erpProductPricing.ErpNopGroupPriceCodeId}. Product Id: {erpProductPricing.NopProductId}. Group Price Id: {erpProductPricing.Id}", ErpSyncLevel.Product, customer: await _b2BB2CWorkContext.GetCurrentCustomerAsync());
+
+        //erp activity log
+        await _erpActivityLogsService.InsertErpActivityAsync("Erp_EditErpGroupPrice",
+            string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.EditErpGroupPrice"),
+            erpProductPricing.Id, erpProductPricing.ErpNopGroupPriceCodeId, erpProductPricing.NopProductId),
+            erpProductPricing);
+
+
+        return new NullJsonResult();
+    }
+
     public async Task<IActionResult> GroupPriceEditPopUp(int id)
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
@@ -399,6 +451,9 @@ public class ErpProductPricingController : NopStationAdminController
 
         if (erpProductPricing == null)
             return RedirectToAction("ProductPricingByProduct", new { id = model.ProductId });
+
+        ModelState.Remove(nameof(model.ErpGroupPriceCode));
+        ModelState.Remove(nameof(model.ErpGroupPriceCodeId));
 
         if (ModelState.IsValid)
         {

@@ -51,6 +51,7 @@
                     {
                         Name = "price-group-product-pricing-grid",
                         UrlRead = new DataUrl("PriceGroupProductPricingList", "ErpProductPricing", new RouteValueDictionary { [nameof(ErpPriceGroupProductPricingSearchModel.ProductId)] = Model.ProductId }),
+                        UrlUpdate = new DataUrl("EditPriceGroupProductPricing", "ErpProductPricing", new RouteValueDictionary { [nameof(ErpPriceGroupProductPricingSearchModel.ProductId)] = Model.ProductId }),
                         UrlDelete = new DataUrl("DeletePriceGroupProductPricing", "ErpProductPricing", null),
                         SearchButtonId = "search-price-group-product-pricing",
                         Length = Model.PageSize,
@@ -90,7 +91,7 @@
                         Title = T("Admin.Common.Edit").Text,
                         Width = "100",
                         ClassName = NopColumnClassDefaults.Button,
-                        Render = new RenderCustom("renderColumnGroupPriceEdit")
+                        Render = new RenderButtonsInlineEdit()
                     });
 
                     groupProductPricingGridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpPriceGroupProductPricingModel.Id))
