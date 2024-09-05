@@ -33,6 +33,8 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore
         public static string ShiptoAddressesByAccountrPrefix => "Nop.account.shiptoaddresses.{0}";
 
         public static CacheKey ErpProductPricingByProductIdbyAccountIdCacheKey => new("ErpProductPricingCommonCacheKey.{0}", ErpProductPricingCommonPrefix);
+        public static CacheKey ErpProductGroupPricingByProductIdCacheKey => new("ErpProductGroupPricingCommonCacheKey.{0}", ErpProductPricingCommonPrefix);
+
 
         /// <summary>
         /// Gets a key pattern to clear cache

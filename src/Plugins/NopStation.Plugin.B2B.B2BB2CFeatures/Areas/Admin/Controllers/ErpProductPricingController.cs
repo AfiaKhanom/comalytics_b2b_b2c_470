@@ -261,7 +261,7 @@ public class ErpProductPricingController : NopStationAdminController
             erpProductPricing.VolumeDiscount = model.VolumeDiscount;
             await _erpSpecialPriceService.UpdateErpSpecialPriceAsync(erpProductPricing);
 
-                ViewBag.RefreshPage = true;
+            ViewBag.RefreshPage = true;
 
             var successMsg = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.ActivityLog.Update");
 
@@ -289,7 +289,7 @@ public class ErpProductPricingController : NopStationAdminController
         if (erpProductPricing == null)
             return RedirectToAction("AllProductList");
 
-            await _erpSpecialPriceService.DeleteErpSpecialPriceByIdAsync(erpProductPricing.Id);
+        await _erpSpecialPriceService.DeleteErpSpecialPriceByIdAsync(erpProductPricing.Id);
 
         var successMsg = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.ActivityLog.Delete");
 
@@ -462,9 +462,6 @@ public class ErpProductPricingController : NopStationAdminController
             erpProductPricing.UpdatedById = (await _b2BB2CWorkContext.GetCurrentCustomerAsync()).Id;
             await _erpGroupPriceService.UpdateErpGroupPriceAsync(erpProductPricing);
 
-            await _staticCacheManager.RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpProductPricingCommonPrefix);
-            await _staticCacheManager.RemoveAsync(_staticCacheManager.PrepareKeyForDefaultCache(NopEntityCacheDefaults<ErpSpecialPrice>.ByIdCacheKey, erpProductPricing.Id));
-
             ViewBag.RefreshPage = true;
 
             var successMsg = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpGroupPrice.ActivityLog.ErpPriceGroupProductPricing.Update");
@@ -492,8 +489,6 @@ public class ErpProductPricingController : NopStationAdminController
         var erpProductPricing = await _erpGroupPriceService.GetErpGroupPriceByIdWithActiveAsync(id);
         if (erpProductPricing == null)
             return RedirectToAction("AllProductList");
-
-        await _staticCacheManager.RemoveAsync(_staticCacheManager.PrepareKeyForDefaultCache(NopEntityCacheDefaults<ErpGroupPrice>.ByIdCacheKey, erpProductPricing.Id));
 
         await _erpGroupPriceService.DeleteErpGroupPriceByIdAsync(erpProductPricing.Id);
 

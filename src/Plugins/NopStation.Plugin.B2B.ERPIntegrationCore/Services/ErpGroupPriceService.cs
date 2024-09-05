@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Nop.Core;
+using Nop.Core.Caching;
 using Nop.Data;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
@@ -14,17 +15,20 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
 
         private readonly IRepository<ErpGroupPrice> _erpGroupPriceRepository;
         private readonly IRepository<ErpGroupPriceCode> _erpGroupPriceCodeRepository;
-
+        protected readonly IStaticCacheManager _staticCacheManager;
         #endregion
 
         #region ctor
-
-        public ErpGroupPriceService(IRepository<ErpGroupPrice> erpGroupPriceRepository, IRepository<ErpGroupPriceCode> erpGroupPriceCodeRepository)
+        public ErpGroupPriceService(IRepository<ErpGroupPrice> erpGroupPriceRepository,
+                                    IRepository<ErpGroupPriceCode> erpGroupPriceCodeRepository,
+                                    IStaticCacheManager staticCacheManager
+                                    )
         {
             _erpGroupPriceRepository = erpGroupPriceRepository;
             _erpGroupPriceCodeRepository = erpGroupPriceCodeRepository;
-        }
+            _staticCacheManager = staticCacheManager;
 
+        }
         #endregion
 
         #region Methods
@@ -151,11 +155,22 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
         {
             if (productId == 0)
                 return null;
+            var cache = _staticCacheManager.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpProductGroupPricingByProductIdCacheKey, productId);
+            var erpGroupPrices = await _staticCacheManager.GetAsync(cache, async () =>
+            {
+                var erpGroupPrices = await _erpGroupPriceRepository.GetAllAsync(query =>
+                {
+                    query = query.Where(egp => egp.NopProductId == productId && !egp.IsDeleted && egp.IsActive);
+                    query = query.OrderBy(egp => egp.Id); // Order by ID
+                    return query;
+                });
 
-            return  (from egp in _erpGroupPriceRepository.Table
-                          where egp.NopProductId == productId && egp.IsDeleted != true && egp.IsActive == true
-                          select egp).ToList();
+                return erpGroupPrices;
+            });
+
+            return erpGroupPrices;
         }
+
 
         public async Task<ErpGroupPrice> GetB2BPriceGroupProductPricingByErpPriceGroupCodeAndProductId(int priceGroupCodeId, int productId)
         {
