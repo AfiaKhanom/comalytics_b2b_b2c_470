@@ -89,7 +89,10 @@ public partial class SysproIntegrationService : ISysproIntegrationService
             sysproRequest.name = "Online_GetPrice";
 
             dynamic args = new ExpandoObject();
-            args.LastChangeDate = erpRequest.DateFrom;
+            if(erpRequest.DateFrom<new DateTime(1753,01,01))
+                args.LastChangeDate = null;
+            else
+                args.LastChangeDate = erpRequest.DateFrom;
             args.Customer = string.IsNullOrWhiteSpace(erpRequest.AccountNumber) ? null : erpRequest.AccountNumber;
             args.StockCode = string.IsNullOrWhiteSpace(erpRequest.ProductSku) ? null : erpRequest.ProductSku;
             args.PageNumber = start > 0 ? start : 1;

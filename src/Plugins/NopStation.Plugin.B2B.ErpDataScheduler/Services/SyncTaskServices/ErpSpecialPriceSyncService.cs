@@ -170,7 +170,9 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                             }
                             var oldSpecialPrice = await _erpSpecialPriceService.GetErpSpecialPricesByErpAccountIdAndNopProductIdAsync(erpAccount.Id, product.Id);
 
-                            if (oldSpecialPrice.Id <= 0)
+                            if (oldSpecialPrice == null)
+                                oldSpecialPrice = new ErpSpecialPrice();
+                            if( oldSpecialPrice.Id <= 0)
                             {
                                 oldSpecialPrice.ErpAccountId = erpAccount.Id;
                                 oldSpecialPrice.NopProductId = product.Id;
