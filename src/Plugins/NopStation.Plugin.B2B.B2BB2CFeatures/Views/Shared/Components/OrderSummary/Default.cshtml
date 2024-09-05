@@ -50,7 +50,7 @@
     }
     var erpNopUser = await erpNopUserService.GetErpNopUserByCustomerIdAsync(currCustomer.Id);
     var isB2BCustomer = erpNopUser != null ? erpNopUser.ErpUserType == NopStation.Plugin.B2B.ERPIntegrationCore.Enums.ErpUserType.B2BUser : false;
-   
+
     var isAllowedToPlaceQuote = await permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BOrder);
     var isAllowedToPlaceOrder = await permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BOrder);
     var isAllowedToAddQuickOrder = await permissionService.AuthorizeAsync(B2BB2CPermissionProvider.EnableQuickOrder);
@@ -184,11 +184,11 @@
                                             @if (viewComponentSelector.SelectComponent("LazyLoadImage") != null)
                                             {
                                                 @await Component.InvokeAsync("LazyLoadImage", new (string Key, string Value)[]
-                                                {
-                                                    ("src", item.Picture.ImageUrl),
-                                                    ("alt", item.Picture.AlternateText),
-                                                    ("title", item.Picture.Title)
-                                                })
+                                                         {
+                                ("src", item.Picture.ImageUrl),
+                                ("alt", item.Picture.AlternateText),
+                                ("title", item.Picture.Title)
+                                                         })
                                             }
                                             else
                                             {
