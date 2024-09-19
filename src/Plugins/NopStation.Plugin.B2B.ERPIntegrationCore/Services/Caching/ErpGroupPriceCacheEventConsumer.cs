@@ -12,8 +12,8 @@ public class ErpGroupPriceCacheEventConsumer : CacheEventConsumer<ErpGroupPrice>
 {
     protected override async Task ClearCacheAsync(ErpGroupPrice entity, EntityEventType entityEventType)
     {
-        await RemoveAsync(ERPIntegrationCoreDefaults.ErpProductGroupPricingByProductIdCacheKey, entity.NopProductId);
-        await _staticCacheManager.RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpProductPricingCommonPrefix);
+        await RemoveAsync(ERPIntegrationCoreDefaults.ErpProductPricingGroupPriceByProductIdCacheKey, entity.NopProductId);
+        await RemoveAsync(ERPIntegrationCoreDefaults.ErpProductPricingGroupPriceByProductIdAndPriceGroupIdCacheKey, entity.NopProductId, entity.ErpNopGroupPriceCodeId);
 
         await base.ClearCacheAsync(entity, entityEventType);
     }
