@@ -166,7 +166,9 @@ public class B2BB2CFeaturesController : NopStationAdminController
 
         var model = new ConfigurationModel();
 
-        var settings = await _settingService.LoadSettingAsync<B2BB2CFeaturesSettings>();
+        //load settings for a chosen store scope
+        var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
+        var settings = await _settingService.LoadSettingAsync<B2BB2CFeaturesSettings>(storeScope);
         if (settings != null)
             model = settings.ToSettingsModel<ConfigurationModel>();
 
@@ -266,7 +268,11 @@ public class B2BB2CFeaturesController : NopStationAdminController
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.Latitude, model.Latitude_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.Longitude, model.Longitude_OverrideForStore, storeScope, false);
 
+            //now clear settings cache
             await _settingService.ClearCacheAsync();
+
+            // clear price cache
+            await _staticCacheManager.RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpProductPricingPrefix);
 
             var successMsg = await _localizationService.GetResourceAsync("B2BB2CFeatures.Configuration.Updated");
             _notificationService.SuccessNotification(successMsg);
