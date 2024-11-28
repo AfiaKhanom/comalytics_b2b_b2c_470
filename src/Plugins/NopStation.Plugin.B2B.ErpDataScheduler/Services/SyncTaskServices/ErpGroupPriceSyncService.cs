@@ -236,7 +236,6 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
                                     oldErpGroupPriceCode.UpdatedOnUtc = DateTime.UtcNow;
                                     oldErpGroupPriceCode.IsActive = true;
                                     oldErpGroupPriceCode.IsDeleted = false;
-
                                 }
                                 else
                                 {
