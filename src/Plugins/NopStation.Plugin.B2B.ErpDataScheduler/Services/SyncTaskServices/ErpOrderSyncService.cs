@@ -1,5 +1,4 @@
 ﻿using Nop.Core;
-using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
@@ -9,13 +8,12 @@ using Nop.Core.Domain.Shipping;
 using Nop.Core.Domain.Tax;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
-using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Orders;
-using Nop.Services.Tax;
 using NopStation.Plugin.B2B.B2BB2CFeatures;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
+using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
@@ -30,7 +28,6 @@ public class ErpOrderSyncService : IErpOrderSyncService
     private readonly IOrderService _orderService;
     private readonly IStoreContext _storeContext;
     private readonly ICountryService _countryService;
-    private readonly ISettingService _settingService;
     private readonly IProductService _productService;
     private readonly IAddressService _addressService;
     private readonly ICustomerService _customerService;
@@ -43,6 +40,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
     private readonly IErpAccountService _erpAccountService;
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
+    private readonly ErpDataSchedulerSettings _erpDataSchedulerSettings;
     private readonly IErpShipToAddressService _erpShipToAddressService;
     private readonly IErpDataClearCacheService _erpDataClearCacheService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginService;
@@ -53,11 +51,9 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
     #region Ctor
 
-    public ErpOrderSyncService(
-        IOrderService orderService,
+    public ErpOrderSyncService(IOrderService orderService,
         IStoreContext storeContext,
         ICountryService countryService,
-        ISettingService settingService,
         IProductService productService,
         IAddressService addressService,
         ICustomerService customerService,
@@ -70,6 +66,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
         IErpAccountService erpAccountService,
         IErpSalesOrgService erpSalesOrgService,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
+        ErpDataSchedulerSettings erpDataSchedulerSettings,
         IErpShipToAddressService erpSShipToAddressService,
         IErpDataClearCacheService erpDataClearCacheService,
         IErpIntegrationPluginManager erpIntegrationPluginService,
@@ -79,7 +76,6 @@ public class ErpOrderSyncService : IErpOrderSyncService
         _orderService = orderService;
         _storeContext = storeContext;
         _countryService = countryService;
-        _settingService = settingService;
         _productService = productService;
         _addressService = addressService;
         _customerService = customerService;
@@ -92,6 +88,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
         _erpAccountService = erpAccountService;
         _erpSalesOrgService = erpSalesOrgService;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
+        _erpDataSchedulerSettings = erpDataSchedulerSettings;
         _erpShipToAddressService = erpSShipToAddressService;
         _erpDataClearCacheService = erpDataClearCacheService;
         _erpIntegrationPluginService = erpIntegrationPluginService;
@@ -103,8 +100,9 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
     #region Method
 
-    private async Task CreateNopUser(ErpNopUser erpNopUser, Customer customer, ErpAccount erpAccount, int erpShipToAddressId)
+    private async Task CreateNopUser(ErpNopUser? erpNopUser, Customer customer, ErpAccount erpAccount, int erpShipToAddressId)
     {
+        erpNopUser ??= new ErpNopUser();
         erpNopUser.NopCustomerId = customer.Id;
         erpNopUser.CreatedById = 1;
         erpNopUser.CreatedOnUtc = DateTime.UtcNow;
@@ -118,6 +116,10 @@ public class ErpOrderSyncService : IErpOrderSyncService
         erpNopUser.UpdatedOnUtc = DateTime.UtcNow;
 
         await _erpNopUserService.InsertErpNopUserAsync(erpNopUser);
+
+        //add to 'Registered' role
+        var registeredRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BCustomerRole) ?? throw new NopException("'B2BUser' role could not be loaded");
+        await _customerService.AddCustomerRoleMappingAsync(new CustomerCustomerRoleMapping { CustomerId = customer.Id, CustomerRoleId = registeredRole.Id });
     }
 
     public virtual async Task<bool> IsErpOrderSyncSuccessfulAsync()
@@ -138,13 +140,6 @@ public class ErpOrderSyncService : IErpOrderSyncService
         {
             #region Data collection
 
-            var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
-            var currency = await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId);
-
-            var erpDataSchedulerSettings = await _settingService.LoadSettingAsync<ErpDataSchedulerSettings>(storeScope);
-
-            var allStateProvinces = (await _stateProvinceService.GetStateProvincesAsync()).ToList();
-            var allCountries = (await _countryService.GetAllCountriesAsync()).ToList();
             var listOfSalesOrgs = new List<ErpSalesOrg>();
             var salesOrgCode = await erpIntegrationPlugin.GetSalesOrgCodeFromIntegrationSettings();
 
@@ -176,6 +171,10 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 }
             }
 
+            var currency = await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId);
+            var allCountries = (await _countryService.GetAllCountriesAsync()).ToList();
+            var allStateProvinces = (await _stateProvinceService.GetStateProvincesAsync()).ToList();
+
             #endregion
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
@@ -185,27 +184,27 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
             foreach (var salesOrg in listOfSalesOrgs)
             {
-                var oldErpAccounts = (List<ErpAccount>)await _erpAccountService.GetAllErpAccountsAsync(salesOrgId: salesOrg.Id);
+                var oldErpAccounts = await _erpAccountService.GetErpAccountsOfOnlyActiveErpNopUsersAsync(salesOrgId: salesOrg.Id);
                 if (oldErpAccounts.Count == 0)
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpOrderSyncTaskName,
                         ErpSyncLevel.Order,
-                        $"No Erp Accounts found with the Sales org : {salesOrg.Name}");
+                        $"No Erp Accounts found with Active Nop Users for Sales org : {salesOrg.Name}");
 
                     return false;
                 }
 
-                var lastErpOrderSynced = new ErpOrderAdditionalData();
-                var lastErpOrderSyncedOfErpAccount = "";
-                var totalSyncedSoFar = 0;
                 var isError = false;
+                var totalSyncedSoFar = 0;
                 var lastErrorMessage = "";
+                var lastErpOrderSynced = "";
+                var lastErpOrderSyncedOfErpAccount = "";
 
                 foreach (var erpAccount in oldErpAccounts)
                 {
                     var start = "0";
-                    var dateFrom = erpDataSchedulerSettings.SyncFromDate.HasValue ? erpDataSchedulerSettings.SyncFromDate.Value : DateTime.MinValue;
+                    var dateFrom = _erpDataSchedulerSettings.SyncFromDate ?? DateTime.MinValue;
 
                     while (true)
                     {
@@ -233,7 +232,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
                         start = response.ErpResponseModel.Next;
 
-                        var erpOrders = response.Data;
+                        var erpOrders = await response.Data.Where(x => !string.IsNullOrWhiteSpace(x.OrderType)).ToListAsync();
 
                         (lastErpOrderSynced, lastErpOrderSyncedOfErpAccount, totalSyncedSoFar) = await MapOrderData(
                             erpOrders,
@@ -246,7 +245,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
                             currency);
 
                     }
-                    if (erpDataSchedulerSettings.NeedQuoteOrderCall)
+                    if (_erpDataSchedulerSettings.NeedQuoteOrderCall)
                     {
                         start = "0";
                         while (true)
@@ -290,21 +289,23 @@ public class ErpOrderSyncService : IErpOrderSyncService
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpOrderSyncTaskName,
                         ErpSyncLevel.Order,
-                        $"Erp Order sync successful for Sales Org: {salesOrg.Name}");
+                        $"Erp Order sync successful for Sales Org: {salesOrg?.Name}");
                 }
                 else
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpOrderSyncTaskName,
                         ErpSyncLevel.Order,
-                        $"Erp Order sync is partially or not successful for Sales Org: {salesOrg.Name}",
+                        $"Erp Order sync is partially or not successful for Sales Org: {salesOrg?.Name}",
                         lastErrorMessage);
                 }
 
                 await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpOrderSyncTaskName,
                     ErpSyncLevel.Order,
-                    (lastErpOrderSynced is not null ? $"The last synced Erp Order: {lastErpOrderSynced.ErpOrderNumber}, of Erp Account: {lastErpOrderSyncedOfErpAccount} for Sales Org: {salesOrg.Name}. " : string.Empty) + $"Total synced in this session: {totalSyncedSoFar}");
+                    (lastErpOrderSynced is not null ? $"The last synced Erp Order: {lastErpOrderSynced}, of Erp Account: " +
+                    $"{lastErpOrderSyncedOfErpAccount} for Sales Org: {salesOrg.Name}. " : string.Empty) +
+                    $"Total synced in this session: {totalSyncedSoFar}");
 
             }
 
@@ -321,7 +322,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 ErpDataSchedulerDefaults.ErpOrderSyncTaskName,
                 ErpSyncLevel.Order,
                 ex.Message,
-                ex.StackTrace);
+                ex.StackTrace ?? "");
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpOrderSyncTaskName,
@@ -332,10 +333,10 @@ public class ErpOrderSyncService : IErpOrderSyncService
         }
     }
 
-    private async Task<(ErpOrderAdditionalData lastErpOrderSynced, string lastErpOrderSyncedOfErpAccount, int totalSyncedSoFar)> MapOrderData(
+    private async Task<(string lastErpOrderSynced, string lastErpOrderSyncedOfErpAccount, int totalSyncedSoFar)> MapOrderData(
         IList<ErpPlaceOrderDataModel> erpOrders,
         ErpAccount erpAccount,
-        ErpOrderAdditionalData lastErpOrderSynced,
+        string lastErpOrderSynced,
         string lastErpOrderSyncedOfErpAccount,
         int totalSyncedSoFar,
         List<StateProvince> allStateProvinces,
@@ -346,21 +347,23 @@ public class ErpOrderSyncService : IErpOrderSyncService
         {
             #region Nop Order
 
-            var erpNopUser = new ErpNopUser();
+            ErpNopUser? erpNopUser = null;
 
-            var oldNopOrder = await _orderService.GetOrderByCustomOrderNumberAsync(erpOrder.CustomOrderNumber) ?? new Order();
+            var oldNopOrder = await _orderService.GetOrderByCustomOrderNumberAsync(erpOrder.CustomOrderNumber);
 
-            if (oldNopOrder.Id <= 0)
+            if (oldNopOrder == null)
             {
                 #region Address
 
-                var countryId = allCountries.Find(x => x.Name.Equals(erpOrder.ShippingAddress?.Country)
-                        || x.TwoLetterIsoCode.Equals(erpOrder.ShippingAddress?.Country)
-                        || x.ThreeLetterIsoCode.Equals(erpOrder.ShippingAddress?.Country)
-                        || x.NumericIsoCode.Equals(erpOrder.ShippingAddress?.Country))?.Id ?? _b2BB2CFeaturesSettings.DefaultCountryId;
+                var countryId = allCountries.Find(x =>
+                    !string.IsNullOrWhiteSpace(x.Name) && x.Name.Equals(erpOrder.ShippingAddress?.Country)
+                    || !string.IsNullOrWhiteSpace(x.TwoLetterIsoCode) && x.TwoLetterIsoCode.Equals(erpOrder.ShippingAddress?.Country)
+                    || !string.IsNullOrWhiteSpace(x.ThreeLetterIsoCode) && x.ThreeLetterIsoCode.Equals(erpOrder.ShippingAddress?.Country))?.Id
+                    ?? _b2BB2CFeaturesSettings.DefaultCountryId;
 
-                var stateProvinceId = allStateProvinces.Find(x => x.CountryId == countryId 
-                && (x.Name.Equals(erpOrder.ShippingAddress?.StateProvince) || x.Abbreviation.Equals(erpOrder.ShippingAddress?.StateProvince)))?.Id ?? 0;
+                var stateProvinceId = allStateProvinces.Find(x => x.CountryId == countryId
+                    && (!string.IsNullOrWhiteSpace(x.Name) && x.Name.Equals(erpOrder.ShippingAddress?.StateProvince) ||
+                    !string.IsNullOrWhiteSpace(x.Abbreviation) && x.Abbreviation.Equals(erpOrder.ShippingAddress?.StateProvince)))?.Id ?? 0;
 
                 var address = new Address();
                 address.Email = erpOrder.CustomerEmail;
@@ -376,9 +379,12 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
                 #endregion
 
-                var customer = await _customerService.GetCustomerByEmailAsync(erpOrder.CustomerEmail) ?? new Customer();
-                if (customer.Id <= 0)
+                #region Customer
+
+                var customer = await _customerService.GetCustomerByEmailAsync(erpOrder.CustomerEmail);
+                if (customer == null)
                 {
+                    customer = new Customer();
                     customer.FirstName = erpOrder.CustomerFirstName;
                     customer.LastName = erpOrder.CustomerLastName;
                     customer.Email = erpOrder.CustomerEmail;
@@ -392,83 +398,142 @@ public class ErpOrderSyncService : IErpOrderSyncService
                     customer.CustomerGuid = Guid.NewGuid();
 
                     await _customerService.InsertCustomerAsync(customer);
+
+                    //add to 'Registered' role
+                    var registeredRole = await _customerService.GetCustomerRoleBySystemNameAsync(NopCustomerDefaults.RegisteredRoleName) ?? throw new NopException("'Registered' role could not be loaded");
+
+                    await _customerService.AddCustomerRoleMappingAsync(new CustomerCustomerRoleMapping { CustomerId = customer.Id, CustomerRoleId = registeredRole.Id });
+
+                    //remove from 'Guests' role            
+                    if (await _customerService.IsGuestAsync(customer))
+                    {
+                        var guestRole = await _customerService.GetCustomerRoleBySystemNameAsync(NopCustomerDefaults.GuestsRoleName);
+                        await _customerService.RemoveCustomerRoleMappingAsync(customer, guestRole);
+                    }
+
                     var erpShiptoAddressforAccount = await _erpShipToAddressService.GetErpShipToAddressesByAccountIdAsync(showHidden: false, isActiveOnly: true, accountId: erpAccount.Id);
                     await CreateNopUser(erpNopUser, customer, erpAccount, erpShiptoAddressforAccount.FirstOrDefault()?.Id ?? 0);
                 }
                 else
                 {
                     var isCustomerHasAdminRole = await _customerService.IsAdminAsync(customer);
+                    var isRegisteredCustomer = await _customerService.IsRegisteredAsync(customer);
+
+                    if (!isRegisteredCustomer)
+                    {
+                        //add to 'Registered' role
+                        var registeredRole = await _customerService.GetCustomerRoleBySystemNameAsync(NopCustomerDefaults.RegisteredRoleName) ?? throw new NopException("'Registered' role could not be loaded");
+
+                        await _customerService.AddCustomerRoleMappingAsync(new CustomerCustomerRoleMapping { CustomerId = customer.Id, CustomerRoleId = registeredRole.Id });
+
+                        //remove from 'Guests' role            
+                        if (await _customerService.IsGuestAsync(customer))
+                        {
+                            var guestRole = await _customerService.GetCustomerRoleBySystemNameAsync(NopCustomerDefaults.GuestsRoleName);
+                            await _customerService.RemoveCustomerRoleMappingAsync(customer, guestRole);
+                        }
+                    }
 
                     if (isCustomerHasAdminRole)
                     {
                         continue;
                     }
 
-                    erpNopUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(customer.Id) ?? new ErpNopUser();
-                    if (erpNopUser.Id <= 0)
+                    erpNopUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(customer.Id);
+                    if (erpNopUser == null)
                     {
-                        var erpShiptoAddressforAccount = await _erpShipToAddressService.GetErpShipToAddressesByAccountIdAsync(showHidden: false, isActiveOnly: true, accountId: erpAccount.Id);
+                        var erpShiptoAddressforAccount = await _erpShipToAddressService.GetErpShipToAddressesByAccountIdAsync(
+                            showHidden: false,
+                            isActiveOnly: true,
+                            accountId: erpAccount.Id);
                         await CreateNopUser(erpNopUser, customer, erpAccount, erpShiptoAddressforAccount.FirstOrDefault()?.Id ?? 0);
                     }
                 }
 
+                #endregion
+
+                oldNopOrder = new Order();
                 oldNopOrder.OrderGuid = Guid.NewGuid();
                 oldNopOrder.CustomerId = customer.Id;
                 oldNopOrder.BillingAddressId = erpAccount.BillingAddressId ?? address.Id;
                 oldNopOrder.ShippingAddressId = address.Id;
                 oldNopOrder.CustomOrderNumber = erpOrder.CustomOrderNumber;
                 oldNopOrder.ShippingStatusId = (int)ShippingStatus.NotYetShipped;
-
-                if (erpOrder.OrderType == ErpDataSchedulerDefaults.ErpOrderType)
+                oldNopOrder.OrderTotal = erpOrder.OrderSubtotalInclTax ?? decimal.Zero;
+                oldNopOrder.OrderSubtotalExclTax = erpOrder.OrderSubtotalExclTax ?? decimal.Zero;
+                oldNopOrder.OrderSubtotalInclTax = erpOrder.OrderSubtotalInclTax ?? decimal.Zero;
+                oldNopOrder.OrderTax = erpOrder.OrderTax ?? decimal.Zero;
+                oldNopOrder.OrderShippingInclTax = erpOrder.ShippingAmount;
+                oldNopOrder.StoreId = (await _storeContext.GetCurrentStoreAsync()).Id;
+                if (erpOrder.OrderType == ((int)ErpOrderType.B2BSalesOrder).ToString())
                 {
                     oldNopOrder.OrderStatusId = (int)OrderStatus.Processing;
                 }
-                else if (erpOrder.OrderType == ErpDataSchedulerDefaults.ErpQuoteType)
+                else if (erpOrder.OrderType == ((int)ErpOrderType.B2BQuote).ToString())
                 {
                     oldNopOrder.OrderStatusId = (int)OrderStatus.Pending;
                 }
-
                 oldNopOrder.PaymentStatusId = (int)PaymentStatus.Paid;
                 oldNopOrder.PaymentMethodSystemName = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.SelectedPaymentMethodAttribute) ?? string.Empty;
                 oldNopOrder.CustomerCurrencyCode = currency.CurrencyCode;
                 oldNopOrder.CurrencyRate = currency.Rate;
-                oldNopOrder.CustomerTaxDisplayTypeId = (int)TaxDisplayType.IncludingTax;
+                oldNopOrder.CustomerTaxDisplayTypeId = (int)TaxDisplayType.ExcludingTax;
+                oldNopOrder.CustomerTaxDisplayType = TaxDisplayType.ExcludingTax;
                 oldNopOrder.PaidDateUtc = DateTime.UtcNow;
                 oldNopOrder.CreatedOnUtc = DateTime.UtcNow;
+
                 await _orderService.InsertOrderAsync(oldNopOrder);
             }
             else
             {
+                erpNopUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(oldNopOrder.CustomerId);
                 oldNopOrder.CustomOrderNumber = erpOrder.CustomOrderNumber ?? string.Empty;
                 oldNopOrder.ShippingStatusId = (int)ShippingStatus.NotYetShipped;
-
-                if (erpOrder.OrderType == ErpDataSchedulerDefaults.ErpOrderType)
+                oldNopOrder.OrderTotal = erpOrder.OrderSubtotalInclTax ?? decimal.Zero;
+                oldNopOrder.OrderSubtotalExclTax = erpOrder.OrderSubtotalExclTax ?? decimal.Zero;
+                oldNopOrder.OrderSubtotalInclTax = erpOrder.OrderSubtotalInclTax ?? decimal.Zero;
+                oldNopOrder.OrderTax = erpOrder.OrderTax ?? decimal.Zero;
+                oldNopOrder.OrderShippingInclTax = erpOrder.ShippingAmount;
+                oldNopOrder.StoreId = (await _storeContext.GetCurrentStoreAsync()).Id;
+                if (erpOrder.OrderType == ((int)ErpOrderType.B2BSalesOrder).ToString())
                 {
                     oldNopOrder.OrderStatusId = (int)OrderStatus.Processing;
                 }
-                else if (erpOrder.OrderType == ErpDataSchedulerDefaults.ErpQuoteType)
+                else if (erpOrder.OrderType == ((int)ErpOrderType.B2BQuote).ToString())
                 {
                     oldNopOrder.OrderStatusId = (int)OrderStatus.Pending;
                 }
+                oldNopOrder.CustomerCurrencyCode = currency.CurrencyCode;
+                oldNopOrder.CurrencyRate = currency.Rate;
+                oldNopOrder.CustomerTaxDisplayTypeId = (int)TaxDisplayType.ExcludingTax;
+                oldNopOrder.CustomerTaxDisplayType = TaxDisplayType.ExcludingTax;
+
                 await _orderService.UpdateOrderAsync(oldNopOrder);
             }
-
-            #region Cache clear for this nop order
-
-            await _erpDataClearCacheService.ClearCacheOfEntity(oldNopOrder, oldNopOrder.Id);
-            await _erpDataClearCacheService.ClearCacheOfEntity(erpNopUser, erpNopUser.Id);
-
-            #endregion
 
             #endregion
 
             #region Erp Order
 
-            var oldErpOrder = (await _erpOrderAdditionalDataService
-                .GetAllErpOrderAdditionalDataAsync(accountId: erpAccount.Id, nopOrderNumber: erpOrder.CustomOrderNumber)).FirstOrDefault() ?? new ErpOrderAdditionalData();
+            var oldErpOrder = await _erpOrderAdditionalDataService
+                .GetErpOrderAdditionalDataByErpAccountIdAndNopOrderNumberAsync(accountId: erpAccount.Id, nopOrderNumber: erpOrder.CustomOrderNumber);
 
-            if (oldErpOrder.Id <= 0)
+            if (oldErpOrder == null)
             {
+                var newErpShiptoAddress = new ErpShipToAddress
+                {
+                    ShipToCode = erpAccount.AccountNumber,
+                    ShipToName = erpAccount.AccountName,
+                    AddressId = oldNopOrder.ShippingAddressId ?? 0,
+                    CreatedOnUtc = DateTime.UtcNow,
+                    IsActive = true,
+                    DeliveryNotes = erpOrder.Notes,
+                    RepNumber = string.Empty
+                };
+
+                await _erpShipToAddressService.InsertErpShipToAddressAsync(newErpShiptoAddress);
+
+                oldErpOrder = new ErpOrderAdditionalData();
                 oldErpOrder.NopOrderId = oldNopOrder.Id;
                 oldErpOrder.ErpOrderNumber = erpOrder.CustomOrderNumber;
                 oldErpOrder.ErpOrderOriginType = ErpOrderOriginType.ERPOrder;
@@ -478,19 +543,6 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 oldErpOrder.LastERPUpdateUtc = DateTime.UtcNow;
                 oldErpOrder.QuoteExpiryDate = erpOrder.DeliveryDate;
                 oldErpOrder.ErpAccountId = erpAccount.Id;
-
-                var newErpShiptoAddress = new ErpShipToAddress
-                {
-                    ShipToCode = erpAccount.AccountNumber,
-                    ShipToName = erpAccount.AccountName,
-                    AddressId = oldNopOrder.ShippingAddressId ?? 0,
-                    CreatedOnUtc = DateTime.UtcNow,
-                    IsActive = true,
-                    DeliveryNotes = erpOrder.Notes
-                };
-
-                await _erpShipToAddressService.InsertErpShipToAddressAsync(newErpShiptoAddress);
-
                 oldErpOrder.ErpShipToAddressId = newErpShiptoAddress.Id;
                 oldErpOrder.SpecialInstructions = erpOrder.DeliveryInstruction;
                 oldErpOrder.CustomerReference = erpOrder.CustomerReference;
@@ -499,6 +551,13 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 oldErpOrder.IntegrationStatusType = IntegrationStatusType.Confirmed;
                 oldErpOrder.IntegrationError = string.Empty;
                 oldErpOrder.ErpOrderItemAdditionalDatas = new List<ErpOrderItemAdditionalData>();
+                oldErpOrder.QuoteSalesOrderId = 0;
+                oldErpOrder.IntegrationRetries = 0;
+                oldErpOrder.IntegrationErrorDateTimeUtc = null;
+                oldErpOrder.IsShippingAddressModified = false;
+                oldErpOrder.IsOrderPlaceNotificationSent = true;
+                oldErpOrder.ErpOrderPlaceByCustomerTypeId = erpNopUser == null ? 0 : erpNopUser.ErpUserTypeId;
+                oldErpOrder.ChangedById = erpNopUser == null ? 0 : erpNopUser.NopCustomerId;
 
                 await _erpOrderAdditionalDataService.InsertErpOrderAdditionalDataAsync(oldErpOrder);
             }
@@ -506,13 +565,11 @@ public class ErpOrderSyncService : IErpOrderSyncService
             {
                 oldErpOrder.NopOrderId = oldNopOrder.Id;
                 oldErpOrder.ErpOrderNumber = erpOrder.CustomOrderNumber;
-                oldErpOrder.ErpOrderOriginType = ErpOrderOriginType.ERPOrder;
                 oldErpOrder.ErpOrderType = (ErpOrderType)Enum.Parse(typeof(ErpOrderType), erpOrder.OrderType);
                 oldErpOrder.OrderPlacedByNopCustomerId = oldNopOrder.CustomerId;
                 oldErpOrder.ChangedOnUtc = DateTime.UtcNow;
                 oldErpOrder.LastERPUpdateUtc = DateTime.UtcNow;
                 oldErpOrder.QuoteExpiryDate = erpOrder.DeliveryDate;
-
                 oldErpOrder.QuoteSalesOrderId = 0;
                 oldErpOrder.ErpAccountId = erpAccount.Id;
                 oldErpOrder.SpecialInstructions = erpOrder.DeliveryInstruction;
@@ -521,13 +578,15 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 oldErpOrder.DeliveryDate = erpOrder.DeliveryDate;
                 oldErpOrder.IntegrationStatusType = IntegrationStatusType.Confirmed;
                 oldErpOrder.IntegrationError = string.Empty;
+                oldErpOrder.ErpOrderPlaceByCustomerTypeId = erpNopUser == null ? 0 : erpNopUser.ErpUserTypeId;
+                oldErpOrder.ChangedById = erpNopUser == null ? 0 : erpNopUser.NopCustomerId;
 
                 await _erpOrderAdditionalDataService.UpdateErpOrderAdditionalDataAsync(oldErpOrder);
             }
 
             #region Cache clear for this erp order
 
-            await _erpDataClearCacheService.ClearCacheOfEntity(oldErpOrder, oldErpOrder.Id);
+            await _erpDataClearCacheService.ClearCacheOfEntity(oldErpOrder);
 
             #endregion
 
@@ -535,53 +594,63 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
             #region Nop Order Items and Erp Order Items
 
-            var nopOrderItems = await _orderService.GetOrderItemsAsync(orderId: oldNopOrder.Id) ?? new List<OrderItem>();
-            var erpOrderItems = await _erpOrderItemAdditionalDataService.GetAllErpOrderItemAdditionalDataByErpOrderIdAsync(oldErpOrder.Id);
+            var nopOrderItems = await _orderService.GetOrderItemsAsync(orderId: oldNopOrder.Id);
+            var erpOrderItems = await _erpOrderItemAdditionalDataService.
+                GetAllErpOrderItemAdditionalDataByErpOrderIdAsync(oldErpOrder.Id);
 
             foreach (var item in erpOrder.ErpPlaceOrderItemDatas)
             {
-                var product = await _productService.GetProductBySkuAsync(item.Sku) ?? new Product();
+                var product = await _productService.GetProductBySkuAsync(item.Sku);
 
-                if (product.Id == 0)
+                if (product == null)
                 {
                     continue;
                 }
 
-                var nopOrderItem = nopOrderItems.FirstOrDefault(prd => prd.ProductId == product.Id) ?? new OrderItem();
+                var nopOrderItem = nopOrderItems?.FirstOrDefault(prd => prd.ProductId == product.Id);
 
-                if (nopOrderItem.Id <= 0)
+                if (nopOrderItem == null)
                 {
+                    nopOrderItem = new OrderItem();
                     nopOrderItem.OrderItemGuid = Guid.NewGuid();
                     nopOrderItem.OrderId = oldNopOrder.Id;
                     nopOrderItem.ProductId = product.Id;
                     nopOrderItem.Quantity = Convert.ToInt16(item.Quantity);
-                    nopOrderItem.PriceInclTax = Convert.ToInt16(item.PriceInclTax);
+                    nopOrderItem.PriceInclTax = item.PriceInclTax ?? 0;
+                    nopOrderItem.PriceExclTax = item.PriceExclTax ?? 0;
                     nopOrderItem.UnitPriceInclTax = item.UnitPriceInclTax ?? 0;
                     nopOrderItem.UnitPriceExclTax = item.UnitPriceExclTax ?? 0;
+                    nopOrderItem.DiscountAmountInclTax = item.DiscountAmountInclTax ?? 0;
+                    nopOrderItem.DiscountAmountExclTax = item.DiscountAmountExclTax ?? 0;
 
                     await _orderService.InsertOrderItemAsync(nopOrderItem);
                 }
                 else
                 {
+                    nopOrderItem.Quantity = Convert.ToInt16(item.Quantity);
+                    nopOrderItem.PriceInclTax = item.PriceInclTax ?? 0;
+                    nopOrderItem.PriceExclTax = item.PriceExclTax ?? 0;
                     nopOrderItem.UnitPriceInclTax = item.UnitPriceInclTax ?? 0;
                     nopOrderItem.UnitPriceExclTax = item.UnitPriceExclTax ?? 0;
-                    nopOrderItem.Quantity = Convert.ToInt16(item.Quantity);
+                    nopOrderItem.DiscountAmountInclTax = item.DiscountAmountInclTax ?? 0;
+                    nopOrderItem.DiscountAmountExclTax = item.DiscountAmountExclTax ?? 0;
 
                     await _orderService.UpdateOrderItemAsync(nopOrderItem);
                 }
 
-                var erpOrderItem = erpOrderItems.FirstOrDefault(prd => prd.NopOrderItemId == nopOrderItem.Id) ?? new ErpOrderItemAdditionalData();
+                var erpOrderItem = erpOrderItems?.FirstOrDefault(prd => prd.NopOrderItemId == nopOrderItem.Id);
 
-                if (erpOrderItem.Id <= 0)
+                if (erpOrderItem == null)
                 {
+                    erpOrderItem = new ErpOrderItemAdditionalData();
                     erpOrderItem.NopOrderItemId = nopOrderItem.Id;
                     erpOrderItem.ErpOrderId = oldErpOrder.Id;
                     erpOrderItem.ErpOrderLineNumber = string.Empty;
-                    erpOrderItem.ErpSalesUoM = string.Empty;
+                    erpOrderItem.ErpSalesUoM = item.UnitOfMeasure;
                     erpOrderItem.ErpOrderLineStatus = string.Empty;
                     erpOrderItem.ErpOrderLineNotes = string.Empty;
                     erpOrderItem.ErpDeliveryMethod = erpOrder.DeliveryMethod;
-                    erpOrderItem.ErpInvoiceNumber = erpOrder.CustomOrderNumber;
+                    erpOrderItem.ErpInvoiceNumber = string.Empty;
                     erpOrderItem.ChangedBy = 1;
                     erpOrderItem.ErpDateRequired = erpOrder.DateRequired;
                     erpOrderItem.ErpDateExpected = erpOrder.DeliveryDate;
@@ -592,21 +661,30 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 }
                 else
                 {
+                    erpOrderItem.ErpOrderLineNumber = string.Empty;
+                    erpOrderItem.ErpSalesUoM = item.UnitOfMeasure;
+                    erpOrderItem.ErpOrderLineStatus = string.Empty;
+                    erpOrderItem.ErpOrderLineNotes = string.Empty;
+                    erpOrderItem.ErpDeliveryMethod = erpOrder.DeliveryMethod;
+                    erpOrderItem.ErpInvoiceNumber = string.Empty;
+                    erpOrderItem.ChangedBy = 1;
+                    erpOrderItem.ErpDateRequired = erpOrder.DateRequired;
+                    erpOrderItem.ErpDateExpected = erpOrder.DeliveryDate;
                     erpOrderItem.LastErpUpdateUtc = DateTime.UtcNow;
+
                     await _erpOrderItemAdditionalDataService.UpdateErpOrderItemAdditionalDataAsync(erpOrderItem);
                 }
 
                 #region Cache clear for this nop order items and erp order items
 
-                await _erpDataClearCacheService.ClearCacheOfEntity(nopOrderItem, nopOrderItem.Id);
-                await _erpDataClearCacheService.ClearCacheOfEntity(erpOrderItem, erpOrderItem.Id);
+                await _erpDataClearCacheService.ClearCacheOfEntity(erpOrderItem);
 
                 #endregion
             }
 
             #endregion
 
-            lastErpOrderSynced = oldErpOrder;
+            lastErpOrderSynced = oldErpOrder.ErpOrderNumber;
             lastErpOrderSyncedOfErpAccount = erpAccount.AccountNumber;
             totalSyncedSoFar++;
         }

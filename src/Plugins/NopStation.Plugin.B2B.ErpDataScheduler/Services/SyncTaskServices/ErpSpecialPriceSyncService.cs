@@ -1,7 +1,8 @@
-﻿using Nop.Core;
+﻿using Nop.Core.Caching;
 using Nop.Services.Catalog;
-using Nop.Services.Configuration;
+using NopStation.Plugin.B2B.B2BB2CFeatures;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
+using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
@@ -13,8 +14,6 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
 {
     #region Fields
 
-    private readonly IStoreContext _storeContext;
-    private readonly ISettingService _settingService;
     private readonly IProductService _productService;
     private readonly ISyncLogService _erpSyncLogService;
     private readonly IErpAccountService _erpAccountService;
@@ -22,23 +21,25 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
     private readonly IErpSpecialPriceService _erpSpecialPriceService;
     private readonly IErpDataClearCacheService _erpDataClearCacheService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginService;
+    private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
+    private readonly IStaticCacheManager _staticCacheManager;
+    private readonly ErpDataSchedulerSettings _erpDataSchedulerSettings;
 
     #endregion
 
     #region Ctor
 
-    public ErpSpecialPriceSyncService(IStoreContext storeContext,
-        ISettingService settingService,
-        IProductService productService,
+    public ErpSpecialPriceSyncService(IProductService productService,
         ISyncLogService erpSyncLogService,
         IErpAccountService erpAccountService,
         IErpSalesOrgService erpSalesOrgService,
         IErpSpecialPriceService erpSpecialPriceService,
         IErpDataClearCacheService erpDataClearCacheService,
-        IErpIntegrationPluginManager erpIntegrationPluginService)
+        IErpIntegrationPluginManager erpIntegrationPluginService,
+        B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
+        IStaticCacheManager staticCacheManager,
+        ErpDataSchedulerSettings erpDataSchedulerSettings)
     {
-        _storeContext = storeContext;
-        _settingService = settingService;
         _productService = productService;
         _erpSyncLogService = erpSyncLogService;
         _erpAccountService = erpAccountService;
@@ -46,6 +47,9 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
         _erpSpecialPriceService = erpSpecialPriceService;
         _erpDataClearCacheService = erpDataClearCacheService;
         _erpIntegrationPluginService = erpIntegrationPluginService;
+        _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
+        _staticCacheManager = staticCacheManager;
+        _erpDataSchedulerSettings = erpDataSchedulerSettings;
     }
 
     #endregion
@@ -70,8 +74,6 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
         {
             #region Data collection
 
-            var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
-            var erpDataSchedulerSettings = await _settingService.LoadSettingAsync<ErpDataSchedulerSettings>(storeScope);
             var listOfSalesOrgs = new List<ErpSalesOrg>();
             var salesOrgCode = await erpIntegrationPlugin.GetSalesOrgCodeFromIntegrationSettings();
 
@@ -103,6 +105,9 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                 }
             }
 
+            var erpSpecialPriceInsertList = new List<ErpSpecialPrice>();
+            var erpSpecialPriceUpdateList = new List<ErpSpecialPrice>();
+
             #endregion
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
@@ -112,28 +117,29 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
 
             foreach (var salesOrg in listOfSalesOrgs)
             {
-                var oldErpAccounts = (List<ErpAccount>)await _erpAccountService.GetAllErpAccountsAsync(salesOrgId: salesOrg.Id);
+                var oldErpAccounts = await _erpAccountService.GetErpAccountsOfOnlyActiveErpNopUsersAsync(salesOrgId: salesOrg.Id);
                 if (!oldErpAccounts.Any())
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskName,
                         ErpSyncLevel.SpecialPrice,
-                        $"No Erp Accounts found with the Sales org : {salesOrg.Name}");
+                        $"No Erp Accounts found with Active Nop Users for Sales org : {salesOrg.Name}");
 
                     return false;
                 }
 
-                var lastErpSpecialPriceSynced = new ErpSpecialPrice();
+                var lastErpSpecialPriceSynced = (decimal)0.0;
                 var lastErpSpecialPriceSyncedOfErpAccount = "";
-                var lastErpSpecialPriceSyncedofProduct = "";
+                var lastErpSpecialPriceSyncedOfProduct = "";
                 var totalSyncedSoFar = 0;
                 var isError = false;
                 var lastErrorMessage = "";
 
                 foreach (var erpAccount in oldErpAccounts)
                 {
+                    var totalSyncedSoFarForThisAccount = 0;
                     var start = "0";
-                    var dateFrom = erpDataSchedulerSettings.SyncFromDate.HasValue ? erpDataSchedulerSettings.SyncFromDate.Value : DateTime.MinValue;
+                    var dateFrom = _erpDataSchedulerSettings.SyncFromDate ?? DateTime.MinValue;
 
                     while (true)
                     {
@@ -142,7 +148,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                             Start = start,
                             Location = salesOrg.Code,
                             DateFrom = erpAccount.LastPriceRefresh ?? dateFrom,
-                            AccountNumber= erpAccount.AccountNumber,
+                            AccountNumber = erpAccount.AccountNumber,
                         };
 
                         var response = await erpIntegrationPlugin.GetProductSpecialPricesFromErpAsync(erpGetRequestModel);
@@ -161,19 +167,24 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
 
                         start = response.ErpResponseModel.Next;
 
-                        foreach (var erpSpecialPrice in response.Data)
+                        var responseData = response.Data
+                            .Where(x => !string.IsNullOrWhiteSpace(x.Sku))
+                            .GroupBy(x => x.Sku)
+                            .Select(g => g.Last());
+
+                        foreach (var erpSpecialPrice in responseData)
                         {
                             var product = await _productService.GetProductBySkuAsync(erpSpecialPrice.Sku);
                             if (product is null)
                             {
-                                break;
+                                continue;
                             }
+
                             var oldSpecialPrice = await _erpSpecialPriceService.GetErpSpecialPricesByErpAccountIdAndNopProductIdAsync(erpAccount.Id, product.Id);
 
-                            if (oldSpecialPrice == null)
-                                oldSpecialPrice = new ErpSpecialPrice();
-                            if( oldSpecialPrice.Id <= 0)
+                            if (oldSpecialPrice is null)
                             {
+                                oldSpecialPrice = new ErpSpecialPrice();
                                 oldSpecialPrice.ErpAccountId = erpAccount.Id;
                                 oldSpecialPrice.NopProductId = product.Id;
                                 oldSpecialPrice.Price = erpSpecialPrice.SpecialPrice ?? 0;
@@ -183,38 +194,51 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                                 oldSpecialPrice.VolumeDiscount = true;
                                 oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;
                                 oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
-                                await _erpSpecialPriceService.InsertErpSpecialPriceAsync(oldSpecialPrice);
+                                erpSpecialPriceInsertList.Add(oldSpecialPrice);
                             }
                             else
                             {
                                 oldSpecialPrice.Price = erpSpecialPrice.SpecialPrice ?? 0;
                                 oldSpecialPrice.ListPrice = erpSpecialPrice.ListPrice ?? 0;
+                                oldSpecialPrice.PercentageOfAllocatedStock = 0;
+                                oldSpecialPrice.PercentageOfAllocatedStockResetTimeUtc = DateTime.MinValue;
+                                oldSpecialPrice.VolumeDiscount = true;
                                 oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;
                                 oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
-                                await _erpSpecialPriceService.UpdateErpSpecialPriceAsync(oldSpecialPrice);
+                                erpSpecialPriceUpdateList.Add(oldSpecialPrice);
                             }
 
-                            lastErpSpecialPriceSynced = oldSpecialPrice;
+                            lastErpSpecialPriceSynced = oldSpecialPrice.Price;
                             lastErpSpecialPriceSyncedOfErpAccount = erpAccount.AccountNumber;
-                            lastErpSpecialPriceSyncedofProduct = product.Sku;
+                            lastErpSpecialPriceSyncedOfProduct = product.Sku;
                             totalSyncedSoFar++;
+                            totalSyncedSoFarForThisAccount++;
+                        }
 
-                            #region Cache clear for this erp special price
+                        if (erpSpecialPriceInsertList.Count != 0)
+                        {
+                            await _erpSpecialPriceService.InsertErpSpecialPricesAsync(erpSpecialPriceInsertList);
+                            erpSpecialPriceInsertList.Clear();
+                        }
 
-                            await _erpDataClearCacheService.ClearCacheOfEntity(oldSpecialPrice, oldSpecialPrice.Id);
-
-                            #endregion
+                        if (erpSpecialPriceUpdateList.Count != 0)
+                        {
+                            await _erpSpecialPriceService.UpdateErpSpecialPricesAsync(erpSpecialPriceUpdateList);
+                            await _erpDataClearCacheService.ClearCacheOfEntities(erpSpecialPriceUpdateList);
+                            erpSpecialPriceUpdateList.Clear();
                         }
                     }
+
                     erpAccount.LastPriceRefresh = DateTime.UtcNow;
-
                     await _erpAccountService.UpdateErpAccountAsync(erpAccount);
+                    await _erpDataClearCacheService.ClearCacheOfEntity(erpAccount);
 
-                    #region Cache clear for this erp account
-
-                    await _erpDataClearCacheService.ClearCacheOfEntity(erpAccount, erpAccount.Id);
-
-                    #endregion
+                    await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                        ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskName,
+                        ErpSyncLevel.SpecialPrice,
+                        $"Total {totalSyncedSoFarForThisAccount} Erp Special Prices synced " +
+                        $"for Erp Account: {erpAccount.AccountNumber} ({erpAccount.AccountName}) " +
+                        $"Sales Org: {salesOrg.Name}");
                 }
 
                 if (!isError)
@@ -236,9 +260,16 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                 await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskName,
                     ErpSyncLevel.SpecialPrice,
-                    (lastErpSpecialPriceSynced is not null ? $"The last synced Erp Special Price: {lastErpSpecialPriceSynced.Price}, on Product: {lastErpSpecialPriceSyncedofProduct}, of Erp Account: {lastErpSpecialPriceSyncedOfErpAccount} for Sales Org: {salesOrg.Name}. " : string.Empty) + $"Total synced in this session: {totalSyncedSoFar}");
-
+                    !string.IsNullOrWhiteSpace(lastErpSpecialPriceSyncedOfErpAccount) &&
+                    !string.IsNullOrWhiteSpace(lastErpSpecialPriceSyncedOfProduct) ?
+                    ($"The last synced Erp Special Price: {lastErpSpecialPriceSynced}, on Product: {lastErpSpecialPriceSyncedOfProduct}, " +
+                    $"of Erp Account: {lastErpSpecialPriceSyncedOfErpAccount} for Sales Org: {salesOrg.Name}. ") : string.Empty +
+                    $"Total synced in this session: {totalSyncedSoFar}");
             }
+
+            await _staticCacheManager.RemoveByPrefixAsync("nop.pres.jcarousel.");
+            await _staticCacheManager.RemoveByPrefixAsync("Nop.totals.productprice.");
+            await _staticCacheManager.RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpProductPricingPrefix);
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskName,
@@ -249,6 +280,10 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
         }
         catch (Exception ex)
         {
+            await _staticCacheManager.RemoveByPrefixAsync("nop.pres.jcarousel.");
+            await _staticCacheManager.RemoveByPrefixAsync("Nop.totals.productprice.");
+            await _staticCacheManager.RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpProductPricingPrefix);
+
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskName,
                 ErpSyncLevel.SpecialPrice,

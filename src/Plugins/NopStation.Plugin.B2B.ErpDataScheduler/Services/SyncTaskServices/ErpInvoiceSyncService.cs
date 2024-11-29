@@ -1,6 +1,4 @@
-﻿using Nop.Core;
-using Nop.Core.Domain.Directory;
-using Nop.Services.Configuration;
+﻿using Nop.Core.Domain.Directory;
 using Nop.Services.Directory;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
@@ -14,8 +12,6 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
 {
     #region Fields
 
-    private readonly IStoreContext _storeContext;
-    private readonly ISettingService _settingService;
     private readonly ICurrencyService _currencyService;
     private readonly CurrencySettings _currencySettings;
     private readonly ISyncLogService _erpSyncLogService;
@@ -24,25 +20,22 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly IErpDataClearCacheService _erpDataClearCacheService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginService;
+    private readonly ErpDataSchedulerSettings _erpDataSchedulerSettings;
 
     #endregion
 
     #region Ctor
 
-    public ErpInvoiceSyncService(
-        IStoreContext storeContext,
-        ISettingService settingService,
-        ICurrencyService currencyService,
+    public ErpInvoiceSyncService(ICurrencyService currencyService,
         CurrencySettings currencySettings,
         ISyncLogService erpSyncLogService,
         IErpAccountService erpAccountService,
         IErpInvoiceService erpInvoiceService,
         IErpSalesOrgService erpSalesOrgService,
         IErpDataClearCacheService erpDataClearCacheService,
-        IErpIntegrationPluginManager erpIntegrationPluginService)
+        IErpIntegrationPluginManager erpIntegrationPluginService,
+        ErpDataSchedulerSettings erpDataSchedulerSettings)
     {
-        _storeContext = storeContext;
-        _settingService = settingService;
         _currencyService = currencyService;
         _currencySettings = currencySettings;
         _erpSyncLogService = erpSyncLogService;
@@ -51,6 +44,7 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
         _erpSalesOrgService = erpSalesOrgService;
         _erpDataClearCacheService = erpDataClearCacheService;
         _erpIntegrationPluginService = erpIntegrationPluginService;
+        _erpDataSchedulerSettings = erpDataSchedulerSettings;
     }
 
     #endregion
@@ -76,10 +70,7 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
             #region Data collections
 
             var listOfSalesOrgs = new List<ErpSalesOrg>();
-            var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
-            var erpDataSchedulerSettings = await _settingService.LoadSettingAsync<ErpDataSchedulerSettings>(storeScope);
             var salesOrgCode = await erpIntegrationPlugin.GetSalesOrgCodeFromIntegrationSettings();
-            var currency = await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId);
 
             if (!string.IsNullOrWhiteSpace(salesOrgCode))
             {
@@ -109,6 +100,11 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                 }
             }
 
+            var currency = await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId);
+
+            var erpInvoiceUpdateList = new List<ErpInvoice>();
+            var erpInvoiceInsertList = new List<ErpInvoice>();
+
             #endregion
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
@@ -118,19 +114,19 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
 
             foreach (var salesOrg in listOfSalesOrgs)
             {
-                var oldErpAccounts = (List<ErpAccount>)await _erpAccountService.GetAllErpAccountsAsync(salesOrgId: salesOrg.Id);
-                if (oldErpAccounts.Count == 0)
+                var oldErpAccounts = await _erpAccountService.GetErpAccountsOfOnlyActiveErpNopUsersAsync(salesOrgId: salesOrg.Id);
+
+                if (oldErpAccounts == null || oldErpAccounts?.Count == 0)
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
                         ErpSyncLevel.Invoice,
-                        $"No Erp Accounts found with the Sales org : {salesOrg.Name}");
-
+                        $"No Erp Accounts found with Active Nop Users for Sales org : {salesOrg.Name}");
                     continue;
                 }
 
-                var lastErpInvoiceSynced = new ErpInvoice();
-                var lastErpInvoiceSyncedOfErpAccount = "";
+                var lastErpInvoiceSynced = string.Empty;
+                var lastErpInvoiceSyncedOfErpAccount = string.Empty;
                 var totalSyncedSoFar = 0;
                 var isError = false;
                 var lastErrorMessage = "";
@@ -138,8 +134,8 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                 foreach (var erpAccount in oldErpAccounts)
                 {
                     var start = "0";
-                    var erpInvoices = (List<ErpInvoice>)await _erpInvoiceService.GetErpInvoicesByErpAccountIdAsync(erpAccount.Id);
-                    var dateFrom = erpDataSchedulerSettings.SyncFromDate.HasValue ? erpDataSchedulerSettings.SyncFromDate.Value : DateTime.MinValue;
+                    var erpInvoices = await _erpInvoiceService.GetErpInvoicesByErpAccountIdAsync(erpAccount.Id);
+                    var dateFrom = _erpDataSchedulerSettings.SyncFromDate ?? DateTime.MinValue;
 
                     while (true)
                     {
@@ -167,11 +163,41 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
 
                         start = response.ErpResponseModel.Next;
 
-                        foreach (var erpInvoice in response.Data)
-                        {
-                            var oldErpInvoiceByThisAccount = erpInvoices.Find(inv => inv.ErpDocumentNumber == erpInvoice.ErpDocumentNumber) ?? new ErpInvoice();
+                        var responseData = response.Data
+                            .Where(x => !string.IsNullOrWhiteSpace(x.ErpDocumentNumber))
+                            .GroupBy(x => x.ErpDocumentNumber)
+                            .Select(g => g.Last());
 
-                            if (oldErpInvoiceByThisAccount.Id <= 0)
+                        foreach (var erpInvoice in responseData)
+                        {
+                            var oldErpInvoiceByThisAccount = erpInvoices.FirstOrDefault(inv => inv.ErpDocumentNumber == erpInvoice.ErpDocumentNumber);
+
+                            if (oldErpInvoiceByThisAccount == null)
+                            {
+                                oldErpInvoiceByThisAccount = new ErpInvoice();
+                                oldErpInvoiceByThisAccount.ShipmentDateUtc = erpInvoice.ShipmentDateUtc;
+                                oldErpInvoiceByThisAccount.PostingDateUtc = erpInvoice.PostingDateUtc ?? DateTime.UtcNow;
+                                oldErpInvoiceByThisAccount.DocumentDateUtc = erpInvoice.DocumentDateUtc;
+                                oldErpInvoiceByThisAccount.ErpDocumentNumber = erpInvoice.ErpDocumentNumber;
+                                oldErpInvoiceByThisAccount.ErpOrderNumber = erpInvoice.ErpOrderNumber;
+                                oldErpInvoiceByThisAccount.Description = erpInvoice.Description;
+                                oldErpInvoiceByThisAccount.ErpAccountId = erpAccount.Id;
+                                oldErpInvoiceByThisAccount.CurrencyCode = currency.CurrencyCode;
+                                oldErpInvoiceByThisAccount.PODSignedById = erpInvoice.PODSignedById;
+                                oldErpInvoiceByThisAccount.PODSignedOnUtc = erpInvoice.PODSignedOnUtc;
+                                oldErpInvoiceByThisAccount.RelatedDocumentNo = erpInvoice.RelatedDocumentNo;
+                                oldErpInvoiceByThisAccount.ItemCount = erpInvoice?.Items?.Count ?? 0;
+                                oldErpInvoiceByThisAccount.DueDateUtc = erpInvoice?.DueDateUtc ?? DateTime.UtcNow;
+
+                                if (Enum.TryParse(erpInvoice?.DocumentType, out ErpDocumentType parsedDocumentType))
+                                {
+                                    oldErpInvoiceByThisAccount.DocumentType = parsedDocumentType;
+                                }
+                                oldErpInvoiceByThisAccount.DocumentDisplayName = parsedDocumentType.ToString();
+
+                                erpInvoiceInsertList.Add(oldErpInvoiceByThisAccount);
+                            }
+                            else
                             {
                                 oldErpInvoiceByThisAccount.ShipmentDateUtc = erpInvoice.ShipmentDateUtc;
                                 oldErpInvoiceByThisAccount.PostingDateUtc = erpInvoice.PostingDateUtc ?? DateTime.UtcNow;
@@ -184,44 +210,34 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                                 oldErpInvoiceByThisAccount.PODSignedById = erpInvoice.PODSignedById;
                                 oldErpInvoiceByThisAccount.PODSignedOnUtc = erpInvoice.PODSignedOnUtc;
                                 oldErpInvoiceByThisAccount.RelatedDocumentNo = erpInvoice.RelatedDocumentNo;
-                                oldErpInvoiceByThisAccount.ItemCount = erpInvoice.Items?.Count ?? 0;
+                                oldErpInvoiceByThisAccount.ItemCount = erpInvoice?.Items?.Count ?? 0;
+                                oldErpInvoiceByThisAccount.DueDateUtc = erpInvoice?.DueDateUtc ?? DateTime.UtcNow;
 
-                                if (Enum.TryParse(erpInvoice.DocumentType, out ErpDocumentType parsedDocumentType))
+                                if (Enum.TryParse(erpInvoice?.DocumentType, out ErpDocumentType parsedDocumentType))
                                 {
                                     oldErpInvoiceByThisAccount.DocumentType = parsedDocumentType;
-                                    oldErpInvoiceByThisAccount.DocumentDisplayName = parsedDocumentType.ToString();
                                 }
+                                oldErpInvoiceByThisAccount.DocumentDisplayName = parsedDocumentType.ToString();
 
-                                await _erpInvoiceService.InsertErpInvoiceAsync(oldErpInvoiceByThisAccount);
-                            }
-                            else
-                            {
-                                oldErpInvoiceByThisAccount.ErpDocumentNumber = erpInvoice.ErpDocumentNumber;
-                                oldErpInvoiceByThisAccount.ErpOrderNumber = erpInvoice.ErpOrderNumber;
-                                oldErpInvoiceByThisAccount.Description = erpInvoice.Description;
-                                oldErpInvoiceByThisAccount.ErpAccountId = erpAccount.Id;
-                                oldErpInvoiceByThisAccount.CurrencyCode = currency.CurrencyCode;
-                                oldErpInvoiceByThisAccount.RelatedDocumentNo = erpInvoice.RelatedDocumentNo;
-                                oldErpInvoiceByThisAccount.ItemCount = erpInvoice.Items?.Count ?? 0;
-
-                                if (Enum.TryParse(erpInvoice.DocumentType, out ErpDocumentType parsedDocumentType))
-                                {
-                                    oldErpInvoiceByThisAccount.DocumentType = parsedDocumentType;
-                                    oldErpInvoiceByThisAccount.DocumentDisplayName = parsedDocumentType.ToString();
-                                }
-
-                                await _erpInvoiceService.UpdateErpInvoiceAsync(oldErpInvoiceByThisAccount);
+                                erpInvoiceUpdateList.Add(oldErpInvoiceByThisAccount);
                             }
 
-                            lastErpInvoiceSynced = oldErpInvoiceByThisAccount;
+                            lastErpInvoiceSynced = oldErpInvoiceByThisAccount.ErpDocumentNumber;
                             lastErpInvoiceSyncedOfErpAccount = erpAccount.AccountNumber;
                             totalSyncedSoFar++;
+                        }
 
-                            #region Cache clear for this erp invoice
+                        if (erpInvoiceInsertList.Count != 0)
+                        {
+                            await _erpInvoiceService.InsertErpInvoicesAsync(erpInvoiceInsertList);
+                            erpInvoiceInsertList.Clear();
+                        }
 
-                            await _erpDataClearCacheService.ClearCacheOfEntity(oldErpInvoiceByThisAccount, oldErpInvoiceByThisAccount.Id);
-
-                            #endregion
+                        if (erpInvoiceUpdateList.Count != 0)
+                        {
+                            await _erpInvoiceService.UpdateErpInvoicesAsync(erpInvoiceUpdateList);
+                            await _erpDataClearCacheService.ClearCacheOfEntities(erpInvoiceUpdateList);
+                            erpInvoiceUpdateList.Clear();
                         }
                     }
                 }
@@ -245,8 +261,10 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                 await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
                     ErpSyncLevel.Invoice,
-                    (lastErpInvoiceSynced is not null ?
-                    $"The last synced Erp Invoice: {lastErpInvoiceSynced.ErpDocumentNumber}, of Erp Account: {lastErpInvoiceSyncedOfErpAccount} for Sales Org: {salesOrg.Name}. " : string.Empty) + $"Total synced in this session: {totalSyncedSoFar}");
+                    (!string.IsNullOrWhiteSpace(lastErpInvoiceSynced) ?
+                    $"The last synced Erp Invoice: {lastErpInvoiceSynced}, of Erp Account: {lastErpInvoiceSyncedOfErpAccount} " +
+                    $"for Sales Org: {salesOrg.Name}. " : string.Empty) +
+                    $"Total synced in this session: {totalSyncedSoFar}");
             }
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(

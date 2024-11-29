@@ -1,8 +1,9 @@
-﻿@using NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure;
-@using NopStation.Plugin.B2B.B2BB2CFeatures.Model.ErpAccountPublic;
-@using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
-@using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
-@using Nop.Web.Models.Customer;
+﻿@using NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Model.ErpAccountPublic
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Services
+@using Nop.Web.Models.Customer
+
 @model ErpAccountQuoteOrderSearchModel
 @inject IStoreContext storeContext
 @inject IErpCustomerFunctionalityService b2BCustomerFunctionality
@@ -73,6 +74,10 @@
         .btn-default:hover {
             color: white;
         }
+
+    a {
+        color: inherit;
+    }
 </style>
 
 <div class="page account-page order-list-page-quotes">
@@ -83,15 +88,10 @@
         <div class="fieldset">
             <div class="row">
                 <div class="col-sm-6">
-                    <div class="row">
-                        <div class="col-md-6 text-right">
-                            <div class="my-inputs">
-                                <label asp-for="SearchQuoteNumberOrName" asp-postfix=":"></label>
-                            </div>
-                        </div>
+                    <div class="row"> 
                         <div class="col-md-6  text-left">
                             <div class="my-inputs">
-                                <input asp-for="SearchQuoteNumberOrName" />
+                                <input asp-for="SearchQuoteNumberOrName" placeholder="@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.SearchOrderNumberOrName")" />
                             </div>
                         </div>
                     </div>
@@ -99,29 +99,19 @@
             </div>
             <div class="row">
                 <div class="col-sm-6">
-                    <div class="row">
-                        <div class="col-md-6 text-right">
-                            <div class="my-inputs">
-                                <label asp-for="SearchOrderDateFrom" asp-postfix=":"></label>
-                            </div>
-                        </div>
+                    <div class="row"> 
                         <div class="col-md-6  text-left">
                             <div class="my-inputs">
-                                <input asp-for="SearchOrderDateFrom" type="date" />
+                                <input asp-for="SearchOrderDateFrom" type="text" placeholder="@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.SearchOrderDateFrom")" onfocus="(this.type='date')" onblur="(this.type='text')" />
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-6">
-                    <div class="row">
-                        <div class="col-md-6 text-right">
-                            <div class="my-inputs">
-                                <label asp-for="SearchOrderDateTo" asp-postfix=":"></label>
-                            </div>
-                        </div>
+                    <div class="row"> 
                         <div class="col-md-6 text-left">
                             <div class="my-inputs">
-                                <input asp-for="SearchOrderDateTo" type="date" />
+                                <input asp-for="SearchOrderDateTo" type="text" placeholder="@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.SearchOrderDateTo")" onfocus="(this.type='date')" onblur="(this.type='text')" />
                             </div>
                         </div>
                     </div>
@@ -234,8 +224,7 @@
             @await Html.PartialAsync("Table", gridModel)
         </div>
     </div>
-</div>
-</div>
+</div> 
 
 <div id="qouteOrderListConvertConfirmAcceptDialog" title="@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.ConvertConfirm")" style="display: none;">
     <form asp-controller="OverridenOrder" asp-action="ReOrder" class="order-confirm-accept-form" method="post" enctype="multipart/form-data">
@@ -304,7 +293,6 @@
     }
 
     function renderQouteOrderLink(data, type, row, meta) {
-
         if (row.ExpiryDate == null) {
             return '<button type="button" class="btn btn-disabled" disabled>@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.Reorder.NoData")</button>';
         }
@@ -312,8 +300,8 @@
             return '<button type="button" class="btn btn-disabled" disabled>@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.Reorder.AlreadyConverted")</button>';
         }
         else if (row.IsQuoteExpired) {
-    @*return '<button type="button" class="btn btn-disabled" disabled>@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.Reorder.Expired")</button>';*@
-                                           return '<button id="quoteOrderListReorderButton' + data + '" type="button" onclick="reOrderLinkGenerator(' + data + ' )" class="btn btn-default">@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.Reorder.Requote")</button>';
+            @*return '<button type="button" class="btn btn-disabled" disabled>@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.Reorder.Expired")</button>';*@
+            return '<button id="quoteOrderListReorderButton' + data + '" type="button" onclick="reOrderLinkGenerator(' + data + ' )" class="btn btn-default">@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.Reorder.Requote")</button>';
         }
         else {
             if (row.ERPOrderStatus == "Failed" || row.ERPOrderStatus == "Rejected") {

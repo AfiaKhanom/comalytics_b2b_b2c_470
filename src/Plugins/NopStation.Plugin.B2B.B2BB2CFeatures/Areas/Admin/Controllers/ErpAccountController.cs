@@ -55,8 +55,7 @@ public class ErpAccountController : NopStationAdminController
 
     #region Ctor
 
-    public ErpAccountController(
-        IStoreContext storeContext,
+    public ErpAccountController(IStoreContext storeContext,
         IAddressService addressService,
         ICountryService countryService,
         ISettingService settingService,
@@ -311,12 +310,11 @@ public class ErpAccountController : NopStationAdminController
                 erpAccount.OverrideStockDisplayFormatConfigSetting = model.OverrideStockDisplayFormatConfigSetting;
                 erpAccount.ErpAccountStatusTypeId = model.ErpAccountStatusTypeId;
                 erpAccount.B2BPriceGroupCodeId = model.B2BPriceGroupCodeId;
-                erpAccount.LastPriceRefresh = model.LastPriceRefresh;
+                //erpAccount.LastPriceRefresh = model.LastPriceRefresh;
                 erpAccount.UpdatedOnUtc = DateTime.UtcNow;
                 erpAccount.UpdatedById = (await _b2BB2CWorkContext.GetCurrentCustomerAsync()).Id;
 
                 await _erpAccountService.UpdateErpAccountAsync(erpAccount);
- 
 
                 //address
                 var address = await _addressService.GetAddressByIdAsync(erpAccount.BillingAddressId ?? 0);

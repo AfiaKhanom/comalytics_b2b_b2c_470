@@ -10,12 +10,14 @@ using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
+using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Discounts;
 using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Shipping;
 using Nop.Data;
 using Nop.Services.Catalog;
+using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
@@ -25,6 +27,7 @@ using Nop.Services.Shipping.Date;
 using Nop.Services.Stores;
 using Nop.Web.Framework;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpSpecificationAttributeService;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Infrastructure;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
@@ -46,6 +49,7 @@ public class OverridenProductService : ProductService
     private readonly ICategoryService _categoryService;
     private readonly IErpNopUserService _erpNopUserService;
     private readonly IErpWarehouseSalesOrgMapService _erpWarehouseSalesOrgMapService;
+    private readonly IGenericAttributeService _genericAttributeService;
 
     #endregion
 
@@ -99,7 +103,8 @@ public class OverridenProductService : ProductService
         ICategoryService categoryService,
         IErpSpecialPriceService erpSpecialPriceService,
         IErpNopUserService erpNopUserService,
-        IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMapService) : base(catalogSettings,
+        IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMapService,
+        IGenericAttributeService genericAttributeService) : base(catalogSettings,
             commonSettings,
             aclService,
             customerService,
@@ -148,20 +153,12 @@ public class OverridenProductService : ProductService
         _categoryService = categoryService;
         _erpNopUserService = erpNopUserService;
         _erpWarehouseSalesOrgMapService = erpWarehouseSalesOrgMapService;
+        _genericAttributeService = genericAttributeService;
     }
 
     #endregion
 
     #region Utilites
-
-    /*protected async Task TemporaryDeleteProductsForMismatchedPreFilterFacet(IEnumerable<Product> Products)
-    {
-        foreach (var product in Products)
-        {
-            product.Deleted = true;
-            product.Published = false;
-        }
-    }*/
 
     private bool IsAdminRoute()
     {
@@ -170,6 +167,13 @@ public class OverridenProductService : ProductService
             return true;
 
         return false;
+    }
+
+    private async Task<ErpAccount> GetErpAccountByCurrentCustomerAsync()
+    {
+        var currCustomer = await _workContext.GetCurrentCustomerAsync();
+        var impersonatedCustomerId = await _genericAttributeService.GetAttributeAsync<int?>(currCustomer, NopCustomerDefaults.ImpersonatedCustomerIdAttribute);
+        return await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(impersonatedCustomerId ?? currCustomer.Id);
     }
 
     /// <summary>
@@ -185,7 +189,7 @@ public class OverridenProductService : ProductService
 
         // seperate consideration for B2B and non B2B
 
-        #region B2B Account
+        #region B2B
 
         var b2bAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
 
@@ -348,8 +352,6 @@ public class OverridenProductService : ProductService
         bool showHidden = false,
         bool? overridePublished = null)
     {
-        var currCustomer = await _workContext.GetCurrentCustomerAsync();
-
         #region Default Nop
 
         //some databases don't support int.MaxValue
@@ -583,10 +585,10 @@ public class OverridenProductService : ProductService
         #endregion
 
         #region B2B
-        
-        var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
 
-        if (!IsAdminRoute() && b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
+        var b2BAccount = await GetErpAccountByCurrentCustomerAsync();
+
+        if (b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
         {
             if (b2BAccount.PreFilterFacets?.Trim() == null)
             {
@@ -644,7 +646,7 @@ public class OverridenProductService : ProductService
 
                 var productSpecificationQuery =
                     from psa in _productSpecificationAttributeRepository.Table
-                    where psa.AllowFiltering && optionIdsBySpecificationAttribute.Contains(psa.SpecificationAttributeOptionId)
+                    where optionIdsBySpecificationAttribute.Contains(psa.SpecificationAttributeOptionId)
                     select psa;
 
                 productsQuery =
@@ -665,12 +667,12 @@ public class OverridenProductService : ProductService
     {
         IList<int> filteredSpecs = null;
         IList<int> excludeFilteredSpecs = null;
-        var currCustomer = await _workContext.GetCurrentCustomerAsync();
 
-        #region B2B Account
+        #region B2B
 
-        var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
-        if (!IsAdminRoute() && b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
+        var b2BAccount = await GetErpAccountByCurrentCustomerAsync();
+
+        if (b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
         {
             filteredSpecs = await _erpSpecificationAttributeService.GetSpecificationAttributeOptionIdsByNames(_b2BB2CFeaturesSettings.PreFilterFacetSpecificationAttributeId, b2BAccount.PreFilterFacets?.Trim(), b2BAccount.Id);
             var specialIncludeSpecIds = await _erpSpecificationAttributeService.GetSpecificationAttributeOptionIdsByNames(_b2BB2CFeaturesSettings.PreFilterFacetSpecificationAttributeId, "", b2BAccount.Id);
@@ -746,8 +748,6 @@ public class OverridenProductService : ProductService
         if (productId == 0)
             return null;
 
-        var currCustomer = await _workContext.GetCurrentCustomerAsync();
-
         var key = _staticCacheManager.PrepareKeyForDefaultCache(B2BB2CFeaturesDefaults.ProductsByIdCacheKey, productId);
         var product = await _staticCacheManager.GetAsync(key, async () =>
         {
@@ -756,8 +756,9 @@ public class OverridenProductService : ProductService
 
         #region B2B
 
-        var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
-        if (!IsAdminRoute() && b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
+        var b2BAccount = await GetErpAccountByCurrentCustomerAsync();
+
+        if (b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
         {
             var productSpecificationAttributes = await _specificationAttributeService.GetProductSpecificationAttributesAsync(product.Id);
             var productSpecificationAttributeIds = productSpecificationAttributes.Select(x => x.SpecificationAttributeOptionId);
@@ -788,19 +789,17 @@ public class OverridenProductService : ProductService
 
             if (!commonSpecIds.Any())
             {
-                    return null;
+                return null;
             }
-            if (specialExcludeSpecIds != null && specialExcludeSpecIds.Any())
+            if (specialExcludeSpecIds != null && specialExcludeSpecIds.Any() && productSpecificationAttributeIds != null && productSpecificationAttributeIds.Any())
             {
-                if (productSpecificationAttributeIds != null && productSpecificationAttributeIds.Any())
+                var commonSpecificationIds = specialExcludeSpecIds.Intersect(productSpecificationAttributeIds);
+                if (commonSpecificationIds.Any())
                 {
-                    var commonSpecificationIds = specialExcludeSpecIds.Intersect(productSpecificationAttributeIds);
-                    if (commonSpecificationIds.Any())
-                    {
-                            return null;
-                    }
+                    return null;
                 }
             }
+
         }
 
         #endregion
@@ -818,8 +817,6 @@ public class OverridenProductService : ProductService
         if (productIds == null || productIds.Length == 0)
             return new List<Product>();
 
-        var currCustomer = await _workContext.GetCurrentCustomerAsync();
-
         var query = from p in _productRepository.Table
                     where productIds.Contains(p.Id) && !p.Deleted
                     select p;
@@ -827,10 +824,11 @@ public class OverridenProductService : ProductService
         IList<int> filteredSpecs = null;
         IList<int> excludeFilteredSpecs = null;
 
-        #region B2B Account
+        #region B2B
 
-        var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
-        if (!IsAdminRoute() && b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
+        var b2BAccount = await GetErpAccountByCurrentCustomerAsync();
+
+        if (b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
         {
             filteredSpecs = await _erpSpecificationAttributeService.GetSpecificationAttributeOptionIdsByNames(_b2BB2CFeaturesSettings.PreFilterFacetSpecificationAttributeId, b2BAccount.PreFilterFacets?.Trim(), b2BAccount.Id);
 
@@ -850,9 +848,7 @@ public class OverridenProductService : ProductService
             {
                 return new List<Product>();
             }
-        }
-        if (!IsAdminRoute() && b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
-        {
+
             excludeFilteredSpecs = new List<int>();
 
             var specialExcludeSpecIds = await _erpSpecificationAttributeService.GetSpecificationAttributeOptionIdsForExcludeByNames(_b2BB2CFeaturesSettings.PreFilterFacetSpecificationAttributeId, "" /*b2BAccount.SpecialExcludes?.Trim()*/);
@@ -922,15 +918,13 @@ public class OverridenProductService : ProductService
     {
         if (product == null)
             throw new ArgumentNullException(nameof(product));
-
-        var b2BCustomerAccountSettings = _settingService.LoadSetting<B2BB2CFeaturesSettings>((await _storeContext.GetCurrentStoreAsync()).Id);
-
+        
         if (product.ManageInventoryMethod != ManageInventoryMethod.ManageStock)
         {
             var categoryIds = new List<int>();
-            if (!string.IsNullOrWhiteSpace(b2BCustomerAccountSettings.SkipLiveStockCheckCategoryIds))
+            if (!string.IsNullOrWhiteSpace(_b2BB2CFeaturesSettings.SkipLiveStockCheckCategoryIds))
             {
-                categoryIds = b2BCustomerAccountSettings.SkipLiveStockCheckCategoryIds.Split(',').Select(int.Parse).ToList();
+                categoryIds = _b2BB2CFeaturesSettings.SkipLiveStockCheckCategoryIds.Split(',').Select(int.Parse).ToList();
             }
             var productCategories = await _categoryService.GetProductCategoriesByProductIdAsync(product.Id);
             foreach (var cat in productCategories)
@@ -948,17 +942,21 @@ public class OverridenProductService : ProductService
 
         #region B2B
 
-        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
-        var erpAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currentCustomer.Id);
-        if (!IsAdminRoute() && erpAccount != null)
+        var erpAccount = await GetErpAccountByCurrentCustomerAsync();
+
+        if (erpAccount != null)
         {
-            var erpNopUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(currentCustomer.Id);
+            var erpNopUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync((await _workContext.GetCurrentCustomerAsync()).Id);
             var productWarehouseInventory = new List<ProductWarehouseInventory>();
 
             if (erpNopUser != null)
             {
-                var warehouseIds = (await _erpWarehouseSalesOrgMapService.GetErpWarehouseSalesOrgMapsBySalesOrgIdAsync(erpAccount.ErpSalesOrgId))?.Select(s => s.NopWarehouseId)?.ToList();
-                productWarehouseInventory = (await GetAllProductWarehouseInventoryRecordsAsync(product.Id))?.Where(w => warehouseIds.Contains(w.WarehouseId)).ToList();
+                var warehouseIds = (await _erpWarehouseSalesOrgMapService
+                    .GetErpWarehouseSalesOrgMapsBySalesOrgIdAsync(erpAccount.ErpSalesOrgId))?
+                    .Select(s => s.NopWarehouseId)?.ToList();
+
+                productWarehouseInventory = (await GetAllProductWarehouseInventoryRecordsAsync(product.Id))?
+                    .Where(w => warehouseIds.Contains(w.WarehouseId)).ToList();
             }
 
             var totalStock = (decimal)productWarehouseInventory.Sum(x => x.StockQuantity);
@@ -967,9 +965,9 @@ public class OverridenProductService : ProductService
                 totalStock = totalStock - productWarehouseInventory.Sum(x => x.ReservedQuantity);
             }
 
-            if (b2BCustomerAccountSettings.UsePercentageOfAllocatedStock)
+            if (_b2BB2CFeaturesSettings.UsePercentageOfAllocatedStock)
             {
-                totalStock = totalStock * b2BCustomerAccountSettings.PercentageOfStockAllowed;
+                totalStock = totalStock * _b2BB2CFeaturesSettings.PercentageOfStockAllowed;
                 totalStock = totalStock / 100;
                 return (int)totalStock;
             }
@@ -1022,11 +1020,11 @@ public class OverridenProductService : ProductService
 
             #region B2B
 
-            var currCustomer = await _workContext.GetCurrentCustomerAsync();
-            var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer?.Id ?? 0);
+            var b2BAccount = await GetErpAccountByCurrentCustomerAsync();
+
             var filteredSpecOptions = new List<SpecificationAttributeOption>();
 
-            if (!IsAdminRoute() && b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
+            if (b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
             {
                 if (b2BAccount.PreFilterFacets?.Trim() == null)
                 {
@@ -1081,7 +1079,7 @@ public class OverridenProductService : ProductService
 
                     var productSpecificationQuery =
                         from psa in _productSpecificationAttributeRepository.Table
-                        where psa.AllowFiltering && optionIdsBySpecificationAttribute.Contains(psa.SpecificationAttributeOptionId)
+                        where optionIdsBySpecificationAttribute.Contains(psa.SpecificationAttributeOptionId)
                         select psa;
 
                     query =
@@ -1104,7 +1102,7 @@ public class OverridenProductService : ProductService
             return featuredProducts.Select(p => p.Id).ToList();
         });
 
-        if (!featuredProducts.Any() && featuredProductIds.Any())
+        if (!featuredProducts.Any() && (featuredProductIds != null && featuredProductIds.Any()))
             featuredProducts = await _productRepository.GetByIdsAsync(featuredProductIds, cache => default, false);
 
         return featuredProducts;
@@ -1142,11 +1140,11 @@ public class OverridenProductService : ProductService
 
             #region B2B
 
-            var currCustomer = await _workContext.GetCurrentCustomerAsync();
-            var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer?.Id ?? 0);
+            var b2BAccount = await GetErpAccountByCurrentCustomerAsync();
+
             var filteredSpecOptions = new List<SpecificationAttributeOption>();
 
-            if (!IsAdminRoute() && b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
+            if (b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
             {
                 if (b2BAccount.PreFilterFacets?.Trim() == null)
                 {
@@ -1201,7 +1199,7 @@ public class OverridenProductService : ProductService
 
                     var productSpecificationQuery =
                         from psa in _productSpecificationAttributeRepository.Table
-                        where psa.AllowFiltering && optionIdsBySpecificationAttribute.Contains(psa.SpecificationAttributeOptionId)
+                        where optionIdsBySpecificationAttribute.Contains(psa.SpecificationAttributeOptionId)
                         select psa;
 
                     query =
@@ -1254,10 +1252,11 @@ public class OverridenProductService : ProductService
 
         #region B2B
 
-        var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(customer?.Id ?? 0);
+        var b2BAccount = await GetErpAccountByCurrentCustomerAsync();
+
         var filteredSpecOptions = new List<SpecificationAttributeOption>();
 
-        if (!IsAdminRoute() && b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
+        if (b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
         {
             if (b2BAccount.PreFilterFacets?.Trim() == null)
             {
@@ -1312,7 +1311,7 @@ public class OverridenProductService : ProductService
 
                 var productSpecificationQuery =
                     from psa in _productSpecificationAttributeRepository.Table
-                    where psa.AllowFiltering && optionIdsBySpecificationAttribute.Contains(psa.SpecificationAttributeOptionId)
+                    where optionIdsBySpecificationAttribute.Contains(psa.SpecificationAttributeOptionId)
                     select psa;
 
                 query =
@@ -1329,6 +1328,81 @@ public class OverridenProductService : ProductService
         query = query.OrderByDescending(p => p.CreatedOnUtc);
 
         return await query.ToPagedListAsync(pageIndex, pageSize);
+    }
+
+    /// <summary>
+    /// Gets a product by SKU
+    /// </summary>
+    /// <param name="sku">SKU</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the product
+    /// </returns>
+    public override async Task<Product> GetProductBySkuAsync(string sku)
+    {
+        if (string.IsNullOrEmpty(sku))
+            return null;
+
+        sku = sku.Trim();
+
+        var query = from p in _productRepository.Table
+                    orderby p.Id
+                    where !p.Deleted &&
+                          p.Sku == sku
+                    select p;
+        var product = await query.FirstOrDefaultAsync();
+
+        #region B2B
+
+        var b2BAccount = await GetErpAccountByCurrentCustomerAsync();
+
+        if (b2BAccount != null && _b2BB2CFeaturesSettings.UsePrefilterFacet)
+        {
+            var productSpecificationAttributes = await _specificationAttributeService.GetProductSpecificationAttributesAsync(product.Id);
+            var productSpecificationAttributeIds = productSpecificationAttributes.Select(x => x.SpecificationAttributeOptionId);
+
+            var filteredSpecs = await _erpSpecificationAttributeService.GetSpecificationAttributeOptionIdsByNames(_b2BB2CFeaturesSettings.PreFilterFacetSpecificationAttributeId, b2BAccount.PreFilterFacets?.Trim(), b2BAccount.Id);
+            var specialIncludeSpecIds = await _erpSpecificationAttributeService.GetSpecificationAttributeOptionIdsByNames(_b2BB2CFeaturesSettings.PreFilterFacetSpecificationAttributeId, "" /*b2BAccount.SpecialIncludes?.Trim()*/, b2BAccount.Id);
+            var specialExcludeSpecIds = await _erpSpecificationAttributeService.GetSpecificationAttributeOptionIdsForExcludeByNames(_b2BB2CFeaturesSettings.PreFilterFacetSpecificationAttributeId, "" /*b2BAccount.SpecialExcludes?.Trim()*/);
+
+            if (specialIncludeSpecIds != null && specialIncludeSpecIds.Any())
+            {
+                foreach (var includeSpecId in specialIncludeSpecIds)
+                {
+                    if (!filteredSpecs.Contains(includeSpecId))
+                        filteredSpecs.Add(includeSpecId);
+                }
+            }
+
+            if (specialIncludeSpecIds != null && specialIncludeSpecIds.Any())
+            {
+                foreach (var includeSpecId in specialIncludeSpecIds)
+                {
+                    if (!filteredSpecs.Contains(includeSpecId))
+                        filteredSpecs.Add(includeSpecId);
+                }
+            }
+
+            var commonSpecIds = filteredSpecs.Intersect(productSpecificationAttributeIds);
+
+            if (!commonSpecIds.Any())
+            {
+                return null;
+            }
+            if (specialExcludeSpecIds != null && specialExcludeSpecIds.Any() && productSpecificationAttributeIds != null && productSpecificationAttributeIds.Any())
+            {
+                var commonSpecificationIds = specialExcludeSpecIds.Intersect(productSpecificationAttributeIds);
+                if (commonSpecificationIds.Any())
+                {
+                    return null;
+                }
+            }
+
+        }
+
+        #endregion
+
+        return product;
     }
 
     #endregion

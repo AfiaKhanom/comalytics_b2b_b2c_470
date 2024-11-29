@@ -1,6 +1,15 @@
 
 @media all and (max-width: 1024px) {
 
+  .html-account-page .master-column-wrapper {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+
+  .html-account-page .select-navigation.mobile {
+    margin-bottom: 35px;
+  }
+
 .header-upper .header-selectors-wrapper {
 	display: none;
 }

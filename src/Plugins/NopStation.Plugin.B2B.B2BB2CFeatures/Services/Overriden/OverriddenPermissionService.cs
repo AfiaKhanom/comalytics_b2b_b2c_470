@@ -14,96 +14,94 @@ using Nop.Services.Security;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
-namespace NopStation.Plugin.B2B.B2BB2CFeatures.Services.Overriden
+namespace NopStation.Plugin.B2B.B2BB2CFeatures.Services.Overriden;
+
+public class OverriddenPermissionService : PermissionService
 {
-    public class OverriddenPermissionService : PermissionService
+    #region Fields
+
+    private readonly ICustomerService _customerService;
+    private readonly ILocalizationService _localizationService;
+    private readonly IRepository<PermissionRecord> _permissionRecordRepository;
+    private readonly IRepository<PermissionRecordCustomerRoleMapping> _permissionRecordCustomerRoleMappingRepository;
+    private readonly IStaticCacheManager _staticCacheManager;
+    private readonly IWorkContext _workContext;
+    private readonly IErpNopUserAccountMapService _erpNopUserAccountMapService;
+    private readonly IServiceProvider _serviceProvider;
+
+    #endregion
+
+    #region Ctor
+
+    public OverriddenPermissionService(ICustomerService customerService,
+    ILocalizationService localizationService,
+    IRepository<PermissionRecord> permissionRecordRepository,
+    IRepository<PermissionRecordCustomerRoleMapping> permissionRecordCustomerRoleMappingRepository,
+    IStaticCacheManager staticCacheManager,
+    IWorkContext workContext,
+    IErpNopUserAccountMapService erpNopUserAccountMapService, IServiceProvider serviceProvider) : base(customerService,
+        localizationService,
+        permissionRecordRepository,
+        permissionRecordCustomerRoleMappingRepository,
+        staticCacheManager,
+        workContext)
     {
-        #region Fields
+        _customerService = customerService;
+        _localizationService = localizationService;
+        _permissionRecordRepository = permissionRecordRepository;
+        _permissionRecordCustomerRoleMappingRepository = permissionRecordCustomerRoleMappingRepository;
+        _staticCacheManager = staticCacheManager;
+        _workContext = workContext;
+        _erpNopUserAccountMapService = erpNopUserAccountMapService;
+        _serviceProvider = serviceProvider;
+    }
 
-        private readonly ICustomerService _customerService;
-        private readonly ILocalizationService _localizationService;
-        private readonly IRepository<PermissionRecord> _permissionRecordRepository;
-        private readonly IRepository<PermissionRecordCustomerRoleMapping> _permissionRecordCustomerRoleMappingRepository;
-        private readonly IStaticCacheManager _staticCacheManager;
-        private readonly IWorkContext _workContext;
-        private readonly IErpNopUserAccountMapService _erpNopUserAccountMapService;
-        private readonly IServiceProvider _serviceProvider;
+    #endregion
 
-        #endregion
+    #region Methods
+    public override async Task<bool> AuthorizeAsync(string permissionRecordSystemName, Customer customer)
+    {
+        if (string.IsNullOrEmpty(permissionRecordSystemName))
+            return false;
 
-        #region Ctor
+        var erpCustomerFunctionalityService = _serviceProvider.GetService<IErpCustomerFunctionalityService>();
+        var erpNopCustomer = await erpCustomerFunctionalityService.GetActiveErpNopUserByCustomerAsync(customer);
 
-        public OverriddenPermissionService(ICustomerService customerService,
-        ILocalizationService localizationService,
-        IRepository<PermissionRecord> permissionRecordRepository,
-        IRepository<PermissionRecordCustomerRoleMapping> permissionRecordCustomerRoleMappingRepository,
-        IStaticCacheManager staticCacheManager,
-        IWorkContext workContext,
-        IErpNopUserAccountMapService erpNopUserAccountMapService, IServiceProvider serviceProvider) :
-            base(customerService,
-            localizationService,
-            permissionRecordRepository,
-            permissionRecordCustomerRoleMappingRepository,
-            staticCacheManager,
-            workContext)
+        // If erpNop Customer 
+        if (erpNopCustomer != null)
         {
-            _customerService = customerService;
-            _localizationService = localizationService;
-            _permissionRecordRepository = permissionRecordRepository;
-            _permissionRecordCustomerRoleMappingRepository = permissionRecordCustomerRoleMappingRepository;
-            _staticCacheManager = staticCacheManager;
-            _workContext = workContext;
-            _erpNopUserAccountMapService = erpNopUserAccountMapService;
-            _serviceProvider = serviceProvider;
-        }
+            var erpNopUserAccountMap = await _erpNopUserAccountMapService.GetErpNopUserAccountMapByAccountAndUserIdAsync(erpNopCustomer.ErpAccountId, erpNopCustomer.Id);
 
-        #endregion
-
-        #region Methods
-        public override async Task<bool> AuthorizeAsync(string permissionRecordSystemName, Customer customer)
-        {
-            if (string.IsNullOrEmpty(permissionRecordSystemName))
-                return false;
-
-            var erpCustomerFunctionalityService = _serviceProvider.GetService<IErpCustomerFunctionalityService>();
-            var erpNopCustomer = await erpCustomerFunctionalityService.GetActiveErpNopUserByCustomerAsync(customer);
-
-            // If erpNop Customer 
-            if (erpNopCustomer != null)
+            if (erpNopUserAccountMap != null)
             {
-                var erpNopUserAccountMap = await _erpNopUserAccountMapService.GetErpNopUserAccountMapByAccountAndUserIdAsync(erpNopCustomer.ErpAccountId, erpNopCustomer.Id);
+                // Taking erp roles ids 
+                var roles = erpNopUserAccountMap.CustomerRolesIds.Split(',');
+                int[] customerRolesIds = roles.Select(c => int.Parse(c.ToString())).ToArray();
 
-                if (erpNopUserAccountMap != null)
+                // taking nop roles ids 
+                var nopRoles = await _customerService.GetCustomerRolesAsync(customer);
+                int[] nopRoleIds = nopRoles.Select(x => (int)x.Id).ToArray();
+
+                // concate roles and check
+                int[] combinedRoles = nopRoleIds.Concat(customerRolesIds).ToArray();
+
+                foreach (var role in combinedRoles)
                 {
-                    // Taking erp roles ids 
-                    var roles = erpNopUserAccountMap.CustomerRolesIds.Split(',');
-                    int[] customerRolesIds = roles.Select(c => int.Parse(c.ToString())).ToArray();
-
-                    // taking nop roles ids 
-                    var nopRoles = await _customerService.GetCustomerRolesAsync(customer);
-                    int[] nopRoleIds = nopRoles.Select(x => (int)x.Id).ToArray();
-
-                    // concate roles and check
-                    int[] combinedRoles = nopRoleIds.Concat(customerRolesIds).ToArray();
-
-                    foreach (var role in combinedRoles)
-                    {
-                        if (await AuthorizeAsync(permissionRecordSystemName, role))
-                            return true;
-                    }
+                    if (await AuthorizeAsync(permissionRecordSystemName, role))
+                        return true;
                 }
             }
-            else
-            {
-                var customerRoles = await _customerService.GetCustomerRolesAsync(customer);
-                foreach (var role in customerRoles)
-                    if (await AuthorizeAsync(permissionRecordSystemName, role.Id))
-                        return true;
-            }
-
-            return false;
+        }
+        else
+        {
+            var customerRoles = await _customerService.GetCustomerRolesAsync(customer);
+            foreach (var role in customerRoles)
+                if (await AuthorizeAsync(permissionRecordSystemName, role.Id))
+                    return true;
         }
 
-        #endregion
+        return false;
     }
+
+    #endregion
 }

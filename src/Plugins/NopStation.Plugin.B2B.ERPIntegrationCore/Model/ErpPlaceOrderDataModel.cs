@@ -41,4 +41,6 @@ public class ErpPlaceOrderDataModel
     public DateTime? DeliveryDate { get; set; }
     public DateTime? DateRequired { get; set; }
     public IList<ErpPlaceOrderItemDataModel> ErpPlaceOrderItemDatas { get; set; }
+    public string AccountName { get; set; }
+    public decimal ShippingAmount { get; set; }
 }

@@ -282,18 +282,18 @@
                                                     $('#quantity-up-@(item.Id)').on('click',
                                                         function (e) {
                                                             var input = $(document).find('#itemquantity@(item.Id)');
-                                                            var oldValue = parseInt(input.val());
+                                                            @* var oldValue = parseInt(input.val());
                                                             var newVal = oldValue + 1;
-                                                            input.val(newVal.toString());
+                                                            input.val(newVal.toString()); *@
                                                             input.trigger("change");
                                                         });
 
                                                     $('#quantity-down-@(item.Id)').on('click',
                                                         function (e) {
                                                             var input = $(document).find('#itemquantity@(item.Id)');
-                                                            var oldValue = parseInt(input.val());
+                                                            @* var oldValue = parseInt(input.val());
                                                             var newVal = oldValue - 1;
-                                                            input.val(newVal.toString());
+                                                            input.val(newVal.toString()); *@
                                                             input.trigger("change");
                                                         });
                                                 });

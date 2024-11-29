@@ -72,11 +72,11 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure
 
             endpointRouteBuilder.MapControllerRoute(name: "CurrentCartItemsLivePriceCheck",
                 pattern: $"{lang}/CurrentCartItemsLivePriceCheck/",
-                defaults: new { controller = "HandleLiveERPCall", action = "CurrentCartItemsLivePriceCheck" });
+                defaults: new { controller = "HandleLiveErpCall", action = "CurrentCartItemsLivePriceCheck" });
 
             endpointRouteBuilder.MapControllerRoute(name: "CurrentCartItemsLiveStockCheck",
                 pattern: $"{lang}/CurrentCartItemsLiveStockCheck/",
-                defaults: new { controller = "HandleLiveERPCall", action = "CurrentCartItemsLiveStockCheck" });
+                defaults: new { controller = "HandleLiveErpCall", action = "CurrentCartItemsLiveStockCheck" });
 
             endpointRouteBuilder.MapControllerRoute(name: "QuoteOrder",
                 pattern: $"{lang}/QuoteOrder/",
@@ -101,6 +101,14 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure
             endpointRouteBuilder.MapControllerRoute(name: "ErpAccountOrders",
                 pattern: $"{lang}/ERPOrders/History",
                 defaults: new { controller = "ErpAccountPublic", action = "ErpAccountOrders" });
+
+            endpointRouteBuilder.MapControllerRoute(name: "LoadErpAccountInfoFromErp",
+                pattern: $"{lang}/LoadErpAccountInfoFromErp",
+                defaults: new { controller = "ErpAccountPublic", action = "LoadErpAccountInfoFromErp" });
+
+            endpointRouteBuilder.MapControllerRoute(name: "DownloadInvoice",
+                pattern: $"{lang}/ErpAccountPublic/DownloadInvoice/{{invoiceId:min(0)}}",
+                defaults: new { controller = "ErpAccountPublic", action = "DownloadInvoice" });
 
             endpointRouteBuilder.MapControllerRoute(name: "GetDeliveryDatesBySuburbOrCity",
                 pattern: $"{lang}/GetERPDeliveryDates/",

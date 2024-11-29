@@ -139,16 +139,7 @@ Alter Table [dbo].[Erp_ShipToAddress]
 Alter Column [Suburb] [nvarchar](max) NULL
 
 
-/****** Card:  clients/uvp/2765-uvp-upload-a-logo-to-customer-table    Script Date: 21-August-24 ******/
+/****** Card:  clients/groceryexpress/bugfix/2804-bugs-on-nopstation-b2b-plugin-for-47    Script Date: 17-September-24 ******/
 
----- Inserting into [Erp_Account_Picture_Mapping] table
-
-CREATE TABLE [dbo].[Erp_Account_Picture_Mapping](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[PictureId] [int] NOT NULL,
-	[ErpAccountId] [int] NOT NULL,
- CONSTRAINT [PK_Erp_Account_Picture_Mapping] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-) ON [PRIMARY]
+ ALTER TABLE [dbo].[Erp_Order_Item_Additional_Data]
+ ADD [WareHouse] [nvarchar](255) NULL;
