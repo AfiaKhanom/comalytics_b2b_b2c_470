@@ -1,8 +1,7 @@
-﻿using Nop.Core;
-using Nop.Core.Domain.Catalog;
+﻿using Nop.Core.Domain.Catalog;
 using Nop.Services.Catalog;
-using Nop.Services.Configuration;
-using Nop.Services.Shipping;
+using Nop.Services.Common;
+using NopStation.Plugin.B2B.B2BB2CFeatures;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
@@ -15,39 +14,36 @@ public class ErpStockSyncService : IErpStockSyncService
 {
     #region Fields
 
-    private readonly IStoreContext _storeContext;
-    private readonly ISettingService _settingService;
     private readonly IProductService _productService;
-    private readonly IShippingService _shippingService;
     private readonly ISyncLogService _erpSyncLogService;
     private readonly IErpProductService _erpProductService;
-    private readonly IErpDataClearCacheService _erpDataClearCacheService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginService;
     private readonly IErpSalesOrgService _erpSalesOrgService;
+    private readonly IErpWarehouseAdditionalDataService _erpWarehouseAdditionalDataService;
+    private readonly IGenericAttributeService _genericAttributeService;
+    private readonly ErpDataSchedulerSettings _erpDataSchedulerSettings;
 
     #endregion
 
     #region Ctor
 
-    public ErpStockSyncService(IStoreContext storeContext,
-        ISettingService settingService,
-        IProductService productService,
-        IShippingService shippingService,
+    public ErpStockSyncService(IProductService productService,
         ISyncLogService erpSyncLogService,
         IErpProductService erpProductService,
-        IErpDataClearCacheService erpDataClearCacheService,
         IErpIntegrationPluginManager erpIntegrationPluginService,
-        IErpSalesOrgService erpSalesOrgService)
+        IErpSalesOrgService erpSalesOrgService,
+        IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService,
+        IGenericAttributeService genericAttributeService,
+        ErpDataSchedulerSettings erpDataSchedulerSettings)
     {
-        _storeContext = storeContext;
-        _settingService = settingService;
         _productService = productService;
-        _shippingService = shippingService;
         _erpSyncLogService = erpSyncLogService;
         _erpProductService = erpProductService;
-        _erpDataClearCacheService = erpDataClearCacheService;
         _erpIntegrationPluginService = erpIntegrationPluginService;
         _erpSalesOrgService = erpSalesOrgService;
+        _erpWarehouseAdditionalDataService = erpWarehouseAdditionalDataService;
+        _genericAttributeService = genericAttributeService;
+        _erpDataSchedulerSettings = erpDataSchedulerSettings;
     }
 
     #endregion
@@ -72,8 +68,6 @@ public class ErpStockSyncService : IErpStockSyncService
         {
             #region Data collection
 
-            var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
-            var erpDataSchedulerSettings = await _settingService.LoadSettingAsync<ErpDataSchedulerSettings>(storeScope);
             var listOfSalesOrgs = new List<ErpSalesOrg>();
             var salesOrgCode = await erpIntegrationPlugin.GetSalesOrgCodeFromIntegrationSettings();
 
@@ -116,17 +110,23 @@ public class ErpStockSyncService : IErpStockSyncService
             {
                 var start = "0";
                 var isError = false;
-                var dateFrom = erpDataSchedulerSettings.SyncFromDate.HasValue ? erpDataSchedulerSettings.SyncFromDate.Value : DateTime.MinValue;
-                var lastErpProductStockSynced = new Product();
+                var lastErpProductStockSynced = string.Empty;
                 var totalSyncedSoFar = 0;
-                var syncStartTime = DateTime.UtcNow.AddMinutes(-10);
+
+                var lastStockRefreshTime = await _genericAttributeService.GetAttributeAsync<DateTime?>(salesOrg, B2BB2CFeaturesDefaults.LastStockSyncDateTime);
+                if (lastStockRefreshTime == null || lastStockRefreshTime == DateTime.MinValue)
+                {
+                    lastStockRefreshTime = _erpDataSchedulerSettings.SyncFromDate ?? null;
+                }
+
+                await _genericAttributeService.SaveAttributeAsync(salesOrg, B2BB2CFeaturesDefaults.LastStockSyncDateTime, DateTime.UtcNow);
 
                 while (true)
                 {
                     var erpGetRequestModel = new ErpGetRequestModel
                     {
                         Start = start,
-                        DateFrom = dateFrom,
+                        DateFrom = lastStockRefreshTime,
                         Location = salesOrg.Code
                     };
 
@@ -152,52 +152,118 @@ public class ErpStockSyncService : IErpStockSyncService
 
                     start = response.ErpResponseModel.Next;
 
-                    foreach (var erpProduct in response.Data)
-                    {
-                        var oldErpProduct = await _productService.GetProductBySkuAsync(erpProduct.Sku) ?? new Product();
+                    var pwiToInsert = new List<ProductWarehouseInventory>();
+                    var pwiToUpdate = new List<ProductWarehouseInventory>();
+                    var stockQuantityHistoriesToInsert = new List<StockQuantityHistory>();
 
-                        if (oldErpProduct.Id == 0)
-                        {
+                    var products = await (await _productService.GetProductsBySkuAsync(response.Data.Where(x => !string.IsNullOrWhiteSpace(x.Sku)).Select(x => x.Sku).ToArray())).ToListAsync();
+                    if (products is null || products.Count == 0)
+                    {
+                        isError = false;
+                        break;
+                    }
+
+                    var erpSalesOrgWarehouse = await _erpWarehouseAdditionalDataService.GetSaleOrgWarehousebySalesOrgIdAsync(salesOrg.Id);
+                    var inventories = new List<ProductWarehouseInventory>();
+                    if (erpSalesOrgWarehouse != null && erpSalesOrgWarehouse.Count > 0)
+                    {
+                        inventories = await (await _erpProductService.GetProductWarehouseInventoryByProductIdsAndNopWarehouseIdsAsync(products.Select(x => x.Id).ToArray(), erpSalesOrgWarehouse.Select(x => x.NopWarehouseId).ToArray())).ToListAsync();
+                    }
+
+                    var responseData = response.Data
+                            .Where(x => !string.IsNullOrWhiteSpace(x.Sku) && !string.IsNullOrWhiteSpace(x.WarehouseNameOrCode))
+                            .GroupBy(x => new { x.Sku, x.WarehouseNameOrCode })
+                            .Select(g => g.Last());
+
+                    foreach (var erpStock in responseData)
+                    {
+                        if (string.IsNullOrWhiteSpace(erpStock.Sku) || !erpStock.QuantityOnHand.HasValue)
                             continue;
-                        }
 
-                        oldErpProduct.StockQuantity = Convert.ToInt32(Math.Min(Math.Max(Math.Round(erpProduct.QuantityOnHand ?? 0), int.MinValue), int.MaxValue));
-                        oldErpProduct.UpdatedOnUtc = DateTime.UtcNow;
+                        var product = products.Find(x => x.Sku.Equals(erpStock.Sku));
+                        if (product == null || product.Id == 0)
+                            continue;
 
-                        if (oldErpProduct.StockQuantity == 0)
+                        if (!string.IsNullOrEmpty(erpStock.WarehouseNameOrCode))
                         {
-                            oldErpProduct.Published = false;
+                            var erpWarehouse = await _erpWarehouseAdditionalDataService.GetErpWarehouseAdditionalDataByCodeAsync(erpStock.WarehouseNameOrCode.Trim());
+
+                            if (erpWarehouse != null && erpWarehouse.NopWarehouseId > 0)
+                            {
+                                var inventory = inventories.Find(x => x.ProductId == product.Id && x.WarehouseId == erpWarehouse.NopWarehouseId);
+                                if (inventory == null)
+                                {
+                                    inventory = new ProductWarehouseInventory
+                                    {
+                                        ProductId = product.Id,
+                                        WarehouseId = erpWarehouse.NopWarehouseId,
+                                        StockQuantity = (int)erpStock.QuantityOnHand,
+                                        ReservedQuantity = 0
+                                    };
+                                    pwiToInsert.Add(inventory);
+
+                                    var stockQuantityHistory = new StockQuantityHistory();
+                                    stockQuantityHistory.QuantityAdjustment = (int)erpStock.QuantityOnHand;
+                                    stockQuantityHistory.StockQuantity = (int)erpStock.QuantityOnHand;
+                                    stockQuantityHistory.CreatedOnUtc = DateTime.UtcNow;
+                                    stockQuantityHistory.ProductId = inventory.ProductId;
+                                    stockQuantityHistory.WarehouseId = erpWarehouse.NopWarehouseId;
+                                    stockQuantityHistory.Message = $"Product Stock updated. The stock quantity has been updated by Integration.";
+                                    stockQuantityHistoriesToInsert.Add(stockQuantityHistory);
+                                }
+                                else
+                                {
+                                    if (inventory.StockQuantity != (int)erpStock.QuantityOnHand || inventory.ReservedQuantity > 0)
+                                    {
+                                        var quantityAdjustment = (int)erpStock.QuantityOnHand - inventory.StockQuantity;
+
+                                        inventory.ReservedQuantity = 0;
+                                        inventory.StockQuantity = (int)erpStock.QuantityOnHand;
+                                        pwiToUpdate.Add(inventory);
+
+                                        var stockQuantityHistory = new StockQuantityHistory();
+                                        stockQuantityHistory.QuantityAdjustment = quantityAdjustment;
+                                        stockQuantityHistory.StockQuantity = (int)erpStock.QuantityOnHand;
+                                        stockQuantityHistory.CreatedOnUtc = DateTime.UtcNow;
+                                        stockQuantityHistory.ProductId = inventory.ProductId;
+                                        stockQuantityHistory.WarehouseId = erpWarehouse.NopWarehouseId;
+                                        stockQuantityHistory.Message = $"Product Stock updated. The stock quantity has been updated by Integration.";
+                                        stockQuantityHistoriesToInsert.Add(stockQuantityHistory);
+                                    }
+                                }
+
+                                product.StockQuantity = 0;
+                                product.ManageInventoryMethodId = (int)ManageInventoryMethod.ManageStock;
+                                product.UseMultipleWarehouses = true;
+                            }
                         }
-
-                        lastErpProductStockSynced = oldErpProduct;
+                        else
+                        {
+                            product.ManageInventoryMethodId = (int)ManageInventoryMethod.ManageStock;
+                            product.StockQuantity = Convert.ToInt32(Math.Min(Math.Max(Math.Round(erpStock.QuantityOnHand ?? 0), int.MinValue), int.MaxValue));
+                            product.UseMultipleWarehouses = false;
+                        }
+                        lastErpProductStockSynced = product.Sku;
                         totalSyncedSoFar++;
-
-                        await _productService.UpdateProductAsync(oldErpProduct);
-
-                        #region Cache clear for this erp stock
-
-                        await _erpDataClearCacheService.ClearCacheOfEntity(oldErpProduct, oldErpProduct.Id);
-
-                        #endregion
                     }
 
-                    if (lastErpProductStockSynced.Id != 0)
-                    {
-                        await _erpSyncLogService.SyncLogSaveOnFileAsync(
-                            ErpDataSchedulerDefaults.ErpStockSyncTaskName,
-                            ErpSyncLevel.Stock,
-                            (lastErpProductStockSynced is not null ? $"The last synced Stock of Erp Product : {lastErpProductStockSynced.Sku} in this batch." : string.Empty) + $"Total product stock synced so far: {totalSyncedSoFar}");
-                    }
-                }
-
-                if (!isError)
-                {
-                    await _erpProductService.UnpublishAllOldProduct(syncStartTime);
+                    await _erpProductService.UpdateProductsAsync(products);
+                    await _erpProductService.UpdateBulkProductWarehouseInventoryAsync(pwiToUpdate);
+                    await _erpProductService.InsertBulkProductWarehouseInventoryAsync(pwiToInsert);
+                    await _erpProductService.InsertBulkStockQuantityHistoryAsync(stockQuantityHistoriesToInsert);
 
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpStockSyncTaskName,
                         ErpSyncLevel.Stock,
-                        $"Erp Stock sync successful. The products having stock quantity of 0 (zero) are unpublished for Sales Org: {salesOrg.Name}.");
+                        (!string.IsNullOrWhiteSpace(lastErpProductStockSynced) ? $"The last synced Stock of Erp Product : {lastErpProductStockSynced} in this batch. " : string.Empty) + $"Total product stock synced so far: {totalSyncedSoFar}");
+                }
+
+                if (!isError)
+                {
+                    await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                        ErpDataSchedulerDefaults.ErpStockSyncTaskName,
+                        ErpSyncLevel.Stock,
+                        $"Erp Stock sync successful for Sales Org: {salesOrg.Name}.");
                 }
                 else
                 {
@@ -210,7 +276,7 @@ public class ErpStockSyncService : IErpStockSyncService
                 await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpStockSyncTaskName,
                     ErpSyncLevel.Stock,
-                    (lastErpProductStockSynced is not null ? $"The last synced Erp Product Stock: {lastErpProductStockSynced.Sku}, for Sales Org: {salesOrg.Name}. " : string.Empty) + $"Total synced in this session: {totalSyncedSoFar}");
+                    (!string.IsNullOrWhiteSpace(lastErpProductStockSynced) ? $"The last synced Stock of Erp Product : {lastErpProductStockSynced} in this batch. " : string.Empty) + $"Total product stock synced so far: {totalSyncedSoFar}");
             }
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(

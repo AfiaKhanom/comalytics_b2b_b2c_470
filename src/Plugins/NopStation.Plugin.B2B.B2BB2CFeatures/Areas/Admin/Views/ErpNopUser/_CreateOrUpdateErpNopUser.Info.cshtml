@@ -28,12 +28,11 @@
             <nop-label asp-for="ErpAccountId" />
         </div>
 
-
         @if (Model.ErpAccountId > 0)
         {
             <div class="col-md-9">
                 <input type="hidden" id="ErpAccountId" name="ErpAccountId" value="@Model.ErpAccountId" />
-                <a asp-controller="ErpAccount" asp-action="ErpAccountEdit" asp-route-id="@Model.ErpAccountId">@Model.ErpAccount</a>
+                <a asp-controller="ErpAccount" asp-action="ErpAccountEdit" asp-route-id="@Model.ErpAccountId">@Model.ErpAccountInfo</a>
             </div>
         }
         else
@@ -96,8 +95,6 @@
                 <span asp-validation-for="ErpAccountId" id="validationMessageErpAccountId"></span>
             </div>
         }
-
-
     </div>
 
     <div class="form-group row">
@@ -127,7 +124,7 @@
             <span asp-validation-for="SelectedCustomerRoleIds"></span>
             <script>
                 $(document).ready(function () {
-                    var customerRoleIdsInput = $('#@Html.IdFor(model => model.SelectedCustomerRoleIds)').data("kendoMultiSelect");
+                    var customerRoleIdsInput = $('#@Html.IdFor(model => model.SelectedCustomerRoleIds)');
                     customerRoleIdsInput.setOptions({
                         customerRoleIdsInput: false,
                         filter: "contains"
@@ -193,14 +190,13 @@
 
 <nop-alert asp-alert-id="statesAlert" asp-alert-message="@T("Admin.Common.Alert.States.Failed")" />
 
-
 <script>
     // Function to update the ErpShipToAddressId dropdown
     function updateErpShipToAddresses(accountId) {
         $.ajax({
             type: 'GET',
             url: '@Url.Action("ShipToAddressDropdownList", "ErpNopUser")', // Replace with the actual controller and action names if necessary
-            data: { erpAccountId: accountId },
+            data: { erpAccountId: accountId, customerId: @Model.NopCustomerId },
             success: function (data) {
                 // Clear existing options in the ErpShipToAddressId dropdown
                 $('#ErpShipToAddressId').empty();

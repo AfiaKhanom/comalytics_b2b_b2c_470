@@ -145,6 +145,8 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
     {
         if (widgetZone.Equals(PublicWidgetZones.HeaderLinksBefore))
             return typeof(PublicHeaderViewComponent);
+        else if (widgetZone.Equals(PublicWidgetZones.HeadHtmlTag))
+            return typeof(B2BRootHeadViewComponent);
         else if (widgetZone.Equals(PublicWidgetZones.OrderSummaryContentDeals))
             return typeof(OrderSummaryContentDealsViewComponent);
         else if (widgetZone.Equals(B2BB2CFeaturesDefaults.ZoneAfterTirePriceCard))
@@ -155,6 +157,8 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
             return typeof(ErpOrderItemInOrderDetailsAdminViewComponent);
         else if (widgetZone.Equals(B2BB2CFeaturesDefaults.ErpAdminWidgetZonesOrderDetailsBlock))
             return typeof(ErpOrderInOrderDetailsAdminViewComponent);
+        else if (widgetZone.Equals(AdminWidgetZones.CustomerDetailsBlock))
+            return typeof(NopCustomerErpAccountInfoComponent);
         else
             return null;
     }
@@ -168,12 +172,17 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
             return Task.FromResult<IList<string>>(new List<string> { string.Empty });
         }
 
-        return Task.FromResult<IList<string>>(new List<string> { PublicWidgetZones.HeaderLinksBefore,
+        return Task.FromResult<IList<string>>(new List<string> 
+        { 
+            PublicWidgetZones.HeaderLinksBefore,
+            PublicWidgetZones.HeadHtmlTag,
+            PublicWidgetZones.OrderSummaryContentDeals,
             B2BB2CFeaturesDefaults.ZoneAfterTirePriceCard,
             B2BB2CFeaturesDefaults.ZoneAfterSpecialPriceCard,
-            AdminWidgetZones.OrderDetailsBlock,
             B2BB2CFeaturesDefaults.ErpAdminWidgetZonesOrderDetailsBlock,
-            PublicWidgetZones.OrderSummaryContentDeals});
+            AdminWidgetZones.OrderDetailsBlock,
+            AdminWidgetZones.CustomerDetailsBlock
+        });
     }
 
     public override async Task InstallAsync()

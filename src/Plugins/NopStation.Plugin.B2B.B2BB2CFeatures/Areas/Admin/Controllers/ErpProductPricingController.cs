@@ -16,7 +16,6 @@ using Nop.Web.Framework.Mvc.ModelBinding;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
-using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;

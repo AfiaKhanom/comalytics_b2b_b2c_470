@@ -43,9 +43,19 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
             await _erpInvoiceRepository.InsertAsync(erpInvoice);
         }
 
+        public async Task InsertErpInvoicesAsync(List<ErpInvoice> erpInvoices)
+        {
+            await _erpInvoiceRepository.InsertAsync(erpInvoices);
+        }
+
         public async Task UpdateErpInvoiceAsync(ErpInvoice erpInvoice)
         {
             await _erpInvoiceRepository.UpdateAsync(erpInvoice);
+        }
+
+        public async Task UpdateErpInvoicesAsync(List<ErpInvoice> erpInvoices)
+        {
+            await _erpInvoiceRepository.UpdateAsync(erpInvoices);
         }
 
         #endregion
@@ -128,7 +138,7 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
                             select erpInvoice;
                 }
 
-                query = query.OrderBy(ei => ei.Id);
+                query = query.OrderByDescending(ei => ei.PostingDateUtc);
                 return query;
 
             }, pageIndex, pageSize, getOnlyTotalCount);

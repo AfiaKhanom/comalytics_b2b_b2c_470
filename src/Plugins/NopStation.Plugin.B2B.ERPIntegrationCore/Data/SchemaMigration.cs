@@ -3,12 +3,12 @@ using Nop.Data.Extensions;
 using Nop.Data.Migrations;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
-namespace NopStation.Plugin.B2B.ERPIntegrationCore.Data
+namespace NopStation.Plugin.B2B.ERPIntegrationCore.Data;
+
+[NopMigration("2024/10/07 12:00:00", ".Misc.NopStation.ERPIntegrationCore base schema", MigrationProcessType.Installation)]
+public class SchemaMigration : AutoReversingMigration
 {
-    [NopMigration("2023/05/25 12:00:00", ".Misc.NopStation.ERPIntegrationCore base schema", MigrationProcessType.Installation)]
-    public class SchemaMigration : AutoReversingMigration
-    {
-        #region Methods
+    #region Methods
 
         /// <summary>
         /// Collect the UP migration expressions
@@ -43,6 +43,5 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Data
             Create.TableFor<ErpAccountCustomerRegistrationPremises>(); 
         }
 
-        #endregion
-    }
+    #endregion
 }

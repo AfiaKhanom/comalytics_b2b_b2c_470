@@ -39,9 +39,14 @@
             @if (Model.RegistrationType != UserRegistrationType.Disabled)
             {
                 @*<li><a href="@Url.RouteUrl("Register", new { returnUrl })" class="ico-register">@T("Account.Register")</a></li>*@
-
-                <li><a href="@Url.RouteUrl("ErpAccountCustomerRegistrationForm", new { returnUrl })" class="ico-register">@* @T("account.register.button") *@ Apply Registration</a></li>
-
+                @if (settings.IsErpAccountCustomerRegisterAllowed)
+                {
+                    <li>
+                        <a href="@Url.RouteUrl("ErpAccountCustomerRegistrationForm", new { returnUrl })" class="ico-register">
+                            @T("Plugin.Misc.NopStation.B2BB2CFeatures.Account.Register.Button.ApplyRegistration")
+                        </a>
+                    </li>
+                }
                 <li>
                     @if (settings.IsB2BUserRegisterAllowed && settings.IsB2CUserRegisterAllowed)
                     {
@@ -104,7 +109,7 @@
                     </a>
                 </li>
             }
-            @if (Model.WishlistEnabled)
+            @if (Model.IsAuthenticated && Model.WishlistEnabled)
             {
                 <li>
                     <a href="@Url.RouteUrl("Wishlist")" class="ico-wishlist">
@@ -125,7 +130,6 @@
 
             @if (Model.IsAuthenticated && b2BB2CFeaturesSettings.DisplayAddToQuickListFavouriteButton && erpCustomer.ErpAccount != null)
             {
-
                 <li id="">
                     <a href="@Url.RouteUrl("QuickOrder")" class="ico-cart">@T("Plugin.Misc.NopStation.B2BB2CFeatures.QuickOrder.QuickOrder")</a>
                 </li>

@@ -11,7 +11,7 @@
             <nop-label asp-for="AccountNumber" />
         </div>
         <div class="col-md-9">
-            @if(Model.Id == 0)
+            @if (Model.Id == 0)
             {
                 <nop-editor asp-for="AccountNumber" asp-required="true" />
             }
@@ -50,10 +50,8 @@
                 <input type="hidden" asp-for="ErpSalesOrgId" value="@b2BB2CFeaturesSettings.DefaultB2COrganizationId" />
             }
         </div>
-        
+
     </div>
-
-
 
     <div class="form-group row">
         <div class="col-md-3">
@@ -76,7 +74,6 @@
     </div>
 
     <div class="form-group row">
-
         <div class="col-md-3">
             <nop-label asp-for="CreditLimitAvailable" />
         </div>
@@ -94,8 +91,8 @@
             <nop-editor asp-for="CurrentBalance" />
             <span asp-validation-for="CurrentBalance"></span>
         </div>
-    </div> 
-
+    </div>
+    
     <div class="form-group row">
         <div class="col-md-3">
             <nop-label asp-for="AllowOverspend" />
@@ -135,7 +132,7 @@
             <span asp-validation-for="B2BPriceGroupCodeId"></span>
         </div>
     </div>
-    
+
     <div class="form-group row">
         <div class="col-md-3">
             <nop-label asp-for="AllowAccountsBackOrdering" />
@@ -217,7 +214,6 @@
             </div>
         </div>
     }
-     
 
 </div>
 

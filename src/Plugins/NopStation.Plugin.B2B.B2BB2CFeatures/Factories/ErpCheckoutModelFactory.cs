@@ -4,9 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core;
-using Nop.Core.Caching;
 using Nop.Core.Domain;
-using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Orders;
@@ -14,32 +12,25 @@ using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Domain.Tax;
 using Nop.Core.Infrastructure;
-using Nop.Services.Affiliates;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Discounts;
-using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Media;
 using Nop.Services.Orders;
-using Nop.Services.Security;
-using Nop.Services.Seo;
 using Nop.Services.Shipping;
 using Nop.Services.Shipping.Pickup;
 using Nop.Services.Stores;
 using Nop.Services.Tax;
 using Nop.Services.Vendors;
-using Nop.Web.Factories;
 using Nop.Web.Models.Checkout;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.Checkout;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpSpecificationAttributeService;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
@@ -75,26 +66,25 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
     private readonly ITaxService _taxService;
     private readonly IShippingPluginManager _shippingPluginManager;
     private readonly CaptchaSettings _captchaSettings;
+    private readonly IErpWarehouseSalesOrgMapService _erpWarehouseSalesOrgMap;
+    private readonly IErpWarehouseAdditionalDataService _erpWarehouseAdditionalDataService;
+    private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
+    private readonly ILogger _logger;
+    private readonly IErpLogsService _erpLogsService;
 
     #endregion
 
     #region Ctor
 
     public ErpCheckoutModelFactory(IWorkContext workContext,
-        CatalogSettings catalogSettings,
         ILocalizationService localizationService,
         OrderSettings orderSettings,
-        IDateTimeHelper dateTimeHelper,
         IAddressService addressService,
-        IStoreService storeService,
         IPriceFormatter priceFormatter,
         ICustomerService customerService,
-        IAffiliateService affiliateService,
         ICurrencyService currencyService,
         CurrencySettings currencySettings,
         TaxSettings taxSettings,
-        IOrderService orderService,
-        IOrderReportService orderReportService,
         IDiscountService discountService,
         IRewardPointService rewardPointService,
         IGiftCardService giftCardService,
@@ -105,39 +95,28 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
         IReturnRequestService returnRequestService,
         ICountryService countryService,
         IStateProvinceService stateProvinceService,
-        IAddressModelFactory addressModelFactory,
         AddressSettings addressSettings,
-        IProductAttributeService productAttributeService,
-        ILogger logger,
         IStoreContext storeContext,
-        IStaticCacheManager staticCacheManager,
         IGenericAttributeService genericAttributeService,
         IErpAccountService erpAccountService,
         IErpSalesOrgService erpSalesOrgService,
-        IErpInvoiceService erpInvoiceService,
-        IErpOrderAdditionalDataService erpOrderAdditionalDataService,
         ISettingService settingService,
-        IPermissionService permissionService,
         IShippingService shippingService,
-        IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService,
-        IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMapService,
         IErpCustomerFunctionalityService erpCustomerFunctionalityService,
         IB2BB2CWorkContext b2BB2CWorkContext,
-        IErpNopUserService erpNopUserService,
-        IUrlRecordService urlRecordService,
-        IErpSpecialPriceService erpSpecialPriceService,
         IShoppingCartService shoppingCartService,
-        IPriceCalculationService priceCalculationService,
-        ICategoryService categoryService,
         IErpShipToAddressService erpShipToAddressService,
         ShippingSettings shippingSettings,
         IPickupPluginManager pickupPluginManager,
         ITaxService taxService,
         IShippingPluginManager shippingPluginManager,
-        IShoppingCartModelFactory shoppingCartModelFactory,
-        IErpSpecificationAttributeService erpSpecificationAttributeService,
-        CaptchaSettings captchaSettings
-        )
+        CaptchaSettings captchaSettings,
+        IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMap,
+        B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
+        IStoreMappingService storeMappingService,
+        ILogger logger,
+        IErpLogsService erpLogsService,
+        IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService)
     {
         _workContext = workContext;
         _localizationService = localizationService;
@@ -164,6 +143,34 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
         _taxService = taxService;
         _shippingPluginManager = shippingPluginManager;
         _captchaSettings = captchaSettings;
+        _erpWarehouseSalesOrgMap = erpWarehouseSalesOrgMap;
+        _erpWarehouseAdditionalDataService = erpWarehouseAdditionalDataService;
+        _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
+        _logger = logger;
+        _erpLogsService = erpLogsService;
+    }
+
+    #endregion
+
+    #region Utilities
+
+    private bool IsDateValid(DateTime dateTime, string cutoffTime)
+    {
+        TimeSpan cutoffTimeSpan = TimeSpan.Parse(cutoffTime);
+
+        bool isToday = dateTime.Date == DateTime.Today;
+
+        if (dateTime > DateTime.Now)
+        {
+            return true;
+        }
+
+        if (isToday && DateTime.Now.TimeOfDay < cutoffTimeSpan)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     #endregion
@@ -171,7 +178,7 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
     #region Method
 
     public async Task PrepareB2BShipToAddressModelAsync(ErpShipToAddressModelForCheckout b2BShipToAddressModel, ErpShipToAddress b2BShipToAddress, ErpAccount b2BAccount,
-       bool loadAvailableAreas = false, bool loadCountriesAndStates = false)
+       bool loadAvailableSuburbs = false, bool loadCountriesAndStates = false)
     {
         if (b2BShipToAddress != null)
         {
@@ -180,7 +187,7 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
 
             if (shipToAddressAccountMap == null)
                 return;
-            
+
             var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(shipToAddressAccountMap.ErpAccountId);
             b2BShipToAddressModel = b2BShipToAddressModel ?? new ErpShipToAddressModelForCheckout();
             b2BShipToAddressModel.Id = b2BShipToAddress.Id;
@@ -229,7 +236,7 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
 
             if (b2BShipToAddressModel.AllowEdit)
             {
-                if (loadAvailableAreas)
+                if (loadAvailableSuburbs)
                 {
                     //load settings for current Store
                     var b2BB2CFeaturesSettings = _settingService.LoadSetting<B2BB2CFeaturesSettings>((await _storeContext.GetCurrentStoreAsync()).Id);
@@ -241,7 +248,7 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
                     {
                         //ToDo - will come from ERP
                         var areaCodes = new List<ErpAreaCodeResponseModel>();
-                        if (areaCodes != null && areaCodes.Any())
+                        if (areaCodes.Count != 0)
                         {
                             b2BShipToAddressModel.AvailableAreas = areaCodes
                             .Select(areaCode => new SelectListItem(areaCode.Area, areaCode.Area))
@@ -255,7 +262,7 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
 
                     if (b2BShipToAddressModel.ErpToDetermineDate)
                     {
-                        b2BShipToAddressModel.AvailableDeliveryDates.Insert(0, new SelectListItem { Text = await _localizationService.GetResourceAsync("B2B.DeliveryDate.SelectDeliveryDate"), Value = string.Empty, Selected = true });
+                        b2BShipToAddressModel.AvailableDeliveryDates.Insert(0, new SelectListItem { Text = await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.DeliveryDate.SelectDeliveryDate"), Value = string.Empty, Selected = true });
                     }
                 }
 
@@ -317,29 +324,28 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
         }
     }
 
-    public async Task PrepareB2CShipToAddressModelAsync(ErpShipToAddressModelForCheckout b2BShipToAddressModel, ErpShipToAddress b2cShipToAddress, ErpAccount b2BAccount,
+    public async Task PrepareB2CShipToAddressModelAsync(ErpShipToAddressModelForCheckout b2BShipToAddressModel, ErpShipToAddress b2CShipToAddress, ErpAccount b2BAccount,
         bool loadAvailableSuburbs = false, bool loadCountriesAndStates = false)
     {
-        var erpAccount = await _erpAccountService.GetErpAccountByErpShipToAddressAsync(b2cShipToAddress);
+        var erpAccount = await _erpAccountService.GetErpAccountByErpShipToAddressAsync(b2CShipToAddress);
         var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
         b2BShipToAddressModel = b2BShipToAddressModel ?? new ErpShipToAddressModelForCheckout();
-        b2BShipToAddressModel.Id = b2cShipToAddress.Id;
-        b2BShipToAddressModel.ShipToCode = b2cShipToAddress.ShipToCode;
-        b2BShipToAddressModel.ShipToName = b2cShipToAddress.ShipToName;
-        b2BShipToAddressModel.AddressId = b2cShipToAddress.AddressId;
-        b2BShipToAddressModel.Suburb = b2cShipToAddress.Suburb;
-        b2BShipToAddressModel.DeliveryNotes = b2cShipToAddress.DeliveryNotes;
-        b2BShipToAddressModel.Email = b2cShipToAddress.EmailAddresses;
-        b2BShipToAddressModel.IsActive = b2cShipToAddress.IsActive;
+        b2BShipToAddressModel.Id = b2CShipToAddress.Id;
+        b2BShipToAddressModel.ShipToCode = b2CShipToAddress.ShipToCode;
+        b2BShipToAddressModel.ShipToName = b2CShipToAddress.ShipToName;
+        b2BShipToAddressModel.AddressId = b2CShipToAddress.AddressId;
+        b2BShipToAddressModel.Suburb = b2CShipToAddress.Suburb;
+        b2BShipToAddressModel.DeliveryNotes = b2CShipToAddress.DeliveryNotes;
+        b2BShipToAddressModel.Email = b2CShipToAddress.EmailAddresses;
+        b2BShipToAddressModel.IsActive = b2CShipToAddress.IsActive;
         b2BShipToAddressModel.ErpAccountId = erpAccount.Id;
         b2BShipToAddressModel.ErpAccountNumber = erpAccount?.AccountNumber;
         b2BShipToAddressModel.ErpSalesOrganizationId = erpAccount?.ErpSalesOrgId ?? 0;
-        b2BShipToAddressModel.SalesOrganisationCode =
-        (await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount?.ErpSalesOrgId ?? 0))?.Code;
+        b2BShipToAddressModel.SalesOrganisationCode = (await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount?.ErpSalesOrgId ?? 0))?.Code;
 
-        if (b2cShipToAddress.AddressId > 0)
+        if (b2CShipToAddress.AddressId > 0)
         {
-            var address = await _addressService.GetAddressByIdAsync(b2cShipToAddress.AddressId);
+            var address = await _addressService.GetAddressByIdAsync(b2CShipToAddress.AddressId);
             var country = await _countryService.GetCountryByIdAsync(address.CountryId ?? 0);
             var stateProvince = await _stateProvinceService.GetStateProvinceByIdAsync(address.StateProvinceId ?? 0);
             b2BShipToAddressModel.Company = address.Company;
@@ -382,7 +388,7 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
                 {
                     //ToDo - will come from ERP
                     var areaCodes = new List<ErpAreaCodeResponseModel>();
-                    if (areaCodes != null && areaCodes.Any())
+                    if (areaCodes.Count != 0)
                     {
                         b2BShipToAddressModel.AvailableAreas = areaCodes
                         .Select(areaCode => new SelectListItem(areaCode.Area, areaCode.Area))
@@ -396,7 +402,7 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
 
                 if (b2BShipToAddressModel.ErpToDetermineDate)
                 {
-                    b2BShipToAddressModel.AvailableDeliveryDates.Insert(0, new SelectListItem { Text = await _localizationService.GetResourceAsync("B2B.DeliveryDate.SelectDeliveryDate"), Value = string.Empty, Selected = true });
+                    b2BShipToAddressModel.AvailableDeliveryDates.Insert(0, new SelectListItem { Text = await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.DeliveryDate.SelectDeliveryDate"), Value = string.Empty, Selected = true });
                 }
             }
 
@@ -685,13 +691,14 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
         model.ErpToDetermineDate = b2BB2CFeaturesSettings.ERPToDetermineDate;
         if (model.ErpToDetermineDate)
         {
-            model.AvailableDeliveryDates.Insert(0, new SelectListItem { Text = await _localizationService.GetResourceAsync("B2B.DeliveryDate.SelectDeliveryDate"), Value = string.Empty, Selected = true });
+            model.AvailableDeliveryDates.Insert(0, new SelectListItem { Text = await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.DeliveryDate.SelectDeliveryDate"), Value = string.Empty, Selected = true });
         }
 
         // we have to load this data as well even if ERPToDetermineDate is enabled (if erp call to determine date failed, we will use this)
         (var minDeliveryDate, var maxDeliveryDate) = await _erpCustomerFunctionalityService.GetMinimumAndMaximumDeliveryDateForShippingAddress();
 
-        model.DeliveryDate = minDeliveryDate;
+        model.DeliveryDate = DateTime.Now.Date.AddDays(1);
+        model.CustomDeliveryDateString = DateTime.Now.Date.AddDays(1).ToString("dd/MM/yyyy");
         model.FormatedDeliveryDate = minDeliveryDate.ToString("dd/MM/yyyy");
         model.MinDeliveryDate = minDeliveryDate.ToString("yyyy-MM-dd"); // html only support this format
         model.MaxDeliveryDate = maxDeliveryDate.ToString("yyyy-MM-dd"); // html only support this format
@@ -826,12 +833,6 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
         return model;
     }
 
-
-    /// <summary>
-    /// Prepare B2C one page checkout model
-    /// </summary>
-    /// <param name="cart">Cart</param>
-    /// <returns>B2C One page checkout model</returns>
     public virtual async Task<ErpOnePageCheckoutModel> PrepareB2COnePageCheckoutModelAsync(IList<ShoppingCartItem> cart, ErpNopUser b2CUser)
     {
         if (cart == null)
@@ -854,15 +855,53 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
         return model;
     }
 
-    public async Task<(IList<SelectListItem>, bool)> GetDeliveryDatesBySuburbOrCityAsync(string suburb, string city)
+    public async Task<(IList<SelectListItem>, bool)> GetDeliveryDatesByAreaAndPlantAsync(string suburb, string city, string warehouseCode)
     {
         //load settings for current Store
         var b2BB2CFeaturesSettings = _settingService.LoadSetting<B2BB2CFeaturesSettings>((await _storeContext.GetCurrentStoreAsync()).Id);
-
         if (!b2BB2CFeaturesSettings.ERPToDetermineDate)
             return (null, false);
 
-        var b2bAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync((await _b2BB2CWorkContext.GetCurrentCustomerAsync()).Id);
+        #region Call By Suburb
+
+        //ToDo - will come from ERP
+        var deliveryDateResponse = new ErpDeliveryDateResponseModel();
+        if (deliveryDateResponse != null && deliveryDateResponse.IsFullLoadRequired)
+            return (null, true);
+
+        #endregion
+
+        #region Call By City
+
+        if (deliveryDateResponse == null || deliveryDateResponse.DeliveryDates.Count < 1)
+            deliveryDateResponse = new ErpDeliveryDateResponseModel();
+
+        if (deliveryDateResponse != null && deliveryDateResponse.IsFullLoadRequired)
+            return (null, true);
+
+        #endregion
+
+        deliveryDateResponse = new ErpDeliveryDateResponseModel();
+
+        if (deliveryDateResponse.IsFullLoadRequired)
+            return (null, true);
+
+        //await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Information, ErpSyncLevel.DeliveryRoutes, $"Dates Received: {string.Join(", ", deliveryDatesList)}");
+
+        if (deliveryDateResponse.DeliveryDates.Count <= 0)
+            return (null, false);
+
+        var availableDeliveryDates = deliveryDateResponse.DeliveryDates
+                .Select(deliveryDate => new SelectListItem(deliveryDate.DelDate, deliveryDate.DelDate))
+                .ToList();
+
+        return (availableDeliveryDates, true);
+    }
+
+    public async Task<(IList<SelectListItem>, bool)> GetDeliveryDatesBySuburbOrCityAsync(string suburb, string city)
+    {
+        if (!_b2BB2CFeaturesSettings.ERPToDetermineDate)
+            return (null, false);
 
         #region Call By Suburb
 
@@ -896,14 +935,14 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
 
         #region Call By City
 
-        // ToDo, will get delivery dates from ERP
+        /*// ToDo, will get delivery dates from ERP
         if (deliveryDateResponse == null || deliveryDateResponse.DeliveryDates.Count < 1)
         {
             deliveryDateResponse = new ErpDeliveryDateResponseModel();
         }
 
         if (deliveryDateResponse != null && deliveryDateResponse.IsFullLoadRequired)
-            return (null, true);
+            return (null, true);*/
 
         #endregion
 
@@ -921,60 +960,7 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
                 return (null, false);
         }
 
-        var deliveryDates = deliveryDateResponse.DeliveryDates;
-        var availableDeliveryDates = new List<SelectListItem>();
-        availableDeliveryDates = deliveryDates
-                .Select(deliveryDate => new SelectListItem(deliveryDate.DelDate, deliveryDate.DelDate))
-                .ToList();
-
-        return (availableDeliveryDates, true);
-    }
-
-    public async Task<(IList<SelectListItem>, bool)> GetDeliveryDatesByAreaAndPlantAsync(string suburb, string city, string warehouseCode)
-    {
-        //load settings for current Store
-        var b2BB2CFeaturesSettings = _settingService.LoadSetting<B2BB2CFeaturesSettings>((await _storeContext.GetCurrentStoreAsync()).Id);
-        if (!b2BB2CFeaturesSettings.ERPToDetermineDate)
-            return (null, false);
-
-        var b2bAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync((await _b2BB2CWorkContext.GetCurrentCustomerAsync()).Id);
-
-        #region Call By Suburb
-
-        //ToDo - will come from ERP
-        var deliveryDateResponse = new ErpDeliveryDateResponseModel();
-        if (deliveryDateResponse != null && deliveryDateResponse.IsFullLoadRequired)
-            return (null, true);
-
-        #endregion
-
-        #region Call By City
-
-        if (deliveryDateResponse == null || deliveryDateResponse.DeliveryDates.Count < 1)
-            deliveryDateResponse = new ErpDeliveryDateResponseModel();
-
-        if (deliveryDateResponse != null && deliveryDateResponse.IsFullLoadRequired)
-            return (null, true);
-
-        #endregion
-
-        if (deliveryDateResponse == null || deliveryDateResponse.DeliveryDates.Count < 1)
-        {
-            deliveryDateResponse = new ErpDeliveryDateResponseModel();
-
-            if (deliveryDateResponse == null)
-                return (null, false);
-
-            if (deliveryDateResponse.IsFullLoadRequired)
-                return (null, true);
-
-            if (deliveryDateResponse.DeliveryDates.Count < 1)
-                return (null, false);
-        }
-
-        var deliveryDates = deliveryDateResponse.DeliveryDates;
-        var availableDeliveryDates = new List<SelectListItem>();
-        availableDeliveryDates = deliveryDates
+        var availableDeliveryDates = deliveryDateResponse.DeliveryDates
                 .Select(deliveryDate => new SelectListItem(deliveryDate.DelDate, deliveryDate.DelDate))
                 .ToList();
 
@@ -983,15 +969,20 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
 
     public async Task<CheckoutErpShippingAddressModel> PrepareCheckoutB2CShippingAddressModelAsync(IList<ShoppingCartItem> cart, ErpNopUser b2CUser, ErpAccount b2BAccount)
     {
+        var nopAddress = new Address();
+        var countries = await _countryService.GetAllCountriesForShippingAsync();
+        var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var b2BSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(b2BAccount.ErpSalesOrgId);
+        var b2CShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(b2CUser.ErpShipToAddressId);
+
         var model = new CheckoutErpShippingAddressModel();
         model.PickupPointsModel = new CheckoutPickupPointsModel
         {
             //allow pickup in store?
             AllowPickupInStore = _shippingSettings.AllowPickupInStore
         };
-
-        var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
-        var b2BSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(b2BAccount.ErpSalesOrgId);
+        model.B2CUserId = b2CUser.Id;
+        model.ErpAccountId = b2BAccount.Id;
         model.IsB2BUser = false;
         model.ThemeName = _settingService.LoadSetting<StoreInformationSettings>((await _storeContext.GetCurrentStoreAsync()).Id).DefaultStoreTheme;
         model.SpecialInstructions = await _genericAttributeService.GetAttributeAsync<string>(currentCustomer, B2BB2CFeaturesDefaults.B2CSpecialInstructions, (await _storeContext.GetCurrentStoreAsync()).Id);
@@ -1057,11 +1048,11 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
             }
         }
 
-        // Prepare ERP ShipToAddress Model of B2C User
+        var shippingAddressModel = new ErpShipToAddressModelForCheckout();
+
         model.ErpShipToAddressId = b2CUser.ErpShipToAddressId;
-        var b2CShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(b2CUser.ErpShipToAddressId);
+
         var modifiedShipToAddressIdOnCheckout = await _genericAttributeService.GetAttributeAsync<int>(currentCustomer, B2BB2CFeaturesDefaults.ShippingAddressModifiedIdInCheckoutAttribute, (await _storeContext.GetCurrentStoreAsync()).Id);
-        var nopAddress = new Address();
         if (modifiedShipToAddressIdOnCheckout > 0)
         {
             model.ErpShipToAddressId = modifiedShipToAddressIdOnCheckout;
@@ -1082,14 +1073,21 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
                     City = nopAddressForModifiedShipToAddress?.City,
                     StateProvinceName = stateProvince?.Name,
                     ZipPostalCode = nopAddressForModifiedShipToAddress?.ZipPostalCode,
-                    CountryName = country?.Name
+                    CountryName = country?.Name,
+                    ErpSalesOrganizationId = b2BSalesOrg.Id,
+                    SalesOrganisationCode = b2BSalesOrg.Code
                 });
             }
         }
         else
         {
-            //Prepare ERP Ship To Address
-            var shipToAddresses = await _erpShipToAddressService.GetErpShipToAddressesByAccountIdAsync(showHidden: false, isActiveOnly: true, accountId: b2BAccount.Id);
+            var shipToAddresses = new List<ErpShipToAddress>();
+
+            if (!_b2BB2CFeaturesSettings.UseDefaultAccountForB2CUser)
+                shipToAddresses = (List<ErpShipToAddress>)await _erpShipToAddressService.GetErpShipToAddressesByAccountIdAsync(showHidden: false, isActiveOnly: true, accountId: b2BAccount.Id);
+            else
+                shipToAddresses = await _erpShipToAddressService.GetErpShipToAddressesByCustomerAddressesAsync(customerId: currentCustomer.Id, erpAccountId: b2CUser.ErpAccountId);
+
             foreach (var shipTo in shipToAddresses)
             {
                 nopAddress = await _addressService.GetAddressByIdAsync(shipTo.AddressId);
@@ -1106,80 +1104,14 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
                     City = nopAddress?.City,
                     StateProvinceName = stateProvince?.Name,
                     ZipPostalCode = nopAddress?.ZipPostalCode,
-                    CountryName = country?.Name
+                    CountryName = country?.Name,
+                    ErpSalesOrganizationId = b2BSalesOrg.Id,
+                    SalesOrganisationCode = b2BSalesOrg.Code
                 });
             }
         }
 
-        model.AllowAddressEdit = await _erpCustomerFunctionalityService.CheckAllowAddressEdit(b2BAccount);
-        model.IsQuoteOrder = false;
-
-        //countries and states
-        var countries = await _countryService.GetAllCountriesForShippingAsync();
-        var erpShippingAddressModel = new ErpShipToAddressModelForCheckout();
-        if (_addressSettings.PreselectCountryIfOnlyOne && countries.Count == 1)
-        {
-            erpShippingAddressModel.CountryId = countries[0].Id;
-        }
-        else
-        {
-            erpShippingAddressModel.AvailableCountries.Add(new SelectListItem { Text = await _localizationService.GetResourceAsync("Address.SelectCountry"), Value = string.Empty });
-        }
-
-        foreach (var c in countries)
-        {
-            erpShippingAddressModel.AvailableCountries.Add(new SelectListItem
-            {
-                Text = await _localizationService.GetLocalizedAsync(c, x => x.Name),
-                Value = c.Id.ToString(),
-                Selected = c.Id == erpShippingAddressModel.CountryId
-            });
-        }
-
-        var states = (await _stateProvinceService
-            .GetStateProvincesByCountryIdAsync(erpShippingAddressModel.CountryId.HasValue ? erpShippingAddressModel.CountryId.Value : 0, languageId)).ToList();
-        if (states.Any())
-        {
-            erpShippingAddressModel.AvailableStates.Add(new SelectListItem { Text = await _localizationService.GetResourceAsync("Address.SelectState"), Value = string.Empty });
-
-            foreach (var s in states)
-            {
-                erpShippingAddressModel.AvailableStates.Add(new SelectListItem
-                {
-                    Text = await _localizationService.GetLocalizedAsync(s, x => x.Name),
-                    Value = s.Id.ToString(),
-                    Selected = (s.Id == erpShippingAddressModel.StateProvinceId)
-                });
-            }
-        }
-        else
-        {
-            var anyCountrySelected = erpShippingAddressModel.AvailableCountries.Any(x => x.Selected);
-            erpShippingAddressModel.AvailableStates.Add(new SelectListItem
-            {
-                Text = await _localizationService.GetResourceAsync(anyCountrySelected ? "Address.OtherNonUS" : "Address.SelectState"),
-                Value = "0"
-            });
-        }
-        model.SelectedShipToAddress = erpShippingAddressModel;
-
-        //load settings for current Store
-        var b2BB2CFeaturesSettings = _settingService.LoadSetting<B2BB2CFeaturesSettings>((await _storeContext.GetCurrentStoreAsync()).Id);
-
-        model.ErpToDetermineDate = b2BB2CFeaturesSettings.ERPToDetermineDate;
-        if (model.ErpToDetermineDate)
-        {
-            model.AvailableDeliveryDates.Insert(0, new SelectListItem { Text = await _localizationService.GetResourceAsync("B2B.DeliveryDate.SelectDeliveryDate"), Value = string.Empty, Selected = true });
-        }
-
-        // we have to load this data as well even if ERPToDetermineDate is enabled (if erp call to determine date failed, we will use this)
-        (var minDeliveryDate, var maxDeliveryDate) = await _erpCustomerFunctionalityService.GetMinimumAndMaximumDeliveryDateForShippingAddress();
-
-        model.DeliveryDate = minDeliveryDate;
-        model.FormatedDeliveryDate = minDeliveryDate.ToString("dd/MM/yyyy");
-        model.MinDeliveryDate = minDeliveryDate.ToString("yyyy-MM-dd"); // html only support this format
-        model.MaxDeliveryDate = maxDeliveryDate.ToString("yyyy-MM-dd"); // html only support this format
-        model.SelectedShipToAddress = new ErpShipToAddressModelForCheckout
+        shippingAddressModel = new ErpShipToAddressModelForCheckout
         {
             Id = b2CShipToAddress.Id,
             ShipToCode = b2CShipToAddress.ShipToCode,
@@ -1194,6 +1126,71 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
             ErpSalesOrganizationId = b2BSalesOrg.Id,
             SalesOrganisationCode = b2BSalesOrg.Code
         };
+
+
+        if (_addressSettings.PreselectCountryIfOnlyOne && countries.Count == 1)
+        {
+            shippingAddressModel.CountryId = countries[0].Id;
+        }
+        else
+        {
+            shippingAddressModel.AvailableCountries.Add(new SelectListItem { Text = await _localizationService.GetResourceAsync("Address.SelectCountry"), Value = string.Empty });
+        }
+
+        foreach (var c in countries)
+        {
+            shippingAddressModel.AvailableCountries.Add(new SelectListItem
+            {
+                Text = await _localizationService.GetLocalizedAsync(c, x => x.Name),
+                Value = c.Id.ToString(),
+                Selected = c.Id == shippingAddressModel.CountryId
+            });
+        }
+
+        var states = (await _stateProvinceService
+            .GetStateProvincesByCountryIdAsync(shippingAddressModel.CountryId.HasValue ? shippingAddressModel.CountryId.Value : 0, languageId)).ToList();
+        if (states.Count != 0)
+        {
+            shippingAddressModel.AvailableStates.Add(new SelectListItem { Text = await _localizationService.GetResourceAsync("Address.SelectState"), Value = string.Empty });
+
+            foreach (var s in states)
+            {
+                shippingAddressModel.AvailableStates.Add(new SelectListItem
+                {
+                    Text = await _localizationService.GetLocalizedAsync(s, x => x.Name),
+                    Value = s.Id.ToString(),
+                    Selected = s.Id == shippingAddressModel.StateProvinceId
+                });
+            }
+        }
+        else
+        {
+            var anyCountrySelected = shippingAddressModel.AvailableCountries.Any(x => x.Selected);
+            shippingAddressModel.AvailableStates.Add(new SelectListItem
+            {
+                Text = await _localizationService.GetResourceAsync(anyCountrySelected ? "Address.OtherNonUS" : "Address.SelectState"),
+                Value = "0"
+            });
+        }
+
+        model.SelectedShipToAddress = shippingAddressModel;
+
+        model.ErpToDetermineDate = _b2BB2CFeaturesSettings.ERPToDetermineDate;
+        if (model.ErpToDetermineDate)
+        {
+            model.AvailableDeliveryDates.Insert(0, new SelectListItem { Text = await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.DeliveryDate.SelectDeliveryDate"), Value = string.Empty, Selected = true });
+        }
+
+        // we have to load this data as well even if ERPToDetermineDate is enabled (if erp call to determine date failed, we will use this)
+        (var minDeliveryDate, var maxDeliveryDate) = await _erpCustomerFunctionalityService.GetMinimumAndMaximumDeliveryDateForShippingAddress();
+
+        model.AllowAddressEdit = await _erpCustomerFunctionalityService.CheckAllowAddressEdit(b2BAccount);
+        model.IsQuoteOrder = await _genericAttributeService.GetAttributeAsync<bool>(currentCustomer, B2BB2CFeaturesDefaults.B2CQouteOrderAttribute, (await _storeContext.GetCurrentStoreAsync()).Id);
+        model.DeliveryDate = minDeliveryDate;
+        model.CustomDeliveryDateString = DateTime.Now.Date.AddDays(1).ToString("dd/MM/yyyy");
+        model.FormatedDeliveryDate = minDeliveryDate.ToString("dd/MM/yyyy");
+        model.MinDeliveryDate = minDeliveryDate.ToString("yyyy-MM-dd"); // html only support this format
+        model.MaxDeliveryDate = maxDeliveryDate.ToString("yyyy-MM-dd"); // html only support this format
 
         return model;
     }

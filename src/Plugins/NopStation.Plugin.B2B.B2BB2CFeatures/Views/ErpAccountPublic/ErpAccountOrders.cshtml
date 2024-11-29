@@ -1,8 +1,9 @@
-﻿@using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
-@using NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure;
-@using NopStation.Plugin.B2B.B2BB2CFeatures.Model.ErpAccountPublic;
-@using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
-@using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
+﻿@using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Model.ErpAccountPublic
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Enums
+
 @model ErpAccountOrderSearchModel
 @inject IErpCustomerFunctionalityService erpCustomerFunctionality
 @inject IB2BB2CWorkContext _b2BB2CWorkContext
@@ -44,25 +45,24 @@
     #ui-datepicker-div {
         z-index: 50 !important;
     }
+
+    a {
+        color: inherit;
+    }
 </style>
 
 <div class="page account-page order-list-page">
     <div class="page-title">
-        <h1>@T("Account.MyAccount") - @T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpOrderDetails.PublicView.ERPOrderNumber")</h1>
+        <h1>@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpOrderList.PublicView.Title")</h1>
     </div>
     <div class="page-body">
         <div class="fieldset">
             <div class="row">
                 <div class="col-sm-5">
-                    <div class="form-group row">
-                        <div class="col-md-6 text-right">
+                    <div class="form-group row"> 
+                        <div class="col-md-12 text-left">
                             <div class="my-inputs">
-                                <label asp-for="SearchOrderNumberOrName" asp-postfix=":"></label>
-                            </div>
-                        </div>
-                        <div class="col-md-6 text-left">
-                            <div class="my-inputs">
-                                <input asp-for="SearchOrderNumberOrName" />
+                                <input asp-for="SearchOrderNumberOrName" placeholder="@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.SearchOrderNumberOrName")"  />
                             </div>
                         </div>
                     </div>
@@ -70,30 +70,20 @@
             </div>
             <div class="row">
                 <div class="col-sm-5">
-                    <div class="form-group row">
-                        <div class="col-md-6 text-right">
+                    <div class="form-group row">                      
+                        <div class="col-md-12 text-left">
                             <div class="my-inputs">
-                                <label asp-for="SearchOrderDateFrom" asp-postfix=":"></label>
-                            </div>
-                        </div>
-                        <div class="col-md-6 text-left">
-                            <div class="my-inputs">
-                                <input asp-for="SearchOrderDateFrom" type="date" />
+                                <input asp-for="SearchOrderDateFrom" type="text" placeholder="@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.SearchOrderDateFrom")" onfocus="(this.type='date')" onblur="(this.type='text')" />
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-5">
-                    <div class="form-group row">
-                        <div class="col-md-6 text-right">
-                            <div class="my-inputs">
-                                <label asp-for="SearchOrderDateTo" asp-postfix=":"></label>
-                            </div>
-                        </div>
+                    <div class="form-group row"> 
 
                         <div class="col-md-6 text-left">
                             <div class="my-inputs">
-                                <input asp-for="SearchOrderDateTo" type="date" />
+                                <input asp-for="SearchOrderDateTo" type="text" placeholder="@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.SearchOrderDateTo")" onfocus="(this.type='date')" onblur="(this.type='text')" />
                             </div>
                         </div>
                     </div>
@@ -139,12 +129,6 @@
                         Width = "200",
                         Render = new RenderCustom("renderColumnViewOrder"),
                         ClassName = NopColumnClassDefaults.Button
-                    });
-
-                    gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.CustomerOrder))
-                    {
-                        Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.CustomerOrder").Text,
-                        Width = "200"
                     });
 
                     if (isB2BCustomer)
@@ -245,13 +229,13 @@
                         ClassName = NopColumnClassDefaults.CenterAll
                     });
 
-                    gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.NopOrderId))
+                    /*gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.NopOrderId))
                     {
                        Title = T("NopStation.Plugin.B2B.B2BB2CFeatures.B2BAccountOrderDetails.DownloadInvoicePOD").Text,
                        Width = "200",
                        Render = new RenderCustom("renderColumnDownloadInvoicePOd"),
                        ClassName = NopColumnClassDefaults.Button
-                    });
+                    });*/
                 }
                 @await Html.PartialAsync("Table", gridModel)
             </div>

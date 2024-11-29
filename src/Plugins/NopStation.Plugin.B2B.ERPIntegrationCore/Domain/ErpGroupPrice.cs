@@ -1,15 +1,14 @@
-﻿namespace NopStation.Plugin.B2B.ERPIntegrationCore.Domain
+﻿namespace NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
+
+public partial class ErpGroupPrice : ErpBaseEntity
 {
-    public partial class ErpGroupPrice : ErpBaseEntity
-    {
 
-        public int ErpNopGroupPriceCodeId { get; set; }
+    public int ErpNopGroupPriceCodeId { get; set; }
 
-        public int NopProductId { get; set; }
+    public int NopProductId { get; set; }
 
-        public decimal Price { get; set; }
+    public decimal Price { get; set; }
 
-        public ErpGroupPriceCode ErpNopGroupPriceCode { get; set; }
+    public ErpGroupPriceCode ErpNopGroupPriceCode { get; set; }
 
-    }
 }

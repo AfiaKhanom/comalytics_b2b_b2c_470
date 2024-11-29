@@ -195,79 +195,79 @@
                         <div class="card-body">
                             @{
                                 var gridModel = new DataTablesModel
-            {
-                Name = "products-grid",
-                UrlRead = new DataUrl("ProductList", "Product", null),
-                SearchButtonId = "search-products",
-                Length = Model.PageSize,
-                LengthMenu = Model.AvailablePageSizes,
-                Filters = new List<FilterParameter>
-                            {
-                            new FilterParameter(nameof(Model.SearchProductName)),
-                            new FilterParameter(nameof(Model.SearchCategoryId)),
-                            new FilterParameter(nameof(Model.SearchIncludeSubCategories), typeof(bool)),
-                            new FilterParameter(nameof(Model.SearchManufacturerId)),
-                            new FilterParameter(nameof(Model.SearchStoreId)),
-                            new FilterParameter(nameof(Model.SearchWarehouseId)),
-                            new FilterParameter(nameof(Model.SearchVendorId)),
-                            new FilterParameter(nameof(Model.SearchProductTypeId)),
-                            new FilterParameter(nameof(Model.SearchPublishedId))
-                            }
-            };
+                                {
+                                    Name = "products-grid",
+                                    UrlRead = new DataUrl("ProductList", "Product", null),
+                                    SearchButtonId = "search-products",
+                                    Length = Model.PageSize,
+                                    LengthMenu = Model.AvailablePageSizes,
+                                    Filters = new List<FilterParameter>
+                                    {
+                                        new FilterParameter(nameof(Model.SearchProductName)),
+                                        new FilterParameter(nameof(Model.SearchCategoryId)),
+                                        new FilterParameter(nameof(Model.SearchIncludeSubCategories), typeof(bool)),
+                                        new FilterParameter(nameof(Model.SearchManufacturerId)),
+                                        new FilterParameter(nameof(Model.SearchStoreId)),
+                                        new FilterParameter(nameof(Model.SearchWarehouseId)),
+                                        new FilterParameter(nameof(Model.SearchVendorId)),
+                                        new FilterParameter(nameof(Model.SearchProductTypeId)),
+                                        new FilterParameter(nameof(Model.SearchPublishedId))
+                                    }
+                                };
                                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ProductModel.PictureThumbnailUrl))
-            {
-                Title = T("Admin.Catalog.Products.Fields.PictureThumbnailUrl").Text,
-                Width = "100",
-                Render = new RenderPicture()
-            });
+                                {
+                                    Title = T("Admin.Catalog.Products.Fields.PictureThumbnailUrl").Text,
+                                    Width = "100",
+                                    Render = new RenderPicture()
+                                });
                                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ProductModel.Name))
-            {
-                Title = T("Admin.Catalog.Products.Fields.Name").Text,
-                Width = "300",
-                Render = new RenderLink(new DataUrl("~/Admin/Product/Edit/", nameof(ProductModel.Id))),
-            });
+                                {
+                                    Title = T("Admin.Catalog.Products.Fields.Name").Text,
+                                    Width = "300",
+                                    Render = new RenderLink(new DataUrl("~/Admin/Product/Edit/", nameof(ProductModel.Id))),
+                                });
                                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ProductModel.Sku))
-            {
-                Title = T("Admin.Catalog.Products.Fields.Sku").Text,
-                Width = "100"
-            });
+                                {
+                                    Title = T("Admin.Catalog.Products.Fields.Sku").Text,
+                                    Width = "100"
+                                });
                                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ProductModel.Price))
-            {
-                Title = T("Admin.Catalog.Products.Fields.Price").Text,
-                Width = "100",
-                Render = new RenderCustom("renderColumnPrice")
-            });
+                                {
+                                    Title = T("Admin.Catalog.Products.Fields.Price").Text,
+                                    Width = "100",
+                                    Render = new RenderCustom("renderColumnPrice")
+                                });
                                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ProductModel.ProductTypeName))
-            {
-                Title = T("Admin.Catalog.Products.Fields.ProductType").Text,
-                Width = "100"
-            });
+                                {
+                                    Title = T("Admin.Catalog.Products.Fields.ProductType").Text,
+                                    Width = "100"
+                                });
                                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ProductModel.Published))
-            {
-                Title = T("Admin.Catalog.Products.Fields.Published").Text,
-                Width = "100",
-                ClassName = NopColumnClassDefaults.CenterAll,
-                Render = new RenderBoolean()
-            });
+                                {
+                                    Title = T("Admin.Catalog.Products.Fields.Published").Text,
+                                    Width = "100",
+                                    ClassName = NopColumnClassDefaults.CenterAll,
+                                    Render = new RenderBoolean()
+                                });
                                 var specialPriceCountPropertyName = nameof(ProductModel.CustomProperties) + ".specialPriceCount";
                                 gridModel.ColumnCollection.Add(new ColumnProperty(specialPriceCountPropertyName)
-            {
-                Title = T("Admin.Catalog.Products.Fields.specialPriceCount").Text,
-                Width = "100"
-            });
+                                {
+                                    Title = T("Admin.Catalog.Products.Fields.specialPriceCount").Text,
+                                    Width = "100"
+                                });
                                 var groupPriceCountCountPropertyName = nameof(ProductModel.CustomProperties) + ".groupPriceCount";
                                 gridModel.ColumnCollection.Add(new ColumnProperty(groupPriceCountCountPropertyName)
-            {
-                Title = T("Admin.Catalog.Products.Fields.groupPriceCount").Text,
-                Width = "100"
-            });
+                                {
+                                    Title = T("Admin.Catalog.Products.Fields.groupPriceCount").Text,
+                                    Width = "100"
+                                });
                                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ProductModel.Id))
-            {
-                Title = T("Admin.Common.Edit").Text,
-                Width = "80",
-                Render = new RenderCustom("renderEditProductPrice"),
-                ClassName = NopColumnClassDefaults.Button
-            });
+                                {
+                                    Title = T("Admin.Common.Edit").Text,
+                                    Width = "80",
+                                    Render = new RenderCustom("renderEditProductPrice"),
+                                    ClassName = NopColumnClassDefaults.Button
+                                });
                             }
                             @await Html.PartialAsync("Table", gridModel)
                             <script>

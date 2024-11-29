@@ -169,14 +169,20 @@ public class ErpOrderController : NopStationAdminController
 
             return RedirectToAction("List");
         }
+        else if (erpOrder.IntegrationStatusType == IntegrationStatusType.Cancelled)
+        {
+            var msg = await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Order.AlreadyCancelled");
+            _notificationService.ErrorNotification(msg);
+
+            await _erpLogsService.ErrorAsync($"{msg}. Order Id: {erpOrder.Id}", ErpSyncLevel.Order, customer: currentCustomer);
+
+            return RedirectToAction("List");
+        }
 
         var isPlaced = false;
         var errorMsg = "Type of order not found!";
 
-        if (erpOrder.ErpOrderType == ErpOrderType.B2BSalesOrder || erpOrder.ErpOrderType == ErpOrderType.B2BQuote)
-            (isPlaced, errorMsg) = await _overriddenOrderProcessingService.RetryPlaceErpOrderAtErpAsync(erpOrder, _b2BB2CFeaturesSettings);
-        else if (erpOrder.ErpOrderType == ErpOrderType.B2CSalesOrder || erpOrder.ErpOrderType == ErpOrderType.B2CQuote)
-            (isPlaced, errorMsg) = await _overriddenOrderProcessingService.RetryPlaceErpOrderAtErpAsync(erpOrder, _b2BB2CFeaturesSettings);
+        (isPlaced, errorMsg) = await _overriddenOrderProcessingService.RetryPlaceErpOrderAtErpAsync(erpOrder, _b2BB2CFeaturesSettings);
 
         if (!isPlaced)
         {

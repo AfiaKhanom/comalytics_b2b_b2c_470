@@ -5,11 +5,9 @@ using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Data;
+using Nop.Services.Orders;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
-using Nop.Services.Orders;
-using DocumentFormat.OpenXml.Spreadsheet;
-using Microsoft.Identity.Client;
 
 namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
@@ -18,21 +16,18 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
     #region Fields
 
     private readonly IRepository<ErpOrderAdditionalData> _erpOrderAdditionalDataRepository;
-    private readonly IRepository<ErpAccount> _erpAccountRepository;
     private readonly IRepository<Order> _orderRepository;
     private readonly IOrderService _orderService;
 
     #endregion
 
-    #region ctor
+    #region Ctor
 
     public ErpOrderAdditionalDataService(IRepository<ErpOrderAdditionalData> erpOrderAdditionalDataRepository,
-        IRepository<ErpAccount> erpAccountRepository,
         IRepository<Order> orderRepository,
         IOrderService orderService)
     {
         _erpOrderAdditionalDataRepository = erpOrderAdditionalDataRepository;
-        _erpAccountRepository = erpAccountRepository;
         _orderRepository = orderRepository;
         _orderService = orderService;
     }
@@ -75,16 +70,27 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
 
     #region Read
 
+    public async Task<bool> IfCustomerReferenceExistWithThisErpAccount(string customerReference, int erpAccountId)
+    {
+        if (string.IsNullOrEmpty(customerReference) || erpAccountId == 0)
+        {
+            return false;
+        }
+
+        return await _erpOrderAdditionalDataRepository.Table
+            .AnyAsync(x => x.CustomerReference == customerReference && x.ErpAccountId == erpAccountId);
+    }
+
     public async Task<IList<ErpOrderAdditionalData>> GetAllFailedOrProcessingOrQueuedErpOrders(int maxIntegrationRetries = 0)
     {
         var erpOrderAdditionalData = await _erpOrderAdditionalDataRepository.GetAllPagedAsync(query =>
         {
-            query = query.Where(x => x.IntegrationStatusTypeId == (int)IntegrationStatusType.Failed 
+            query = query.Where(x => x.IntegrationStatusTypeId == (int)IntegrationStatusType.Failed
                             || x.IntegrationStatusTypeId == (int)IntegrationStatusType.Processing
                             || x.IntegrationStatusTypeId == (int)IntegrationStatusType.Queued);
 
             query = query.Where(x => x.IntegrationRetries < maxIntegrationRetries);
-            
+
             query = query.OrderByDescending(ei => ei.Id);
 
             return query;
@@ -95,18 +101,20 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
 
     public async Task<ErpOrderAdditionalData> GetErpOrderAdditionalDataByIdAsync(int id)
     {
-        if (id == 0)
+        if (id <= 0)
             return null;
 
         return await _erpOrderAdditionalDataRepository.GetByIdAsync(id, cache => default);
     }
 
-    public async Task<IPagedList<ErpOrderAdditionalData>> GetAllErpOrderAdditionalDataAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, int accountId = 0, int nopCustomerId = 0, string email = null,  string erpOrderNumber = null, string nopOrderNumber = null, int erpOrderOriginTypeId = 0, int erpOrderTypeId = 0, int integrationStatusTypeId = 0, DateTime? searchOrderDateFrom = null, DateTime? searchOrderDateTo = null)
+    public async Task<IPagedList<ErpOrderAdditionalData>> GetAllErpOrderAdditionalDataAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false,
+        int accountId = 0, int nopCustomerId = 0, string email = null, string erpOrderNumber = null, string nopOrderNumber = null, int erpOrderOriginTypeId = 0,
+        int erpOrderTypeId = 0, int integrationStatusTypeId = 0, DateTime? searchOrderDateFrom = null, DateTime? searchOrderDateTo = null)
     {
         var erpOrderAdditionalData = await _erpOrderAdditionalDataRepository.GetAllPagedAsync(query =>
         {
             if (accountId > 0)
-                query = query.Where(x => x.ErpAccountId == accountId); 
+                query = query.Where(x => x.ErpAccountId == accountId);
             if (erpOrderTypeId > 0)
                 query = query.Where(x => x.ErpOrderTypeId == erpOrderTypeId);
             if (integrationStatusTypeId > 0)
@@ -119,8 +127,8 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
             }
             if (!string.IsNullOrEmpty(nopOrderNumber))
             {
-                query = query.Where(x => x.ErpOrderNumber.Contains(nopOrderNumber.ToLower()) || x.NopOrderId.ToString().Contains(nopOrderNumber.ToLower()));
-            } 
+                query = query.Where(x => x.CustomerReference.Contains(nopOrderNumber.ToLower()));
+            }
             if (searchOrderDateFrom != null && searchOrderDateFrom.HasValue)
             {
                 query = from or in _orderRepository.Table
@@ -139,10 +147,9 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
             }
 
             if (nopCustomerId > 0)
-                query = query.Where(x => x.OrderPlacedByNopCustomerId ==  nopCustomerId);
+                query = query.Where(x => x.OrderPlacedByNopCustomerId == nopCustomerId);
 
-
-            query = query.OrderByDescending(ei => ei.Id); 
+            query = query.OrderByDescending(ei => ei.Id);
 
             return query;
         }, pageIndex, pageSize, getOnlyTotalCount);
@@ -159,6 +166,7 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
                     where c.NopOrderId == nopOrderId
                     orderby c.Id
                     select c;
+
         return await query.FirstOrDefaultAsync();
     }
 
@@ -168,7 +176,6 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
         {
             if (accountId > 0)
                 query = query.Where(x => x.ErpAccountId == accountId);
-
             query = query.OrderBy(ei => ei.Id);
             return query;
 
@@ -186,6 +193,15 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
         if (erpOrderAdditionalData != null && erpOrderAdditionalData.NopOrderId > 0)
             return await _orderService.GetOrderByIdAsync(erpOrderAdditionalData.NopOrderId);
         return null;
+    }
+
+    public async Task<ErpOrderAdditionalData> GetErpOrderAdditionalDataByErpAccountIdAndNopOrderNumberAsync(int accountId, string nopOrderNumber)
+    {
+        if (accountId <= 0 || string.IsNullOrEmpty(nopOrderNumber))
+            return null;
+
+        return await _erpOrderAdditionalDataRepository.Table.Where(
+            x => x.ErpAccountId == accountId && x.ErpOrderNumber.Trim() == nopOrderNumber.Trim()).FirstOrDefaultAsync();
     }
 
     #endregion
@@ -207,8 +223,8 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
         if (erpOrderAdditionalData.QuoteSalesOrderId.HasValue && erpOrderAdditionalData.QuoteSalesOrderId.Value > 0)
             return false;
 
-        return (erpOrderAdditionalData.ERPOrderStatus == ERPIntegrationCoreDefaults.ERPOrderStatusApproved 
-            || erpOrderAdditionalData.ERPOrderStatus == ERPIntegrationCoreDefaults.ERPOrderStatusPendingApproval 
+        return (erpOrderAdditionalData.ERPOrderStatus == ERPIntegrationCoreDefaults.ERPOrderStatusApproved
+            || erpOrderAdditionalData.ERPOrderStatus == ERPIntegrationCoreDefaults.ERPOrderStatusPendingApproval
             || erpOrderAdditionalData.ERPOrderStatus == nameof(OrderStatus.Complete));
     }
     public async Task<IDictionary<string, string>> GetAllCustomerReferencesByERPOrderNumbersAsync(IList<string> erpOrderNumbers)
@@ -226,4 +242,3 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
 
     #endregion
 }
-

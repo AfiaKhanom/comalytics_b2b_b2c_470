@@ -122,6 +122,6 @@ public static class B2BB2CFeaturesDefaults
 
     public static string ProcessFailedErpOrdersTask => "NopStation.Plugin.B2B.B2BB2CFeatures.Services.ProcessFailedErpOrdersTask";
     public static string ProcessFailedErpOrdersTaskName => "B2B Process Failed ERP Orders";
+    public static string LastStockSyncDateTime => "LastStockSyncDateTime";
     public static int DefaultTaskTimeOutPeriod => 360;
-
 }

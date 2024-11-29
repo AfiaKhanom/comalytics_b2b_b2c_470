@@ -10,6 +10,7 @@ using Nop.Core;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
+using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Security;
 using Nop.Web.Framework.Controllers;
@@ -18,6 +19,7 @@ using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Factories;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.ErpAccountPublic;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpPriceSyncFunctionality;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Infrastructure;
@@ -45,6 +47,11 @@ public class ErpAccountPublicController : BasePluginController
     private readonly INotificationService _notificationService;
     private readonly ILocalizationService _localizationService;
     private readonly IErpActivityLogsService _erpActivityLogsService;
+    private readonly IErpSalesOrgService _erpSalesOrgService;
+    private readonly IErpInvoiceService _erpInvoiceService;
+    private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
+    private readonly  IErpPriceSyncFunctionalityService _erpPriceSyncFunctionalityService;
+    private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
 
     #endregion
 
@@ -65,7 +72,13 @@ public class ErpAccountPublicController : BasePluginController
         IErpLogsService erpLogsService,
         INotificationService notificationService,
         ILocalizationService localizationService,
-        IErpActivityLogsService erpActivityLogsService)
+        IErpActivityLogsService erpActivityLogsService,
+        IErpSalesOrgService erpSalesOrgService,
+        ILogger logger,
+        B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
+        IErpIntegrationPluginManager erpIntegrationPluginManager,
+        IErpPriceSyncFunctionalityService erpPriceSyncFunctionalityService,
+        IErpInvoiceService erpInvoiceService)
     {
         _customerService = customerService;
         _workContext = workContext;
@@ -82,6 +95,11 @@ public class ErpAccountPublicController : BasePluginController
         _notificationService = notificationService;
         _localizationService = localizationService;
         _erpActivityLogsService = erpActivityLogsService;
+        _erpSalesOrgService = erpSalesOrgService;
+        _erpInvoiceService = erpInvoiceService;
+        _erpIntegrationPluginManager = erpIntegrationPluginManager;
+        _erpPriceSyncFunctionalityService = erpPriceSyncFunctionalityService;
+        _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
     }
 
     #endregion
@@ -90,8 +108,8 @@ public class ErpAccountPublicController : BasePluginController
 
     private async Task<(ErpAccount erpAccount, ErpNopUser erpNopUser)> GetErpAccountAndUserOfCurrentCustomerAsync(int customerId)
     {
-        var erpAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(customerId);
         var erpNopUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(customerId);
+        var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpNopUser?.ErpAccountId ?? 0);
 
         return (erpAccount, erpNopUser);
     }
@@ -172,21 +190,50 @@ public class ErpAccountPublicController : BasePluginController
         return Json(model);
     }
 
-    public async Task<IActionResult> DownloadInvoice(string id)
+    public async Task<IActionResult> DownloadInvoice(int invoiceId)
     {
-        var erpIntegrationPlugin = await _erpIntegrationPluginService.LoadActiveERPIntegrationPlugin();
+        var erpIntegrationPlugin = await _erpIntegrationPluginManager.LoadActiveERPIntegrationPlugin();
 
         if (erpIntegrationPlugin is null)
         {
             await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Error, ErpSyncLevel.Invoice, "No integration method found.");
+            _notificationService.ErrorNotification("No integration method found.");
             return null;
+        }
+
+        if (invoiceId < 1)
+        {
+            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("B2BB2CFeatures.DownloadInvoice.ErrorMessage.InvoiceData.IdIsNotValid"));
+            return RedirectToAction("ErpAccountInvoices");
+        }
+
+        var erpInvoice = await _erpInvoiceService.GetErpInvoiceByIdAsync(invoiceId);
+        if (erpInvoice == null)
+        {
+            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("B2BB2CFeatures.DownloadInvoice.ErrorMessage.InvoiceData.NotFound"));
+            return RedirectToAction("ErpAccountInvoices");
+        }
+
+        var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpInvoice.ErpAccountId);
+        if (erpAccount == null)
+        {
+            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("B2BB2CFeatures.DownloadInvoice.ErrorMessage.InvoiceData.B2BAccountNotFound"));
+            return RedirectToAction("ErpAccountInvoices");
+        }
+        var salesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount.ErpSalesOrgId);
+        if (salesOrg == null)
+        {
+            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("B2BB2CFeatures.DownloadInvoice.ErrorMessage.InvoiceData.ErpSalesOrgNotFound"));
+            return RedirectToAction("ErpAccountInvoices");
         }
 
         try
         {
             var erpGetRequestModel = new ErpGetRequestModel
             {
-                DocumentNumber = id
+                DocumentNumber = erpInvoice.ErpDocumentNumber,
+                OrderNumber = erpInvoice.ErpOrderNumber,
+                Location = salesOrg.Code ?? ""
             };
 
             var response = await erpIntegrationPlugin.GetInvoicePdfByteCodeByDocumentNoFromErpAsync(erpGetRequestModel);
@@ -209,7 +256,7 @@ public class ErpAccountPublicController : BasePluginController
                     //erp activity log
                     await _erpActivityLogsService.InsertErpActivityAsync("Erp_InvoiceDownload",
                         string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.ErpInvoiceDownload"),
-                        id),
+                        invoiceId),
                         new ErpInvoice());
 
                     // Return the file as a download response
@@ -387,28 +434,30 @@ public class ErpAccountPublicController : BasePluginController
     {
         var currCustomer = await _workContext.GetCurrentCustomerAsync();
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(currCustomer.Id);
-        if (erpAccount == null && erpNopUser == null)
+
+        if (erpAccount == null)
             return await AccessDeniedDataTablesJson();
 
         if (!await _permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BOrders))
             return await AccessDeniedDataTablesJson();
 
         var model = new ErpAccountOrderListModel();
-        if (erpNopUser?.ErpUserType == ErpUserType.B2BUser)
+        if (erpNopUser.ErpUserType == ErpUserType.B2BUser)
         {
             searchModel.ErpAccountId = erpAccount.Id;
             searchModel.ErpAccountNumber = erpAccount.AccountNumber;
+            searchModel.NopCustomerId = currCustomer.Id;
+
             model = await _erpAccountPublicModelFactory.PrepareErpOrderListModelAsync(searchModel);
         }
-        else if (erpNopUser?.ErpUserType == ErpUserType.B2CUser)
+        else if (erpNopUser.ErpUserType == ErpUserType.B2CUser)
         {
             searchModel.ErpAccountId = erpAccount.Id;
             searchModel.ErpAccountNumber = erpAccount.AccountNumber;
             searchModel.ErpNopUserId = erpNopUser.Id;
+            searchModel.NopCustomerId = currCustomer.Id;
 
-            var store = await _storeContext.GetCurrentStoreAsync();
-            var b2BB2CFeaturesSettings = await _settingService.LoadSettingAsync<B2BB2CFeaturesSettings>(store.Id);
-            if (b2BB2CFeaturesSettings.UseDefaultAccountForB2CUser)
+            if (_b2BB2CFeaturesSettings.UseDefaultAccountForB2CUser)
                 searchModel.NopCustomerId = currCustomer.Id;
 
             model = await _erpAccountPublicModelFactory.PrepareErpOrderListModelAsync(searchModel);
@@ -438,24 +487,30 @@ public class ErpAccountPublicController : BasePluginController
     [HttpPost]
     public async Task<IActionResult> LoadErpQuoteOrderList(ErpAccountQuoteOrderSearchModel searchModel)
     {
-        var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
-        (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(customer.Id);
-        if (erpAccount == null && erpNopUser == null)
+        var currCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(currCustomer.Id);
+
+        if (erpAccount == null)
             return await AccessDeniedDataTablesJson();
 
         if (!await _permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BQuotes))
             return await AccessDeniedDataTablesJson();
 
         var model = new ErpQuoteOrderListModel();
-        if (erpNopUser?.ErpUserType == ErpUserType.B2BUser)
+        if (erpNopUser.ErpUserType == ErpUserType.B2BUser)
         {
             searchModel.ErpAccountId = erpAccount.Id;
             searchModel.ErpAccountNumber = erpAccount.AccountNumber;
+            searchModel.NopCustomerId = currCustomer.Id;
+
             model = await _erpAccountPublicModelFactory.PrepareErpQuoteOrderListModelAsync(searchModel);
         }
-        else if (erpNopUser?.ErpUserType == ErpUserType.B2CUser)
+        else if (erpNopUser.ErpUserType == ErpUserType.B2CUser)
         {
+            searchModel.ErpAccountId = erpAccount.Id;
             searchModel.ErpNopUserId = erpNopUser.Id;
+            searchModel.NopCustomerId = currCustomer.Id;
+
             model = await _erpAccountPublicModelFactory.PrepareErpQuoteOrderListModelAsync(searchModel);
         }
 
@@ -463,6 +518,15 @@ public class ErpAccountPublicController : BasePluginController
     }
 
     #endregion
+
+    public async Task<IActionResult> AllProductsLivePriceSync()
+    {
+        await _erpPriceSyncFunctionalityService.ExecuteAllProductsLivePriceSync();
+        return Json(new
+        {
+            success = true
+        });
+    }
 
     #endregion
 }

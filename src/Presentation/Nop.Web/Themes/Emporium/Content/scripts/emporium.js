@@ -907,10 +907,10 @@
 
         $(document).on("quickTabsRefreshedTab quickTabsLoadedTab", function () {
 
-            handleExpand(".write-review .message-error, .write-review .field-validation-error", ".write-review-collapse", ".write-review > .title");
-        });
-        
-        function groupedButton() {
+      handleExpand(".write-review .message-error, .write-review .field-validation-error", ".write-review-collapse", ".write-review > .title");
+    });
+
+    function groupedButton() {
 
             if (!$('.product-variant-line').length) {
 
@@ -1197,9 +1197,9 @@
 
             $('#edit-billing-address-button').removeClass('button-1').addClass('button-2 edit-address-button');
 
-            $(document).on("opcStepLoad", function () {
-                $('#edit-shipping-address-button').removeClass('button-1').addClass('button-2 edit-address-button');
-            });
-        }
-    });
+      $(document).on("opcStepLoad", function () {
+        $('#edit-shipping-address-button').removeClass('button-1').addClass('button-2 edit-address-button');
+      });
+    }
+  });
 })(jQuery, window.sevenSpikesCore = window.sevenSpikesCore || {});

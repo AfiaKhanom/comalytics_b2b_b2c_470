@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DocumentFormat.OpenXml.Math;
-using DocumentFormat.OpenXml.Office2010.Excel;
-using DocumentFormat.OpenXml.Wordprocessing;
+using DocumentFormat.OpenXml.EMMA;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -43,9 +41,11 @@ using Nop.Web.Models.ShoppingCart;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Factories;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpPriceSyncFunctionality;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Infrastructure;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
 namespace NopStation.Plugin.B2B.B2BB2CFeatures.Controllers;
@@ -53,7 +53,7 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Controllers;
 public class OverridenShoppingCartController : ShoppingCartController
 {
     #region Fields
-    
+
     private readonly IErpOrderAdditionalDataService _erpOrderAdditionalDataService;
     private readonly IErpCustomerFunctionalityService _erpCustomerFunctionalityService;
     private readonly IOrderService _orderService;
@@ -61,6 +61,11 @@ public class OverridenShoppingCartController : ShoppingCartController
     private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
     private readonly ILogger _logger;
     private readonly IErpLogsService _erpLogsService;
+    private readonly IErpAccountService _erpAccountService;
+    private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
+    private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
+    private readonly IOrderProcessingService _orderProcessingService;
+
     #endregion
 
     #region Ctor
@@ -109,7 +114,11 @@ public class OverridenShoppingCartController : ShoppingCartController
         IB2BB2CWorkContext b2BB2CWorkContext,
         ILogger logger,
         IErpLogsService erpLogsService,
-        IStoreMappingService storeMappingService) : base(captchaSettings,
+        IStoreMappingService storeMappingService,
+        IErpAccountService erpAccountService,
+        B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
+        IErpIntegrationPluginManager erpIntegrationPluginManager,
+        IOrderProcessingService orderProcessingService) : base(captchaSettings,
             customerSettings,
             checkoutAttributeParser,
             checkoutAttributeService,
@@ -146,7 +155,7 @@ public class OverridenShoppingCartController : ShoppingCartController
             orderSettings,
             shoppingCartSettings,
             shippingSettings)
-    {        
+    {
         _erpOrderAdditionalDataService = erpOrderAdditionalDataService;
         _erpCustomerFunctionalityService = erpCustomerFunctionalityService;
         _orderService = orderService;
@@ -154,13 +163,17 @@ public class OverridenShoppingCartController : ShoppingCartController
         _b2BB2CWorkContext = b2BB2CWorkContext;
         _logger = logger;
         _erpLogsService = erpLogsService;
+        _erpAccountService = erpAccountService;
+        _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
+        _erpIntegrationPluginManager = erpIntegrationPluginManager;
+        _orderProcessingService = orderProcessingService;
     }
 
     #endregion
 
     #region Utilities
 
-    protected override async Task<IActionResult> GetProductToCartDetailsAsync(List<string> addToCartWarnings, ShoppingCartType cartType,  Product product)
+    protected override async Task<IActionResult> GetProductToCartDetailsAsync(List<string> addToCartWarnings, ShoppingCartType cartType, Product product)
     {
         if (addToCartWarnings.Any())
         {
@@ -258,6 +271,49 @@ public class OverridenShoppingCartController : ShoppingCartController
         }
     }
 
+    private async Task LiveErpAccountCreditCheckByCustomerAsync(Customer customer)
+    {
+        var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(customer.Id);
+
+        if (_b2BB2CFeaturesSettings.EnableLiveCreditChecks && b2BAccount != null)
+        {
+            var erpIntegrationPlugin = await _erpIntegrationPluginManager.LoadActiveERPIntegrationPlugin();
+
+            if (erpIntegrationPlugin is not null)
+            {
+                var response = await erpIntegrationPlugin.GetAllAccountCreditFromErpAsync(new ErpGetRequestModel() { AccountNumber = b2BAccount.AccountNumber });
+
+                if (!response.ErpResponseModel.IsError)
+                {
+                    if (response.Data is not null)
+                    {
+                        var data = response.Data?.FirstOrDefault();
+                        b2BAccount.CreditLimit = data?.CreditLimit ?? b2BAccount.CreditLimit;
+                        b2BAccount.CurrentBalance = data?.CurrentBalance ?? b2BAccount.CurrentBalance;
+                        b2BAccount.CreditLimitAvailable = data?.CreditLimitAvailable ?? b2BAccount.CreditLimitAvailable;
+                        b2BAccount.UpdatedById = 1;
+                        b2BAccount.UpdatedOnUtc = DateTime.UtcNow;
+                        b2BAccount.LastErpAccountSyncDate = DateTime.UtcNow;
+                        await _erpAccountService.UpdateErpAccountAsync(b2BAccount);
+                        await _erpLogsService.InformationAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit synced.", ErpSyncLevel.Account, customer: customer);
+                    }
+                    else
+                    {
+                        await _erpLogsService.InformationAsync($"No credit data found for Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber})", ErpSyncLevel.Account, customer: customer);
+                    }
+                }
+                else
+                {
+                    await _erpLogsService.ErrorAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit Check error: {response.ErpResponseModel.ErrorShortMessage}", ErpSyncLevel.Account, customer: customer);
+                }
+            }
+            else
+            {
+                await _erpLogsService.ErrorAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit Check error: No integration method found.", ErpSyncLevel.Account, customer: customer);
+            }
+        }
+    }
+
     #endregion
 
     #region Shopping cart
@@ -267,10 +323,13 @@ public class OverridenShoppingCartController : ShoppingCartController
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.EnableShoppingCart))
             return RedirectToRoute("Homepage");
 
+        var currCustomer = await _workContext.GetCurrentCustomerAsync();
         var store = await _storeContext.GetCurrentStoreAsync();
-        var cart = await _shoppingCartService.GetShoppingCartAsync(await _workContext.GetCurrentCustomerAsync(), ShoppingCartType.ShoppingCart, store.Id);
+        var cart = await _shoppingCartService.GetShoppingCartAsync(currCustomer, ShoppingCartType.ShoppingCart, store.Id);
         var model = new ShoppingCartModel();
         model = await _shoppingCartModelFactory.PrepareShoppingCartModelAsync(model, cart);
+
+        await LiveErpAccountCreditCheckByCustomerAsync(currCustomer);
 
         return View(model);
     }
@@ -289,6 +348,19 @@ public class OverridenShoppingCartController : ShoppingCartController
         var customer = await _workContext.GetCurrentCustomerAsync();
         var store = await _storeContext.GetCurrentStoreAsync();
         var cart = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id);
+
+        await LiveErpAccountCreditCheckByCustomerAsync(customer);
+
+        if (cart != null && cart.Any())
+        {
+            //Check whether payment workflow is required
+            var isPaymentWorkflowRequired = await _orderProcessingService.IsPaymentWorkflowRequiredAsync(cart);
+            if (!isPaymentWorkflowRequired)
+            {
+                _notificationService.WarningNotification(await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Checkout.Start.OrderTotalIsZeroWarning"));
+                return RedirectToAction(nameof(Cart));
+            }
+        }
 
         //parse and save checkout attributes
         await ParseAndSaveCheckoutAttributesAsync(cart, form);
@@ -343,11 +415,10 @@ public class OverridenShoppingCartController : ShoppingCartController
         await ParseAndSaveCheckoutAttributesAsync(cart, form);
 
         //validate attributes
-        var checkoutAttributes = await _genericAttributeService.GetAttributeAsync<string>(currCustomer,
-            NopCustomerDefaults.CheckoutAttributes, store.Id);
-        
+        var checkoutAttributes = await _genericAttributeService.GetAttributeAsync<string>(currCustomer, NopCustomerDefaults.CheckoutAttributes, store.Id);
+
         var checkoutAttributeWarnings = await _shoppingCartService.GetShoppingCartWarningsAsync(cart, checkoutAttributes, true);
-        
+
         if (checkoutAttributeWarnings.Any())
         {
             //something wrong, redisplay the page with warnings
@@ -481,12 +552,12 @@ public class OverridenShoppingCartController : ShoppingCartController
         var shoppingCartItem = await _shoppingCartService.FindShoppingCartItemInTheCartAsync(cart, cartType, product);
         //if we already have the same product in the cart, then use the total quantity to validate
         var quantityToValidate = shoppingCartItem != null ? shoppingCartItem.Quantity + quantity : quantity;
-        
+
         var addToCartWarnings = await _shoppingCartService
             .GetShoppingCartItemWarningsAsync(currCustomer, cartType,
             product, store.Id, string.Empty,
             decimal.Zero, null, null, quantityToValidate, false, shoppingCartItem?.Id ?? 0, true, false, false, false);
-        
+
         if (addToCartWarnings.Any())
         {
             //cannot be added to the cart
@@ -506,7 +577,7 @@ public class OverridenShoppingCartController : ShoppingCartController
             storeId: store.Id,
             attributesXml: attXml,
             quantity: quantity);
-        
+
         if (addToCartWarnings.Any())
         {
             //cannot be added to the cart
@@ -608,13 +679,6 @@ public class OverridenShoppingCartController : ShoppingCartController
     {
         var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
         var store = await _storeContext.GetCurrentStoreAsync();
-        // if cart is undergoing any activity, don't clear it. wait for it to finish.
-        var isCartActivityOn = await _genericAttributeService.GetAttributeAsync<bool>(currentCustomer, B2BB2CFeaturesDefaults.IsCartActivityOn, store.Id);
-        if (isCartActivityOn)
-        {
-            _notificationService.WarningNotification(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ShoppingCart.Warning.CartActivityOn"));
-            return RedirectToRoute("ShoppingCart");
-        }
 
         try
         {
@@ -635,8 +699,6 @@ public class OverridenShoppingCartController : ShoppingCartController
         {
             _logger.Error(_localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.Wishlist.ClearCart.Error") + " " + ex.Message, ex);
             _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.Wishlist.ClearCart.Error"));
-
-            //ERP activity log
             await _erpLogsService.ErrorAsync(_localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.Wishlist.ClearCart.Error") + " " + ex.Message, ErpSyncLevel.Order, customer: currentCustomer);
 
             return Json(new

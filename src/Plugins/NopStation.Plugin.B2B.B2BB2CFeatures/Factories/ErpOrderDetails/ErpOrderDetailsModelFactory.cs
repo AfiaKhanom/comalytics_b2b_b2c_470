@@ -182,19 +182,17 @@ public class ErpOrderDetailsModelFactory : IErpOrderDetailsModelFactory
     {
         var order = await _orderService.GetOrderByIdAsync(erpOrderPerAccount.NopOrderId);
         var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
-        var b2BOrderDetailsModel = new ErpOrderDetailsModel();
         var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currentCustomer.Id);
-        var erpOrder = await _erpOrderAdditionalDataService.GetErpOrderAdditionalDataByNopOrderIdAsync(erpOrderPerAccount.NopOrderId);
-        var b2bOrder = erpOrder.ErpOrderType == ErpOrderType.B2BSalesOrder || erpOrder.ErpOrderType == ErpOrderType.B2BQuote ? erpOrder : null;
+        var salesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(b2BAccount.ErpSalesOrgId);
+        var language = await _b2BB2CWorkContext.GetWorkingLanguageAsync();
+        var erpBillingAddress = await _addressService.GetAddressByIdAsync(b2BAccount.BillingAddressId ?? 0);
+        var erpCountry = await _countryService.GetCountryByIdAsync(erpBillingAddress.CountryId ?? 0);
+        var erpStateProvidenAddress = await _stateProvinceService.GetStateProvinceByAddressAsync(erpBillingAddress);
+
+        var b2BOrderDetailsModel = new ErpOrderDetailsModel();
         var baseWeight = "";
         var totalPriceWithOutSavingsExcTax = decimal.Zero;
         var b2BOnlineOrderDiscountExcTax = decimal.Zero;
-        var language = await _b2BB2CWorkContext.GetWorkingLanguageAsync();
-        var languageId = language.Id;
-        var erpBillingAddress = await _addressService.GetAddressByIdAsync(b2BAccount.BillingAddressId ?? 0);
-        var salesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(b2BAccount.ErpSalesOrgId);
-        var erpStateProvidenAddress = await _stateProvinceService.GetStateProvinceByAddressAsync(erpBillingAddress);
-        var erpCountry = await _countryService.GetCountryByIdAsync(erpBillingAddress.CountryId ?? 0);
 
         b2BOrderDetailsModel.ErpAccountDataModel = new ErpAccountDataModel()
         {
@@ -228,9 +226,7 @@ public class ErpOrderDetailsModelFactory : IErpOrderDetailsModelFactory
         }
         else
         {
-            var erpShipToAddressId = erpOrder.ErpShipToAddressId ?? 0;
-
-            var erpShippingAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(erpShipToAddressId);// erpOrder.ErpShipToAddress;
+            var erpShippingAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(erpOrderPerAccount.ErpShipToAddressId ?? 0);
             b2BOrderDetailsModel.ErpShippingAddressModel = await PreapreErpShippingAddress(erpShippingAddress);
             b2BOrderDetailsModel.ErpShippingAddressModel.AccountNumber = b2BAccount.AccountNumber;
         }
@@ -276,13 +272,13 @@ public class ErpOrderDetailsModelFactory : IErpOrderDetailsModelFactory
 
             //order subtotal
             var orderSubtotalInclTaxInCustomerCurrency = _currencyService.ConvertCurrency(order.OrderSubtotalInclTax, order.CurrencyRate);
-            b2BOrderDetailsModel.OrderSubtotal = await _priceFormatter.FormatPriceAsync(orderSubtotalInclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, languageId, true);
+            b2BOrderDetailsModel.OrderSubtotal = await _priceFormatter.FormatPriceAsync(orderSubtotalInclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, language.Id, true);
             b2BOrderDetailsModel.OrderSubtotalValue = orderSubtotalInclTaxInCustomerCurrency;
             //discount (applied to order subtotal)
             var orderSubTotalDiscountInclTaxInCustomerCurrency = _currencyService.ConvertCurrency(order.OrderSubTotalDiscountInclTax, order.CurrencyRate);
             if (orderSubTotalDiscountInclTaxInCustomerCurrency > decimal.Zero)
             {
-                b2BOrderDetailsModel.OrderSubTotalDiscount = await _priceFormatter.FormatPriceAsync(-orderSubTotalDiscountInclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, languageId, true);
+                b2BOrderDetailsModel.OrderSubTotalDiscount = await _priceFormatter.FormatPriceAsync(-orderSubTotalDiscountInclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, language.Id, true);
                 b2BOrderDetailsModel.OrderSubTotalDiscountValue = orderSubTotalDiscountInclTaxInCustomerCurrency;
             }
         }
@@ -292,13 +288,13 @@ public class ErpOrderDetailsModelFactory : IErpOrderDetailsModelFactory
 
             //order subtotal
             var orderSubtotalExclTaxInCustomerCurrency = _currencyService.ConvertCurrency(order.OrderSubtotalExclTax, order.CurrencyRate);
-            b2BOrderDetailsModel.OrderSubtotal = await _priceFormatter.FormatPriceAsync(orderSubtotalExclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, languageId, false);
+            b2BOrderDetailsModel.OrderSubtotal = await _priceFormatter.FormatPriceAsync(orderSubtotalExclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, language.Id, false);
             b2BOrderDetailsModel.OrderSubtotalValue = orderSubtotalExclTaxInCustomerCurrency;
             //discount (applied to order subtotal)
             var orderSubTotalDiscountExclTaxInCustomerCurrency = _currencyService.ConvertCurrency(order.OrderSubTotalDiscountExclTax, order.CurrencyRate);
             if (orderSubTotalDiscountExclTaxInCustomerCurrency > decimal.Zero)
             {
-                b2BOrderDetailsModel.OrderSubTotalDiscount = await _priceFormatter.FormatPriceAsync(-orderSubTotalDiscountExclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, languageId, false);
+                b2BOrderDetailsModel.OrderSubTotalDiscount = await _priceFormatter.FormatPriceAsync(-orderSubTotalDiscountExclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, language.Id, false);
                 b2BOrderDetailsModel.OrderSubTotalDiscountValue = orderSubTotalDiscountExclTaxInCustomerCurrency;
             }
         }
@@ -309,13 +305,13 @@ public class ErpOrderDetailsModelFactory : IErpOrderDetailsModelFactory
 
             //order shipping
             var orderShippingInclTaxInCustomerCurrency = _currencyService.ConvertCurrency(order.OrderShippingInclTax, order.CurrencyRate);
-            b2BOrderDetailsModel.OrderShipping = await _priceFormatter.FormatShippingPriceAsync(orderShippingInclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, languageId, true);
+            b2BOrderDetailsModel.OrderShipping = await _priceFormatter.FormatShippingPriceAsync(orderShippingInclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, language.Id, true);
             b2BOrderDetailsModel.OrderShippingValue = orderShippingInclTaxInCustomerCurrency;
             //payment method additional fee
             var paymentMethodAdditionalFeeInclTaxInCustomerCurrency = _currencyService.ConvertCurrency(order.PaymentMethodAdditionalFeeInclTax, order.CurrencyRate);
             if (paymentMethodAdditionalFeeInclTaxInCustomerCurrency > decimal.Zero)
             {
-                b2BOrderDetailsModel.PaymentMethodAdditionalFee = await _priceFormatter.FormatPaymentMethodAdditionalFeeAsync(paymentMethodAdditionalFeeInclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, languageId, true);
+                b2BOrderDetailsModel.PaymentMethodAdditionalFee = await _priceFormatter.FormatPaymentMethodAdditionalFeeAsync(paymentMethodAdditionalFeeInclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, language.Id, true);
                 b2BOrderDetailsModel.PaymentMethodAdditionalFeeValue = paymentMethodAdditionalFeeInclTaxInCustomerCurrency;
             }
         }
@@ -325,13 +321,13 @@ public class ErpOrderDetailsModelFactory : IErpOrderDetailsModelFactory
 
             //order shipping
             var orderShippingExclTaxInCustomerCurrency = _currencyService.ConvertCurrency(order.OrderShippingExclTax, order.CurrencyRate);
-            b2BOrderDetailsModel.OrderShipping = await _priceFormatter.FormatShippingPriceAsync(orderShippingExclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, languageId, false);
+            b2BOrderDetailsModel.OrderShipping = await _priceFormatter.FormatShippingPriceAsync(orderShippingExclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, language.Id, false);
             b2BOrderDetailsModel.OrderShippingValue = orderShippingExclTaxInCustomerCurrency;
             //payment method additional fee
             var paymentMethodAdditionalFeeExclTaxInCustomerCurrency = _currencyService.ConvertCurrency(order.PaymentMethodAdditionalFeeExclTax, order.CurrencyRate);
             if (paymentMethodAdditionalFeeExclTaxInCustomerCurrency > decimal.Zero)
             {
-                b2BOrderDetailsModel.PaymentMethodAdditionalFee = await _priceFormatter.FormatPaymentMethodAdditionalFeeAsync(paymentMethodAdditionalFeeExclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, languageId, false);
+                b2BOrderDetailsModel.PaymentMethodAdditionalFee = await _priceFormatter.FormatPaymentMethodAdditionalFeeAsync(paymentMethodAdditionalFeeExclTaxInCustomerCurrency, true, order.CustomerCurrencyCode, language.Id, false);
                 b2BOrderDetailsModel.PaymentMethodAdditionalFeeValue = paymentMethodAdditionalFeeExclTaxInCustomerCurrency;
             }
         }
@@ -358,14 +354,14 @@ public class ErpOrderDetailsModelFactory : IErpOrderDetailsModelFactory
                 displayTax = !displayTaxRates;
 
                 var orderTaxInCustomerCurrency = _currencyService.ConvertCurrency(order.OrderTax, order.CurrencyRate);
-                b2BOrderDetailsModel.Tax = await _priceFormatter.FormatPriceAsync(orderTaxInCustomerCurrency, true, order.CustomerCurrencyCode, false, languageId);
+                b2BOrderDetailsModel.Tax = await _priceFormatter.FormatPriceAsync(orderTaxInCustomerCurrency, true, order.CustomerCurrencyCode, false, language.Id);
 
                 foreach (var tr in taxRates)
                 {
                     b2BOrderDetailsModel.TaxRates.Add(new ErpOrderDetailsModel.TaxRate
                     {
                         Rate = _priceFormatter.FormatTaxRate(tr.Key),
-                        Value = await _priceFormatter.FormatPriceAsync(_currencyService.ConvertCurrency(tr.Value, order.CurrencyRate), true, order.CustomerCurrencyCode, false, languageId),
+                        Value = await _priceFormatter.FormatPriceAsync(_currencyService.ConvertCurrency(tr.Value, order.CurrencyRate), true, order.CustomerCurrencyCode, false, language.Id),
                     });
                 }
             }
@@ -378,7 +374,7 @@ public class ErpOrderDetailsModelFactory : IErpOrderDetailsModelFactory
         var orderDiscountInCustomerCurrency = _currencyService.ConvertCurrency(order.OrderDiscount, order.CurrencyRate);
         if (orderDiscountInCustomerCurrency > decimal.Zero)
         {
-            b2BOrderDetailsModel.OrderTotalDiscount = await _priceFormatter.FormatPriceAsync(-orderDiscountInCustomerCurrency, true, order.CustomerCurrencyCode, false, languageId);
+            b2BOrderDetailsModel.OrderTotalDiscount = await _priceFormatter.FormatPriceAsync(-orderDiscountInCustomerCurrency, true, order.CustomerCurrencyCode, false, language.Id);
             b2BOrderDetailsModel.OrderTotalDiscountValue = orderDiscountInCustomerCurrency;
         }
 
@@ -388,7 +384,7 @@ public class ErpOrderDetailsModelFactory : IErpOrderDetailsModelFactory
             b2BOrderDetailsModel.GiftCards.Add(new ErpOrderDetailsModel.GiftCard
             {
                 CouponCode = (await _giftCardService.GetGiftCardByIdAsync(gcuh.GiftCardId)).GiftCardCouponCode,
-                Amount = await _priceFormatter.FormatPriceAsync(-(_currencyService.ConvertCurrency(gcuh.UsedValue, order.CurrencyRate)), true, order.CustomerCurrencyCode, false, languageId),
+                Amount = await _priceFormatter.FormatPriceAsync(-(_currencyService.ConvertCurrency(gcuh.UsedValue, order.CurrencyRate)), true, order.CustomerCurrencyCode, false, language.Id),
             });
         }
 
@@ -396,12 +392,12 @@ public class ErpOrderDetailsModelFactory : IErpOrderDetailsModelFactory
         if (order.RedeemedRewardPointsEntryId.HasValue && await _rewardPointService.GetRewardPointsHistoryEntryByIdAsync(order.RedeemedRewardPointsEntryId.Value) is RewardPointsHistory redeemedRewardPointsEntry)
         {
             b2BOrderDetailsModel.RedeemedRewardPoints = -redeemedRewardPointsEntry.Points;
-            b2BOrderDetailsModel.RedeemedRewardPointsAmount = await _priceFormatter.FormatPriceAsync(-(_currencyService.ConvertCurrency(redeemedRewardPointsEntry.UsedAmount, order.CurrencyRate)), true, order.CustomerCurrencyCode, false, languageId);
+            b2BOrderDetailsModel.RedeemedRewardPointsAmount = await _priceFormatter.FormatPriceAsync(-(_currencyService.ConvertCurrency(redeemedRewardPointsEntry.UsedAmount, order.CurrencyRate)), true, order.CustomerCurrencyCode, false, language.Id);
         }
 
         //total
         var orderTotalInCustomerCurrency = _currencyService.ConvertCurrency(order.OrderTotal, order.CurrencyRate);
-        b2BOrderDetailsModel.OrderTotal = await _priceFormatter.FormatPriceAsync(orderTotalInCustomerCurrency, true, order.CustomerCurrencyCode, false, languageId);
+        b2BOrderDetailsModel.OrderTotal = await _priceFormatter.FormatPriceAsync(orderTotalInCustomerCurrency, true, order.CustomerCurrencyCode, false, language.Id);
         b2BOrderDetailsModel.OrderTotalValue = orderTotalInCustomerCurrency;
 
         //checkout attributes
@@ -443,6 +439,10 @@ public class ErpOrderDetailsModelFactory : IErpOrderDetailsModelFactory
             var vendor = await _vendorService.GetVendorByProductIdAsync(product.Id);
             var picture = await _pictureService.GetProductPictureAsync(product, nopOrderItem.AttributesXml);
 
+            if(picture == null)
+            {
+                picture = new Nop.Core.Domain.Media.Picture();
+            }
             var pictureModel = new PictureModel
             {
                 ImageUrl = await _pictureService.GetPictureUrlAsync(picture.Id),
@@ -473,7 +473,7 @@ public class ErpOrderDetailsModelFactory : IErpOrderDetailsModelFactory
             if (vendor != null)
                 orderItemDataModel.VendorName = vendor.Name;
 
-            if (erpOrderItem != null && b2bOrder != null)
+            if (erpOrderItem != null && erpOrderPerAccount != null)
             {
                 orderItemDataModel.Id = erpOrderItem.Id;
                 orderItemDataModel.ERPSalesUoM = erpOrderItem.ErpSalesUoM ?? string.Empty;
@@ -488,11 +488,13 @@ public class ErpOrderDetailsModelFactory : IErpOrderDetailsModelFactory
             b2BOrderDetailsModel.Items.Add(orderItemDataModel);
         }
 
-        if (b2bOrder != null)
+        if (erpOrderPerAccount != null)
         {
-            b2BOrderDetailsModel.ERPOrderNumber = b2bOrder.ErpOrderNumber ?? b2bOrder.ErpOrderNumber;
-            b2BOrderDetailsModel.ERPOrderStatus = b2bOrder.ERPOrderStatus ?? string.Empty;
-            b2BOrderDetailsModel.IsQuoteOrder = b2bOrder.ErpOrderType == ErpOrderType.B2BSalesOrder ? false : true;
+            b2BOrderDetailsModel.ERPOrderNumber = erpOrderPerAccount.ErpOrderNumber ?? erpOrderPerAccount.ErpOrderNumber;
+            b2BOrderDetailsModel.ERPOrderStatus = erpOrderPerAccount.ERPOrderStatus ?? string.Empty;
+            b2BOrderDetailsModel.IsQuoteOrder = 
+                erpOrderPerAccount.ErpOrderType == ErpOrderType.B2BQuote ||
+                erpOrderPerAccount.ErpOrderType == ErpOrderType.B2CQuote;
         }
 
         b2BOrderDetailsModel.CreatedOn = order.CreatedOnUtc;

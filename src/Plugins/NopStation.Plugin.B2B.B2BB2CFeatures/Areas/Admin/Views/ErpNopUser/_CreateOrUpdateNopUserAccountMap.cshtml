@@ -99,7 +99,7 @@
                             </div>
                             <script>
                                 $(document).ready(function () {
-                                    var customerRoleIdsInput = $('#@Html.IdFor(model => model.SelectedCustomerRoleIds)').data("kendoMultiSelect");
+                                    var customerRoleIdsInput = $('#@Html.IdFor(model => model.SelectedCustomerRoleIds)');
                                     customerRoleIdsInput.setOptions({
                                         customerRoleIdsInput: false,
                                         filter: "contains"

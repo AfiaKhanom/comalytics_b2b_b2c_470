@@ -94,12 +94,13 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure
             services.AddScoped<IErpRegistrationApplicationModelFactory, ErpRegistrationApplicationModelFactory>();
 
             //register controllers
-            services.AddScoped<OrderController, OverridenOrderController>();
+            services.AddScoped<OrderController, Controllers.OverridenOrderController>();
             services.AddScoped<ShoppingCartController, OverridenShoppingCartController>();
 
             services.AddScoped<CheckoutController, ErpCheckoutController>();
             services.AddScoped<Nop.Web.Areas.Admin.Controllers.ProductController, OverridenProductController>();
             services.AddScoped<Nop.Web.Areas.Admin.Controllers.CustomerController, OverridenCustomerController>();
+            services.AddScoped<Nop.Web.Areas.Admin.Controllers.OrderController, Areas.Admin.Controllers.OverridenOrderController>();
 
             // Quick Order 
             services.AddScoped<IQuickOrderTemplateService, QuickOrderTemplateService>();

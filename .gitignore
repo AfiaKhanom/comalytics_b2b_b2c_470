@@ -209,4 +209,8 @@ src/Tests/Nop.Tests/Connections.resx
 /src/Presentation/Nop.Web/wwwroot/SyncLogs
 /NopSmartTheme
 /src/Presentation/Nop.Web/App_Data/plugin.json
-/src/Presentation/Nop.Web/wwwroot/images
+/src/Presentation/Nop.Web/wwwroot/images/*
+/src/Plugins/NopStation.Plugin.Misc.Core/NopStation.Plugin.Misc.Actions.deps.json
+/src/Plugins/NopStation.Plugin.B2B.ERPIntegrationCore/Services/ErpProductAdditionalService.cs
+/src/Presentation/Nop.Web/Themes/Emporium/Content/css/theme.custom-1.css
+/src/Plugins/NopStation.Plugin.Misc.Core/release_note.txt

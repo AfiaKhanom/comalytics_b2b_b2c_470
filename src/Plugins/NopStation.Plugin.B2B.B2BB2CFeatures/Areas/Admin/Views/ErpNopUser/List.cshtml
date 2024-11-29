@@ -193,7 +193,7 @@
                                         Render = new RenderLink(new DataUrl("~/Admin/Customer/Edit", nameof(ErpNopUserModel.NopCustomerId))),
                                         Width = "200"
                                     },
-                                    new ColumnProperty(nameof(ErpNopUserModel.ErpAccount))
+                                    new ColumnProperty(nameof(ErpNopUserModel.ErpAccountInfo))
                                     {
                                         Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Field.ErpAccount").Text,
                                         Render = new RenderLink(new DataUrl("~/Admin/ErpAccount/ErpAccountEdit/", nameof(ErpNopUserModel.ErpAccountId))),

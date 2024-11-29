@@ -16,7 +16,7 @@ using Nop.Web.Controllers;
 using Nop.Web.Framework;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpNopUser;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Services.Customers;
 using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
@@ -39,10 +39,10 @@ public class CustomerImpersonateController : BasePublicController
     private readonly IAuthenticationService _authenticationService;
     private readonly IEventPublisher _eventPublisher;
     private readonly StoreInformationSettings _storeInformationSettings;
-    private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
     private readonly IErpLogsService _erpLogsService;
     private readonly IErpActivityLogsService _erpActivityLogsService;
-    private const string ADMININSTRATOR_ROLE_SYSTEM_NAME = "Administrators";
+    private readonly ICommonHelperService _commonHelperService;
+    private readonly IErpAccountService _erpAccountService;
 
     #endregion
 
@@ -59,9 +59,10 @@ public class CustomerImpersonateController : BasePublicController
         IAuthenticationService authenticationService,
         IEventPublisher eventPublisher,
         StoreInformationSettings storeInformationSettings,
-        IB2BB2CWorkContext b2BB2CWorkContext,
         IErpLogsService erpLogsService,
-        IErpActivityLogsService erpActivityLogsService)
+        IErpActivityLogsService erpActivityLogsService,
+        ICommonHelperService commonHelperService,
+        IErpAccountService erpAccountService)
     {
         _workContext = workContext;
         _erpSalesRepService = erpSalesRepService;
@@ -74,9 +75,10 @@ public class CustomerImpersonateController : BasePublicController
         _authenticationService = authenticationService;
         _eventPublisher = eventPublisher;
         _storeInformationSettings = storeInformationSettings;
-        _b2BB2CWorkContext = b2BB2CWorkContext;
         _erpLogsService = erpLogsService;
         _erpActivityLogsService = erpActivityLogsService;
+        _commonHelperService = commonHelperService;
+        _erpAccountService = erpAccountService;
     }
 
     #endregion
@@ -85,15 +87,15 @@ public class CustomerImpersonateController : BasePublicController
 
     protected async Task<bool> HasB2BSalesRepRoleAsync()
     {
-        var salesRepRoles = await _customerService.GetCustomerRolesAsync((await _b2BB2CWorkContext.GetCurrentERPCustomerAsync()).Customer);
+        var salesRepRoles = await _customerService.GetCustomerRolesAsync((await _workContext.GetCurrentCustomerAsync()));
         if (!salesRepRoles.Any())
         {
             return false;
         }
-        var salesRepRole = salesRepRoles.Where(r => r.SystemName == ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName).FirstOrDefault();
+        var salesRepRole = salesRepRoles.FirstOrDefault(r => r.SystemName == ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName);
 
-        if (salesRepRole == null && !salesRepRoles.Any(r => r.SystemName == ADMININSTRATOR_ROLE_SYSTEM_NAME))
-            return false;            
+        if (salesRepRole == null && !salesRepRoles.Any(r => r.SystemName == NopCustomerDefaults.AdministratorsRoleName))
+            return false;
 
         return true;
     }
@@ -153,8 +155,14 @@ public class CustomerImpersonateController : BasePublicController
 
         if (!customer.Active)
         {
-            _notificationService.WarningNotification(
-                await _localizationService.GetResourceAsync("Admin.Customers.Customers.Impersonate.Inactive"));
+            _notificationService.WarningNotification(await _localizationService.GetResourceAsync("Admin.Customers.Customers.Impersonate.Inactive"));
+            return RedirectToAction("List");
+        }
+
+        var erpAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(customer.Id);
+        if (erpAccount == null)
+        {
+            _notificationService.WarningNotification(await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Customers.Impersonate.ErpAccountNotAvailable"));
             return RedirectToAction("List");
         }
 
@@ -166,13 +174,21 @@ public class CustomerImpersonateController : BasePublicController
             return RedirectToAction("List");
         }
 
+        await _workContext.SetCurrentCustomerAsync(customer);
+
+        await _commonHelperService.ClearUnavailableShoppingCartAndWishlistItemsBeforeImpersonation(customer: customer);
+
         var successMsg = await _localizationService.GetResourceAsync("ActivityLog.Impersonation.Started.Customer");
         await _erpLogsService.InformationAsync($"{successMsg}. Impersonated Customer: {customer.Email}, Id: {customer.Id}. Original Customer Email: {currentCustomer.Email}, Id: {currentCustomer.Id}", ErpSyncLevel.LoginLogout, customer: customer);
 
-        //erp activity log
+        //erp activity log  
         await _erpActivityLogsService.InsertErpActivityAsync(customer, "Erp_CustomerImpersonationStart",
             string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.CustomerImpersonationStarted"),
             customer.Email, customer.Id, currentCustomer.Email, currentCustomer.Id), customer);
+
+        //activity log
+        await _customerActivityService.InsertActivityAsync("Impersonation.Started",
+            string.Format(await _localizationService.GetResourceAsync("ActivityLog.Impersonation.Started.Customer"), customer.Email, customer.Id), customer);
 
         //ensure login is not required
         customer.RequireReLogin = false;
@@ -193,6 +209,17 @@ public class CustomerImpersonateController : BasePublicController
             await _erpActivityLogsService.InsertErpActivityAsync(_workContext.OriginalCustomerIfImpersonated, "Erp_CustomerImpersonationEnd",
                 string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.CustomerImpersonationEnded"),
             customer.Email, customer.Id, _workContext.OriginalCustomerIfImpersonated.Email, _workContext.OriginalCustomerIfImpersonated.Id), customer);
+
+            //activity log
+            await _customerActivityService.InsertActivityAsync(_workContext.OriginalCustomerIfImpersonated, "Impersonation.Finished",
+                string.Format(await _localizationService.GetResourceAsync("ActivityLog.Impersonation.Finished.StoreOwner"),
+                    customer.Email, customer.Id),
+                customer);
+
+            await _customerActivityService.InsertActivityAsync("Impersonation.Finished",
+                string.Format(await _localizationService.GetResourceAsync("ActivityLog.Impersonation.Finished.Customer"),
+                    _workContext.OriginalCustomerIfImpersonated.Email, _workContext.OriginalCustomerIfImpersonated.Id),
+                _workContext.OriginalCustomerIfImpersonated);
 
             //logout impersonated customer
             await _genericAttributeService
@@ -223,12 +250,10 @@ public class CustomerImpersonateController : BasePublicController
             string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.CustomerPublicStoreLogOut"),
             customer.Email, customer.Id), customer);
         }
-        else
-        {
-            //activity log
-            await _customerActivityService.InsertActivityAsync(customer, "PublicStore.Login",
-                await _localizationService.GetResourceAsync("ActivityLog.PublicStore.Login"), customer);
-        }
+
+        //activity log
+        await _customerActivityService.InsertActivityAsync(customer, "PublicStore.Logout",
+            await _localizationService.GetResourceAsync("ActivityLog.PublicStore.Logout"), customer);
 
         //standard logout 
         await _authenticationService.SignOutAsync();

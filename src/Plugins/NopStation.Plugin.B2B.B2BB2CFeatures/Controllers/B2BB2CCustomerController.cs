@@ -50,6 +50,8 @@ using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Factories;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.Account;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.Registration;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Services.Customers;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpWorkflowMessage;
 using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
@@ -81,6 +83,8 @@ public class B2BB2CCustomerController : CustomerController
     private readonly IErpAccountCustomerRegistrationPhysicalTradingAddressService _erpAccountCustomerRegistrationPhysicalTradingAddressService;
     private readonly IErpAccountCustomerRegistrationTradeReferencesService _erpAccountCustomerRegistrationTradeReferencesService;
     private readonly IErpWorkflowMessageService _erpWorkflowMessageService;
+    private readonly ICommonHelperService _commonHelperService;
+    private readonly IErpCustomerFunctionalityService _erpCustomerFunctionalityService;
 
     #endregion
 
@@ -150,7 +154,9 @@ public class B2BB2CCustomerController : CustomerController
         IErpAccountCustomerRegistrationPhysicalTradingAddressService erpAccountCustomerRegistrationPhysicalTradingAddressService,
         IErpAccountCustomerRegistrationTradeReferencesService erpAccountCustomerRegistrationTradeReferencesService,
         IErpWorkflowMessageService erpWorkflowMessageService,
-        IShoppingCartService shoppingCartService) :  base(addressSettings,
+        ICommonHelperService commonHelperService,
+        IErpCustomerFunctionalityService erpCustomerFunctionalityService,
+        IShoppingCartService shoppingCartService) : base(addressSettings,
              captchaSettings,
              customerSettings,
              dateTimeSettings,
@@ -197,7 +203,7 @@ public class B2BB2CCustomerController : CustomerController
              storeInformationSettings,
              taxSettings)
     {
-        
+
         _b2BB2CWorkContext = b2BB2CWorkContext;
         _shoppingCartService = shoppingCartService;
         _b2BRegisterModelFactory = b2BRegisterModelFactory;
@@ -216,6 +222,8 @@ public class B2BB2CCustomerController : CustomerController
         _erpAccountCustomerRegistrationPhysicalTradingAddressService = erpAccountCustomerRegistrationPhysicalTradingAddressService;
         _erpAccountCustomerRegistrationTradeReferencesService = erpAccountCustomerRegistrationTradeReferencesService;
         _erpWorkflowMessageService = erpWorkflowMessageService;
+        _commonHelperService = commonHelperService;
+        _erpCustomerFunctionalityService = erpCustomerFunctionalityService;
     }
 
     #endregion
@@ -598,9 +606,7 @@ public class B2BB2CCustomerController : CustomerController
                 {
                     var customerUserName = model.Username?.Trim();
                     var isApproved = false;
-                    if (model.IsB2BUser)
-                        isApproved = _customerSettings.UserRegistrationType == UserRegistrationType.AdminApproval;
-                    else
+                    if (!model.IsB2BUser)
                         isApproved = _customerSettings.UserRegistrationType == UserRegistrationType.Standard;
 
                     var registrationRequest = new CustomerRegistrationRequest(customer,
@@ -915,9 +921,9 @@ public class B2BB2CCustomerController : CustomerController
                         }
                         else
                         {
-                            if (defaultAddressValidation)
+                            if (!defaultAddressValidation)
                             {
-                                shipToAddressIdForB2BB2CUserId = existingShipToAddressList.Any() ? existingShipToAddressList[0].Id : defaultAddress.Id;
+                                shipToAddressIdForB2BB2CUserId = existingShipToAddressList.Any() ? existingShipToAddressList[0].Id : 0;
                             }
                         }
 
@@ -952,26 +958,14 @@ public class B2BB2CCustomerController : CustomerController
                             erpNopUser.Id),
                             erpNopUser);
 
-                        var customerRolesIds = (await _customerService.GetCustomerRoleIdsAsync(customer)).ToList();
-
                         var b2BB2CustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(model.IsB2BUser ? ERPIntegrationCoreDefaults.B2BCustomerRole : ERPIntegrationCoreDefaults.B2CCustomerRole);
-                        if (b2BB2CustomerRole != null)
-                        {
-                            customerRolesIds.Add(b2BB2CustomerRole.Id);
-                        }
-
-                        var commaSeparatedRolesIds = string.Empty;
-                        if (customerRolesIds.Any())
-                        {
-                            commaSeparatedRolesIds = string.Join(",", customerRolesIds);
-                        }
 
                         //prepare and save erpNopUser 
                         var erpNopUserAccountMap = new ErpNopUserAccountMap
                         {
                             ErpAccountId = erpAccount.Id,
                             ErpUserId = erpNopUser.Id,
-                            CustomerRolesIds = commaSeparatedRolesIds
+                            CustomerRolesIds = b2BB2CustomerRole == null ? string.Empty : $"{b2BB2CustomerRole.Id}",
                         };
                         await _erpNopUserAccountMapService.InsertErpNopUserAccountMapAsync(erpNopUserAccountMap);
 
@@ -998,6 +992,9 @@ public class B2BB2CCustomerController : CustomerController
                             await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.AddNewB2CCustomer"),
                             customer.Id),
                             customer);
+
+                        if (erpNopUser != null && erpNopUser.ErpUserType == ErpUserType.B2BUser)
+                            await _genericAttributeService.SaveAttributeAsync(customer, ERPIntegrationCoreDefaults.NewB2BCustomerNeedsApproval, true);
 
                         switch (_customerSettings.UserRegistrationType)
                         {
@@ -1064,6 +1061,63 @@ public class B2BB2CCustomerController : CustomerController
     #endregion
 
     #region Methods
+
+    #region Customer Email Validation
+
+    //available even when navigation is not allowed
+    [CheckAccessPublicStore(ignore: true)]
+    public override async Task<IActionResult> AccountActivation(string token, string email, Guid guid)
+    {
+        //For backward compatibility with previous versions where email was used as a parameter in the URL
+        var customer = await _customerService.GetCustomerByEmailAsync(email)
+                       ?? await _customerService.GetCustomerByGuidAsync(guid);
+
+        if (customer == null)
+            return RedirectToRoute("Homepage");
+
+        var model = new AccountActivationModel { ReturnUrl = Url.RouteUrl("Homepage") };
+        var cToken = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.AccountActivationTokenAttribute);
+        if (string.IsNullOrEmpty(cToken))
+        {
+            model.Result = await _localizationService.GetResourceAsync("Account.AccountActivation.AlreadyActivated");
+            return View(model);
+        }
+
+        if (!cToken.Equals(token, StringComparison.InvariantCultureIgnoreCase))
+            return RedirectToRoute("Homepage");
+
+        //activate user account
+        //customer.Active = true;
+        //await _customerService.UpdateCustomerAsync(customer);
+        await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.AccountActivationTokenAttribute, "");
+
+        //send welcome message
+        //await _workflowMessageService.SendCustomerWelcomeMessageAsync(customer, (await _workContext.GetWorkingLanguageAsync()).Id);
+
+        //raise event       
+        await _eventPublisher.PublishAsync(new CustomerActivatedEvent(customer));
+
+        //authenticate customer after activation
+        //await _customerRegistrationService.SignInCustomerAsync(customer, null, true);
+
+        await _customerActivityService.InsertActivityAsync(customer, "PublicStore.EmailValidation",
+                string.Format(await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.CustomerActivityLog.PublicStore.EmailValidation"),
+                customer.Email), customer);
+
+        //activating newsletter if need
+        /*var store = await _storeContext.GetCurrentStoreAsync();
+        var newsletter = await _newsLetterSubscriptionService.GetNewsLetterSubscriptionByEmailAndStoreIdAsync(customer.Email, store.Id);
+        if (newsletter != null && !newsletter.Active)
+        {
+            newsletter.Active = true;
+            await _newsLetterSubscriptionService.UpdateNewsLetterSubscriptionAsync(newsletter);
+        }*/
+
+        model.Result = await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Customer.Account.EmailValidation.Validated");
+        return View(model);
+    }
+
+    #endregion
 
     #region B2BRegister
 
@@ -1178,12 +1232,33 @@ public class B2BB2CCustomerController : CustomerController
             var customerEmail = model.Email?.Trim();
             var userNameOrEmail = _customerSettings.UsernamesEnabled ? customerUserName : customerEmail;
 
-            var loginResult = await _customerRegistrationService.ValidateCustomerAsync(userNameOrEmail, model.Password);
+            // by default giving not registered just for wrong value to initiate
+            var loginResult = CustomerLoginResults.NotRegistered;
+
+            var customer = _customerSettings.UsernamesEnabled
+                                ? await _customerService.GetCustomerByUsernameAsync(model.Username)
+                                : await _customerService.GetCustomerByEmailAsync(model.Email);
+
+            ErpAccount erpAccount = null;
+            if (customer != null)
+            {
+                erpAccount = await _erpCustomerFunctionalityService.GetActiveErpAccountByCustomerAsync(customer);
+            }
+
+            if (erpAccount != null && (erpAccount.ErpAccountStatusType == ErpAccountStatusType.BlockLogin || !erpAccount.IsActive))
+            {
+                loginResult = CustomerLoginResults.NotActive;
+            }
+            else
+            {
+                loginResult = await _customerRegistrationService.ValidateCustomerAsync(userNameOrEmail, model.Password);
+            }
+
             switch (loginResult)
             {
                 case CustomerLoginResults.Successful:
                     {
-                        var customer = _customerSettings.UsernamesEnabled
+                        customer = _customerSettings.UsernamesEnabled
                             ? await _customerService.GetCustomerByUsernameAsync(customerUserName)
                             : await _customerService.GetCustomerByEmailAsync(customerEmail);
 
@@ -1207,7 +1282,24 @@ public class B2BB2CCustomerController : CustomerController
                     ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.Deleted"));
                     break;
                 case CustomerLoginResults.NotActive:
-                    ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.NotActive"));
+
+                    #region ERP
+
+                    if (erpAccount != null && (erpAccount.ErpAccountStatusType == ErpAccountStatusType.BlockLogin || !erpAccount.IsActive))
+                    {
+                        if (!erpAccount.IsActive)
+                            ModelState.AddModelError("", await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.CustomerLogin.ErpAccount.NotActive"));
+                        else
+                            ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.LoginBlocked"));
+                        break;
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.NotActive"));
+                    }
+
+                    #endregion
+
                     break;
                 case CustomerLoginResults.NotRegistered:
                     ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.NotRegistered"));
@@ -1243,6 +1335,17 @@ public class B2BB2CCustomerController : CustomerController
                 string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.CustomerImpersonationEnded"),
             customer.Email, customer.Id, _workContext.OriginalCustomerIfImpersonated.Email, _workContext.OriginalCustomerIfImpersonated.Id), customer);
 
+            //activity log
+            await _customerActivityService.InsertActivityAsync(_workContext.OriginalCustomerIfImpersonated, "Impersonation.Finished",
+                string.Format(await _localizationService.GetResourceAsync("ActivityLog.Impersonation.Finished.StoreOwner"),
+                    customer.Email, customer.Id),
+                customer);
+
+            await _customerActivityService.InsertActivityAsync("Impersonation.Finished",
+                string.Format(await _localizationService.GetResourceAsync("ActivityLog.Impersonation.Finished.Customer"),
+                    _workContext.OriginalCustomerIfImpersonated.Email, _workContext.OriginalCustomerIfImpersonated.Id),
+                _workContext.OriginalCustomerIfImpersonated);
+
             //logout impersonated customer
             await _genericAttributeService
                 .SaveAttributeAsync<int?>(_workContext.OriginalCustomerIfImpersonated, NopCustomerDefaults.ImpersonatedCustomerIdAttribute, null);
@@ -1270,12 +1373,11 @@ public class B2BB2CCustomerController : CustomerController
             string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.CustomerPublicStoreLogOut"),
             customer.Email, customer.Id), customer);
         }
-        else
-        {
-            //activity log
-            await _customerActivityService.InsertActivityAsync(customer, "PublicStore.Login",
-                await _localizationService.GetResourceAsync("ActivityLog.PublicStore.Login"), customer);
-        }
+
+        //activity log
+        await _customerActivityService.InsertActivityAsync(customer, "PublicStore.Logout",
+            await _localizationService.GetResourceAsync("ActivityLog.PublicStore.Logout"), customer);
+
 
         //raise logged out event       
         await _eventPublisher.PublishAsync(new CustomerLoggedOutEvent(customer));
@@ -1296,6 +1398,20 @@ public class B2BB2CCustomerController : CustomerController
 
     #endregion
 
+    #region My account / Addresses
+
+    public override async Task<IActionResult> Addresses()
+    {
+        if (!await _customerService.IsRegisteredAsync(await _workContext.GetCurrentCustomerAsync()))
+            return Challenge();
+
+        var model = await _customerModelFactory.PrepareCustomerAddressListModelAsync();
+
+        return View($"~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Views/B2BB2CCustomer/Addresses.cshtml", model);
+    }
+
+    #endregion
+
     #region ErpUserAccount
 
     [HttpPost]
@@ -1305,6 +1421,14 @@ public class B2BB2CCustomerController : CustomerController
 
         try
         {
+            var erpAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(model.CustomerId);
+            if (erpAccount == null)
+            {
+                _notificationService.WarningNotification(
+                    await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Customers.Impersonate.ErpAccountNotAvailable"));
+                return Redirect(model.RedirectUrl);
+            }
+
             var erpUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(model.CustomerId);
             if (erpUser != null && model.ErpAccountId > 0 && erpUser.ErpAccountId != model.ErpAccountId)
             {
@@ -1315,11 +1439,9 @@ public class B2BB2CCustomerController : CustomerController
 
                 await _erpNopUserService.UpdateErpNopUserAsync(erpUser);
 
-                await _staticCacheManager.RemoveAsync(_staticCacheManager.PrepareKeyForDefaultCache(NopEntityCacheDefaults<ErpNopUser>.ByIdCacheKey, erpUser.Id));
-
                 await _b2BB2CWorkContext.SetCurrentERPCustomerAsync(erpAccountId: model.ErpAccountId);
-
                 await _erpLogsService.InformationAsync($"Erp Account (Id: {erpUser.ErpAccountId}) set to Erp User Id: {erpUser.Id}", ErpSyncLevel.Account, customer: currentCustomer);
+                await _commonHelperService.ClearUnavailableShoppingCartAndWishlistItemsBeforeImpersonation(customer: currentCustomer);
 
                 var productsHomepageCacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopCatalogDefaults.ProductsHomepageCacheKey);
                 await _staticCacheManager.RemoveAsync(productsHomepageCacheKey);
@@ -1355,7 +1477,7 @@ public class B2BB2CCustomerController : CustomerController
 
     #endregion
 
-    #region B2BRegister
+    #region B2BRegister with Registration Form
 
     //[HttpsRequirement(SslRequirement.Yes)]
     //available even when navigation is not allowed

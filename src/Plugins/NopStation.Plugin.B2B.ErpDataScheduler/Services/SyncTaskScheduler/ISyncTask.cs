@@ -1,14 +1,13 @@
-﻿namespace NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncTaskScheduler
+﻿namespace NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncTaskScheduler;
+
+/// <summary>
+/// Interface that should be implemented by each task
+/// </summary>
+public partial interface ISyncTask
 {
     /// <summary>
-    /// Interface that should be implemented by each task
+    /// Executes a task
     /// </summary>
-    public partial interface ISyncTask
-    {
-        /// <summary>
-        /// Executes a task
-        /// </summary>
-        /// <returns>A task that represents the asynchronous operation</returns>
-        Task ExecuteAsync();
-    }
+    /// <returns>A task that represents the asynchronous operation</returns>
+    Task ExecuteAsync();
 }
