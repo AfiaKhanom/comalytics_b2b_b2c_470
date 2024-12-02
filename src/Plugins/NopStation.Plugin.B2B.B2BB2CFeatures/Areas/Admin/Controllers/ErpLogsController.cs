@@ -9,19 +9,19 @@ using Nop.Services.Security;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpLogs;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 using NopStation.Plugin.Misc.Core.Controllers;
 
 namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Controllers;
 
-public class ErpActivityLogController : NopStationAdminController
+public class ErpLogsController : NopStationAdminController
 {
     #region Fields
 
     private readonly IPermissionService _permissionService;
     private readonly IErpLogsService _erpLogsService;
-    private readonly IErpActivityLogModelFactory _erpActivityLogModelFactory;
+    private readonly IErpLogsModelFactory _erpLogsModelFactory;
     private readonly INotificationService _notificationService;
     private readonly ILocalizationService _localizationService;
     private readonly ICustomerActivityService _customerActivityService;
@@ -30,16 +30,16 @@ public class ErpActivityLogController : NopStationAdminController
 
     #region Ctor
 
-    public ErpActivityLogController(IPermissionService permissionService,
+    public ErpLogsController(IPermissionService permissionService,
         IErpLogsService erpLogsService,
-        IErpActivityLogModelFactory erpActivityLogModelFactory,
+        IErpLogsModelFactory erpLogsModelFactory,
         INotificationService notificationService,
         ILocalizationService localizationService,
         ICustomerActivityService customerActivityService)
     {
         _permissionService = permissionService;
         _erpLogsService = erpLogsService;
-        _erpActivityLogModelFactory = erpActivityLogModelFactory;
+        _erpLogsModelFactory = erpLogsModelFactory;
         _notificationService = notificationService;
         _localizationService = localizationService;
         _customerActivityService = customerActivityService;
@@ -49,34 +49,25 @@ public class ErpActivityLogController : NopStationAdminController
 
     #region Methods
 
-    /// <summary>
-    /// Get list of B2B Activity Log, here is prepare search model
-    /// </summary>
-    /// <returns></returns>
     public async Task<IActionResult> List()
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
             return await AccessDeniedDataTablesJson();
 
         //prepare model
-        var model = await _erpActivityLogModelFactory.PrepareErpActivityLogSearchModelAsync(new ErpActivityLogSearchModel());
+        var model = await _erpLogsModelFactory.PrepareErpLogsSearchModelAsync(new ErpLogsSearchModel());
 
         return View(model);
     }
 
-    /// <summary>
-    /// Get list of Erp Activity Log, here is prepare list model by search model
-    /// </summary>
-    /// <param name="searchModel">search model</param>
-    /// <returns>b2b activity log list model</returns>
     [HttpPost]
-    public virtual async Task<IActionResult> ErpActivityLogListAsync(ErpActivityLogSearchModel searchModel)
+    public virtual async Task<IActionResult> ErpLogsListAsync(ErpLogsSearchModel searchModel)
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
             return await AccessDeniedDataTablesJson();
 
         //prepare model
-        var model = await _erpActivityLogModelFactory.PrepareErpActivityLogListModelAsync(searchModel);
+        var model = await _erpLogsModelFactory.PrepareErpLogsListModelAsync(searchModel);
 
         return Json(model);
     }
@@ -92,7 +83,7 @@ public class ErpActivityLogController : NopStationAdminController
             return RedirectToAction("List");
 
         //prepare model
-        var model = await _erpActivityLogModelFactory.PrepareErpActivityLogModelAsync(null, log);
+        var model = await _erpLogsModelFactory.PrepareErpLogsModelAsync(null, log);
 
         return View(model);
     }
@@ -103,12 +94,10 @@ public class ErpActivityLogController : NopStationAdminController
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
             return await AccessDeniedDataTablesJson();
 
-        //try to get a B2B Activity Log Record with the specified id
         var erpActivityLog = await _erpLogsService.GetErpLogByIdAsync(id);
         if (erpActivityLog == null)
             return RedirectToAction("List");
 
-        //after record item delete then b2b activity log record delete
         await _erpLogsService.DeleteErpLogByIdAsync(id);
 
         return new NullJsonResult();
@@ -120,12 +109,10 @@ public class ErpActivityLogController : NopStationAdminController
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
             return await AccessDeniedDataTablesJson();
 
-        //try to get a B2B Activity Log Record with the specified id
         var erpActivityLog = await _erpLogsService.GetErpLogByIdAsync(id);
         if (erpActivityLog == null)
             return RedirectToAction("List");
 
-        //after record item delete then b2b activity log record delete
         await _erpLogsService.DeleteErpLogByIdAsync(id);
 
         var successMsg = "An Erp Log is Deleted!";
@@ -138,7 +125,6 @@ public class ErpActivityLogController : NopStationAdminController
     [FormValueRequired("clearall")]
     public virtual async Task<IActionResult> ClearAll()
     {
-        //clear ERP activity log permission have to insert
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageSystemLog))
             return AccessDeniedView();
 

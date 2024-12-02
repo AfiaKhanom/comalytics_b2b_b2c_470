@@ -77,7 +77,7 @@ public static class B2BB2CFeaturesDefaults
     public static CacheKey ProductsByIdCacheKey => new("NopProductId-{0}", NopProductId);
     public static string NopProductId => "NopProductId.{0}";
 
-    public static CacheKey ErpCustomerAccountErpActivityLogSyncLabelSelectList => new("B2BB2CFeatures.ErpActivityLog.SyncLabelSelectList");
+    public static CacheKey ErpCustomerAccountErpLogsSyncLabelSelectList => new("B2BB2CFeatures.ErpLogs.SyncLabelSelectList");
     public static CacheKey ErpProductModelProductPriceCacheKey => new("Erp.ProductPricing.ProductModel.ProductPrice-{0}", ProductPrice);
     public static string ProductPrice => "ProductPrice.{0}";
 

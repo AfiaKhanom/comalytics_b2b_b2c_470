@@ -1,23 +1,24 @@
-@model ErpActivityLogModel
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpLogs
+@model ErpLogsModel
 
 @{
     Layout = "_AdminLayout";
 
     //title
-    NopHtml.AddTitleParts(T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpLog.Title.ViewDetails").Text);
-    ViewBag.PageTitle = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpLog.Title.ViewDetails").Text;
+    NopHtml.AddTitleParts(T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Title.ViewDetails").Text);
+    ViewBag.PageTitle = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Title.ViewDetails").Text;
 
     //active menu item (system name)
-    NopHtml.SetActiveMenuItemSystemName("NopStation.B2BB2CFeatures.ErpActivityLogs");
+    NopHtml.SetActiveMenuItemSystemName("NopStation.B2BB2CFeatures.ErpLogs");
 }
 
-<form asp-controller="ErpActivityLog" asp-action="View" method="post">
+<form asp-controller="ErpLogs" asp-action="View" method="post">
     <div class="content-header clearfix">
         <h1 class="float-left">
-            @T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpLog.ViewLogDetails")
+            @T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.ViewLogDetails")
             <small>
                 <i class="fas fa-arrow-circle-left"></i>
-                <a asp-action="List">@T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpLog.BackToList")</a>
+                <a asp-action="List">@T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.BackToList")</a>
             </small>
         </h1>
         <div class="float-right">

@@ -24,7 +24,7 @@ public partial class ErpLogs : BaseEntity
      
     public DateTime CreatedOnUtc { get; set; }
      
-    public ErpLogLevel LogLevel
+    public ErpLogLevel ErpLogLevel
     {
         get => (ErpLogLevel)ErpLogLevelId;
         set => ErpLogLevelId = (int)value;

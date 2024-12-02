@@ -36,8 +36,8 @@
     <None Remove="Areas\Admin\Views\ErpAccount\_CreateOrUpdateErpAccount.Info.ErpShipToAddresses.cshtml" />
     <None Remove="Areas\Admin\Views\ErpActivityLogs\ErpActivityLogs.cshtml" />
     <None Remove="Areas\Admin\Views\ErpActivityLogs\ErpActivityTypes.cshtml" />
-    <None Remove="Areas\Admin\Views\ErpActivityLog\List.cshtml" />
-    <None Remove="Areas\Admin\Views\ErpActivityLog\View.cshtml" />
+    <None Remove="Areas\Admin\Views\ErpLogs\List.cshtml" />
+    <None Remove="Areas\Admin\Views\ErpLogs\View.cshtml" />
     <None Remove="Areas\Admin\Views\ErpInvoice\_Details.cshtml" />
     <None Remove="Areas\Admin\Views\ErpInvoice\_Details.Info.cshtml" />
     <None Remove="Areas\Admin\Views\ErpProductPricing\_CreateOrUpdateGroupPrice.cshtml" />
@@ -331,10 +331,10 @@
     <Content Include="Areas\Admin\Views\ErpAccount\_CreateOrUpdateErpAccount.Info.Address.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Areas\Admin\Views\ErpActivityLog\List.cshtml">
+    <Content Include="Areas\Admin\Views\ErpLogs\List.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Areas\Admin\Views\ErpActivityLog\View.cshtml">
+    <Content Include="Areas\Admin\Views\ErpLogs\View.cshtml">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

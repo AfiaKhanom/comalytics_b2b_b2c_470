@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Services;
 using Nop.Services.Customers;
@@ -11,15 +12,14 @@ using Nop.Services.Html;
 using Nop.Services.Localization;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Framework.Models.Extensions;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpLogs;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
 namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories;
 
-public class ErpActivityLogModelFactory : IErpActivityLogModelFactory
+public class ErpLogsModelFactory : IErpLogsModelFactory
 {
     #region Fields
 
@@ -27,7 +27,7 @@ public class ErpActivityLogModelFactory : IErpActivityLogModelFactory
     private readonly ICustomerService _customerService;
     private readonly ILocalizationService _localizationService;
     private readonly IStaticCacheManager _staticCacheManager;
-    private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
+    private readonly IWorkContext _workContext;
     private readonly IErpLogsService _erpLogsService;
     private readonly IHtmlFormatter _htmlFormatter;
 
@@ -35,21 +35,19 @@ public class ErpActivityLogModelFactory : IErpActivityLogModelFactory
 
     #region Ctor
 
-    public ErpActivityLogModelFactory(
-        ILocalizationService localizationService,
+    public ErpLogsModelFactory(ILocalizationService localizationService,
         IDateTimeHelper dateTimeHelper,
         ICustomerService customerService,
         IStaticCacheManager staticCacheManager,
-        IB2BB2CWorkContext b2BB2CWorkContext,
+        IWorkContext workContext,
         IErpLogsService erpLogsService,
-        IHtmlFormatter htmlFormatter
-        )
+        IHtmlFormatter htmlFormatter)
     {
         _localizationService = localizationService;
         _dateTimeHelper = dateTimeHelper;
         _customerService = customerService;
         _staticCacheManager = staticCacheManager;
-        _b2BB2CWorkContext = b2BB2CWorkContext;
+        _workContext = workContext;
         _erpLogsService = erpLogsService;
         _htmlFormatter = htmlFormatter;
     }
@@ -58,14 +56,13 @@ public class ErpActivityLogModelFactory : IErpActivityLogModelFactory
 
     #region Utilities
 
-    private async Task PrepareActivityTypesAsync(IList<SelectListItem> items, bool withSpecialDefaultItem = true, string defaultItemText = null)
+    private async Task PrepareLogTypesAsync(IList<SelectListItem> items, bool withSpecialDefaultItem = true, string defaultItemText = null)
     {
-        if (items == null)
-            throw new ArgumentNullException(nameof(items));
+        ArgumentNullException.ThrowIfNull(items);
 
-        //prepare available b2b activity log
-        var availableActivityTypes = await ErpLogLevel.Debug.ToSelectListAsync(false);
-        foreach (var types in availableActivityTypes)
+        //prepare available erp log
+        var availableLogTypes = await ErpLogLevel.Debug.ToSelectListAsync(false);
+        foreach (var types in availableLogTypes)
         {
             items.Add(types);
         }
@@ -76,8 +73,7 @@ public class ErpActivityLogModelFactory : IErpActivityLogModelFactory
 
     private async Task PrepareDefaultItemAsync(IList<SelectListItem> items, bool withSpecialDefaultItem, string defaultItemText = null)
     {
-        if (items == null)
-            throw new ArgumentNullException(nameof(items));
+        ArgumentNullException.ThrowIfNull(items);
 
         //whether to insert the first special item for the default value
         if (!withSpecialDefaultItem)
@@ -95,12 +91,11 @@ public class ErpActivityLogModelFactory : IErpActivityLogModelFactory
 
     private async Task<IList<SelectListItem>> PrepareSyncLabelItemAsync(IList<SelectListItem> items, bool withSpecialDefaultItem = true, string defaultItemText = null)
     {
-        if (items == null)
-            throw new ArgumentNullException(nameof(items));
+        ArgumentNullException.ThrowIfNull(items);
 
-        //prepare available Erp activity log sync label
-        var availableActivityTypes = await ErpSyncLevel.Order.ToSelectListAsync(false);
-        foreach (var types in availableActivityTypes)
+        //prepare available Erp log sync label
+        var availableLogTypes = await ErpSyncLevel.Order.ToSelectListAsync(false);
+        foreach (var types in availableLogTypes)
         {
             items.Add(types);
         }
@@ -126,17 +121,14 @@ public class ErpActivityLogModelFactory : IErpActivityLogModelFactory
 
     #region Method
 
-    public async Task<ErpActivityLogSearchModel> PrepareErpActivityLogSearchModelAsync(ErpActivityLogSearchModel searchModel)
+    public async Task<ErpLogsSearchModel> PrepareErpLogsSearchModelAsync(ErpLogsSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
-        //prepare activity log types name
-        await PrepareActivityTypesAsync(searchModel.AvailableActivityType);
+        await PrepareLogTypesAsync(searchModel.AvailableLogType);
 
-        var key = _staticCacheManager.PrepareKeyForDefaultCache(B2BB2CFeaturesDefaults.ErpCustomerAccountErpActivityLogSyncLabelSelectList);
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(B2BB2CFeaturesDefaults.ErpCustomerAccountErpLogsSyncLabelSelectList);
 
-        //prepare entity name
         searchModel.AvailableErpSyncLabel = await _staticCacheManager.GetAsync(key, async () =>
         {
             return await PrepareSyncLabelItemAsync(searchModel.AvailableErpSyncLabel);
@@ -148,57 +140,58 @@ public class ErpActivityLogModelFactory : IErpActivityLogModelFactory
         return searchModel;
     }
 
-    /// <summary>
-    /// Prepare B2B Activity Log List Model
-    /// </summary>
-    /// <param name="b2BActivityLogListModel">list model</param>
-    /// <returns></returns>
-    public async Task<ErpActivityLogListModel> PrepareErpActivityLogListModelAsync(ErpActivityLogSearchModel searchModel)
+    public async Task<ErpLogsListModel> PrepareErpLogsListModelAsync(ErpLogsSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
-        var currCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        ArgumentNullException.ThrowIfNull(searchModel);
+
+        var currCustomer = await _workContext.GetCurrentCustomerAsync();
         var createdFrom = !searchModel.CreatedFrom.HasValue ? null
             : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.CreatedFrom.Value, await _dateTimeHelper.GetCustomerTimeZoneAsync(currCustomer));
         var createdTo = !searchModel.CreatedTo.HasValue ? null
             : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.CreatedTo.Value, await _dateTimeHelper.GetCustomerTimeZoneAsync(currCustomer)).AddDays(1);
-        //get ERP_Activity_log
-        var erpActivityLogs = await _erpLogsService.GetAllErpLogsAsync(ipAddress: searchModel.IpAddress, pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize, logLevelId: searchModel.ActivityLogLevelId, syncLavelId: searchModel.ErpSyncLabelId, nopCustomerEmail: searchModel.NopCustomerEmail, createdFrom: createdFrom, createdTo: createdTo);
 
-        //prepare list model
-        var model = await new ErpActivityLogListModel().PrepareToGridAsync(searchModel, erpActivityLogs, () =>
+        var erpLogs = await _erpLogsService.GetAllErpLogsAsync(ipAddress: searchModel.IpAddress,
+            pageIndex: searchModel.Page - 1,
+            pageSize: searchModel.PageSize,
+            logLevelId: searchModel.ErpLogLevelId,
+            syncLavelId: searchModel.ErpSyncLabelId,
+            nopCustomerEmail: searchModel.NopCustomerEmail,
+            createdFrom: createdFrom,
+            createdTo: createdTo);
+
+        var model = await new ErpLogsListModel().PrepareToGridAsync(searchModel, erpLogs, () =>
         {
-            return erpActivityLogs.SelectAwait(async activityLog =>
+            return erpLogs.SelectAwait(async erpLogs =>
             {
-                var activityLogModel = activityLog.ToModel<ErpActivityLogModel>();
+                var erpLogsModel = erpLogs.ToModel<ErpLogsModel>();
 
-                activityLogModel.ErpLogLevel = await _localizationService.GetLocalizedEnumAsync(activityLog.LogLevel);
-                activityLogModel.CreatedOnUtc = activityLog.CreatedOnUtc;
-                activityLogModel.ErpSyncLevel = await _localizationService.GetLocalizedEnumAsync(activityLog.ErpSyncLevel);
-                activityLogModel.ChangedByCustomerEmail = activityLog.CustomerId.HasValue ? (await _customerService.GetCustomerByIdAsync(activityLog.CustomerId.Value))?.Email : string.Empty;
-                activityLogModel.CreatedOnUtc = await _dateTimeHelper.ConvertToUserTimeAsync(activityLog.CreatedOnUtc, DateTimeKind.Utc);
+                erpLogsModel.ErpLogLevel = await _localizationService.GetLocalizedEnumAsync(erpLogs.ErpLogLevel);
+                erpLogsModel.CreatedOnUtc = erpLogs.CreatedOnUtc;
+                erpLogsModel.ErpSyncLevel = await _localizationService.GetLocalizedEnumAsync(erpLogs.ErpSyncLevel);
+                erpLogsModel.ChangedByCustomerEmail = erpLogs.CustomerId.HasValue ? (await _customerService.GetCustomerByIdAsync(erpLogs.CustomerId.Value))?.Email : string.Empty;
+                erpLogsModel.CreatedOnUtc = await _dateTimeHelper.ConvertToUserTimeAsync(erpLogs.CreatedOnUtc, DateTimeKind.Utc);
 
-                return activityLogModel;
+                return erpLogsModel;
             });
         });
 
         return model;
     }
 
-    public async Task<ErpActivityLogModel> PrepareErpActivityLogModelAsync(ErpActivityLogModel model, ErpLogs log, bool excludeProperties = false)
+    public async Task<ErpLogsModel> PrepareErpLogsModelAsync(ErpLogsModel model, ErpLogs log, bool excludeProperties = false)
     {
         if (log != null && model == null)
         {
-            model = log.ToModel<ErpActivityLogModel>();
+            model = log.ToModel<ErpLogsModel>();
 
-            model.ErpLogLevel = await _localizationService.GetLocalizedEnumAsync(log.LogLevel);
+            model.ErpLogLevel = await _localizationService.GetLocalizedEnumAsync(log.ErpLogLevel);
             model.ErpSyncLevel = await _localizationService.GetLocalizedEnumAsync(log.ErpSyncLevel);
             model.ShortMessage = _htmlFormatter.FormatText(log.ShortMessage, false, true, false, false, false, false);
             model.FullMessage = _htmlFormatter.FormatText(log.FullMessage, false, true, false, false, false, false);
             model.CreatedOnUtc = await _dateTimeHelper.ConvertToUserTimeAsync(log.CreatedOnUtc, DateTimeKind.Utc);
             model.ChangedByCustomerEmail = log.CustomerId.HasValue ? (await _customerService.GetCustomerByIdAsync(log.CustomerId.Value))?.Email : string.Empty;
         }
-        
+
         return model;
     }
 
