@@ -284,53 +284,8 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
 
     public override async Task UpdateAsync(string currentVersion, string targetVersion)
     {
-        if (targetVersion != currentVersion && targetVersion == "1.51")
-        {
-            await _permissionService.InstallPermissionsAsync(new B2BB2CPermissionProvider());
-            await _permissionService.InstallPermissionsAsync(new ErpPermissionProvider());
-            var emailAccount = (await _emailAccountService.GetAllEmailAccountsAsync()).FirstOrDefault();
-
-            if (emailAccount is not null)
-            {
-                var template1 = await _messageTemplateService.GetMessageTemplatesByNameAsync(B2BB2CFeaturesDefaults.MessageTemplateSystemNames_ERPAccountCustomerRegistrationCreatedNotificationToAdmin);
-                if (!template1.Any())
-                {
-                    await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
-                    {
-                        Name = B2BB2CFeaturesDefaults.MessageTemplateSystemNames_ERPAccountCustomerRegistrationCreatedNotificationToAdmin,
-                        Subject = "%Store.Name%. ERP Customer Registration Application Created",
-                        Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Hello %Application.AdminName%,{Environment.NewLine}<br />{Environment.NewLine}An application is created to register a new customer in ERP.{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Please review the application. Application Id: %Application.Id%. And Registration Number: %Application.RegistrationNumber%{Environment.NewLine}<br />{Environment.NewLine}Thanks</p>{Environment.NewLine}",
-                        IsActive = true,
-                        EmailAccountId = emailAccount.Id
-                    });
-                }
-
-                var template2 = await _messageTemplateService.GetMessageTemplatesByNameAsync(B2BB2CFeaturesDefaults.MessageTemplateSystemNames_ERPAccountCustomerRegistrationCreatedNotificationToCustomer);
-                if (!template2.Any())
-                {
-                    await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
-                    {
-                        Name = B2BB2CFeaturesDefaults.MessageTemplateSystemNames_ERPAccountCustomerRegistrationCreatedNotificationToCustomer,
-                        Subject = "%Store.Name%. ERP Customer Registration Application Created",
-                        Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Hello %Application.CustomerFullName%,{Environment.NewLine}<br />{Environment.NewLine}An application is created to register a new customer in ERP.{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Admin will review your application. You will get another mail if it gets approved.{Environment.NewLine}<br />{Environment.NewLine}Thank you</p>{Environment.NewLine}",
-                        IsActive = true,
-                        EmailAccountId = emailAccount.Id
-                    });
-                }
-
-                var template3 = await _messageTemplateService.GetMessageTemplatesByNameAsync(B2BB2CFeaturesDefaults.MessageTemplateSystemNames_ERPAccountCustomerRegistrationApprovedNotification);
-                if (!template3.Any())
-                {
-                    await _messageTemplateService.InsertMessageTemplateAsync(new MessageTemplate
-                    {
-                        Name = B2BB2CFeaturesDefaults.MessageTemplateSystemNames_ERPAccountCustomerRegistrationApprovedNotification,
-                        Subject = "%Store.Name%. ERP Customer Registration Application Approved",
-                        Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Hello %Application.CustomerFullName%,{Environment.NewLine}<br />{Environment.NewLine}Your application is Approved to register a new customer in ERP.{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Admin will create an ERP account for your user according to your given information.{Environment.NewLine}<br />{Environment.NewLine}Thank you</p>{Environment.NewLine}",
-                        IsActive = true,
-                        EmailAccountId = emailAccount.Id
-                    });
-                }
-            }
+        if (targetVersion != currentVersion && targetVersion == "4.70.2.1")
+        {            
             await InstalLocalResourseStringFromXmlFileAsync();
         }
 
@@ -339,7 +294,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
 
     public override string GetConfigurationPageUrl()
     {
-        return _webHelper.GetStoreLocation() + "Admin/B2BB2CFeatures/Configure";
+        return $"{_webHelper.GetStoreLocation()}Admin/B2BB2CFeatures/Configure";
     }
 
     public async Task ManageSiteMapAsync(SiteMapNode rootNode)
@@ -468,9 +423,9 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
 
         childNode = new SiteMapNode()
         {
-            SystemName = "NopStation.B2BB2CFeatures.ErpActivityLogs",
+            SystemName = "NopStation.B2BB2CFeatures.ErpLogs",
             Title = "ERP Logs",
-            ControllerName = "ErpActivityLog",
+            ControllerName = "ErpLogs",
             ActionName = "List",
             IconClass = "nav-icon fas fa-list",
             Visible = true,
@@ -480,7 +435,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
 
         childNode = new SiteMapNode()
         {
-            SystemName = "NopStation.B2BB2CFeatures.ErpActivityLogsNew",
+            SystemName = "NopStation.B2BB2CFeatures.ErpActivityLogs",
             Title = "ERP Activity Logs",
             IconClass = "nav-icon fas fa-cube",
             Visible = true,

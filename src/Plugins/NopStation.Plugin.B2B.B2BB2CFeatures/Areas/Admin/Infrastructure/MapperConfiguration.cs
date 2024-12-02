@@ -5,6 +5,7 @@ using Nop.Core.Infrastructure.Mapper;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpActivityLogs;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpInvoice;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpLogs;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpSalesRep;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpShipToAddress;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.Registration;
@@ -127,11 +128,11 @@ public class MapperConfiguration : Profile, IOrderedMapperProfile
 
         #endregion
 
-        #region ErpActivityLogs
+        #region ErpLogs and ErpActivityLogs
 
-        CreateMap<ErpLogs, ErpActivityLogModel>();
-        CreateMap<ErpActivityLogModel, ErpLogs>()
-            .ForMember(model => model.LogLevel, options => options.Ignore())
+        CreateMap<ErpLogs, ErpLogsModel>();
+        CreateMap<ErpLogsModel, ErpLogs>()
+            .ForMember(model => model.ErpLogLevel, options => options.Ignore())
             .ForMember(model => model.ErpSyncLevel, options => options.Ignore());
 
         CreateMap<ErpActivityLogs, ErpActivityLogsModel>();

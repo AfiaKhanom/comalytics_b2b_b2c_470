@@ -86,7 +86,7 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure
             services.AddScoped<IErpAccountPublicModelFactory, ErpAccountPublicModelFactory>();
             services.AddScoped<ICustomerModelFactory, Factories.OverridenCustomerModelFactory>();
             services.AddScoped<Nop.Web.Areas.Admin.Factories.ICustomerModelFactory, Areas.Admin.Factories.OverridenCustomerModelFactory>();
-            services.AddScoped<IErpActivityLogModelFactory, ErpActivityLogModelFactory>();
+            services.AddScoped<IErpLogsModelFactory, ErpLogsModelFactory>();
             services.AddScoped<IErpCheckoutModelFactory, ErpCheckoutModelFactory>();
             services.AddScoped<IErpOrderItemModelFactory, ErpOrderItemModelFactory>();
             services.AddScoped<IErpProductModelFactory, ErpProductModelFactory>();
