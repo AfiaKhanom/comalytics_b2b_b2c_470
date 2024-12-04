@@ -94,7 +94,6 @@ public class ErpDataSchedulerController : NopStationAdminController
         var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
         var settings = model.ToSettings(await _settingService.LoadSettingAsync<ErpDataSchedulerSettings>(storeScope));
 
-        await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.SyncFromDate, model.SyncFromDate_OverrideForStore, storeScope, false);
         await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.NeedQuoteOrderCall, model.NeedQuoteOrderCall_OverrideForStore, storeScope, false);
         await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.EnalbeSendingEmailNotificationToStoreOwnerOnSyncError, model.EnalbeSendingEmailNotificationToStoreOwnerOnSyncError_OverrideForStore, storeScope, false);
         await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.AdditionalEmailAddresses, model.AdditionalEmailAddresses_OverrideForStore, storeScope, false);

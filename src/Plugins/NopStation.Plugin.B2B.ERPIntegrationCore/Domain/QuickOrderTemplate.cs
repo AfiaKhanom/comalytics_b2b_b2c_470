@@ -5,7 +5,7 @@ using Nop.Core.Domain.Common;
 
 namespace NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
-public partial class QuickOrderTemplate : BaseEntity,ISoftDeletedEntity
+public partial class QuickOrderTemplate : BaseEntity, ISoftDeletedEntity
 {
     private ICollection<QuickOrderItem> _quickOrderItems;
 

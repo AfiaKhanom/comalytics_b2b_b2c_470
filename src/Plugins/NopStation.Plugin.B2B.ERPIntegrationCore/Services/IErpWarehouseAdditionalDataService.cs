@@ -28,4 +28,3 @@ public interface IErpWarehouseAdditionalDataService
 
     Task<List<ErpWarehouseSalesOrgMap>> GetSaleOrgWarehousebySalesOrgIdAsync(int salesOrgId);
 }
-

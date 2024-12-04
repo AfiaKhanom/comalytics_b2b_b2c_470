@@ -4,7 +4,6 @@ namespace NopStation.Plugin.B2B.ErpDataScheduler;
 
 public class ErpDataSchedulerSettings : ISettings
 {
-    public DateTime? SyncFromDate { get; set; }
     public bool NeedQuoteOrderCall { get; set; }
     public bool EnalbeSendingEmailNotificationToStoreOwnerOnSyncError { get; set; }
     public string? AdditionalEmailAddresses { get; set; }

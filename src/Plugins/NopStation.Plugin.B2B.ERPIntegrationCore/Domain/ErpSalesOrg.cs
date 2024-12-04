@@ -3,7 +3,7 @@
 namespace NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
 public partial class ErpSalesOrg : ErpBaseEntity
-{ 
+{
     public string Name { get; set; }
 
     public string Code { get; set; }

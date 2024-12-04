@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Services.Common;
-using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
@@ -34,8 +33,6 @@ public class ErpSalesOrgController : NopStationAdminController
     private readonly ILocalizationService _localizationService;
     private readonly INotificationService _notificationService;
     private readonly IPermissionService _permissionService;
-    private readonly ISettingService _settingService;
-    private readonly IStoreContext _storeContext;
     private readonly IErpSalesOrgModelFactory _erpSalesOrgModelFactory;
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly IAddressService _addressService;
@@ -45,6 +42,7 @@ public class ErpSalesOrgController : NopStationAdminController
     private readonly IErpWarehouseAdditionalDataService _erpWarehouseAdditionalDataService;
     private readonly IErpWarehouseSalesOrgMapService _erpWarehouseSalesOrgMapService;
     private readonly IErpActivityLogsService _erpActivityLogsService;
+    private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
 
     #endregion
 
@@ -53,8 +51,6 @@ public class ErpSalesOrgController : NopStationAdminController
     public ErpSalesOrgController(ILocalizationService localizationService,
         INotificationService notificationService,
         IPermissionService permissionService,
-        ISettingService settingService,
-        IStoreContext storeContext,
         IErpSalesOrgModelFactory erpSalesOrgModelFactory,
         IErpSalesOrgService erpSalesOrgService,
         IAddressService addressService,
@@ -63,13 +59,12 @@ public class ErpSalesOrgController : NopStationAdminController
         IErpCustomerFunctionalityService erpCustomerFunctionalityService,
         IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService,
         IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMapService,
-        IErpActivityLogsService erpActivityLogsService)
+        IErpActivityLogsService erpActivityLogsService,
+        B2BB2CFeaturesSettings b2BB2CFeaturesSettings)
     {
         _localizationService = localizationService;
         _notificationService = notificationService;
         _permissionService = permissionService;
-        _settingService = settingService;
-        _storeContext = storeContext;
         _erpSalesOrgModelFactory = erpSalesOrgModelFactory;
         _erpSalesOrgService = erpSalesOrgService;
         _addressService = addressService;
@@ -79,6 +74,7 @@ public class ErpSalesOrgController : NopStationAdminController
         _erpWarehouseAdditionalDataService = erpWarehouseAdditionalDataService;
         _erpWarehouseSalesOrgMapService = erpWarehouseSalesOrgMapService;
         _erpActivityLogsService = erpActivityLogsService;
+        _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
     }
 
     #endregion
@@ -350,8 +346,7 @@ public class ErpSalesOrgController : NopStationAdminController
         if (!await _erpCustomerFunctionalityService.IsCurrentCustomerInAdministratorRoleAsync())
             return AccessDeniedView();
 
-        var b2BFeatureSettings = _settingService.LoadSetting<B2BB2CFeaturesSettings>((await _storeContext.GetCurrentStoreAsync()).Id);
-        if (!b2BFeatureSettings.EnableWarehouse)
+        if (!_b2BB2CFeaturesSettings.EnableWarehouse)
         {
             return Json(new ErpSalesOrgWarehouseListModel());
         }
@@ -366,8 +361,7 @@ public class ErpSalesOrgController : NopStationAdminController
         if (!await _erpCustomerFunctionalityService.IsCurrentCustomerInAdministratorRoleAsync())
             return AccessDeniedView();
 
-        var b2BFeatureSettings = _settingService.LoadSetting<B2BB2CFeaturesSettings>((await _storeContext.GetCurrentStoreAsync()).Id);
-        if (!b2BFeatureSettings.EnableWarehouse)
+        if (!_b2BB2CFeaturesSettings.EnableWarehouse)
         {
             return Json(new { Result = false });
         }
@@ -431,8 +425,7 @@ public class ErpSalesOrgController : NopStationAdminController
         if (!await _erpCustomerFunctionalityService.IsCurrentCustomerInAdministratorRoleAsync())
             return AccessDeniedView();
 
-        var b2BFeatureSettings = _settingService.LoadSetting<B2BB2CFeaturesSettings>((await _storeContext.GetCurrentStoreAsync()).Id);
-        if (!b2BFeatureSettings.EnableWarehouse)
+        if (!_b2BB2CFeaturesSettings.EnableWarehouse)
         {
             return new NullJsonResult();
         }
@@ -474,8 +467,7 @@ public class ErpSalesOrgController : NopStationAdminController
         if (!await _erpCustomerFunctionalityService.IsCurrentCustomerInAdministratorRoleAsync())
             return AccessDeniedView();
 
-        var b2BFeatureSettings = _settingService.LoadSetting<B2BB2CFeaturesSettings>((await _storeContext.GetCurrentStoreAsync()).Id);
-        if (!b2BFeatureSettings.EnableWarehouse)
+        if (!_b2BB2CFeaturesSettings.EnableWarehouse)
         {
             return new NullJsonResult();
         }

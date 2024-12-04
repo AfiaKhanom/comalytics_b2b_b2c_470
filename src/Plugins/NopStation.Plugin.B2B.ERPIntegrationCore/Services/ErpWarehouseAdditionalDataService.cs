@@ -22,7 +22,7 @@ public class ErpWarehouseAdditionalDataService : IErpWarehouseAdditionalDataServ
 
     #endregion
 
-    #region ctor
+    #region Ctor
 
     public ErpWarehouseAdditionalDataService(IRepository<ErpWarehouseAdditionalData> erpWarehouseAdditionalDataRepository,
         IRepository<ErpWarehouseSalesOrgMap> erpWarehouseSalesOrgMapRepository,
@@ -194,16 +194,15 @@ public class ErpWarehouseAdditionalDataService : IErpWarehouseAdditionalDataServ
         if (salesOrgAndWarehouseMap == null)
             return null;
 
-        var warehouse = new ErpWarehouseSalesOrgMap();
         var pwiList = await _productService.GetAllProductWarehouseInventoryRecordsAsync(product.Id);
 
         var salesOrgWarehouseId = salesOrgAndWarehouseMap.NopWarehouseId;
-        var selectedPwi = pwiList.Where(x => (x.WarehouseId == salesOrgWarehouseId) && (quantity <= x.StockQuantity)).FirstOrDefault();
+        var selectedPwi = pwiList.FirstOrDefault(x => (x.WarehouseId == salesOrgWarehouseId) && (quantity <= x.StockQuantity));
         if (selectedPwi == null)
         {
-            var otherSalesOrgWarehouseIds = map.Where(sowh => sowh.ErpSalesOrgId == erpSalesOrgId)?
-                .Where(x => x.NopWarehouseId != salesOrgWarehouseId)?
-                .Select(x => x.NopWarehouseId);
+            var otherSalesOrgWarehouseIds = map
+                    .Where(sowh => sowh.ErpSalesOrgId == erpSalesOrgId && sowh.NopWarehouseId != salesOrgWarehouseId)?
+                    .Select(x => x.NopWarehouseId);
 
             selectedPwi = pwiList.Where(x => otherSalesOrgWarehouseIds.Contains(x.WarehouseId) && quantity <= x.StockQuantity)
                             .OrderByDescending(x => x.StockQuantity)
@@ -213,7 +212,7 @@ public class ErpWarehouseAdditionalDataService : IErpWarehouseAdditionalDataServ
         if (selectedPwi == null)
             return null;
 
-        warehouse = map.FirstOrDefault(f => f.NopWarehouseId == selectedPwi.WarehouseId);
+        var warehouse = map.FirstOrDefault(f => f.NopWarehouseId == selectedPwi.WarehouseId);
         return warehouse;
     }
 

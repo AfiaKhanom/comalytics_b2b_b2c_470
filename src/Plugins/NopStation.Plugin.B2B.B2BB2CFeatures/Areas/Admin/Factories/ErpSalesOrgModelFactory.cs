@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Services.Common;
 using Nop.Services.Helpers;
@@ -23,7 +21,6 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
 {
     #region Fields
 
-    private readonly IWorkContext _workContext;
     private readonly IBaseAdminModelFactory _baseAdminModelFactory;
     private readonly IDateTimeHelper _dateTimeHelper;
     private readonly IAddressService _addressService;
@@ -39,8 +36,7 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
 
     #region Ctor
 
-    public ErpSalesOrgModelFactory(IWorkContext workContext,
-        IBaseAdminModelFactory baseAdminModelFactory,
+    public ErpSalesOrgModelFactory(IBaseAdminModelFactory baseAdminModelFactory,
         ILocalizationService localizationService,
         IDateTimeHelper dateTimeHelper,
         IAddressService addressService,
@@ -51,7 +47,6 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
         IShippingService shippingService,
         IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService)
     {
-        _workContext = workContext;
         _baseAdminModelFactory = baseAdminModelFactory;
         _localizationService = localizationService;
         _dateTimeHelper = dateTimeHelper;
@@ -90,8 +85,7 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
 
     public async Task<ErpSalesOrgSearchModel> PrepareErpSalesOrgSearchModelAsync(ErpSalesOrgSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
         //prepare "active" filter (0 - all; 1 - active only; 2 - inactive only)
         searchModel.ShowInActiveOption.Add(new SelectListItem
@@ -118,29 +112,28 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
 
     public async Task<ErpSalesOrgListModel> PrepareErpSalesOrgListModelAsync(ErpSalesOrgSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
+        //get ERP Sales Orgs
         var erpSalesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgAsync(pageIndex: searchModel.Page - 1,
             pageSize: searchModel.PageSize,
             name: searchModel.Name,
             email: searchModel.Email,
             code: searchModel.Code,
-            showHidden: searchModel.ShowInActive == 0 ? null : (bool?)(searchModel.ShowInActive == 2));
+            showHidden: searchModel.ShowInActive == 0 ? null : (searchModel.ShowInActive == 2));
 
+        //prepare list model
         var model = await new ErpSalesOrgListModel().PrepareToGridAsync(searchModel, erpSalesOrgs, () =>
         {
+            //fill in model values from the entity
             return erpSalesOrgs.SelectAwait(async erpSalesOrg =>
             {
                 var erpSalesOrgModel = new ErpSalesOrgModel();
-                //Get addionalInfos
-                //var erpSalesOrgInfo = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpSalesOrg.Id);
 
-                var currentCulture = (await _workContext.GetWorkingLanguageAsync()).LanguageCulture;
-                var dtfi = new CultureInfo(currentCulture, false).DateTimeFormat;
-
+                //Additional Infos
                 if (erpSalesOrg != null)
                 {
+                    //prepare address model
                     var address = await _addressService.GetAddressByIdAsync(erpSalesOrg.AddressId);
                     var addressModel = new AddressModel();
                     if (address != null)
@@ -227,8 +220,7 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
 
     public async Task<ErpSalesOrgWarehouseListModel> PrepareErpSalesOrgWarehouseListModel(ErpSalesOrgWarehouseSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
         var erpSalesOrgWarehouses = await _erpWarehouseSalesOrgMapService.GetAllErpWarehouseSalesOrgMapsAsync(pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize, salesOrgId: searchModel.ErpSalesOrgId);
         var model = await new ErpSalesOrgWarehouseListModel().PrepareToGridAsync(searchModel, erpSalesOrgWarehouses, () =>
@@ -237,22 +229,21 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
             {
                 var warehouse = await _shippingService.GetWarehouseByIdAsync(saleOrgWarehouse.NopWarehouseId);
                 var erpWarehouse = await _erpWarehouseAdditionalDataService.GetErpWarehouseAdditionalDataByIdAsync(saleOrgWarehouse.ErpWarehouseId);
-                if (warehouse == null || erpWarehouse == null)
-                    return new ErpSalesOrgWarehouseModel();
 
-                //fill in model values from the entity
+                if (warehouse == null || erpWarehouse == null || erpWarehouse.IsDeleted)
+                    return null;
+
                 var salesOrgWarehouseModel = new ErpSalesOrgWarehouseModel
                 {
                     Id = saleOrgWarehouse.Id,
                     WarehouseId = saleOrgWarehouse.NopWarehouseId,
-                    WarehouseName = warehouse?.Name ?? string.Empty,
+                    WarehouseName = warehouse.Name,
                     ErpSalesOrgId = saleOrgWarehouse.ErpSalesOrgId,
-                    ErpWarehouseCode = erpWarehouse?.Code ?? string.Empty,
+                    ErpWarehouseCode = erpWarehouse.Code,
                     LastUpdateTime = (await _dateTimeHelper.ConvertToUserTimeAsync(erpWarehouse.LastUpdateTime, DateTimeKind.Utc)).ToString(),
                 };
-
                 return salesOrgWarehouseModel;
-            });
+            }).Where(x => x != null);
         });
         return model;
     }

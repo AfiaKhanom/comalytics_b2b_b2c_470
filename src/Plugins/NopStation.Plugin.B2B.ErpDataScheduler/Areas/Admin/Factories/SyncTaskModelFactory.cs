@@ -52,7 +52,7 @@ public partial class SyncTaskModelFactory : ISyncTaskModelFactory
 
     private async Task<ErpSyncLevel> GetErpSyncLevelBySyncTaskType(string syncTaskType)
     {
-        if (syncTaskType == ErpDataSchedulerDefaults.ErpAccountSyncTask || syncTaskType == ErpDataSchedulerDefaults.ErpAccountCreditSyncTask)
+        if (syncTaskType == ErpDataSchedulerDefaults.ErpAccountSyncTask)
             return ErpSyncLevel.Account;
         if (syncTaskType == ErpDataSchedulerDefaults.ErpProductSyncTask)
             return ErpSyncLevel.Product;
@@ -68,10 +68,6 @@ public partial class SyncTaskModelFactory : ISyncTaskModelFactory
             return ErpSyncLevel.GroupPrice;
         if (syncTaskType == ErpDataSchedulerDefaults.ErpInvoiceSyncTask)
             return ErpSyncLevel.Invoice;
-        if (syncTaskType == ErpDataSchedulerDefaults.ErpDeliveryRoutesSyncTask)
-            return ErpSyncLevel.DeliveryRoutes;
-        if (syncTaskType == ErpDataSchedulerDefaults.ErpDealsSyncTask)
-            return ErpSyncLevel.Deals;
 
         return 0;
     }

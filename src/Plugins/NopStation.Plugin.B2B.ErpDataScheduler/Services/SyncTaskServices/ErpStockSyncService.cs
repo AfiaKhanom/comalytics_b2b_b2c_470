@@ -325,7 +325,6 @@ public class ErpStockSyncService : IErpStockSyncService
                         ErpSyncLevel.Stock,
                         $"Erp Stock sync is partially or not successful for Sales Org: ({salesOrg.Code}) {salesOrg.Name}.");
                 }
-
                 await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpStockSyncTaskName,
                     ErpSyncLevel.Stock,
@@ -338,6 +337,7 @@ public class ErpStockSyncService : IErpStockSyncService
                 await _erpSalesOrgService.UpdateErpSalesOrgAsync(salesOrg);
             }
 
+            await _staticCacheManager.RemoveByPrefixAsync("nop.pres.jcarousel.");
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpStockSyncTaskName,
                 ErpSyncLevel.Stock,
@@ -347,6 +347,7 @@ public class ErpStockSyncService : IErpStockSyncService
         }
         catch (Exception ex)
         {
+            await _staticCacheManager.RemoveByPrefixAsync("nop.pres.jcarousel.");
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpStockSyncTaskName,
                 ErpSyncLevel.Stock,
