@@ -32,10 +32,10 @@ public class ErpGroupPriceCodeModelFactory : IErpGroupPriceCodeModelFactory
     #endregion
 
     #region Method
+
     public async Task<ErpGroupPriceCodeListModel> PrepareErpGroupPriceCodeListModelAsync(ErpGroupPriceCodeSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
         var erpGroupPriceCodes = await _erpGroupPriceCodeService.GetAllErpGroupPriceCodesPagedAsync(
             searchModel.SearchGroupPriceCode,
@@ -47,6 +47,9 @@ public class ErpGroupPriceCodeModelFactory : IErpGroupPriceCodeModelFactory
         {
             return erpGroupPriceCodes.Select(priceGroup =>
             {
+                if (string.IsNullOrWhiteSpace(priceGroup.Code))
+                    return null;
+
                 var priceGroupModel = new ErpGroupPriceCodeModel
                 {
                     Id = priceGroup.Id,
@@ -56,8 +59,9 @@ public class ErpGroupPriceCodeModelFactory : IErpGroupPriceCodeModelFactory
                 };
 
                 return priceGroupModel;
-            });
+            }).Where(model => model != null);
         });
+
         return model;
     }
 
@@ -71,13 +75,13 @@ public class ErpGroupPriceCodeModelFactory : IErpGroupPriceCodeModelFactory
             model.IsActive = erpGroupPriceCode.IsActive;
             model.LastPriceUpdatedOnUTC = erpGroupPriceCode.LastUpdateTime;
         }
+
         return model;
     }
 
     public async Task<ErpGroupPriceCodeSearchModel> PrepareErpGroupPriceCodeSearchModelAsync(ErpGroupPriceCodeSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
         //prepare "active" filter (0 - all; 1 - active only; 2 - inactive only)
         searchModel.ShowInActiveOption.Add(new SelectListItem
@@ -100,10 +104,9 @@ public class ErpGroupPriceCodeModelFactory : IErpGroupPriceCodeModelFactory
         return searchModel;
     }
 
-    public async void PrepareErpGroupPriceCodes(IList<SelectListItem> items, bool withSpecialDefaultItem = false)
+    public async Task PrepareErpGroupPriceCodes(IList<SelectListItem> items, bool withSpecialDefaultItem = false)
     {
-        if (items == null)
-            throw new ArgumentNullException(nameof(items));
+        ArgumentNullException.ThrowIfNull(items);
 
         var availablePriceGroup = await _erpGroupPriceCodeService.GetAllErpGroupPriceCodesAsync();
         foreach (var priceGroup in availablePriceGroup)
@@ -112,13 +115,13 @@ public class ErpGroupPriceCodeModelFactory : IErpGroupPriceCodeModelFactory
         }
 
         if (withSpecialDefaultItem)
-            PrepareDefaultItem(items);
+            await PrepareDefaultItem(items);
     }
 
-    protected async void PrepareDefaultItem(IList<SelectListItem> items)
+    protected async Task PrepareDefaultItem(IList<SelectListItem> items)
     {
-        if (items == null)
-            throw new ArgumentNullException(nameof(items));
+        ArgumentNullException.ThrowIfNull(items);
+
         const string value = "0";
         var defaultItemText = await _localizationService.GetResourceAsync("Admin.Common.All");
         items.Insert(0, new SelectListItem { Text = defaultItemText, Value = value });

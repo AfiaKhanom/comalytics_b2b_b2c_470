@@ -143,8 +143,8 @@ public class ErpNopUserAccountMapService : IErpNopUserAccountMapService
 
     public async Task<IList<int>> GetErpNopUserRolesByErpNopUserAsync(ErpNopUser user)
     {
-        if (user == null)
-            throw new ArgumentNullException(nameof(user));
+        ArgumentNullException.ThrowIfNull(user);
+
         var listOferpNopUserRoleIds = new List<int>();
 
         var erpNopUserAccountMap = await GetErpNopUserAccountMapByAccountAndUserIdAsync(user.ErpAccountId, user.Id);

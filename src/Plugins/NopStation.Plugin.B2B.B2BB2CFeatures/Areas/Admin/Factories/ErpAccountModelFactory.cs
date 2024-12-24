@@ -103,8 +103,7 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
 
     public async Task<ErpAccountSearchModel> PrepareErpAccountSearchModelAsync(ErpAccountSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
         // Prepare ErpAccountStatusTypes dropdown options
         var availableErpAccountStatusTypes = await ErpAccountStatusType.Normal.ToSelectListAsync(false);
@@ -157,8 +156,7 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
 
     public async Task<ErpAccountListModel> PrepareErpAccountListModelAsync(ErpAccountSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
         //get ERP Accounts
         var erpAccounts = await _erpAccountService.GetAllErpAccountsAsync(
@@ -178,7 +176,8 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
             return erpAccounts.SelectAwait(async erpAccount =>
             {
                 //prepare address model
-                var address = await _addressService.GetAddressByIdAsync(erpAccount?.BillingAddressId ?? 0);
+                var address = await _addressService.GetAddressByIdAsync(erpAccount.BillingAddressId ?? 0);
+
                 var addressModel = new AddressModel();
                 if (address != null)
                     addressModel = address.ToModel(addressModel);
@@ -365,7 +364,7 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
             });
 
             //prepare address model
-            var address = await _addressService.GetAddressByIdAsync(erpAccount?.BillingAddressId ?? 0);
+            var address = await _addressService.GetAddressByIdAsync(erpAccount.BillingAddressId ?? 0);
             var addressModel = new AddressModel();
             if (address != null)
                 addressModel = address.ToModel(addressModel);
