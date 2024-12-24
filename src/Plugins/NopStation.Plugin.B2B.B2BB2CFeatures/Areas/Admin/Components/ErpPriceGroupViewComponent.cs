@@ -35,7 +35,7 @@ public class ErpPriceGroupViewComponent : NopViewComponent
         try
         {
             var productId = additionalData is int pId ? pId : 0;
-            var searchModel = await _erpPriceGroupProductPricingModelFactory.PrepareErpProductPricingSearchModel(new ErpPriceGroupProductPricingSearchModel(), productId);
+            var searchModel = await _erpPriceGroupProductPricingModelFactory.PrepareErpProductGroupPriceSearchModel(new ErpPriceGroupProductPricingSearchModel(), productId);
 
             if (productId > 0)
             {

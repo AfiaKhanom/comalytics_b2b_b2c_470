@@ -561,7 +561,7 @@
         <Value>Is Active</Value>
     </LocaleResource>
 
-    <LocaleResource Name="Admin.ErpShipToAddresss.Fields.Active.Hint">
+    <LocaleResource Name="Admin.ErpShipToAddress.Fields.Active.Hint">
         <Value>Account branch is active or not?</Value>
     </LocaleResource>
 
@@ -3824,16 +3824,16 @@
         <Value>Erp Logs</Value>
     </LocaleResource>
 
-    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Card.ErpActivityLogs">
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Card.ErpLogs">
         <Value>Erp Logs</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.ErpLogLevel">
-        <Value>ERP Log Level</Value>
+        <Value>Erp Log Level</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.ErpSyncLevel">
-        <Value>ERP Sync Label</Value>
+        <Value>Erp Sync Label</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.CreatedOnUtc">
@@ -3873,55 +3873,55 @@
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.ErpLogLevel.Hint">
-        <Value>ERP Log Level represents the log elements type.</Value>
+        <Value>Erp Log Level represents the log elements type</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.ErpSyncLevel.Hint">
-        <Value>ERP Sync Label represents the log entity/module type.</Value>
+        <Value>Erp Sync Label represents the log entity/module type</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.CreatedOnUtc.Hint">
-        <Value>Created On represents the generation date of the log.</Value>
+        <Value>Created On represents the generation date of the log</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.CustomerEmail.Hint">
-        <Value>Customer Email represents the Nop Customers email address.</Value>
+        <Value>Customer Email represents the Nop Customers email address</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.CustomerId.Hint">
-        <Value>Customer represents the Nop customer who does the activity.</Value>
+        <Value>Customer represents the Nop customer who does the activity</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.ShortMessage.Hint">
-        <Value>Short Message represents the information in short.</Value>
+        <Value>Short Message represents the information in short</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.FullMessage.Hint">
-        <Value>Full Message represents the exception details if any issue occures.</Value>
+        <Value>Full Message represents the exception details if any issue occurs</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.PageUrl.Hint">
-        <Value>Page URL represents the requested page, ehere the activity was happening.</Value>
+        <Value>Page URL represents the requested page, here the activity was happening</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.ReferrerUrl.Hint">
-        <Value>Referrer URL represents the requested page, ehere the activity was happening.</Value>
+        <Value>Referrer URL represents the requested page, here the activity was happening</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.ErpLogLevelId">
-        <Value>ERP Log Level</Value>
+        <Value>Erp Log Level</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.ErpLogLevelId.Hint">
-        <Value>Search by ERP Log Level</Value>
+        <Value>Search by Erp Log Level</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.ErpSyncLabelId">
-        <Value>ERP Sync Label</Value>
+        <Value>Erp Sync Label</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.ErpSyncLabelId.Hint">
-        <Value>Search by ERP Sync Label</Value>
+        <Value>Search by Erp Sync Label</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.CreatedFrom">
@@ -3949,23 +3949,23 @@
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.DeleteErpActivityLog">
-        <Value>Deleted ERP activity log</Value>
+        <Value>Deleted Erp activity log</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.DeleteErpActivityLogs">
-        <Value>Deleted ERP activity logs</Value>
+        <Value>Deleted Erp activity logs</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Cleared">
-        <Value>The ERP activity log has been cleared successfully.</Value>
+        <Value>The Erp Log has been cleared successfully</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.ViewLogDetails">
-        <Value>View ERP activity log details</Value>
+        <Value>View Erp Log details</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.BackToList">
-        <Value>back to the ERP activity log list</Value>
+        <Value>back to the Erp Log list</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.B2BB2CFeatures.Admin.ErpOrderItemInOrderDetails.TableHeader.ERPOrderLineNumber">
@@ -6196,5 +6196,23 @@
     <!-- Card: 2804 - Bugs on Nopstation B2B plugin for 4.7  - 21-Nov-2024 -->
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.DeliveryDate.SelectDeliveryDate">
         <Value>Select your delivery date</Value>
+    </LocaleResource>
+
+
+    <!-- Card: 2963-2804-Bug-4.7-Basic-B2B-issues  - 23-Dec-2024 -->
+    <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.EnableAccountStatementDownload">
+        <Value>Enable account statement download</Value>
+    </LocaleResource>
+    <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.EnableAccountStatementDownload.Hint">
+        <Value>Enable account statement download</Value>
+    </LocaleResource>
+    <LocaleResource Name="Admin.ErpShipToAddress.BackToList">
+        <Value>Back to Erp Ship To Address list</Value>
+    </LocaleResource>
+    <LocaleResource Name="Admin.ErpShipToAddress.EditErpShipToAddressDetails">
+        <Value>Erp Ship To Address Details</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.IntegrationMethodFindResult.NoIntegrationMethodFound">
+        <Value>No integration method was found</Value>
     </LocaleResource>
 </Language>

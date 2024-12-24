@@ -72,14 +72,6 @@ public class ErpGroupPriceCodeService : IErpGroupPriceCodeService
 
     #region Read
 
-    /// <summary>
-    /// Gets an ErpAccount by Id
-    /// </summary>
-    /// <param name="id">ErpAccount identifier</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the ErpAccount
-    /// </returns>
     public async Task<ErpGroupPriceCode> GetErpGroupPriceCodeByIdAsync(int id)
     {
         if (id == 0)
@@ -93,14 +85,6 @@ public class ErpGroupPriceCodeService : IErpGroupPriceCodeService
         return erpGroupPriceCode;
     }
 
-    /// <summary>
-    /// Gets an ErpAccount by Id if it is active
-    /// </summary>
-    /// <param name="id">ErpAccount identifier</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the ErpAccount if it is activ
-    /// </returns>
     public async Task<ErpGroupPriceCode> GetErpGroupPriceCodeByIdWithActiveAsync(int id)
     {
         if (id == 0)
@@ -114,20 +98,12 @@ public class ErpGroupPriceCodeService : IErpGroupPriceCodeService
         return erpGroupPriceCode;
     }
 
-    /// <summary>
-    /// Gets all ErpAccounts
-    /// </summary>
-    /// <param name="pageIndex">Page number</param>
-    /// <param name="pageSize">Page size</param>
-    /// <param name="getOnlyTotalCount">If only total no of account needed or not</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains all the ErpAccounts
-    /// </returns>
     public async Task<IList<ErpGroupPriceCode>> GetAllErpGroupPriceCodesAsync(bool showHidden = false)
     {
         var erpGroupPriceCodes = await _erpGroupPriceCodeRepository.GetAllAsync(query =>
         {
+            query = query.Where(egpc => !string.IsNullOrWhiteSpace(egpc.Code));
+
             if (!showHidden)
                 query = query.Where(egpc => egpc.IsActive);
 

@@ -364,7 +364,7 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
         //get ERP Sales Orgs
         var erpNopUsers = await _erpNopUserService.GetAllErpNopUsersAsync(pageIndex: searchModel.Page - 1,
             pageSize: searchModel.PageSize,
-            showHidden: searchModel.ShowInActive == 0 ? null : (bool?)(searchModel.ShowInActive == 2),
+            showHidden: searchModel.ShowInActive == 0 ? null : (searchModel.ShowInActive == 2),
             email: searchModel.Email,
             accountId: searchModel.AccountId,
             name: searchModel.Name,
@@ -379,9 +379,6 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
             return erpNopUsers.SelectAwait(async erpNopUser =>
             {
                 var erpNopUserModel = new ErpNopUserModel();
-
-                var currentCulture = (await _workContext.GetWorkingLanguageAsync()).LanguageCulture;
-                var dtfi = new CultureInfo(currentCulture, false).DateTimeFormat;
 
                 //Additional Infos
                 if (erpNopUser != null)
@@ -404,23 +401,24 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
                     await _addressModelFactory.PrepareAddressModelAsync(addressModelOfShipToAddress, addressOfShipToAddress);
                     addressModelOfShipToAddress.AddressHtml = await PrepareModelAddressHtmlAsync(addressModelOfShipToAddress, addressOfShipToAddress, false);
 
+
                     //prepare BillingErpShipToAddress model
-                    var billingErpShipToAddress = await _addressService.GetAddressByIdAsync(erpNopUser?.BillingErpShipToAddressId ?? 0);
+                    var billingErpShipToAddress = await _addressService.GetAddressByIdAsync(erpNopUser.BillingErpShipToAddressId);
                     var billingErpShipToAddressModel = new AddressModel();
 
                     if (billingErpShipToAddress != null)
                         billingErpShipToAddressModel = billingErpShipToAddress.ToModel(billingErpShipToAddressModel);
-
                     await _addressModelFactory.PrepareAddressModelAsync(billingErpShipToAddressModel, billingErpShipToAddress);
 
+
                     //prepare ShippingErpShipToAddress model
-                    var shippingErpShipToAddress = await _addressService.GetAddressByIdAsync(erpNopUser?.ShippingErpShipToAddressId ?? 0);
+                    var shippingErpShipToAddress = await _addressService.GetAddressByIdAsync(erpNopUser.ShippingErpShipToAddressId);
                     var shippingErpShipToAddressModel = new AddressModel();
 
                     if (shippingErpShipToAddress != null)
                         shippingErpShipToAddressModel = shippingErpShipToAddress.ToModel(shippingErpShipToAddressModel);
-
                     await _addressModelFactory.PrepareAddressModelAsync(shippingErpShipToAddressModel, shippingErpShipToAddress);
+
                     var selectedCustomerRoleIds = await _erpNopUserAccountMapService.GetErpNopUserRolesByErpNopUserAsync(erpNopUser);
 
                     erpNopUserModel = new ErpNopUserModel
@@ -432,6 +430,7 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
                         ErpAccountId = erpNopUser.ErpAccountId,
                         ErpAccountInfo = erpAccount?.AccountName + "(" + erpAccount?.AccountNumber + ")",
                         ErpSalesOrg = erpSalesOrg != null ? erpSalesOrg.Name : "",
+                        ErpSalesOrgId = erpSalesOrg != null ? erpSalesOrg.Id : 0,
                         ErpShipToAddressId = erpNopUser.ErpShipToAddressId,
                         ErpShipToAddress = addressModelOfShipToAddress,
                         BillingErpShipToAddressId = erpNopUser.BillingErpShipToAddressId,

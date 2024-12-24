@@ -146,10 +146,10 @@ public class ErpInvoiceController : NopStationAdminController
         }
 
         var erpIntegrationPlugin = await _erpIntegrationPluginService.LoadActiveERPIntegrationPlugin();
-
         if (erpIntegrationPlugin is null)
         {
-            await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Error, ErpSyncLevel.Invoice, "No integration method found.");
+            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.IntegrationMethodFindResult.NoIntegrationMethodFound"));
+            await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Error, ErpSyncLevel.Invoice, "NopStation.Plugin.B2B.B2BB2CFeatures.IntegrationMethodFindResult.NoIntegrationMethodFound");
             return RedirectToAction("List");
         }
 
@@ -159,7 +159,7 @@ public class ErpInvoiceController : NopStationAdminController
             {
                 DocumentNumber = erpInvoice.ErpDocumentNumber,
                 OrderNumber = erpInvoice.ErpOrderNumber,
-                Location = salesOrg?.Code ?? ""
+                Location = salesOrg.Code
             };
 
             var response = await erpIntegrationPlugin.GetInvoicePdfByteCodeByDocumentNoFromErpAsync(erpGetRequestModel);
@@ -171,7 +171,7 @@ public class ErpInvoiceController : NopStationAdminController
                 if (base64PDFData is not null)
                 {
                     // Decode the base64 string
-                    byte[] pdfBytes = Convert.FromBase64String(base64PDFData);
+                    var pdfBytes = Convert.FromBase64String(base64PDFData);
 
                     // Save the decoded binary data to a PDF file
                     var fileName = $"downloaded_pdf_{Guid.NewGuid()}.pdf";
@@ -211,7 +211,7 @@ public class ErpInvoiceController : NopStationAdminController
         var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
         var b2BB2CFeaturesSettings = await _settingService.LoadSettingAsync<B2BB2CFeaturesSettings>(storeScope);
 
-        var baseUrl = b2BB2CFeaturesSettings.DownloadInvoicesPath + "/";
+        var baseUrl = $"{b2BB2CFeaturesSettings.DownloadInvoicesPath}/";
         //var baseUrl = "ftp://89.116.28.135/RenamedInvoiceTest/";
 
         try

@@ -3,8 +3,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Caching;
-using Nop.Core.Domain.Catalog;
-using Nop.Core.Events;
 using Nop.Services.Catalog;
 using Nop.Services.Localization;
 using Nop.Services.Security;
@@ -142,10 +140,10 @@ public class ErpProductPricingController : NopStationAdminController
         };
 
         //Preparing Special Price search model
-        await _erpSpecialPriceModelFactory.PrepareErpProductPricingSearchModel(model.ErpSpecialPriceSearchModel, id);
+        await _erpSpecialPriceModelFactory.PrepareErpProductSpecialPriceSearchModel(model.ErpSpecialPriceSearchModel, id);
 
         //Preparing Group Price search model
-        await _erpPriceGroupProductPricingModelFactory.PrepareErpProductPricingSearchModel(model.ErpPriceGroupProductPricingSearchModel, id);
+        await _erpPriceGroupProductPricingModelFactory.PrepareErpProductGroupPriceSearchModel(model.ErpPriceGroupProductPricingSearchModel, id);
 
         return View("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Areas/Admin/Views/ErpProductPricing/ProductPricing.cshtml", model);
     }
@@ -159,7 +157,7 @@ public class ErpProductPricingController : NopStationAdminController
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
             return AccessDeniedView();
 
-        var model = await _erpSpecialPriceModelFactory.PrepareErpProductPricingListModel(searchModel);
+        var model = await _erpSpecialPriceModelFactory.PrepareErpProductSpecialPriceListModel(searchModel);
 
         return Json(model);
     }
@@ -170,7 +168,7 @@ public class ErpProductPricingController : NopStationAdminController
             return AccessDeniedView();
 
         //prepare model
-        var model = await _erpSpecialPriceModelFactory.PrepareErpProductPricingModel(new ErpSpecialPriceModel(), null);
+        var model = await _erpSpecialPriceModelFactory.PrepareErpProductSpecialPriceModel(new ErpSpecialPriceModel(), null);
         model.ProductId = productId;
 
         return View("_SpecialPriceCreatePopUp", model);
@@ -231,7 +229,7 @@ public class ErpProductPricingController : NopStationAdminController
         if (erpProductPricing == null)
             return RedirectToAction("AllProductList");
 
-        var model = await _erpSpecialPriceModelFactory.PrepareErpProductPricingModel(null, erpProductPricing);
+        var model = await _erpSpecialPriceModelFactory.PrepareErpProductSpecialPriceModel(null, erpProductPricing);
 
         return View("_SpecialPriceEditPopUp", model);
     }
@@ -315,7 +313,7 @@ public class ErpProductPricingController : NopStationAdminController
         if ((await _productService.GetProductByIdAsync(searchModel.ProductId) is null))
             throw new ArgumentException("No product found with the specified id");
 
-        var model = await _erpPriceGroupProductPricingModelFactory.PrepareErpProductPricingListModel(searchModel);
+        var model = await _erpPriceGroupProductPricingModelFactory.PrepareErpProductGroupPriceListModel(searchModel);
 
         return Json(model);
     }
@@ -325,7 +323,7 @@ public class ErpProductPricingController : NopStationAdminController
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
             return AccessDeniedView();
 
-        var model = await _erpPriceGroupProductPricingModelFactory.PrepareErpProductPricingModel(new ErpPriceGroupProductPricingModel(), null);
+        var model = await _erpPriceGroupProductPricingModelFactory.PrepareErpProductGroupPriceModel(new ErpPriceGroupProductPricingModel(), null);
         model.ProductId = productId;
 
         return View("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Areas/Admin/Views/ErpProductPricing/Create.cshtml", model);
@@ -384,7 +382,7 @@ public class ErpProductPricingController : NopStationAdminController
         if (erpProductPricing == null)
             return RedirectToAction("AllProductList");
 
-        var model = await _erpPriceGroupProductPricingModelFactory.PrepareErpProductPricingModel(null, erpProductPricing);
+        var model = await _erpPriceGroupProductPricingModelFactory.PrepareErpProductGroupPriceModel(null, erpProductPricing);
         return View("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Areas/Admin/Views/ErpProductPricing/Edit.cshtml", model);
     }
 
@@ -436,7 +434,7 @@ public class ErpProductPricingController : NopStationAdminController
         if (erpProductPricing == null)
             return RedirectToAction("AllProductList");
 
-        var model = await _erpPriceGroupProductPricingModelFactory.PrepareErpProductPricingModel(null, erpProductPricing);
+        var model = await _erpPriceGroupProductPricingModelFactory.PrepareErpProductGroupPriceModel(null, erpProductPricing);
         return View("_GroupPriceEditPopUp", model);
     }
 
