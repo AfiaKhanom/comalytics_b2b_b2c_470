@@ -69,6 +69,7 @@ public class ErpCheckoutController : CheckoutController
     private readonly IErpAccountService _erpAccountService;
     private readonly IErpActivityLogsService _erpActivityLogsService;
     private readonly ICustomerActivityService _customerActivityService;
+    private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
     private static readonly string[] _separator = ["___"];
@@ -122,7 +123,8 @@ public class ErpCheckoutController : CheckoutController
         IErpActivityLogsService erpActivityLogsService,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
         IErpIntegrationPluginManager erpIntegrationPluginManager,
-        ICustomerActivityService customerActivityService) : base(addressSettings,
+        ICustomerActivityService customerActivityService,
+        IErpSalesOrgService erpSalesOrgService) : base(addressSettings,
             captchaSettings,
             customerSettings,
             addressModelFactory,
@@ -169,6 +171,7 @@ public class ErpCheckoutController : CheckoutController
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
         _erpIntegrationPluginManager = erpIntegrationPluginManager;
         _customerActivityService = customerActivityService;
+        _erpSalesOrgService = erpSalesOrgService;
     }
 
     #endregion
@@ -240,7 +243,14 @@ public class ErpCheckoutController : CheckoutController
 
             if (erpIntegrationPlugin is not null)
             {
-                var response = await erpIntegrationPlugin.GetAllAccountCreditFromErpAsync(new ErpGetRequestModel() { AccountNumber = b2BAccount.AccountNumber });
+                var erpSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(b2BAccount.ErpSalesOrgId);
+                var response = await erpIntegrationPlugin.GetAllAccountCreditFromErpAsync(
+                    new ErpGetRequestModel()
+                    {
+                        Location = erpSalesOrg.Code,
+                        AccountNumber = b2BAccount.AccountNumber
+                    }
+                );
 
                 if (!response.ErpResponseModel.IsError)
                 {

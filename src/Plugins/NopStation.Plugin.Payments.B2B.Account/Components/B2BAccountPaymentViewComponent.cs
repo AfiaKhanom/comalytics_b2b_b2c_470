@@ -24,6 +24,7 @@ public class B2BAccountPaymentViewComponent : NopViewComponent
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
     private readonly IErpLogsService _erpLogsService;
+    private readonly IErpSalesOrgService _erpSalesOrgService;
 
     #endregion
 
@@ -35,7 +36,8 @@ public class B2BAccountPaymentViewComponent : NopViewComponent
         IPriceFormatter priceFormatter,
         IErpIntegrationPluginManager erpIntegrationPluginManager,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
-        IErpLogsService erpLogsService)
+        IErpLogsService erpLogsService,
+        IErpSalesOrgService erpSalesOrgService)
     {
         _erpNopUserService = erpNopUserService;
         _workContext = workContext;
@@ -44,6 +46,7 @@ public class B2BAccountPaymentViewComponent : NopViewComponent
         _erpIntegrationPluginManager = erpIntegrationPluginManager;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
         _erpLogsService = erpLogsService;
+        _erpSalesOrgService = erpSalesOrgService;
     }
 
     #endregion
@@ -62,8 +65,14 @@ public class B2BAccountPaymentViewComponent : NopViewComponent
 
             if (erpIntegrationPlugin is not null)
             {
-                var response = await erpIntegrationPlugin.GetAllAccountCreditFromErpAsync(new ErpGetRequestModel() { AccountNumber = b2BAccount.AccountNumber });
-
+                var erpSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(b2BAccount.ErpSalesOrgId);
+                var response = await erpIntegrationPlugin.GetAllAccountCreditFromErpAsync(
+                    new ErpGetRequestModel()
+                    {
+                        Location = erpSalesOrg.Code,
+                        AccountNumber = b2BAccount.AccountNumber
+                    }
+                );
                 if (!response.ErpResponseModel.IsError)
                 {
                     if (response.Data is not null)

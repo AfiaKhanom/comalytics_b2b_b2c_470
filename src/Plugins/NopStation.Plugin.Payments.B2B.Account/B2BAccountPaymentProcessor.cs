@@ -40,6 +40,7 @@ public class B2BAccountPaymentProcessor : BasePlugin, IPaymentMethod, INopStatio
     private readonly INotificationService _notificationService;
     private readonly IErpOrderAdditionalDataService _erpOrderAdditionalDataService;
     private readonly IGenericAttributeService _genericAttributeService;
+    private readonly IErpSalesOrgService _erpSalesOrgService;
 
     #endregion
 
@@ -58,7 +59,8 @@ public class B2BAccountPaymentProcessor : BasePlugin, IPaymentMethod, INopStatio
         IErpLogsService erpLogsService,
         INotificationService notificationService,
         IErpOrderAdditionalDataService erpOrderAdditionalDataService,
-        IGenericAttributeService genericAttributeService)
+        IGenericAttributeService genericAttributeService,
+        IErpSalesOrgService erpSalesOrgService)
     {
         _orderTotalCalculationService = orderTotalCalculationService;
         _localizationService = localizationService;
@@ -73,6 +75,7 @@ public class B2BAccountPaymentProcessor : BasePlugin, IPaymentMethod, INopStatio
         _notificationService = notificationService;
         _erpOrderAdditionalDataService = erpOrderAdditionalDataService;
         _genericAttributeService = genericAttributeService;
+        _erpSalesOrgService = erpSalesOrgService;
     }
 
     #endregion
@@ -91,8 +94,14 @@ public class B2BAccountPaymentProcessor : BasePlugin, IPaymentMethod, INopStatio
 
             if (erpIntegrationPlugin is not null)
             {
-                var response = await erpIntegrationPlugin.GetAllAccountCreditFromErpAsync(new ErpGetRequestModel() { AccountNumber = b2BAccount.AccountNumber });
-
+                var erpSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(b2BAccount.ErpSalesOrgId);
+                var response = await erpIntegrationPlugin.GetAllAccountCreditFromErpAsync(
+                    new ErpGetRequestModel() 
+                    { 
+                        Location = erpSalesOrg.Code,
+                        AccountNumber = b2BAccount.AccountNumber 
+                    }
+                );
                 if (!response.ErpResponseModel.IsError)
                 {
                     if (response.Data is not null)

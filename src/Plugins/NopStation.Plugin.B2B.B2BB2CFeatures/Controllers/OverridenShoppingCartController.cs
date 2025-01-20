@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DocumentFormat.OpenXml.EMMA;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
@@ -41,10 +39,7 @@ using Nop.Web.Models.ShoppingCart;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Factories;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
-using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpPriceSyncFunctionality;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
-using NopStation.Plugin.B2B.ERPIntegrationCore.Infrastructure;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
@@ -65,6 +60,7 @@ public class OverridenShoppingCartController : ShoppingCartController
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
     private readonly IOrderProcessingService _orderProcessingService;
+    private readonly IErpSalesOrgService _erpSalesOrgService;
 
     #endregion
 
@@ -118,7 +114,8 @@ public class OverridenShoppingCartController : ShoppingCartController
         IErpAccountService erpAccountService,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
         IErpIntegrationPluginManager erpIntegrationPluginManager,
-        IOrderProcessingService orderProcessingService) : base(captchaSettings,
+        IOrderProcessingService orderProcessingService,
+        IErpSalesOrgService erpSalesOrgService) : base(captchaSettings,
             customerSettings,
             checkoutAttributeParser,
             checkoutAttributeService,
@@ -167,6 +164,8 @@ public class OverridenShoppingCartController : ShoppingCartController
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
         _erpIntegrationPluginManager = erpIntegrationPluginManager;
         _orderProcessingService = orderProcessingService;
+        _erpAccountService = erpAccountService;
+        _erpSalesOrgService = erpSalesOrgService;
     }
 
     #endregion
@@ -281,7 +280,14 @@ public class OverridenShoppingCartController : ShoppingCartController
 
             if (erpIntegrationPlugin is not null)
             {
-                var response = await erpIntegrationPlugin.GetAllAccountCreditFromErpAsync(new ErpGetRequestModel() { AccountNumber = b2BAccount.AccountNumber });
+                var erpSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(b2BAccount.ErpSalesOrgId);
+                var response = await erpIntegrationPlugin.GetAllAccountCreditFromErpAsync(
+                    new ErpGetRequestModel()
+                    {
+                        Location = erpSalesOrg.Code,
+                        AccountNumber = b2BAccount.AccountNumber
+                    }
+                );
 
                 if (!response.ErpResponseModel.IsError)
                 {
