@@ -12,6 +12,15 @@
     NopHtml.AppendPageCssClassParts("html-order-details-page");
     NopHtml.AppendScriptParts(ResourceLocation.Footer, "~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Content/scripts/b2bajaxcart.js");
 }
+<style>
+    .order-details-page .section.products {
+        width: 100% !important;
+    }
+
+    .order-details-page .totals {
+        width: 100% !important;
+    }
+</style>
 
 <div class="page order-details-page">
 
@@ -691,11 +700,11 @@
                     <div class="row">
                         <div class="float-left" style="float: left">
 
-                            <div class="cart-collaterals">
+                            @* <div class="cart-collaterals">
                                 <div class="deals">
                                     @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.OrderSummaryContentDeals, additionalData = Model })
                                 </div>
-                            </div>
+                            </div> *@
 
                         </div>
                         <div class="float-right" style="float:right">

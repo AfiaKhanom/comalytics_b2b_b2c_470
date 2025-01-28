@@ -985,7 +985,7 @@ public class ErpCheckoutController : CheckoutController
             if (model.CustomDeliveryDateString is null)
                 ModelState.AddModelError("DeliveryDateString", "Please provide a valid delivery date");
             else
-                model.DeliveryDate = DateTime.ParseExact(model.CustomDeliveryDateString, "yyyy/MM/dd", CultureInfo.InvariantCulture);
+                model.DeliveryDate = DateTime.ParseExact(model.CustomDeliveryDateString, "dd/MM/yyyy", CultureInfo.InvariantCulture);
             //else
             //{
             //    if (!DateTime.TryParseExact(model.CustomDeliveryDateString, "dd/MM/yyyy", new CultureInfo("en-GB"), DateTimeStyles.None, out var selectedDeliveryDate))
@@ -1329,7 +1329,7 @@ public class ErpCheckoutController : CheckoutController
                     && !await _permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BQuote))
                     return RedirectToRoute("ShoppingCart");
 
-            await _genericAttributeService.SaveAttributeAsync<string>(customer, NopCustomerDefaults.SelectedPaymentMethodAttribute, null, store.Id);
+                await _genericAttributeService.SaveAttributeAsync<string>(customer, NopCustomerDefaults.SelectedPaymentMethodAttribute, null, store.Id);
 
                 //skip payment info page too
                 var paymentInfo = new ProcessPaymentRequest();
@@ -1363,21 +1363,21 @@ public class ErpCheckoutController : CheckoutController
 
                     await ClearGenericAttributeForQuoteOrderAsync();   //clear generic Attribute for Quote Order
 
-                //ERP activity log
-                await _erpLogsService.InformationAsync("B2B Quote order placed successfully! OrderId: " + placeOrderResult.PlacedOrder.Id + ", Erp Order Id: " + placeOrderResult.PlacedOrder.CustomOrderNumber, ErpSyncLevel.Order, customer: customer);
+                    //ERP activity log
+                    await _erpLogsService.InformationAsync("B2B Quote order placed successfully! OrderId: " + placeOrderResult.PlacedOrder.Id + ", Erp Order Id: " + placeOrderResult.PlacedOrder.CustomOrderNumber, ErpSyncLevel.Order, customer: customer);
 
-                //activity log
-                await _customerActivityService.InsertActivityAsync(customer, "PublicStore.PlaceOrder",
-                        string.Format(await _localizationService.GetResourceAsync("ActivityLog.PublicStore.PlaceOrder"),
-                            placeOrderResult.PlacedOrder.CustomOrderNumber), placeOrderResult.PlacedOrder);
+                    //activity log
+                    await _customerActivityService.InsertActivityAsync(customer, "PublicStore.PlaceOrder",
+                            string.Format(await _localizationService.GetResourceAsync("ActivityLog.PublicStore.PlaceOrder"),
+                                placeOrderResult.PlacedOrder.CustomOrderNumber), placeOrderResult.PlacedOrder);
 
-                return RedirectToRoute("CheckoutCompleted", new { orderId = placeOrderResult.PlacedOrder.Id });
-            }
-            else
-            {
-                foreach (var error in placeOrderResult.Errors)
-                    ModelState.AddModelError("", error);
-            }
+                    return RedirectToRoute("CheckoutCompleted", new { orderId = placeOrderResult.PlacedOrder.Id });
+                }
+                else
+                {
+                    foreach (var error in placeOrderResult.Errors)
+                        ModelState.AddModelError("", error);
+                }
 
                 // if place order is not successful
                 return RedirectToRoute("CheckoutConfirm");
@@ -1456,8 +1456,8 @@ public class ErpCheckoutController : CheckoutController
 
         var (b2BAccount, b2BUser, b2CUser) = await GetB2BAccountAndUserOfCurrentCustomerAsync();
 
-        if ((b2BUser != null || b2CUser != null) 
-            && !await _permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BOrder) 
+        if ((b2BUser != null || b2CUser != null)
+            && !await _permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BOrder)
             && !await _permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BQuote))
             return RedirectToRoute("ShoppingCart");
 
@@ -1636,7 +1636,7 @@ public class ErpCheckoutController : CheckoutController
                     await _paymentService.GenerateOrderGuidAsync(processPaymentRequest);
                     processPaymentRequest.StoreId = store.Id;
                     processPaymentRequest.CustomerId = customer.Id;
-                    processPaymentRequest.PaymentMethodSystemName = await _genericAttributeService.GetAttributeAsync<string>(customer, 
+                    processPaymentRequest.PaymentMethodSystemName = await _genericAttributeService.GetAttributeAsync<string>(customer,
                         NopCustomerDefaults.SelectedPaymentMethodAttribute, store.Id);
 
                     await HttpContext.Session.SetAsync("OrderPaymentInfo", processPaymentRequest);
@@ -2855,7 +2855,7 @@ public class ErpCheckoutController : CheckoutController
                     await _erpActivityLogsService.InsertErpActivityAsync(currCustomer, "Erp_ErpOrderPlacement",
                         string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.ErpOrderPlacement"),
                         placeOrderResult.PlacedOrder.CustomOrderNumber),
-                        new ErpOrderAdditionalData());                    
+                        new ErpOrderAdditionalData());
 
                     await _erpLogsService.InformationAsync($"B2B Quote order placed successfully! OrderId: {placeOrderResult.PlacedOrder.Id}, Erp Order Id: {placeOrderResult.PlacedOrder.CustomOrderNumber}", ErpSyncLevel.Order, customer: currCustomer);
 
@@ -3297,7 +3297,7 @@ public class ErpCheckoutController : CheckoutController
     public async Task<IActionResult> GetERPDeliveryDates(string suburb, string city)
     {
         var (deliveyDates, isSucceed) = await _erpCheckoutModelFactory.GetDeliveryDatesBySuburbOrCityAsync(suburb, city);
-        
+
         return Json(new
         {
             deliveyDates = deliveyDates,
