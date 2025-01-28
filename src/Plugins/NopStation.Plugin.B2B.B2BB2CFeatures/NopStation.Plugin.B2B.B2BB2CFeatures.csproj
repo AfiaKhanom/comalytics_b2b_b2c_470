@@ -141,6 +141,19 @@
     <None Remove="Themes\DefaultClean\Views\Shared\Head.cshtml" />
     <None Remove="Themes\DefaultClean\Views\_OldInternetExplorerWarning.cshtml" />
     <None Remove="Themes\DefaultClean\Views\_ViewImports.cshtml" />
+    <None Remove="Themes\Emporium\Content\css\styles.css" />
+    <None Remove="Themes\Emporium\Content\css\theme.custom.css" />
+    <None Remove="Themes\Emporium\Views\Catalog\CategoryTemplate.ProductsInGridOrLines.cshtml" />
+    <None Remove="Themes\Emporium\Views\Customer\Addresses.cshtml" />
+    <None Remove="Themes\Emporium\Views\Order\Details.cshtml" />
+    <None Remove="Themes\Emporium\Views\Shared\Components\CheckoutProgress\Default.cshtml" />
+    <None Remove="Themes\Emporium\Views\Shared\Components\HeaderLinks\Default.cshtml" />
+    <None Remove="Themes\Emporium\Views\Shared\Components\Logo\Default.cshtml" />
+    <None Remove="Themes\Emporium\Views\Shared\Components\OrderSummary\Default.cshtml" />
+    <None Remove="Themes\Emporium\Views\Shared\_Header.cshtml" />
+    <None Remove="Themes\Emporium\Views\Shared\_ProductBox.cshtml" />
+    <None Remove="Themes\Emporium\Views\Shared\_Root.cshtml" />
+    <None Remove="Themes\Emporium\Views\_ViewImports.cshtml" />
     <None Remove="Themes\FreshLand\Content\css\erpstyle.css" />
     <None Remove="Themes\FreshLand\Content\css\freshLand.css" />
     <None Remove="Themes\FreshLand\Content\css\freshLand.min.css" />
@@ -692,6 +705,56 @@
     <Content Include="Themes\DefaultClean\Views\_ViewImports.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Themes\Emporium\Content\css\styles.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Themes\Emporium\Content\css\theme.custom.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Themes\Emporium\Views\Catalog\CategoryTemplate.ProductsInGridOrLines.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Themes\Emporium\Views\Customer\Addresses.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Themes\Emporium\Views\Order\Details.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Themes\Emporium\Views\Shared\Components\CheckoutProgress\Default.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Themes\Emporium\Views\Shared\Components\HeaderLinks\Default.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Themes\Emporium\Views\Shared\Components\Logo\Default.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Themes\Emporium\Views\Shared\Components\OrderSummary\Default.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Themes\Emporium\Views\Shared\_Header.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Themes\Emporium\Views\Shared\_ProductBox.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Themes\Emporium\Views\Shared\_Root.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Themes\Emporium\Views\_ViewImports.cshtml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Include="Themes\FreshLand\Content\css\erpstyle.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -917,7 +980,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Themes\Smart\Views\Shared\_Root.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Themes\Smart\Views\_ViewImports.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
