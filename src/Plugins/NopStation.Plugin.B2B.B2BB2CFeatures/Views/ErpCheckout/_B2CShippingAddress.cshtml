@@ -1,4 +1,5 @@
 ﻿@model CheckoutErpShippingAddressModel
+@using Nop.Core
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Model.Checkout
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality
@@ -69,44 +70,40 @@
                             </div>
 
                             <script asp-location="Footer">
-                        function editSelectedAddress() {
-                            //console.log('Got it');
-                            var selectedAddress = $('input[type="radio"][data-id]:checked');
-                            var shipToId = selectedAddress.data('id');
-                            //console.log('Current selected ship to address id: ' + shipToId);
-                            loadB2BShipToAddress(shipToId);
-                        }
+                                function editSelectedAddress() {
+                                    var selectedAddress = $('input[type="radio"][data-id]:checked');
+                                    var shipToId = selectedAddress.data('id');
+                                    loadB2BShipToAddress(shipToId);
+                                }
 
-                        function loadB2BShipToAddress(shipToId) {
-                            displayAjaxLoading(true);
-                            var postData = {
-                                shipToId: shipToId
-                            };
-                            addAntiForgeryToken(postData);
-                            if (shipToId > 0) {
-                                $.ajax({
-                                    cache: true,
-                                    type: 'POST',
-                                    url: '@(Url.Action("LoadB2BShipToAddressById", "ErpCheckout"))',
-                                    data: postData,
-                                    success: function (response) {
-                                        if (response.isSucceed) {
-                                            //console.log(response.Data);
-                                            $("#modal-body-content").html(response.Data);
-                                            $("#addressModal").show();
-                                        }
-                                    },
-                                    error: function () {
-                                        $("#modal-body-content").html('<h2>@T("Checkout.ShippingAddress.CouldNotLoadShippingAddress")</h2>');
-                                        $("#addressModal").show();
-                                        //console.log("@T("Checkout.ShippingAddress.CouldNotLoadShippingAddress")");
-                                    },
-                                    complete: function () {
-                                        displayAjaxLoading();
+                                function loadB2BShipToAddress(shipToId) {
+                                    displayAjaxLoading(true);
+                                    var postData = {
+                                        shipToId: shipToId
+                                    };
+                                    addAntiForgeryToken(postData);
+                                    if (shipToId > 0) {
+                                        $.ajax({
+                                            cache: true,
+                                            type: 'POST',
+                                            url: '@(Url.Action("LoadB2BShipToAddressById", "ErpCheckout"))',
+                                            data: postData,
+                                            success: function (response) {
+                                                if (response.isSucceed) {
+                                                    $("#modal-body-content").html(response.Data);
+                                                    $("#addressModal").show();
+                                                }
+                                            },
+                                            error: function () {
+                                                $("#modal-body-content").html('<h2>@T("Checkout.ShippingAddress.CouldNotLoadShippingAddress")</h2>');
+                                                $("#addressModal").show();
+                                            },
+                                            complete: function () {
+                                                displayAjaxLoading();
+                                            }
+                                        });
                                     }
-                                });
-                            }
-                        }
+                                }
 
                         $(document).ready(function () {
                             $(".close").on('click', function () {
@@ -176,8 +173,8 @@
                                 <input asp-for="ErpToDetermineDate" type="hidden" />
                                 <div class="delivery-date-body">
                                     <div id="deliveryDatePicker" class="inputs" style="@(Model.ErpToDetermineDate == true ? "display: none; text-align: center;" : "display: block; text-align: center;")">
-                                        <input asp-for="DeliveryDateString" type="text" />
-                                        <span asp-validation-for="DeliveryDateString"></span>
+                                        <input asp-for="CustomDeliveryDateString" type="text" />
+                                        <span asp-validation-for="CustomDeliveryDateString"></span>
                                     </div>
                                     <script asp-location="Footer">
                                         $('#DeliveryDateString').datepicker({
@@ -193,21 +190,65 @@
                                             <h3 class="FullLoadRequired-div FullLoadRequired-div-hide">@T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpOrder.DeliveryDate.FullLoadRequired")</h3>
                                             <select asp-for="DeliveryDateString" asp-items="Model.AvailableDeliveryDates"></select>
                                             <span id="delivery-dates-loading-progress" style="display: none;" class="please-wait">@T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpOrder.DeliveryDate.Loading")</span>
-                                            <span asp-validation-for="DeliveryDateString"></span>
+                                            <span asp-validation-for="CustomDeliveryDateString"></span>
                                         </div>
                                     }
                                 </div>
                             </div>
                         }
                     </div>
-                }
-                <div id="shippingTabCollect" class="tab-content collect" style="display: none;">
-                    <div class="checkout-title">
-                        <h1 id="collect-header-text"></h1>
+
+                    <div id="shippingTabCollect" class="tab-content collect" style="display: none;">
+                        <div class="checkout-title">
+                            <h1 id="collect-header-text"></h1>
+                        </div>
+                        @if (Model.DisplayPickupInStore && Model.PickupPointsModel.AllowPickupInStore)
+                        {
+                            @await Html.PartialAsync("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Views/Checkout/_PickupPoints.cshtml", Model.PickupPointsModel)
+                            <a class="trigger-ship-to-address-selector-button button-1">@T("Plugins.Payments.B2BCustomerAccount.B2CShipToAddressSelector")</a>
+
+                            <script asp-location="Footer">
+                                $(document).ready(function () {
+                                    $('#pickup-points-form').hide();
+                                    $('.pickup-in-store .selector').hide();
+                                    $('.pickup-in-store .description').hide();
+
+                                    $('#deliver').on('change', function () {
+                                        if ($(this).is(':checked')) {
+                                            $('#shipping-addresses-form').show();
+                                            $('#shippingaddress-new-form').show();
+                                            $('#select-delivery-date').show();
+                                            $('#pickup-points-form').hide();
+                                            $('#collect').prop('checked', false);
+                                            $('#collect-header-text').text('');
+                                        }
+                                    });
+
+                                    $('#collect').on('change', function () {
+                                        if ($(this).is(':checked')) {
+                                            $('#shipping-addresses-form').hide();
+                                            $('#shippingaddress-new-form').hide();
+                                            $('#select-delivery-date').hide();
+                                            $('#pickup-points-form').show();
+                                            $('#deliver').prop('checked', false);
+                                            $('#collect-header-text').text('@T("Checkout.ShippingAddress.SelectCollectionPoint")');
+                                        }
+                                    });
+                                });
+                            </script>
+                        }
                     </div>
-                    @if (Model.DisplayPickupInStore && Model.PickupPointsModel.AllowPickupInStore)
-                    {
-                        @await Html.PartialAsync("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Views/Checkout/_PickupPoints.cshtml", Model.PickupPointsModel)
+                }
+                else if (Model.SelectedShipToAddress.DeliveryOptionId == (int)DeliveryOption.Collect)
+                {
+                    <div id="shippingTabCollect" class="tab-content collect" style="display: none;">
+                        <div class="checkout-title">
+                            <h1 id="collect-header-text"></h1>
+                        </div>
+                        @if (Model.DisplayPickupInStore && Model.PickupPointsModel.AllowPickupInStore)
+                        {
+                            @await Html.PartialAsync("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Views/Checkout/_PickupPoints.cshtml", Model.PickupPointsModel)
+                            <a class="trigger-ship-to-address-selector-button button-1">@T("Plugins.Payments.B2BCustomerAccount.B2CShipToAddressSelector")</a>
 
                         <script asp-location="Footer">
                             $(document).ready(function () {
@@ -344,7 +385,7 @@
     <script asp-location="Footer">
         $(document).ready(function () {
             $('#@Html.IdFor(model => model.DeliveryDateString)').prop('required', true);
-            $('input[type=radio][name="ErpShipToAddress.Id"]').change(getDeliveryDates);
+            $('input[type=radio][name="SelectedShipToAddress.Id"]').change(getDeliveryDates);
             getDeliveryDates();
         });
 
@@ -361,13 +402,11 @@
             $("#deliveryDateDropdown").css("display", "block");
             $('#delivery-dates-loading-progress').show();
 
-            var suburbData = $('input[name="ErpShipToAddressId"]:checked').attr("data-suburb");
-            var cityData = $('input[name="ErpShipToAddressId"]:checked').attr("data-city");
-            //console.log("suburb: " + suburbData);
-            //console.log("city: " + cityData);
-
-            var selectedData = { suburb: suburbData, city: cityData };
+            var shipToAddressId = $('input[name="SelectedShipToAddress.Id"]:checked').attr("data-id");
+            var selectedData = { shipToAddressId: shipToAddressId };
             addAntiForgeryToken(selectedData);
+
+            //console.log('Model: ' + @Model.SelectedShipToAddress.Id);
 
             $.ajax({
                 cache: true,
@@ -376,34 +415,13 @@
                 type: 'POST',
                 success: function (response) {
                     if (response.isSucceed) {
-                        @* if (response.isFullLoadRequired) {
-                            $('#@Html.IdFor(model => model.IsFullLoadRequired)').val(true);
-                            $('#@Html.IdFor(model => model.DeliveryDateString)').prop('required', true);
-                            $(".FullLoadRequired-div").removeClass("FullLoadRequired-div-hide");
-                            $(".FullLoadRequired-div").show();
-                            ddates.hide();
-                        }
-                        else {
-                            $('#@Html.IdFor(model => model.DeliveryDateString)').prop('required', true);
-                            $('#@Html.IdFor(model => model.ErpToDetermineDate)').val(true);
-                            ddates.html('');
-                            console.log("Delivery dates:", response);
-                            $.each(response.deliveyDates, function (id, option) {
-                                ddates.append($('<option></option>').val(option.Value).html(option.Text));
-                            });
-                            ddates.show();
-                            //console.log(ddates);
-                            $(".FullLoadRequired-div").hide();
-                        } *@
                         $('#@Html.IdFor(model => model.DeliveryDateString)').prop('required', true);
                         $('#@Html.IdFor(model => model.ErpToDetermineDate)').val(true);
-                        ddates.html('');
-
+                        dates.html('');
                         $.each(response.deliveyDates, function (id, option) {
                             ddates.append($('<option></option>').val(option.Value).html(option.Text));
                         });
-
-                        ddates.show();
+                        dates.show();
                         $(".FullLoadRequired-div").hide();
                     }
                     else {
@@ -423,7 +441,6 @@
                 error: function () {
                     $('#@Html.IdFor(model => model.DeliveryDateString)').prop('required', false);
                     $('#@Html.IdFor(model => model.ErpToDetermineDate)').val(false);
-                    //console.log("Could Not Load Delivery Dates By Suburb");
                     alert("Could Not Load Delivery Dates");
                 },
                 complete: function () {
@@ -436,13 +453,17 @@
 
 <script asp-location="Footer">
 
+    $(".trigger-ship-to-address-selector-button").click(function (e) {
+        e.preventDefault();
+        if ($('.b2c-address-selector-button').length) {
+            $('.b2c-address-selector-button').click();
+        }
+    });
+
     $(function () {
         $.validator.unobtrusive.parse("#ErpShiptoAddressForm");
         $('#ErpShiptoAddressForm').submit(function (e) {
-
-            //var isErpToDetermineDate = $('#@Html.IdFor(model => model.ErpToDetermineDate)').val().toLowerCase();
             var isErpToDetermineDate = true;
-            //var isFullLoadRequired = $('#@Html.IdFor(model => model.IsFullLoadRequired)').val().toLowerCase();
             var isFullLoadRequired = false;
             var isPISChecked = $('#PickupInStore').is(':checked');
             var showLoadingIndicator = true;
@@ -457,8 +478,7 @@
                 if (erpAddressSelections && erpAddressSelections.filter(':checked').length === 0) {
                     showLoadingIndicator = false;
                     $(".shipping-address-body span.field-validation-error").remove();
-                    $(".shipping-address-body")
-                        .append('<span class="shipping-address-error field-validation-error">@T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpOrder.Fields.CustomerReference.B2BShipToAddress.Required")</span>');
+                    $(".shipping-address-body").append('<span class="shipping-address-error field-validation-error">@T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpOrder.Fields.CustomerReference.B2BShipToAddress.Required")</span>');
                 }
                 else {
                     $(".shipping-address-body span.field-validation-error").remove();

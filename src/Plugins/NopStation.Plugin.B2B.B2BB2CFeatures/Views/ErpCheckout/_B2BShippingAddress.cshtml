@@ -4,7 +4,6 @@
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality
 @inject IErpCustomerFunctionalityService b2BCustomerFunctionality
 @inject IWebHelper webHelper
-@using Nop.Core
 
 @{
     var storeLocation = webHelper.GetStoreLocation();
@@ -14,8 +13,8 @@
 
 <style>
 
-    #DeliveryDate, #DeliveryDateString, #CustomDeliveryDateString{
-        width:40%;
+    #DeliveryDate, #DeliveryDateString, #CustomDeliveryDateString {
+        width: 40%;
     }
 
 </style>
@@ -90,8 +89,6 @@
                                             },
                                             complete: function () {
                                                 displayAjaxLoading();
-                                                //$(".new-shipping-address").css("top", 10);
-                                                //window.scrollTo(0, 10);
                                             }
                                         });
                                     }
@@ -142,10 +139,6 @@
                                                            value="@item.Id" />
                                                     <span class="checkmark"></span>
                                                     @(addressLine)
-                                                    @* @if (Model.AllowAddressEdit)
-                                                    {
-                                                        <button class="edit-ship-to" onclick="loadB2BShipToAddress(@item.Id);return false;">Edit Address</button>
-                                                    } *@
                                                 </label>
                                                 <br />
                                             }
@@ -367,25 +360,6 @@
                 type: 'POST',
                 success: function (response) {
                     if (response.isSucceed) {
-                        @* if (response.isFullLoadRequired) {
-                            $('#@Html.IdFor(model => model.IsFullLoadRequired)').val(true);
-                            $('#@Html.IdFor(model => model.DeliveryDateString)').prop('required', true);
-                            $(".FullLoadRequired-div").removeClass("FullLoadRequired-div-hide");
-                            $(".FullLoadRequired-div").show();
-                            ddates.hide();
-                        }
-                        else {
-                            $('#@Html.IdFor(model => model.DeliveryDateString)').prop('required', true);
-                            $('#@Html.IdFor(model => model.ErpToDetermineDate)').val(true);
-                            ddates.html('');
-                            console.log("Delivery dates:", response);
-                            $.each(response.deliveyDates, function (id, option) {
-                                ddates.append($('<option></option>').val(option.Value).html(option.Text));
-                            });
-                            ddates.show();
-                            //console.log(ddates);
-                            $(".FullLoadRequired-div").hide();
-                        } *@
                         $('#@Html.IdFor(model => model.DeliveryDateString)').prop('required', true);
                         $('#@Html.IdFor(model => model.ErpToDetermineDate)').val(true);
                         ddates.html('');
@@ -450,8 +424,7 @@
                 if (addressSelections && addressSelections.filter(':checked').length === 0) {
                     showLoadingIndicator = false;
                     $(".shipping-address-body span.field-validation-error").remove();
-                    $(".shipping-address-body")
-                        .append('<span class="shipping-address-error field-validation-error">@T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpOrder.Fields.CustomerReference.B2BShipToAddress.Required")</span>');
+                    $(".shipping-address-body").append('<span class="shipping-address-error field-validation-error">@T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpOrder.Fields.CustomerReference.B2BShipToAddress.Required")</span>');
                 }
                 else {
                     $(".shipping-address-body span.field-validation-error").remove();
