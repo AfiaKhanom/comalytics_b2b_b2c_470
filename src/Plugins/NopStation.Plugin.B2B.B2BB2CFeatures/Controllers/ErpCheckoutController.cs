@@ -383,19 +383,16 @@ public class ErpCheckoutController : CheckoutController
     public override async Task<IActionResult> Completed(int? orderId)
     {
         //validation
-        var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var customer = await _workContext.GetCurrentCustomerAsync();
         if (await _customerService.IsGuestAsync(customer) && !_orderSettings.AnonymousCheckoutAllowed)
             return Challenge();
 
-        Order order = null;
+        var order = await _orderService.GetOrderByIdAsync(orderId ?? 0);
 
-        order = await _orderService.GetOrderByIdAsync(orderId ?? 0);
         if (order == null)
         {
             var store = await _storeContext.GetCurrentStoreAsync();
-            order = (await _orderService.SearchOrdersAsync(storeId: store.Id,
-            customerId: customer.Id, pageSize: 1))
-                .FirstOrDefault();
+            order = (await _orderService.SearchOrdersAsync(storeId: store.Id, customerId: customer.Id, pageSize: 1)).FirstOrDefault();
             orderId = order?.Id ?? 0;
         }
 
@@ -403,65 +400,11 @@ public class ErpCheckoutController : CheckoutController
 
         (var b2BAccount, var b2BUser, var b2CUser) = await GetB2BAccountAndUserOfCurrentCustomerAsync();
 
-        var currCustomer = await _workContext.GetCurrentCustomerAsync();
-        var erpAccountOfCurrCustomer = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
-        var erpNopUserOfCurrCustomer = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(currCustomer.Id);
-        var isB2BUser = erpAccountOfCurrCustomer != null && erpNopUserOfCurrCustomer != null && erpNopUserOfCurrCustomer.ErpUserType == ErpUserType.B2BUser;
-        var isB2CUser = erpNopUserOfCurrCustomer != null && erpNopUserOfCurrCustomer.ErpUserType == ErpUserType.B2CUser;
-        var isERPOrder = false;
-        var isQuoteOrder = false;
-        var checkQuoteOrderStatus = false;
-        var isQuoteExpired = true;
-        var isQuoteAlreadyConverted = true;
-        var hasQuoteExpireDate = false;
-        var isQuoteRejectedorFailed = true;
-
-        if (isB2BUser)
-        {
-            var b2bOrder = await _erpOrderAdditionalDataService.GetErpOrderAdditionalDataByNopOrderIdAsync(order.Id);
-            if (b2bOrder != null && (b2bOrder.ErpOrderType == ErpOrderType.B2BSalesOrder || b2bOrder.ErpOrderType == ErpOrderType.B2BQuote))
-            {
-                isERPOrder = b2bOrder.ErpOrderOriginType == ErpOrderOriginType.ERPOrder ? true : false;
-                isQuoteOrder = b2bOrder.ErpOrderType == ErpOrderType.B2BSalesOrder ? false : true;
-                if (isQuoteOrder)
-                {
-                    checkQuoteOrderStatus = await _erpOrderAdditionalDataService.CheckQuoteOrderStatusAsync(b2bOrder);
-                    if (b2bOrder.QuoteExpiryDate != null)
-                    {
-                        isQuoteExpired = DateTime.UtcNow.Date >= b2bOrder.QuoteExpiryDate.Value.Date ? true : false;
-                        hasQuoteExpireDate = true;
-                    }
-                    isQuoteRejectedorFailed = b2bOrder.ERPOrderStatus == "Failed" || b2bOrder.ERPOrderStatus == "Rejected";
-                    isQuoteAlreadyConverted = b2bOrder.QuoteSalesOrderId.HasValue && b2bOrder.QuoteSalesOrderId.Value > 0;
-                }
-            }
-        }
-        else if (isB2CUser)
-        {
-            var b2COrder = await _erpOrderAdditionalDataService.GetErpOrderAdditionalDataByNopOrderIdAsync(order.Id);
-            if (b2COrder != null && (b2COrder.ErpOrderType == ErpOrderType.B2CSalesOrder || b2COrder.ErpOrderType == ErpOrderType.B2CQuote))
-            {
-                isERPOrder = b2COrder.ErpOrderOriginType == ErpOrderOriginType.ERPOrder ? true : false;
-                isQuoteOrder = b2COrder.ErpOrderType == ErpOrderType.B2CSalesOrder ? false : true;
-                if (isQuoteOrder)
-                {
-                    checkQuoteOrderStatus = await _erpOrderAdditionalDataService.CheckQuoteOrderStatusAsync(b2COrder);
-                    if (b2COrder.QuoteExpiryDate != null)
-                    {
-                        isQuoteExpired = DateTime.UtcNow.Date >= b2COrder.QuoteExpiryDate.Value.Date ? true : false;
-                        hasQuoteExpireDate = true;
-                    }
-                    isQuoteRejectedorFailed = b2COrder.ERPOrderStatus == "Failed" || b2COrder.ERPOrderStatus == "Rejected";
-                    isQuoteAlreadyConverted = b2COrder.QuoteSalesOrderId.HasValue && b2COrder.QuoteSalesOrderId.Value > 0;
-                }
-            }
-        }
-
         if (b2BAccount != null && (b2BUser != null || b2CUser != null))
         {
             await LiveErpAccountCreditCheckAsync(b2BAccount, customer);
 
-            var erpOrderPerAccount = await _erpOrderAdditionalDataService.GetErpOrderAdditionalDataByNopOrderIdAsync(order.Id);
+            var erpOrderPerAccount = await _erpOrderAdditionalDataService.GetErpOrderAdditionalDataByNopOrderIdAsync(order?.Id ?? 0);
             if (order == null || order.Deleted || erpOrderPerAccount == null || erpOrderPerAccount.ErpAccountId != b2BAccount.Id)
                 return Challenge();
 
@@ -483,7 +426,6 @@ public class ErpCheckoutController : CheckoutController
         }
 
         var model = await _orderModelFactory.PrepareOrderDetailsModelAsync(order);
-        //return View(model);
         return View("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Views/Checkout/Completed.cshtml", model);
     }
 

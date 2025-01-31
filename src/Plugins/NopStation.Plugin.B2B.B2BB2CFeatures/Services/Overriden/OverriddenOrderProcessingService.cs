@@ -846,6 +846,12 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
                 await PlaceOrderOrQuoteOnERPAsync(erpPlaceOrderDataModel, erpOrderAdditionalData, order);
 
                 order.CustomOrderNumber = erpOrderAdditionalData.ErpOrderNumber;
+
+                await _erpLogsService.ErrorAsync($"1. Custom Order Number updated to -> {order.CustomOrderNumber}", 
+                    ErpSyncLevel.Order,
+                    null,
+                    currentCustomer
+                );
             }
             catch (Exception ex)
             {
