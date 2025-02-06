@@ -28,6 +28,7 @@ using Nop.Services.Payments;
 using Nop.Services.Security;
 using Nop.Services.Shipping;
 using Nop.Services.Tax;
+using Nop.Web.Components;
 using Nop.Web.Controllers;
 using Nop.Web.Factories;
 using Nop.Web.Framework;
@@ -69,6 +70,10 @@ public class ErpCheckoutController : CheckoutController
     private readonly IErpAccountService _erpAccountService;
     private readonly IErpActivityLogsService _erpActivityLogsService;
     private readonly ICustomerActivityService _customerActivityService;
+    private readonly IErpAccountCreditSyncFunctionality _erpAccountCreditSyncFunctionality;
+    private readonly IOpsiIntegrationService _opsiIntegrationService;
+    private readonly IOrderTotalCalculationService _orderTotalCalculationService;
+    private readonly ICurrencyService _currencyService;
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
@@ -124,6 +129,9 @@ public class ErpCheckoutController : CheckoutController
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
         IErpIntegrationPluginManager erpIntegrationPluginManager,
         ICustomerActivityService customerActivityService,
+        IErpAccountCreditSyncFunctionality erpAccountCreditSyncFunctionality,
+        IOrderTotalCalculationService orderTotalCalculationService,
+        ICurrencyService currencyService,
         IErpSalesOrgService erpSalesOrgService) : base(addressSettings,
             captchaSettings,
             customerSettings,
@@ -171,6 +179,9 @@ public class ErpCheckoutController : CheckoutController
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
         _erpIntegrationPluginManager = erpIntegrationPluginManager;
         _customerActivityService = customerActivityService;
+        _erpAccountCreditSyncFunctionality = erpAccountCreditSyncFunctionality;
+        _orderTotalCalculationService = orderTotalCalculationService;
+        _currencyService = currencyService;
         _erpSalesOrgService = erpSalesOrgService;
     }
 
@@ -1646,7 +1657,7 @@ public class ErpCheckoutController : CheckoutController
                         if (erpAccount != null)
                         {
                             if (b2BUser != null && b2BUser.Id > 0)
-                            {                               
+                            {
                                 await _overriddenOrderProcessingService.PlaceErpOrderAtNopAsync(placeOrderResult.PlacedOrder, ErpOrderType.B2BSalesOrder);
                             }
                             else if (b2CUser != null && b2CUser.Id > 0)
@@ -3315,35 +3326,40 @@ public class ErpCheckoutController : CheckoutController
 
     public async Task<IActionResult> ClearShippingOptionAndSavePickupPoint()
     {
-        if (_shippingSettings.AllowPickupInStore)
+        if (!_shippingSettings.AllowPickupInStore)
+            return RedirectToRoute("CheckoutShippingAddress");
+
+        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+        var store = await _storeContext.GetCurrentStoreAsync();
+        var erpNopUser = await _erpCustomerFunctionalityService.GetActiveErpNopUserByCustomerAsync(currentCustomer);
+
+        if (erpNopUser == null)
+            return RedirectToRoute("CheckoutShippingAddress");
+
+        var b2CShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdWithActiveAsync(erpNopUser.ErpShipToAddressId);
+        var nopAddress = await _addressService.GetAddressByIdAsync(b2CShipToAddress.AddressId);
+        var cart = await _shoppingCartService.GetShoppingCartAsync(currentCustomer, ShoppingCartType.ShoppingCart, store.Id);
+        var pickupPoints = (await _shippingService.GetPickupPointsAsync(cart, nopAddress, customer: currentCustomer, storeId: store.Id))
+                            ?.PickupPoints?.ToList();
+
+        var defaultPoint = pickupPoints?.FirstOrDefault();
+        if (defaultPoint == null)
+            return RedirectToRoute("CheckoutShippingAddress");
+
+        var pickUpInStoreShippingOption = new ShippingOption
         {
-            var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
-            var store = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
-            var b2CUser = await _erpCustomerFunctionalityService.GetActiveErpNopUserByCustomerAsync(currentCustomer);
-            var b2CShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdWithActiveAsync(b2CUser?.ErpShipToAddressId ?? 0);
-            var nopAddress = await _addressService.GetAddressByIdAsync(b2CShipToAddress?.AddressId ?? 0);
-            var cart = await _shoppingCartService.GetShoppingCartAsync(currentCustomer, ShoppingCartType.ShoppingCart, store.Id);
-            var pickupPoints = (await _shippingService.GetPickupPointsAsync(cart, nopAddress, customer: currentCustomer, storeId: store.Id))?.PickupPoints.ToList();
-            var defaultPoint = pickupPoints.FirstOrDefault();
-            if (defaultPoint == null)
-                return RedirectToRoute("CheckoutShippingAddress");
+            Name = string.Format(await _localizationService.GetResourceAsync("Checkout.PickupPoints.Name"), defaultPoint.Name),
+            Rate = 0,
+            Description = defaultPoint?.Description,
+            ShippingRateComputationMethodSystemName = defaultPoint?.ProviderSystemName
+        };
 
-            var pickUpInStoreShippingOption = new ShippingOption
-            {
-                Name = string.Format(await _localizationService.GetResourceAsync("Checkout.PickupPoints.Name"), defaultPoint.Name),
-                Rate = 0,
-                Description = defaultPoint.Description,
-                ShippingRateComputationMethodSystemName = defaultPoint.ProviderSystemName
-            };
+        await _genericAttributeService.SaveAttributeAsync(currentCustomer, NopCustomerDefaults.SelectedShippingOptionAttribute, pickUpInStoreShippingOption, store.Id);
+        await _genericAttributeService.SaveAttributeAsync(currentCustomer, NopCustomerDefaults.SelectedPickupPointAttribute, defaultPoint, store.Id);
 
-            await _genericAttributeService.SaveAttributeAsync(currentCustomer, NopCustomerDefaults.SelectedShippingOptionAttribute, pickUpInStoreShippingOption, store.Id);
-            await _genericAttributeService.SaveAttributeAsync(currentCustomer, NopCustomerDefaults.SelectedPickupPointAttribute, defaultPoint, store.Id);
-
-            return ViewComponent("OrderTotals", new { isEditable = false });
-        }
-
-        return RedirectToRoute("CheckoutShippingAddress");
+        return Json(await RenderViewComponentToStringAsync(typeof(OrderTotalsViewComponent), new { isEditable = false }));
     }
+
 
     [HttpGet]
     public async Task<IActionResult> ValidateCustomerReference(string customerReferenceAsPO, int erpAccountId)
@@ -3358,6 +3374,17 @@ public class ErpCheckoutController : CheckoutController
         }
 
         return Json(new { isValid = true });
+    }
+
+    public async Task<IActionResult> ClearPickUpPointAndSaveShippingOption()
+    {
+        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+        var currentStore = await _storeContext.GetCurrentStoreAsync();
+
+        await _genericAttributeService.SaveAttributeAsync<ShippingOption>(currentCustomer, NopCustomerDefaults.SelectedShippingOptionAttribute, null, currentStore.Id);
+        await _genericAttributeService.SaveAttributeAsync<PickupPoint>(currentCustomer, NopCustomerDefaults.SelectedPickupPointAttribute, null, currentStore.Id);
+
+        return Json(await RenderViewComponentToStringAsync(typeof(OrderTotalsViewComponent), new { isEditable = false }));
     }
 
     #endregion

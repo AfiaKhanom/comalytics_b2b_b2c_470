@@ -847,7 +847,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
                 order.CustomOrderNumber = erpOrderAdditionalData.ErpOrderNumber;
 
-                await _erpLogsService.ErrorAsync($"1. Custom Order Number updated to -> {order.CustomOrderNumber}", 
+                await _erpLogsService.ErrorAsync($"1. Custom Order Number updated to -> {order.CustomOrderNumber}",
                     ErpSyncLevel.Order,
                     null,
                     currentCustomer

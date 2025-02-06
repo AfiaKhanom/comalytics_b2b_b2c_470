@@ -119,13 +119,13 @@
                                             @foreach (var item in Model.ExistingErpShipToAddresses)
                                             {
                                                 var addressLine = string.Join(", ", new string[] {
-                                                        item.ShipToName,
-                                                        item.Address1,
-                                                        item.Address2,
-                                                        item.Suburb,
-                                                        item.City,
-                                                        item.StateProvinceName,
-                                                        item.ZipPostalCode
+                                item.ShipToName,
+                                item.Address1,
+                                item.Address2,
+                                item.Suburb,
+                                item.City,
+                                item.StateProvinceName,
+                                item.ZipPostalCode
                                                     }.Where(s => !string.IsNullOrEmpty(s)));
 
                                                 <label id="shipping-address-select" class="address-select-radio">
@@ -255,10 +255,12 @@
                 </div>
             </div>
             <div class="section order-summary">
-                @* <div class="title">
-                <strong>@T("Checkout.OrderSummary")</strong>
-                </div> *@
-                @await Component.InvokeAsync(typeof(OrderSummaryViewComponent))
+                <div class="title">
+                    <strong>@T("Checkout.OrderSummary")</strong>
+                </div>
+                <div class="div-order-totals">
+                    @await Component.InvokeAsync(typeof(OrderSummaryViewComponent))
+                </div>
                 <div class="buttons">
                     <button id="shippingaddress-next-button" type="submit" name="nextstep" class="button-1 new-address-next-step-button">@(Model.IsQuoteOrder ? T("Checkout.ConfirmButton") : T("Checkout.NextButton"))</button>
                 </div>
@@ -350,7 +352,7 @@
             console.log("suburb: " + suburbData);
             console.log("city: " + cityData);
 
-            var selectedData = { suburb: suburbData, city: cityData };
+            var selectedData = { shipToAddressId: shipToAddressId };
             addAntiForgeryToken(selectedData);
 
             $.ajax({
@@ -405,6 +407,64 @@
         }
     </script>
 }
+
+<script asp-location="Footer">
+    $(document).ready(function () {
+        $("#checkoutShippingTabs").tabs();
+        $('.trigger-ship-to-address-selector-button').show();
+        displayAjaxLoading(true);
+        clearPickUpPointAndSaveShippingOption();
+    });
+
+    $(".tab-links #collect").click(function () {
+        displayAjaxLoading(true);
+        clearShippingOptionAndSavePickupPoint("Collection");
+    });
+
+    $(".tab-links #deliver").click(function () {
+        displayAjaxLoading(true);
+        clearPickUpPointAndSaveShippingOption();
+    });
+
+    function clearPickUpPointAndSaveShippingOption() {
+        $.ajax({
+            cache: false,
+            type: "GET",
+            url: "@(Url.Action("ClearPickUpPointAndSaveShippingOption", "ErpCheckout"))",
+            success: function (data, textStatus, jqXHR) {
+                //console.log("shipping cost found");
+                $('.div-order-totals').empty();
+                $('.div-order-totals').html(data);
+                displayAjaxLoading(false);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.error(errorThrown);
+                alert("Something went wrong");
+                setLocation("/cart");
+            }
+        });
+    }
+
+    function clearShippingOptionAndSavePickupPoint() {
+        $.ajax({
+            cache: false,
+            type: "GET",
+            url: "@(Url.Action("ClearShippingOptionAndSavePickupPoint", "ErpCheckout"))",
+            success: function (data, textStatus, jqXHR) {
+                $('.div-order-totals').empty();
+                $('.div-order-totals').html(data);
+                displayAjaxLoading(false);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.error(errorThrown);
+                alert("Something went wrong.");
+                setLocation("/cart");
+            }
+        });
+    }
+
+</script>
+
 <script asp-location="Footer">
     $(function () {
         $.validator.unobtrusive.parse("#ErpShiptoAddressForm");

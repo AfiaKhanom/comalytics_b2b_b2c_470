@@ -125,13 +125,13 @@
                                 @if (Model.SelectedShipToAddress != null)
                                 {
                                     var addressLine = string.Join(", ", new string[] {
-                                        Model.SelectedShipToAddress.ShipToName,
-                                        Model.SelectedShipToAddress.Address1,
-                                        Model.SelectedShipToAddress.Address2,
-                                        Model.SelectedShipToAddress.Suburb,
-                                        Model.SelectedShipToAddress.City,
-                                        Model.SelectedShipToAddress.StateProvinceName,
-                                        Model.SelectedShipToAddress.ZipPostalCode
+                        Model.SelectedShipToAddress.ShipToName,
+                        Model.SelectedShipToAddress.Address1,
+                        Model.SelectedShipToAddress.Address2,
+                        Model.SelectedShipToAddress.Suburb,
+                        Model.SelectedShipToAddress.City,
+                        Model.SelectedShipToAddress.StateProvinceName,
+                        Model.SelectedShipToAddress.ZipPostalCode
                                     }.Where(s => !string.IsNullOrEmpty(s)));
 
                                     <div class="section select-shipping-address">
@@ -141,13 +141,13 @@
                                         <div class="shipping-address-body" style="text-align:center;">
                                             <label id="shipping-address-select" class="address-select-radio">
                                                 <input id="shipToAddress-@Model.SelectedShipToAddress.Id"
-                                                    type="radio"
-                                                    data-id="@Model.SelectedShipToAddress.Id"
-                                                    data-suburb="@Model.SelectedShipToAddress.Suburb"
-                                                    data-city="@Model.SelectedShipToAddress.City"
-                                                    checked=true
-                                                    asp-for="@Model.SelectedShipToAddress.Id"
-                                                    value="@Model.SelectedShipToAddress.Id" />
+                                                       type="radio"
+                                                       data-id="@Model.SelectedShipToAddress.Id"
+                                                       data-suburb="@Model.SelectedShipToAddress.Suburb"
+                                                       data-city="@Model.SelectedShipToAddress.City"
+                                                       checked=true
+                                                       asp-for="@Model.SelectedShipToAddress.Id"
+                                                       value="@Model.SelectedShipToAddress.Id" />
                                                 <span class="checkmark"></span>
                                                 @(addressLine)
                                             </label>
@@ -315,8 +315,10 @@
             <div class="section order-summary">
                 @* <div class="title">
                     <strong>@T("Checkout.OrderSummary")</strong>
-                </div> *@
-                @await Component.InvokeAsync(typeof(OrderSummaryViewComponent))
+                </div>
+                <div class="div-order-totals">
+                    @await Component.InvokeAsync(typeof(OrderSummaryViewComponent))
+                </div>
                 <div class="buttons">
                     <button id="shippingaddress-next-button" type="submit" name="nextstep" class="button-1 new-address-next-step-button">@(Model.IsQuoteOrder ? T("Checkout.ConfirmButton") : T("Checkout.NextButton"))</button>
                 </div>
@@ -452,6 +454,61 @@
 }
 
 <script asp-location="Footer">
+    $(document).ready(function () {
+        $("#checkoutShippingTabs").tabs();
+        $('.trigger-ship-to-address-selector-button').show();
+        displayAjaxLoading(true);
+        clearPickUpPointAndSaveShippingOption();
+    });
+
+    $(".tab-links #collect").click(function () {
+        $('.trigger-ship-to-address-selector-button').hide();
+        displayAjaxLoading(true);
+        clearShippingOptionAndSavePickupPoint("Collection");
+    });
+
+    $(".tab-links #deliver").click(function () {
+        $('.trigger-ship-to-address-selector-button').show();
+        displayAjaxLoading(true);
+        clearPickUpPointAndSaveShippingOption();
+    });
+
+    function clearPickUpPointAndSaveShippingOption() {
+        $.ajax({
+            cache: false,
+            type: "GET",
+            url: "@(Url.Action("ClearPickUpPointAndSaveShippingOption", "ErpCheckout"))",
+            success: function (data, textStatus, jqXHR) {
+                //console.log("shipping cost found");
+                $('.div-order-totals').empty();
+                $('.div-order-totals').html(data);
+                displayAjaxLoading(false);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.error(errorThrown);
+                alert("Something went wrong");
+                setLocation("/cart");
+            }
+        });
+    }
+
+    function clearShippingOptionAndSavePickupPoint() {
+        $.ajax({
+            cache: false,
+            type: "GET",
+            url: "@(Url.Action("ClearShippingOptionAndSavePickupPoint", "ErpCheckout"))",
+            success: function (data, textStatus, jqXHR) {
+                $('.div-order-totals').empty();
+                $('.div-order-totals').html(data);
+                displayAjaxLoading(false);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.error(errorThrown);
+                alert("Something went wrong.");
+                setLocation("/cart");
+            }
+        });
+    }
 
     $(".trigger-ship-to-address-selector-button").click(function (e) {
         e.preventDefault();
@@ -459,6 +516,9 @@
             $('.b2c-address-selector-button').click();
         }
     });
+</script>
+
+<script asp-location="Footer">
 
     $(function () {
         $.validator.unobtrusive.parse("#ErpShiptoAddressForm");
