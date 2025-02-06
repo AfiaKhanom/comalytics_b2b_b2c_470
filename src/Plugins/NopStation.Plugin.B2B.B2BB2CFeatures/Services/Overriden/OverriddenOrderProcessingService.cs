@@ -543,17 +543,19 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
             if (modifiedShipToAddressIdOnCheckout > 0)
                 erpShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(modifiedShipToAddressIdOnCheckout);
             else
-                erpShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(erpNopUser?.ShippingErpShipToAddressId ?? erpNopUser?.ErpShipToAddressId ?? 0);
-
-            if (erpShipToAddress == null)
             {
-                erpShipToAddress = order.ShippingAddressId.HasValue ? await _erpShipToAddressService.GetErpShipToAddressByShippingAddressIdAsync(order.ShippingAddressId.Value) : null;
+                erpShipToAddress = await _erpShipToAddressService
+                    .GetErpShipToAddressByIdAsync((erpNopUser?.ShippingErpShipToAddressId > 0 ? erpNopUser?.ErpShipToAddressId : 0) ?? 0);
             }
 
-            await _erpShipToAddressService.InsertErpShipToAddressAsync(erpShipToAddress);
+            erpShipToAddress ??= order.ShippingAddressId.HasValue ? await _erpShipToAddressService.GetErpShipToAddressByShippingAddressIdAsync(order.ShippingAddressId.Value) : null;
 
-            erpOrderAdditionalData.ErpShipToAddressId = erpShipToAddress?.Id;
-            erpOrderAdditionalData.ErpShipToAddress = erpShipToAddress;
+            if (erpShipToAddress != null)
+            {
+                await _erpShipToAddressService.InsertErpShipToAddressAsync(erpShipToAddress);
+                erpOrderAdditionalData.ErpShipToAddressId = erpShipToAddress?.Id;
+            }
+
             erpOrderAdditionalData.SpecialInstructions = erpShipToAddress?.DeliveryNotes + specialInstructions;
             order.ShippingAddressId = erpShipToAddress?.AddressId;
         }
