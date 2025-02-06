@@ -273,8 +273,8 @@ public class OverridenPriceCalculationService : PriceCalculationService
             if (priceWithoutDiscount < decimal.Zero)
                 priceWithoutDiscount = decimal.Zero;
 
-                return (priceWithoutDiscount, price, appliedDiscountAmount, discounts);
-            });
+            return (priceWithoutDiscount, price, appliedDiscountAmount, discounts);
+        });
 
         return (rezPriceWithoutDiscount, rezPrice, discountAmount, appliedDiscounts);
     }

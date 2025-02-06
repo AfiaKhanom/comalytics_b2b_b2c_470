@@ -1431,7 +1431,7 @@ public class B2BB2CCustomerController : CustomerController
                 erpUser.ErpAccountId = model.ErpAccountId;
 
                 var defaultShipToAddress = (await _erpShipToAddressService.GetErpShipToAddressesByAccountIdAsync(showHidden: false, isActiveOnly: true, accountId: erpUser.ErpAccountId)).FirstOrDefault();
-                
+
                 if (defaultShipToAddress == null)
                 {
                     _notificationService.WarningNotification(
@@ -1441,7 +1441,7 @@ public class B2BB2CCustomerController : CustomerController
                     return Redirect(model.RedirectUrl);
                 }
 
-                erpUser.ErpShipToAddressId = defaultShipToAddress?.Id ?? 0;
+                erpUser.ErpShipToAddressId = defaultShipToAddress.Id;
 
                 await _erpNopUserService.UpdateErpNopUserAsync(erpUser);
 
@@ -1469,6 +1469,14 @@ public class B2BB2CCustomerController : CustomerController
                     string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.ErpNopUserAccountSwitch"),
                     erpUser.Id, erpUser.ErpAccountId),
                     erpUser);
+            }
+            else
+            {
+                _notificationService.WarningNotification(
+                    string.Format(await _localizationService
+                    .GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Customers.Impersonate.ErpNopUserNotAvailable"),
+                    erpAccount.AccountName, erpAccount.AccountNumber));
+                return Redirect(model.RedirectUrl);
             }
         }
         catch (Exception ex)
