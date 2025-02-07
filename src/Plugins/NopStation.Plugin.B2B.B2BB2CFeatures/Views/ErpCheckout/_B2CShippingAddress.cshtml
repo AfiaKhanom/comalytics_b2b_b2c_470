@@ -39,15 +39,12 @@
                     <h1>@T("Checkout.ShippingAddress.SelectDeliverOrCollect")</h1>
                 </div>
                 <ul class="tab-links">
-                    @if (Model.ExistingErpShipToAddresses.Count > 0)
+                    @if (Model.SelectedShipToAddress.DeliveryOptionId == (int)DeliveryOption.Deliver)
                     {
-                        <li class="tab-item deliver">
-                            <label for="deliver"><input type="radio" name="shippingTab" id="deliver" checked>@T("B2B.Shipping.Deliver")</label>
-                        </li>
+                        <li class="tab-item" id="deliver"><a href="#shippingTabDeliver">@T("B2B.Shipping.Deliver")</a></li>
                     }
-                    <li class="tab-item collect">
-                        <label for="collect"><input type="radio" name="shippingTab" id="collect">@T("B2B.Shipping.Collect")</label>
-                    </li>
+
+                    <li class="tab-item" id="collect"><a href="#shippingTabCollect">@T("B2B.Shipping.Collect")</a></li>
                 </ul>
 
                 <input hidden asp-for="ErpToDetermineDate" value="@Model.ErpToDetermineDate" />
@@ -197,49 +194,10 @@
                             </div>
                         }
                     </div>
-
-                    <div id="shippingTabCollect" class="tab-content collect" style="display: none;">
-                        <div class="checkout-title">
-                            <h1 id="collect-header-text"></h1>
-                        </div>
-                        @if (Model.DisplayPickupInStore && Model.PickupPointsModel.AllowPickupInStore)
-                        {
-                            @await Html.PartialAsync("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Views/Checkout/_PickupPoints.cshtml", Model.PickupPointsModel)
-                            <a class="trigger-ship-to-address-selector-button button-1">@T("Plugins.Payments.B2BCustomerAccount.B2CShipToAddressSelector")</a>
-
-                            <script asp-location="Footer">
-                                $(document).ready(function () {
-                                    $('#pickup-points-form').hide();
-                                    $('.pickup-in-store .selector').hide();
-                                    $('.pickup-in-store .description').hide();
-
-                                    $('#deliver').on('change', function () {
-                                        if ($(this).is(':checked')) {
-                                            $('#shipping-addresses-form').show();
-                                            $('#shippingaddress-new-form').show();
-                                            $('#select-delivery-date').show();
-                                            $('#pickup-points-form').hide();
-                                            $('#collect').prop('checked', false);
-                                            $('#collect-header-text').text('');
-                                        }
-                                    });
-
-                                    $('#collect').on('change', function () {
-                                        if ($(this).is(':checked')) {
-                                            $('#shipping-addresses-form').hide();
-                                            $('#shippingaddress-new-form').hide();
-                                            $('#select-delivery-date').hide();
-                                            $('#pickup-points-form').show();
-                                            $('#deliver').prop('checked', false);
-                                            $('#collect-header-text').text('@T("Checkout.ShippingAddress.SelectCollectionPoint")');
-                                        }
-                                    });
-                                });
-                            </script>
-                        }
-                    </div>
                 }
-                else if (Model.SelectedShipToAddress.DeliveryOptionId == (int)DeliveryOption.Collect)
+
+                @if (Model.SelectedShipToAddress.DeliveryOptionId == (int)DeliveryOption.Deliver ||
+                Model.SelectedShipToAddress.DeliveryOptionId == (int)DeliveryOption.Collect)
                 {
                     <div id="shippingTabCollect" class="tab-content collect" style="display: none;">
                         <div class="checkout-title">
@@ -256,31 +214,32 @@
                                 $('.pickup-in-store .selector').hide();
                                 $('.pickup-in-store .description').hide();
 
-                                $('#deliver').on('change', function () {
-                                    if ($(this).is(':checked')) {
-                                        $('#shipping-addresses-form').show();
-                                        $('#shippingaddress-new-form').show();
-                                        $('#select-delivery-date').show();
-                                        $('#pickup-points-form').hide();
-                                        $('#collect').prop('checked', false);
-                                        $('#collect-header-text').text('');
-                                    }
-                                });
+                                    $('#deliver').on('click', function () {
+                                        if ($(this).hasClass('ui-state-active')) {
+                                            $('#shipping-addresses-form').show();
+                                            $('#shippingaddress-new-form').show();
+                                            $('#select-delivery-date').show();
+                                            $('#pickup-points-form').hide();
+                                            $('#collect').prop('checked', false);
+                                            $('#collect-header-text').text('');
+                                        }
+                                    });
 
-                                $('#collect').on('change', function () {
-                                    if ($(this).is(':checked')) {
-                                        $('#shipping-addresses-form').hide();
-                                        $('#shippingaddress-new-form').hide();
-                                        $('#select-delivery-date').hide();
-                                        $('#pickup-points-form').show();
-                                        $('#deliver').prop('checked', false);
-                                        $('#collect-header-text').text('@T("Checkout.ShippingAddress.SelectCollectionPoint")');
-                                    }
+                                    $('#collect').on('click', function () {
+                                        if ($(this).hasClass('ui-state-active')) {
+                                            $('#shipping-addresses-form').hide();
+                                            $('#shippingaddress-new-form').hide();
+                                            $('#select-delivery-date').hide();
+                                            $('#pickup-points-form').show();
+                                            $('#deliver').prop('checked', false);
+                                            $('#collect-header-text').text('@T("Checkout.ShippingAddress.SelectCollectionPoint")');
+                                        }
+                                    });
                                 });
-                            });
-                        </script>
-                    }
-                </div>
+                            </script>
+                        }
+                    </div>
+                }
 
                 <!---Customer reference added for Quote Order -->
                 @if (Model.IsQuoteOrder)
@@ -310,15 +269,12 @@
                     </div>
                 </div>
 
-
             </div>
             <div class="section order-summary">
                 @* <div class="title">
                     <strong>@T("Checkout.OrderSummary")</strong>
                 </div>
-                <div class="div-order-totals">
-                    @await Component.InvokeAsync(typeof(OrderSummaryViewComponent))
-                </div>
+                @await Component.InvokeAsync(typeof(OrderSummaryViewComponent))
                 <div class="buttons">
                     <button id="shippingaddress-next-button" type="submit" name="nextstep" class="button-1 new-address-next-step-button">@(Model.IsQuoteOrder ? T("Checkout.ConfirmButton") : T("Checkout.NextButton"))</button>
                 </div>
@@ -344,19 +300,20 @@
 
         <script asp-location="Footer">
             $(document).ready(function () {
-                document.querySelectorAll('input[name="shippingTab"]').forEach((input) => {
-                    input.addEventListener('change', () => {
+                document.querySelectorAll('.tab-links .tab-item a').forEach((tab) => {
+                    tab.addEventListener('click', (event) => {
+                        event.preventDefault();
+
                         // Hide all tab contents
                         document.querySelectorAll('.tab-content').forEach((content) => {
                             content.style.display = 'none';
                         });
 
-                        // Show the corresponding tab content based on the selected radio button
-                        const selectedTabId = input.id === 'deliver' ? 'shippingTabDeliver' : 'shippingTabCollect';
+                        // Determine which tab was clicked and show the corresponding content
+                        const selectedTabId = tab.parentElement.id === 'deliver' ? 'shippingTabDeliver' : 'shippingTabCollect';
                         document.getElementById(selectedTabId).style.display = 'block';
                     });
                 });
-
             });
             CheckoutShipping.init('#ErpShiptoAddressForm');
             $('#edit-shipping-address-button').show();
@@ -461,14 +418,14 @@
         clearPickUpPointAndSaveShippingOption();
     });
 
-    $(".tab-links #collect").click(function () {
-        $('.trigger-ship-to-address-selector-button').hide();
+    $("#collect").click(function () {
+            $('.trigger-ship-to-address-selector-button').hide();
         displayAjaxLoading(true);
         clearShippingOptionAndSavePickupPoint("Collection");
     });
 
-    $(".tab-links #deliver").click(function () {
-        $('.trigger-ship-to-address-selector-button').show();
+    $("#deliver").click(function () {
+            $('.trigger-ship-to-address-selector-button').show();
         displayAjaxLoading(true);
         clearPickUpPointAndSaveShippingOption();
     });
@@ -480,8 +437,9 @@
             url: "@(Url.Action("ClearPickUpPointAndSaveShippingOption", "ErpCheckout"))",
             success: function (data, textStatus, jqXHR) {
                 //console.log("shipping cost found");
-                $('.div-order-totals').empty();
-                $('.div-order-totals').html(data);
+                $('#div-order-totals').empty();
+                $('#div-order-totals').html(data);
+
                 displayAjaxLoading(false);
             },
             error: function (jqXHR, textStatus, errorThrown) {
@@ -498,8 +456,8 @@
             type: "GET",
             url: "@(Url.Action("ClearShippingOptionAndSavePickupPoint", "ErpCheckout"))",
             success: function (data, textStatus, jqXHR) {
-                $('.div-order-totals').empty();
-                $('.div-order-totals').html(data);
+                $('#div-order-totals').empty();
+                $('#div-order-totals').html(data);
                 displayAjaxLoading(false);
             },
             error: function (jqXHR, textStatus, errorThrown) {
@@ -527,7 +485,7 @@
             var isFullLoadRequired = false;
             var isPISChecked = $('#PickupInStore').is(':checked');
             var showLoadingIndicator = true;
-
+            var isCollectChecked = $('#collect').hasClass('ui-state-active');
             if (!(isPISChecked || isErpToDetermineDate == 'false' || isFullLoadRequired == 'true')
                 && !$('#DeliveryDateString').val()) {
                 showLoadingIndicator = false;
@@ -569,3 +527,46 @@
     });
 
 </script>
+
+<style>
+    .checkout-shipping-tab .ui-state-active a::after {
+        content: "";
+        display: block;
+        background: #0270d3;
+        height: 8px;
+        width: 8px;
+        border-radius: 50%;
+        position: absolute;
+        left: 15px;
+        top: 15px;
+        transform: translate(calc(20px/2 - 4px), calc(20px/2 - 4px));
+    }
+
+    .checkout-shipping-tab .tab-item a::before {
+        content: "";
+        display: block;
+        background: #fff;
+        height: 20px;
+        width: 20px;
+        border-radius: 50%;
+        margin-right: 10px;
+        border: 1px solid #0270d3;
+        float: left;
+    }
+
+    .checkout-shipping-tab .tab-item a {
+        position: relative;
+    }
+
+    .checkout-left-section .ui-tabs-nav .tab-item a {
+        color: #444;
+        border: 0;
+        text-transform: capitalize;
+    }
+
+    .checkout-shipping-tab .tab-content {
+        margin: 0px !important;
+        padding: 0 !important;
+        background-color: transparent;
+    }
+</style> 

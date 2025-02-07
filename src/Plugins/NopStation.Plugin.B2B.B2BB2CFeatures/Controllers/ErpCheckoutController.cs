@@ -1153,10 +1153,13 @@ public class ErpCheckoutController : CheckoutController
         if (_shippingSettings.BypassShippingMethodSelectionIfOnlyOne && model.ShippingMethods.Count == 1)
         {
             //if we have only one shipping method, then a customer doesn't have to choose a shipping method
-            await _genericAttributeService.SaveAttributeAsync(customer,
-                NopCustomerDefaults.SelectedShippingOptionAttribute,
-                model.ShippingMethods.First().ShippingOption,
-                store.Id);
+            if (await _genericAttributeService.GetAttributeAsync<ShippingOption>(customer, NopCustomerDefaults.SelectedShippingOptionAttribute, store.Id) == null)
+            {
+                await _genericAttributeService.SaveAttributeAsync(customer,
+                    NopCustomerDefaults.SelectedShippingOptionAttribute,
+                    model.ShippingMethods.First().ShippingOption,
+                    store.Id);
+            }
 
             return RedirectToRoute("CheckoutPaymentMethod");
         }
@@ -3357,7 +3360,7 @@ public class ErpCheckoutController : CheckoutController
         await _genericAttributeService.SaveAttributeAsync(currentCustomer, NopCustomerDefaults.SelectedShippingOptionAttribute, pickUpInStoreShippingOption, store.Id);
         await _genericAttributeService.SaveAttributeAsync(currentCustomer, NopCustomerDefaults.SelectedPickupPointAttribute, defaultPoint, store.Id);
 
-        return Json(await RenderViewComponentToStringAsync(typeof(OrderTotalsViewComponent), new { isEditable = false }));
+        return Json(await RenderViewComponentToStringAsync(typeof(NopStation.Plugin.B2B.B2BB2CFeatures.Components.OrderTotalsViewComponent), new { isEditable = false }));
     }
 
 
@@ -3384,7 +3387,7 @@ public class ErpCheckoutController : CheckoutController
         await _genericAttributeService.SaveAttributeAsync<ShippingOption>(currentCustomer, NopCustomerDefaults.SelectedShippingOptionAttribute, null, currentStore.Id);
         await _genericAttributeService.SaveAttributeAsync<PickupPoint>(currentCustomer, NopCustomerDefaults.SelectedPickupPointAttribute, null, currentStore.Id);
 
-        return Json(await RenderViewComponentToStringAsync(typeof(OrderTotalsViewComponent), new { isEditable = false }));
+        return Json(await RenderViewComponentToStringAsync(typeof(NopStation.Plugin.B2B.B2BB2CFeatures.Components.OrderTotalsViewComponent), new { isEditable = false }));
     }
 
     #endregion
