@@ -1441,7 +1441,6 @@ public class B2BB2CCustomerController : CustomerController
                     return Redirect(model.RedirectUrl);
                 }
 
-                erpUser.ErpShipToAddressId = defaultShipToAddress.Id;
                 erpUser.ErpShipToAddressId = defaultShipToAddress?.Id ?? 0;
 
                 await _erpNopUserService.UpdateErpNopUserAsync(erpUser);
