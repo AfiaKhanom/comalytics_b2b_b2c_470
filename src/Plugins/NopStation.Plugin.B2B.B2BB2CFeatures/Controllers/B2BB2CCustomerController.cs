@@ -1435,6 +1435,17 @@ public class B2BB2CCustomerController : CustomerController
                 erpUser.ErpAccountId = model.ErpAccountId;
 
                 var defaultShipToAddress = (await _erpShipToAddressService.GetErpShipToAddressesByAccountIdAsync(showHidden: false, isActiveOnly: true, accountId: erpUser.ErpAccountId)).FirstOrDefault();
+                
+                if (defaultShipToAddress == null)
+                {
+                    _notificationService.WarningNotification(
+                        string.Format(await _localizationService
+                        .GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Customers.Impersonate.NoErpShipToAddressAvailableForThisErpAccount"),
+                        erpAccount.AccountName, erpAccount.AccountNumber));
+                    return Redirect(model.RedirectUrl);
+                }
+
+                erpUser.ErpShipToAddressId = defaultShipToAddress.Id;
                 erpUser.ErpShipToAddressId = defaultShipToAddress?.Id ?? 0;
 
                 await _erpNopUserService.UpdateErpNopUserAsync(erpUser);

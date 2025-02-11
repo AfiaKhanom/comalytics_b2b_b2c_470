@@ -332,6 +332,7 @@ public class ErpProductSyncService : IErpProductSyncService
                                 oldErpProduct.TaxCategoryId = allTaxCategories.FirstOrDefault(x => x.Name.Equals(erpProduct.TaxCategoryName))?.Id ?? 0;
                             }
 
+                            oldErpProduct.Deleted = erpProduct.Published;
                             oldErpProduct.Published = erpProduct.Published;
                             oldErpProduct.CreatedOnUtc = DateTime.UtcNow;
                             oldErpProduct.UpdatedOnUtc = DateTime.UtcNow;
@@ -390,6 +391,7 @@ public class ErpProductSyncService : IErpProductSyncService
                                 oldErpProduct.TaxCategoryId = allTaxCategories.FirstOrDefault(x => x.Name.Equals(erpProduct.TaxCategoryName))?.Id ?? 0;
                             }
 
+                            oldErpProduct.Deleted = erpProduct.Published;
                             oldErpProduct.Published = erpProduct.Published;
                             oldErpProduct.UpdatedOnUtc = DateTime.UtcNow;
 
