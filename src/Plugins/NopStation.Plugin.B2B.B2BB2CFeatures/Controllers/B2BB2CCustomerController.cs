@@ -1431,7 +1431,7 @@ public class B2BB2CCustomerController : CustomerController
                 erpUser.ErpAccountId = model.ErpAccountId;
 
                 var defaultShipToAddress = (await _erpShipToAddressService.GetErpShipToAddressesByAccountIdAsync(showHidden: false, isActiveOnly: true, accountId: erpUser.ErpAccountId)).FirstOrDefault();
-
+                
                 if (defaultShipToAddress == null)
                 {
                     _notificationService.WarningNotification(
@@ -1442,6 +1442,7 @@ public class B2BB2CCustomerController : CustomerController
                 }
 
                 erpUser.ErpShipToAddressId = defaultShipToAddress.Id;
+                erpUser.ErpShipToAddressId = defaultShipToAddress?.Id ?? 0;
 
                 await _erpNopUserService.UpdateErpNopUserAsync(erpUser);
 
