@@ -72,6 +72,14 @@
                                             <nop-select asp-for="ErpLogLevelId" asp-items="Model.AvailableLogType" />
                                         </div>
                                     </div> 
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="ShortMessage" />
+                                        </div>
+                                        <div class="col-md-8">
+                                            <nop-editor asp-for="ShortMessage" />
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="col-md-7">
                                     <div class="form-group row">
@@ -130,7 +138,8 @@
                                         new FilterParameter(nameof(Model.CreatedTo), typeof(string)),
                                         new FilterParameter(nameof(Model.IpAddress), typeof(string)),
                                         new FilterParameter(nameof(Model.NopCustomerEmail), typeof(string)),
-                                        new FilterParameter(nameof(Model.CreatedFrom), typeof(string))
+                                        new FilterParameter(nameof(Model.CreatedFrom), typeof(string)),
+                                        new FilterParameter(nameof(Model.ShortMessage), typeof(string))
                                     },
                                     ColumnCollection = new List<ColumnProperty>
                                     {
