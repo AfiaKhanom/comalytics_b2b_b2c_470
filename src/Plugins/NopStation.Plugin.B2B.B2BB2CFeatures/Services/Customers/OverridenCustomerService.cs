@@ -123,7 +123,20 @@ public partial class OverridenCustomerService : CustomerService
             .Where(cr => cr != null && (showHidden || cr.Active))
             .ToList();
 
-        return nopCustomerRoles;
+        var currentErpUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(customer.Id);
+
+        if (currentErpUser == null)
+            return nopCustomerRoles;
+
+        var erpAccountNopUserMap = await _erpNopUserAccountMapService.GetAllErpNopUserAccountMapsByUserIdAsync(currentErpUser.Id);
+        var erpUserCustomerRoles = erpAccountNopUserMap
+            .Select(e => e.CustomerRolesIds.Split(','))
+            .SelectMany(x => x.Select(y => int.Parse(y)))
+            .Select(id => allRolesById.TryGetValue(id, out var role) ? role : null)
+            .Where(cr => cr != null && (showHidden || cr.Active))
+            .ToList();
+
+        return nopCustomerRoles.Concat(erpUserCustomerRoles).Distinct().ToList();
     }
 
     /// <summary>
@@ -148,18 +161,10 @@ public partial class OverridenCustomerService : CustomerService
         if (currentErpUser == null)
             return customerRoleIds;
 
-        var erpAccountNopUserMap = await _erpNopUserAccountMapService.GetErpNopUserAccountMapByAccountAndUserIdAsync(currentErpUser.ErpAccountId, currentErpUser.Id);
-        var erpUserCustomerRoleIds = new List<int>();
-
-        if (erpAccountNopUserMap != null && !string.IsNullOrWhiteSpace(erpAccountNopUserMap.CustomerRolesIds))
-        {
-            erpUserCustomerRoleIds = erpAccountNopUserMap.CustomerRolesIds
-                .Split(',')
-                .Select(y => int.TryParse(y, out var roleId) ? roleId : (int?)null)
-                .Where(roleId => roleId.HasValue)
-                .Select(roleId => roleId.Value)
-                .ToList();
-        }
+        var erpAccountNopUserMap = await _erpNopUserAccountMapService.GetAllErpNopUserAccountMapsByUserIdAsync(currentErpUser.Id);
+        var erpUserCustomerRoleIds = erpAccountNopUserMap
+            .Select(e => e.CustomerRolesIds.Split(','))
+            .SelectMany(x => x.Select(y => int.Parse(y)));
 
         var allCustomerRoleIds = customerRoleIds.Concat(erpUserCustomerRoleIds).Distinct().ToArray();
 
