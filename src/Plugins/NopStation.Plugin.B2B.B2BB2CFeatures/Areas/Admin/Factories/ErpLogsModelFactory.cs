@@ -151,6 +151,7 @@ public class ErpLogsModelFactory : IErpLogsModelFactory
             : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.CreatedTo.Value, await _dateTimeHelper.GetCustomerTimeZoneAsync(currCustomer)).AddDays(1);
 
         var erpLogs = await _erpLogsService.GetAllErpLogsAsync(ipAddress: searchModel.IpAddress,
+            message: searchModel.ShortMessage,
             pageIndex: searchModel.Page - 1,
             pageSize: searchModel.PageSize,
             logLevelId: searchModel.ErpLogLevelId,

@@ -167,7 +167,7 @@ public class ErpLogsService : IErpLogsService
         return await _erpLogsRepository.GetByIdAsync(id, cache => default);
     }
 
-    public async Task<IPagedList<ErpLogs>> GetAllErpLogsAsync(string ipAddress, int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, int logLevelId = 0, int syncLavelId = 0, string nopCustomerEmail = null, DateTime? createdFrom = null, DateTime? createdTo = null)
+    public async Task<IPagedList<ErpLogs>> GetAllErpLogsAsync(string ipAddress, string message, int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, int logLevelId = 0, int syncLavelId = 0, string nopCustomerEmail = null, DateTime? createdFrom = null, DateTime? createdTo = null)
     {
         var erpLogs = await _erpLogsRepository.GetAllPagedAsync(query =>
         {
@@ -176,6 +176,11 @@ public class ErpLogsService : IErpLogsService
 
             if (createdTo != null && createdTo.HasValue)
                 query = query.Where(w => w.CreatedOnUtc <= createdTo.Value);
+
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                query = query.Where(x => x.ShortMessage.Contains(message) || x.FullMessage.Contains(message));
+            }
 
             if (!string.IsNullOrEmpty(ipAddress))
                 query = query.Where(x => x.IpAddress.Contains(ipAddress));

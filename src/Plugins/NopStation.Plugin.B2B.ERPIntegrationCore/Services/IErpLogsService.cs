@@ -12,7 +12,7 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
     {
         Task<ErpLogs> InsertErpLogAsync(ErpLogLevel logLevel, ErpSyncLevel syncLavel, string shortMessage, string fullMessage = "", Customer customer = null);
 
-        ErpLogs  InsertErpLog(ErpLogLevel logLevel, ErpSyncLevel syncLavel, string shortMessage, string fullMessage = "", Customer customer = null);
+        ErpLogs InsertErpLog(ErpLogLevel logLevel, ErpSyncLevel syncLavel, string shortMessage, string fullMessage = "", Customer customer = null);
 
         Task UpdateErpLogAsync(ErpLogs erpLog);
 
@@ -20,7 +20,7 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
 
         Task<ErpLogs> GetErpLogByIdAsync(int id);
 
-        Task<IPagedList<ErpLogs>> GetAllErpLogsAsync(string ipAddress, int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, int logLevelId = 0, int syncLavelId = 0, string nopCustomerEmail = null, DateTime? createdFrom = null, DateTime? createdTo = null);
+        Task<IPagedList<ErpLogs>> GetAllErpLogsAsync(string ipAddress, string message, int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, int logLevelId = 0, int syncLavelId = 0, string nopCustomerEmail = null, DateTime? createdFrom = null, DateTime? createdTo = null);
 
         Task<IList<ErpLogs>> GetErpLogsByIdsAsync(int[] erpLogIds);
 
