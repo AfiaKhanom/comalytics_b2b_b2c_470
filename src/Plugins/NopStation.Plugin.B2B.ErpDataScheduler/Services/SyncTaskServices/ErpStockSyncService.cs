@@ -1,4 +1,5 @@
-﻿using Nop.Core.Caching;
+﻿using Nop.Core;
+using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
@@ -211,7 +212,7 @@ public class ErpStockSyncService : IErpStockSyncService
                             continue;
                         }
 
-                        var product = products.FirstOrDefault(x => x.Sku.Equals(erpStock.Sku));
+                        var product = products.FirstOrDefault(x => x.Sku.Trim().ToLower().Equals(erpStock.Sku.Trim().ToLower()));
                         if (product == null || product.Id == 0)
                         {
                             totalNotSyncedSoFar++;

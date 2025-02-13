@@ -210,7 +210,7 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
 
                     foreach (var erpGroupPrice in responseData)
                     {
-                        var product = products.FirstOrDefault(x => x.Sku == erpGroupPrice.Sku);
+                        var product = products.FirstOrDefault(x => x.Sku.Trim().ToLower() == erpGroupPrice.Sku.Trim().ToLower());
 
                         if (product is null)
                         {

@@ -348,8 +348,8 @@ public class ErpProductSyncService : IErpProductSyncService
                     start = response.ErpResponseModel.Next;
 
                     var responseData = response.Data
-                        .Where(x => !string.IsNullOrWhiteSpace(x.Sku))
-                        .GroupBy(x => x.Sku)
+                        .Where(x => !string.IsNullOrWhiteSpace(x.Sku.Trim().ToLower()))
+                        .GroupBy(x => x.Sku.Trim().ToLower())
                         .Select(g => g.Last());
 
                     if (responseData == null)
@@ -439,6 +439,7 @@ public class ErpProductSyncService : IErpProductSyncService
                         }
                         else
                         {
+                            oldErpProduct.Sku = erpProduct.Sku;
                             oldErpProduct.ManufacturerPartNumber = erpProduct.ManufacturerPartNumber;
 
                             oldErpProduct.ShortDescription = (erpProduct.ShortDescription.Length > 400) ? erpProduct.ShortDescription[..400] : erpProduct.ShortDescription;
