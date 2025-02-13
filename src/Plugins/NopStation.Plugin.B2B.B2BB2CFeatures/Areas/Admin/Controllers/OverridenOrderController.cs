@@ -283,43 +283,88 @@ public partial class OverridenOrderController : OrderController
         return RedirectToAction("Edit", new { id = order.Id });
     }
 
-    [HttpPost, ActionName("Edit")]
-    [FormValueRequired(FormValueRequirement.StartsWith, "btnDeleteB2BOrderItem")]
-    public virtual async Task<IActionResult> DeleteB2BOrderItem(int id, IFormCollection form)
+    [HttpPost]
+    public virtual async Task<IActionResult> DeleteB2BOrderItem(int id, int orderItemId)
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageOrders))
-            return AccessDeniedView();
+        {
+            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.AccessDenied"));
+            return Json(new
+            {
+                success = false,
+                redirect = Url.Action("List", "Order")
+            });
+        }
 
-        //try to get an order with the specified id
         var order = await _orderService.GetOrderByIdAsync(id);
         if (order == null)
-            return RedirectToAction("List");
+        {
+            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.NoOrderFound"));
+            return Json(new
+            {
+                success = false,
+                redirect = Url.Action("List", "Order")
+            });
+        }
 
-        //a vendor does not have access to this functionality
         if (await _workContext.GetCurrentVendorAsync() != null)
-            return RedirectToAction("Edit", new { id = order.Id });
+        {
+            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.VendorAccessDenied"));
+            return Json(new
+            {
+                success = false,
+                redirect = Url.Action("Edit", "Order", new { id = order.Id })
+            });
+        }
 
-        //get order item identifier
-        var orderItemId = form.Keys
-            .Where(formValue => formValue.StartsWith("btnDeleteB2BOrderItem", StringComparison.InvariantCultureIgnoreCase))
-            .Select(formValue => Convert.ToInt32(formValue["btnDeleteB2BOrderItem".Length..]))
-            .FirstOrDefault();
-
-        if (await _orderService.GetOrderItemByIdAsync(orderItemId) == null)
-            throw new ArgumentException("No order item found with the specified id");
+        var orderItem = await _orderService.GetOrderItemByIdAsync(orderItemId);
+        if (orderItem == null)
+        {
+            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.NoOrderItemFound"));
+            return Json(new
+            {
+                success = false,
+                redirect = Url.Action("Edit", "Order", new { id = order.Id })
+            });
+        }
 
         var erpOrderItemAdditionalData = await _erpOrderItemAdditionalDataService
             .GetErpOrderItemAdditionalDataByNopOrderItemIdAsync(orderItemId);
-
         if (erpOrderItemAdditionalData == null)
-            throw new ArgumentException("No ERP order item additional data found with the specified id");
+        {
+            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.NoOrderItemFound"));
+            return Json(new
+            {
+                success = false,
+                redirect = Url.Action("Edit", "Order", new { id = order.Id })
+            });
+        }
 
-        await _erpOrderItemAdditionalDataService.DeleteErpOrderItemAdditionalDataByIdAsync(erpOrderItemAdditionalData.Id);
+        try
+        {
+            await _erpOrderItemAdditionalDataService.DeleteErpOrderItemAdditionalDataByIdAsync(erpOrderItemAdditionalData.Id);
 
-        //selected card
-        SaveSelectedCardName("order-products");
+            //activity log
+            await _customerActivityService.InsertActivityAsync("DeleteB2BOrderItem",
+                string.Format(await _localizationService.GetResourceAsync("ActivityLog.DeleteB2BOrderItem"), orderItemId), order);
 
-        return RedirectToAction("Edit", new { id = order.Id });
+            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.B2B.OrderItem.Deleted"));
+
+            return Json(new
+            {
+                success = true,
+                redirect = Url.Action("Edit", "Order", new { id = order.Id })
+            });
+        }
+        catch (Exception ex)
+        {
+            _notificationService.ErrorNotification(ex.Message);
+            return Json(new
+            {
+                success = false,
+                redirect = Url.Action("Edit", "Order", new { id = order.Id })
+            });
+        }
     }
 
     #endregion

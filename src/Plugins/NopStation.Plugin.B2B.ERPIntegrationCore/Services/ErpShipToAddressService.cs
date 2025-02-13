@@ -59,7 +59,16 @@ public class ErpShipToAddressService : IErpShipToAddressService
 
     public async Task UpdateErpShipToAddressesAsync(IList<ErpShipToAddress> erpShipToAddresses)
     {
-        await _erpShipToAddressRepository.UpdateAsync(erpShipToAddresses);
+        if (erpShipToAddresses == null || !erpShipToAddresses.Any())
+            return;
+
+        // Ensure no duplicate target rows
+        var distinctAddresses = erpShipToAddresses
+            .GroupBy(a => a.Id)  // Group by the primary key to remove duplicates
+            .Select(g => g.Last())  // Take the first occurrence
+            .ToList();
+
+        await _erpShipToAddressRepository.UpdateAsync(distinctAddresses);
     }
 
     public async Task DeleteErpShipToAddressAsync(ErpShipToAddress erpShipToAddress)

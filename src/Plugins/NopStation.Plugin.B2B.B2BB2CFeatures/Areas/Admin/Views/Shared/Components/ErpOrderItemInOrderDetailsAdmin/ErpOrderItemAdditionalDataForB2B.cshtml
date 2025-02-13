@@ -30,7 +30,7 @@
                                 $('#pnlEditB2BEoiDiscount@(item.Id)').show();
                                 $('#pnlEditB2BEoiPrice@(item.Id)').show();
                                 $('#btnEditB2BOrderItem@(item.Id)').hide();
-                                $('#btnDeleteB2BOrderItem@(item.Id)').hide();
+                                $('#btnDeleteB2BOrderItem@(item.Id)').hideElement();
                                 $('#btnSaveB2BOrderItem@(item.Id)').show();
                                 $('#btnCancelB2BOrderItem@(item.Id)').show();
                             } else {
@@ -39,7 +39,7 @@
                                 $('#pnlEditB2BEoiDiscount@(item.Id)').hide();
                                 $('#pnlEditB2BEoiPrice@(item.Id)').hide();
                                 $('#btnEditB2BOrderItem@(item.Id)').show();
-                                $('#btnDeleteB2BOrderItem@(item.Id)').show();
+                                $('#btnDeleteB2BOrderItem@(item.Id)').showElement();
                                 $('#btnSaveB2BOrderItem@(item.Id)').hide();
                                 $('#btnCancelB2BOrderItem@(item.Id)').hide();
                             }
@@ -389,11 +389,10 @@
                                 @if (!Model.IsLoggedInAsVendor)
                                 {
                                     <td style="width: 15%;" class="text-center">
-                                        <button type="submit" class="btn btn-default" name="btnDeleteB2BOrderItem@(item.Id)" id="btnDeleteB2BOrderItem@(item.Id)">
+                                        <button type="button" class="btn btn-default btn-delete-b2b-order-item" id="btnDeleteB2BOrderItem@(item.Id)" data-item-id="@item.Id">
                                             <i class="far fa-trash-alt"></i>
                                             @T("Admin.Common.Delete")
                                         </button>
-                                        <nop-action-confirmation asp-button-id="@("btnDeleteB2BOrderItem" + item.Id)" />
                                     </td>
                                 }
                             </tr>
@@ -421,6 +420,93 @@
             </div>
         }
     </div>
+
+    <script asp-location="Footer">
+        function startLoading() {
+            $('.please-wait').show();
+            $('body').addClass('loading');
+        }
+        function stopLoading() {
+            $('.please-wait').hide();
+            $('body').removeClass('loading');
+        }
+        function initializeB2BDeleteModal(itemId) {
+            const modalId = `deleteB2BOrderItem${itemId}-modal`;
+            const buttonId = `btnDeleteB2BOrderItem${itemId}`;
+
+            const modalHtml = `
+                <div id="${modalId}" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="${modalId}-title">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title" id="${modalId}-title">Are you sure?</h4>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                Are you sure you want to delete this B2B order item?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" id="${modalId}-submit" class="btn btn-primary float-right">
+                                    Yes
+                                </button>
+                                <span class="btn btn-default float-right margin-r-5" data-dismiss="modal">
+                                    No, cancel
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            // Add modal to body if it doesn't exist
+            if (!document.getElementById(modalId)) {
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            }
+
+            // Initialize modal behavior
+            $(`#${buttonId}`).attr('type', 'button')
+                .attr('data-toggle', 'modal')
+                .attr('data-target', `#${modalId}`);
+
+            $(`#${modalId}-submit`).off('click').on('click', function() {
+                startLoading();
+
+                $.ajax({
+                    url: '@Url.Action("DeleteB2BOrderItem", "OverridenOrder")',
+                    type: 'POST',
+                    data: {
+                        id: @Model.Id,
+                        orderItemId: itemId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        //$(`#${modalId}`).modal('hide');
+
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        } else {
+                            window.location.reload();
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        $(`#${modalId}`).modal('hide');
+                        window.location.reload();
+                    },
+                    complete: function() {
+                        stopLoading();
+                    }
+                });
+            });
+        }
+
+        $(document).ready(function() {
+            $('.btn-delete-b2b-order-item').each(function() {
+                const itemId = $(this).data('item-id');
+                initializeB2BDeleteModal(itemId);
+            });
+        });
+    </script>
 </nop-card>
 
 @await Component.InvokeAsync(typeof(AdminWidgetViewComponent), new { widgetZone = B2BB2CFeaturesDefaults.ErpAdminWidgetZonesOrderDetailsBlock, additionalData = Model.Id })

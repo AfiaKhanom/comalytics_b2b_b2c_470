@@ -6263,4 +6263,20 @@
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpStockSyncTimeOnUtc.Hint">
         <Value>The last utc time product stocks were synced</Value>
     </LocaleResource>
+
+    <!-- Card: 3112 - JH Group - 2804 - Not able to delete lines from an order  - 13-Feb-2025 -->
+
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.NoOrderFound">
+        <Value>No order found with the specified Id</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.VendorAccessDenied">
+        <Value>Vendors cannot access this functionality</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.AccessDenied">
+        <Value>Access Denied</Value>
+    </LocaleResource>    
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.NoOrderItemFound">
+        <Value>No order item found with the specified id</Value>
+    </LocaleResource>
+    
 </Language>
