@@ -33,65 +33,115 @@
         else
         {
             var returnUrl = Context.Request.Query.TryGetValue("returnUrl", out var url) && !StringValues.IsNullOrEmpty(url)
-            ? url.ToString()
-            : webHelper.GetRawUrl(Context.Request);
-
-            @if (Model.RegistrationType != UserRegistrationType.Disabled)
-            {
-                @*<li><a href="@Url.RouteUrl("Register", new { returnUrl })" class="ico-register">@T("Account.Register")</a></li>*@
-
-                <li><a href="@Url.RouteUrl("ErpAccountCustomerRegistrationForm", new { returnUrl })" class="ico-register">@* @T("account.register.button") *@ Apply Registration</a></li>
-
-                <li>
-                    @if (settings.IsB2BUserRegisterAllowed && settings.IsB2CUserRegisterAllowed)
-                    {
-                        <a onclick="registerButtonClick()" data-toggle="modal" data-target="#registrationTypeDialog" class="ico-register">@T("account.register.button")</a>
-                        <div id="registrationTypeDialog" class="registration-type-dialog" title='@T("NopStation.B2BB2CFeatures.Register.Notification.Title")' style="display: none;">
-                            <div class="dialog-center-register">
-                                <h2>@T("NopStation.B2BB2CFeatures.Register.Notification.Description")</h2>
-                            </div>
-                            <br />
-                            <div class="register-confirm-buttons login-page">
-                                <button type="button" class="button-1" onclick="redirectToB2BRegister()"><span>@T("NopStation.B2BB2CFeatures.Register.Notification.Yes")</span></button>
-                                <button type="button" class="button-1" onclick="redirectToB2CRegister()"><span>@T("NopStation.B2BB2CFeatures.Register.Notification.No")</span></button>
-                            </div>
-                            <script asp-location="Footer">
-                                function redirectToB2BRegister() {
-                                    window.location.href = "@Url.RouteUrl("B2BRegister")";
+                ? url.ToString()
+                : webHelper.GetRawUrl(Context.Request);
+            <li>
+     
+                        <div class="header-links-mobile">
+                            <div class="profile-menu-box">
+                                <div class="close-side-menu">
+                                    <span class="close-side-menu-text">@T("Account.MyAccount")</span>
+                                    <span class="close-side-menu-btn">@T("SevenSpikes.Themes.Common.CloseMenu")</span>
+                                </div>
+                                <a href="@Url.RouteUrl("Login", new { returnUrl })" class="ico-login">@T("Account.Login")</a>
+                                @if (b2BB2CFeaturesSettings.IsB2BUserRegisterAllowed && b2BB2CFeaturesSettings.IsB2CUserRegisterAllowed)
+                                {
+                                    <a onclick="customRegisterButtonClick()" data-toggle="modal" data-target="#registrationTypeDialog" class="ico-register">@T("account.register.button")</a>
+                                    <div id="registrationTypeDialog" class="registration-type-dialog" title='@T("NopStation.B2BB2CFeatures.Register.Notification.Title")' style="display: none;">
+                                        <div class="dialog-center-register">
+                                            <h2>@T("NopStation.B2BB2CFeatures.Register.Notification.Description")</h2>
+                                        </div>
+                                        <br />
+                                        <div class="register-confirm-buttons login-page">
+                                            <button type="button" class="button-1" onclick="redirectToB2BRegister()"><span>@T("NopStation.B2BB2CFeatures.Register.Notification.Yes")</span></button>
+                                            <button type="button" class="button-1" onclick="redirectToB2CRegister()"><span>@T("NopStation.B2BB2CFeatures.Register.Notification.No")</span></button>
+                                        </div>
+                                        <script asp-location="Footer">
+                                            function redirectToB2BRegister() {
+                                                window.location.href = "@Url.RouteUrl("B2BRegister")";
+                                            }
+                                            function redirectToB2CRegister() {
+                                                window.location.href = "@Url.RouteUrl("B2CRegister")";
+                                            }
+                                        </script>
+                                    </div>
                                 }
-                                function redirectToB2CRegister() {
-                                    window.location.href = "@Url.RouteUrl("B2CRegister")";
+                                else if (b2BB2CFeaturesSettings.IsB2BUserRegisterAllowed)
+                                {
+                                    <a href="@Url.RouteUrl("B2BRegister")" class="ico-register">@T("Account.Register")</a>
                                 }
-                            </script>
+                                else if (b2BB2CFeaturesSettings.IsB2CUserRegisterAllowed)
+                                {
+                                    <a href="@Url.RouteUrl("B2CRegister")" class="ico-register">@T("Account.Register")</a>
+                                }
+                                else
+                                {
+                                    <a href="@Url.RouteUrl("Register", new { returnUrl })" class="ico-register">@T("Account.Register")</a>
+                                }
+                            </div>
                         </div>
-                        <script asp-location="Footer">
-                            function registerButtonClick() {
-                                $("#header-links-mobile").hide();
-                                $("#registrationTypeDialog").dialog({
-                                    modal: true,
-                                    draggable: false,
-                                    closeOnEscape: true
-                                });
+
+                        @if (Model.RegistrationType != UserRegistrationType.Disabled)
+                        {
+                            @if (b2BB2CFeaturesSettings.IsErpAccountCustomerRegisterAllowed)
+                            {
+                                <li>
+                                    <a href="@Url.RouteUrl("ErpAccountCustomerRegistrationForm", new { returnUrl })" class="ico-register">
+                                        @T("Plugin.Misc.NopStation.B2BB2CFeatures.Account.Register.Button.ApplyRegistration")
+                                    </a>
+                                </li>
                             }
-                        </script>
-                    }
-                    else if (settings.IsB2BUserRegisterAllowed)
-                    {
-                        <a href="@Url.RouteUrl("B2BRegister")" class="ico-register">@T("Account.Register")</a>
-                    }
-                    else if (settings.IsB2CUserRegisterAllowed)
-                    {
-                        <a href="@Url.RouteUrl("B2CRegister")" class="ico-register">@T("Account.Register")</a>
-                    }
-                    else
-                    {
-                        <a href="@Url.RouteUrl("Register", new { returnUrl })" class="ico-register">@T("Account.Register")</a>
-                    }
-
-                </li>
-
-            }
-            <li><a href="@Url.RouteUrl("Login", new { returnUrl })" class="ico-login">@T("Account.Login")</a></li>
+                          
+                            <li>
+                                @if (b2BB2CFeaturesSettings.IsB2BUserRegisterAllowed && b2BB2CFeaturesSettings.IsB2CUserRegisterAllowed)
+                                {
+                                    <a onclick="customRegisterButtonClick()" data-toggle="modal" data-target="#registrationTypeDialog" class="ico-register">@T("account.register.button")</a>
+                                    <div id="registrationTypeDialog" class="registration-type-dialog" title='@T("NopStation.B2BB2CFeatures.Register.Notification.Title")' style="display: none;">
+                                        <div class="dialog-center-register">
+                                            <h2>@T("NopStation.B2BB2CFeatures.Register.Notification.Description")</h2>
+                                        </div>
+                                        <br />
+                                        <div class="register-confirm-buttons login-page">
+                                            <button type="button" class="button-1" onclick="redirectToB2BRegister()"><span>@T("NopStation.B2BB2CFeatures.Register.Notification.Yes")</span></button>
+                                            <button type="button" class="button-1" onclick="redirectToB2CRegister()"><span>@T("NopStation.B2BB2CFeatures.Register.Notification.No")</span></button>
+                                        </div>
+                                        <script asp-location="Footer">
+                                            function redirectToB2BRegister() {
+                                                window.location.href = "@Url.RouteUrl("B2BRegister")";
+                                            }
+                                            function redirectToB2CRegister() {
+                                                window.location.href = "@Url.RouteUrl("B2CRegister")";
+                                            }
+                                        </script>
+                                    </div>
+                                    <script asp-location="Footer">
+                                        function customRegisterButtonClick() {
+                                            $(".header .close-side-menu .close-side-menu-btn").click();
+                                            $("#registrationTypeDialog").dialog({
+                                                modal: true,
+                                                draggable: false,
+                                                closeOnEscape: true
+                                            });
+                                        }
+                                    </script>
+                                }
+                                else if (b2BB2CFeaturesSettings.IsB2BUserRegisterAllowed)
+                                {
+                                    <a href="@Url.RouteUrl("B2BRegister")" class="ico-register">@T("Account.Register")</a>
+                                }
+                                else if (b2BB2CFeaturesSettings.IsB2CUserRegisterAllowed)
+                                {
+                                    <a href="@Url.RouteUrl("B2CRegister")" class="ico-register">@T("Account.Register")</a>
+                                }
+                                else
+                                {
+                                    <a href="@Url.RouteUrl("Register", new { returnUrl })" class="ico-register">@T("Account.Register")</a>
+                                }
+                            </li>
+                        }
+                        <a href="@Url.RouteUrl("Login", new { returnUrl })" class="ico-login">@T("Account.Login")</a>
+                     
+            </li>
         }
         @if (await customerService.IsInCustomerRoleAsync(customer, ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName) == false)
         {
