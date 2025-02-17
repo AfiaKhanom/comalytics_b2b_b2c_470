@@ -1,19 +1,16 @@
 ﻿using LinqToDB.Common;
 using Newtonsoft.Json;
-using Nop.Core;
 using Nop.Core.Infrastructure;
 using Nop.Services.Helpers;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Framework.Models.Extensions;
 using NopStation.Plugin.B2B.ErpDataScheduler.Areas.Admin.Models;
+using NopStation.Plugin.B2B.ErpDataScheduler.Services.NopStationSyncServices;
+using NopStation.Plugin.B2B.ErpDataScheduler.Services.QuartzServices;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
-using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncTaskScheduler;
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Areas.Admin.Factories;
 
-/// <summary>
-/// Represents the task model factory implementation
-/// </summary>
 public partial class SyncTaskModelFactory : ISyncTaskModelFactory
 {
     #region Fields
@@ -22,6 +19,8 @@ public partial class SyncTaskModelFactory : ISyncTaskModelFactory
     private readonly ISyncTaskService _syncTaskService;
     private readonly ISyncLogService _erpSyncLogService;
     private readonly INopFileProvider _fileProvider;
+    private readonly IQuartzJobDetailService _quartzJobDetailService;
+    private readonly IQrtzFiredTriggersService _qrtzFiredTriggersService;
 
     #endregion
 
@@ -30,30 +29,25 @@ public partial class SyncTaskModelFactory : ISyncTaskModelFactory
     public SyncTaskModelFactory(IDateTimeHelper dateTimeHelper,
         ISyncTaskService taskService,
         ISyncLogService erpSyncLogService,
-        INopFileProvider fileProvider)
+        INopFileProvider fileProvider,
+        IQuartzJobDetailService quartzJobDetailService,
+        IQrtzFiredTriggersService qrtzFiredTriggersService)
     {
         _dateTimeHelper = dateTimeHelper;
         _syncTaskService = taskService;
         _erpSyncLogService = erpSyncLogService;
         _fileProvider = fileProvider;
+        _quartzJobDetailService = quartzJobDetailService;
+        _qrtzFiredTriggersService = qrtzFiredTriggersService;
     }
 
     #endregion
 
     #region Methods
 
-    /// <summary>
-    /// Prepare task search model
-    /// </summary>
-    /// <param name="searchModel">SyncTask search model</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the task search model
-    /// </returns>
-    public virtual async Task<SyncTaskSearchModel> PrepareTaskSearchModelAsync(SyncTaskSearchModel searchModel)
+    public async Task<SyncTaskSearchModel> PrepareTaskSearchModelAsync(SyncTaskSearchModel searchModel)
     {
-        if (searchModel is null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
         //prepare page parameters
         searchModel.SetGridPageSize();
@@ -61,31 +55,18 @@ public partial class SyncTaskModelFactory : ISyncTaskModelFactory
         return searchModel;
     }
 
-    /// <summary>
-    /// Prepare paged task list model
-    /// </summary>
-    /// <param name="searchModel">SyncTask search model</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the task list model
-    /// </returns>
-    public virtual async Task<SyncTaskListModel> PrepareTaskListModelAsync(SyncTaskSearchModel searchModel)
+    public async Task<SyncTaskListModel> PrepareTaskListModelAsync(SyncTaskSearchModel searchModel)
     {
-        if (searchModel is null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
-        //get schedule tasks
         var tasks = (await _syncTaskService.GetAllTasksAsync()).ToPagedList(searchModel);
 
-        //prepare list model
         return await new SyncTaskListModel().PrepareToGridAsync(searchModel, tasks, () =>
         {
             return tasks.SelectAwait(async task =>
             {
-                //fill in model values from the entity
                 var taskModel = task.ToModel<SyncTaskModel>();
 
-                //convert dates to the user time
                 if (task.LastStartUtc.HasValue)
                 {
                     taskModel.LastStartUtc = (await _dateTimeHelper
@@ -104,68 +85,59 @@ public partial class SyncTaskModelFactory : ISyncTaskModelFactory
                         .ConvertToUserTimeAsync(task.LastSuccessUtc.Value, DateTimeKind.Utc)).ToString("G");
                 }
 
+                taskModel.IsRunning = await _qrtzFiredTriggersService
+                    .CheckJobIsRunningAsync(task.QuartzJobName);
+
                 return taskModel;
             });
         });
     }
 
-    /// <summary>
-    /// Prepare a task model
-    /// </summary>
-    /// <param name="taskId">SyncTask id</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the task model
-    /// </returns>
-    public virtual async Task<SyncTaskModel> PrepareTaskModelByIdAsync(int taskId)
+    public async Task<SyncTaskModel> PrepareTaskModelByIdAsync(int taskId)
     {
-        // Get task
         var task = await _syncTaskService.GetTaskByIdAsync(taskId);
 
-        // Prepare model
+        if (task is null)
+        {
+            return new SyncTaskModel();
+        }
+
         var model = task.ToModel<SyncTaskModel>();
-        var dayOfWeekSlots = JsonConvert.DeserializeObject<List<SyncTaskDaySlotModel>>(task?.DayTimeSlots ?? string.Empty);
+
+        var dayOfWeekSlots = JsonConvert.DeserializeObject<List<SyncTaskDaySlotModel>>(task.DayTimeSlots);
 
         #region DayOfWeek Slots arrangements
 
-        // Initialize TaskTimeSlotModel for each day
         var timeSlotModel = new Dictionary<int, List<SyncTaskTimeSlotModel>>();
 
-        for (int dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++)
+        for (var dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++)
         {
             timeSlotModel[dayOfWeek] = new List<SyncTaskTimeSlotModel>();
+        }
 
-            // Only proceed if dayOfWeekSlots has entries
-            if (!dayOfWeekSlots.IsNullOrEmpty())
+        if (!dayOfWeekSlots.IsNullOrEmpty())
+        {
+            foreach (var daySlot in dayOfWeekSlots)
             {
-                foreach (var daySlot in dayOfWeekSlots)
+                foreach (var timeSlot in daySlot.TimeSlots)
                 {
-                    if (daySlot.DayOfWeek == dayOfWeek)
+                    timeSlotModel[daySlot.DayOfWeek].Add(new SyncTaskTimeSlotModel
                     {
-                        foreach (var time in daySlot.TimeSlots)
-                        {
-                            timeSlotModel[dayOfWeek].Add(
-                                new SyncTaskTimeSlotModel 
-                                { 
-                                    TimeSlot = time.TimeSlot, 
-                                    IsSelected = true 
-                                });
-                        }
-                    }
+                        TimeSlot = timeSlot.TimeSlot,
+                        IsSelected = true
+                    });
                 }
             }
         }
 
-        // Create daySlotModel based on timeSlotModel
         var daySlotModel = new List<SyncTaskDaySlotModel>();
-
-        for (int dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++)
+        for (var dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++)
         {
             daySlotModel.Add(new SyncTaskDaySlotModel
             {
                 DayOfWeek = dayOfWeek,
                 TimeSlots = timeSlotModel[dayOfWeek],
-                IsSelected = timeSlotModel[dayOfWeek].Count != 0
+                IsSelected = timeSlotModel[dayOfWeek].Count > 0
             });
         }
 
@@ -179,16 +151,70 @@ public partial class SyncTaskModelFactory : ISyncTaskModelFactory
         return model;
     }
 
+    public async Task<SyncTaskModel> PrepareTaskModelByIdAsync(string quartzJobName)
+    {
+        var task = await _syncTaskService.GetTaskByQuartzJobNameAsync(quartzJobName);
+
+        if (task is null)
+        {
+            return new SyncTaskModel();
+        }
+
+        var model = task.ToModel<SyncTaskModel>();
+
+        var dayOfWeekSlots = JsonConvert.DeserializeObject<List<SyncTaskDaySlotModel>>(task.DayTimeSlots);
+
+        #region DayOfWeek Slots arrangements
+
+        var timeSlotModel = new Dictionary<int, List<SyncTaskTimeSlotModel>>();
+
+        for (var dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++)
+        {
+            timeSlotModel[dayOfWeek] = new List<SyncTaskTimeSlotModel>();
+        }
+
+        if (!dayOfWeekSlots.IsNullOrEmpty())
+        {
+            foreach (var daySlot in dayOfWeekSlots)
+            {
+                foreach (var timeSlot in daySlot.TimeSlots)
+                {
+                    timeSlotModel[daySlot.DayOfWeek].Add(new SyncTaskTimeSlotModel
+                    {
+                        TimeSlot = timeSlot.TimeSlot,
+                        IsSelected = true
+                    });
+                }
+            }
+        }
+
+        var daySlotModel = new List<SyncTaskDaySlotModel>();
+        for (var dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++)
+        {
+            daySlotModel.Add(new SyncTaskDaySlotModel
+            {
+                DayOfWeek = dayOfWeek,
+                TimeSlots = timeSlotModel[dayOfWeek],
+                IsSelected = timeSlotModel[dayOfWeek].Count > 0
+            });
+        }
+
+        model.DayOfWeekSlots = daySlotModel;
+
+        #endregion
+
+        model.SyncLogSearchModel.SyncTaskName = task.Name;
+        model.SyncLogSearchModel.SyncTaskId = task.Id;
+
+        return model;
+    }
 
     public async Task<SyncLogListModel> PrepareSyncLogListModelAsync(SyncLogSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
-        //get backup files
-        var syncLogFiles = (await _erpSyncLogService.GetAllSyncLogFiles(searchModel.SyncTaskName,searchModel.SyncTaskId)).ToPagedList(searchModel);
+        var syncLogFiles = (await _erpSyncLogService.GetAllSyncLogFiles(searchModel.SyncTaskName, searchModel.SyncTaskId)).ToPagedList(searchModel);
 
-        //prepare list model
         return await new SyncLogListModel().PrepareToGridAsync(searchModel, syncLogFiles, () =>
         {
             return syncLogFiles.SelectAwait(async file => new SyncLogModel
@@ -198,6 +224,25 @@ public partial class SyncTaskModelFactory : ISyncTaskModelFactory
                 Length = $"{_fileProvider.FileLength(file) / 1024f:F2} Kb",
 
                 TaskId = searchModel.SyncTaskId
+
+                //Link = $"{_webHelper.GetStoreLocation()}{ErpDataSchedulerDefaults.SyncLogFileSaveDefaultPath}/{_fileProvider.GetFileName(file)}"
+            });
+        });
+    }
+
+    public async Task<QuartzJobListModel> PrepareJobListPagedModelAsync(SyncTaskSearchModel searchModel)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(nameof(searchModel));
+
+        var scheduleJobs = await _quartzJobDetailService.GetPagedListAsync(searchModel.Page - 1, searchModel.PageSize);
+
+        return await new QuartzJobListModel().PrepareToGridAsync(searchModel, scheduleJobs, () =>
+        {
+            return scheduleJobs.SelectAwait(async job => new QuartzJobDetailModel
+            {
+                JOB_NAME = job.JOB_NAME,
+                DESCRIPTION = job.DESCRIPTION,
+                JOB_GROUP = job.JOB_GROUP,
             });
         });
     }

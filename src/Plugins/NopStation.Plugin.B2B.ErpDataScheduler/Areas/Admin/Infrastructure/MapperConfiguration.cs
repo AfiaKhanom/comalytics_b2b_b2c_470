@@ -16,7 +16,8 @@ public class MapperConfiguration : Profile, IOrderedMapperProfile
         CreateMap<ErpDataSchedulerSettings, ConfigurationModel>()
             .ForMember(model => model.SyncFromDate_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.NeedQuoteOrderCall_OverrideForStore, options => options.Ignore())
-            .ForMember(model => model.StartProductSyncAfterLastSyncedProduct_OverrideForStore, options => options.Ignore())
+            .ForMember(model => model.EnalbeSendingEmailNotificationOnSyncError_OverrideForStore, options => options.Ignore())
+            .ForMember(model => model.EmailAddresses_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.ActiveStoreScopeConfiguration, options => options.Ignore());
         CreateMap<ConfigurationModel, ErpDataSchedulerSettings>();
 
@@ -27,8 +28,10 @@ public class MapperConfiguration : Profile, IOrderedMapperProfile
         CreateMap<SyncTask, SyncTaskModel>()
             .ForMember(model => model.DayOfWeekSlots, options => options.Ignore())
             .ForMember(model => model.SyncLogSearchModel, options => options.Ignore());
+
         CreateMap<SyncTaskModel, SyncTask>()
-            .ForMember(entity => entity.DayTimeSlots, options => options.Ignore());
+            .ForMember(entity => entity.DayTimeSlots, options => options.Ignore())
+            .ForMember(entity => entity.QuartzJobName, options => options.Ignore());
 
         #endregion
     }

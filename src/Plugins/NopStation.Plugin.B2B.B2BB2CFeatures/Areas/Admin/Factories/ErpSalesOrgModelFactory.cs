@@ -49,8 +49,7 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
         IErpSalesOrgService erpSalesOrgService,
         IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMapService,
         IShippingService shippingService,
-        IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService
-        )
+        IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService)
     {
         _workContext = workContext;
         _baseAdminModelFactory = baseAdminModelFactory;
@@ -68,10 +67,7 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
     #endregion
 
     #region Utilities
-    /// <summary>
-    /// Set some address fields as required
-    /// </summary>
-    /// <param name="model">Address model</param>
+
     protected virtual void SetAddressFieldsAsRequired(AddressModel model)
     {
         model.FirstNameRequired = true;
@@ -125,7 +121,6 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
         if (searchModel == null)
             throw new ArgumentNullException(nameof(searchModel));
 
-        //get ERP Sales Orgs
         var erpSalesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgAsync(pageIndex: searchModel.Page - 1,
             pageSize: searchModel.PageSize,
             name: searchModel.Name,
@@ -133,10 +128,8 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
             code: searchModel.Code,
             showHidden: searchModel.ShowInActive == 0 ? null : (bool?)(searchModel.ShowInActive == 2));
 
-        //prepare list model
         var model = await new ErpSalesOrgListModel().PrepareToGridAsync(searchModel, erpSalesOrgs, () =>
         {
-            //fill in model values from the entity
             return erpSalesOrgs.SelectAwait(async erpSalesOrg =>
             {
                 var erpSalesOrgModel = new ErpSalesOrgModel();
@@ -146,11 +139,9 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
                 var currentCulture = (await _workContext.GetWorkingLanguageAsync()).LanguageCulture;
                 var dtfi = new CultureInfo(currentCulture, false).DateTimeFormat;
 
-                //Additional Infos
                 if (erpSalesOrg != null)
                 {
-                    //prepare address model
-                    var address = await _addressService.GetAddressByIdAsync(erpSalesOrg?.AddressId ?? 0);
+                    var address = await _addressService.GetAddressByIdAsync(erpSalesOrg.AddressId);
                     var addressModel = new AddressModel();
                     if (address != null)
                         addressModel = address.ToModel(addressModel);
@@ -166,6 +157,13 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
                         Address = addressModel,
                         IntegrationClientId = erpSalesOrg.IntegrationClientId,
                         AuthenticationKey = erpSalesOrg.AuthenticationKey,
+                        LastErpAccountSyncTimeOnUtc = erpSalesOrg.LastErpAccountSyncTimeOnUtc,
+                        LastErpAccountCreditSyncTimeOnUtc = erpSalesOrg.LastErpAccountCreditSyncTimeOnUtc,
+                        LastErpGroupPriceSyncTimeOnUtc = erpSalesOrg.LastErpGroupPriceSyncTimeOnUtc,
+                        LastErpShipToAddressSyncTimeOnUtc = erpSalesOrg.LastErpShipToAddressSyncTimeOnUtc,
+                        LastErpStockSyncTimeOnUtc = erpSalesOrg.LastErpStockSyncTimeOnUtc,
+                        LastErpProductSyncTimeOnUtc = erpSalesOrg.LastErpProductSyncTimeOnUtc,
+                        Password = erpSalesOrg.Password ?? string.Empty,
                         CreatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(erpSalesOrg.CreatedOnUtc, DateTimeKind.Utc),
                         UpdatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(erpSalesOrg.UpdatedOnUtc, DateTimeKind.Utc),
                         IsActive = erpSalesOrg.IsActive,
@@ -183,7 +181,6 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
     {
         if (erpSalesOrg != null)
         {
-            //fill in model values from the entity
             model ??= new ErpSalesOrgModel();
 
             model.Id = erpSalesOrg.Id;
@@ -193,6 +190,13 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
             model.AddressId = erpSalesOrg.AddressId;
             model.IntegrationClientId = erpSalesOrg.IntegrationClientId;
             model.AuthenticationKey = erpSalesOrg.AuthenticationKey;
+            model.LastErpAccountSyncTimeOnUtc = erpSalesOrg.LastErpAccountSyncTimeOnUtc;
+            model.LastErpAccountCreditSyncTimeOnUtc = erpSalesOrg.LastErpAccountCreditSyncTimeOnUtc;
+            model.LastErpGroupPriceSyncTimeOnUtc = erpSalesOrg.LastErpGroupPriceSyncTimeOnUtc;
+            model.LastErpShipToAddressSyncTimeOnUtc = erpSalesOrg.LastErpShipToAddressSyncTimeOnUtc;
+            model.LastErpStockSyncTimeOnUtc = erpSalesOrg.LastErpStockSyncTimeOnUtc;
+            model.LastErpProductSyncTimeOnUtc = erpSalesOrg.LastErpProductSyncTimeOnUtc;
+            model.Password = erpSalesOrg.Password;
             model.CreatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(erpSalesOrg.CreatedOnUtc, DateTimeKind.Utc);
             model.UpdatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(erpSalesOrg.UpdatedOnUtc, DateTimeKind.Utc);
             model.IsActive = erpSalesOrg.IsActive;
@@ -202,7 +206,6 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
 
         }
 
-        //prepare address model
         var address = await _addressService.GetAddressByIdAsync(erpSalesOrg?.AddressId ?? 0);
         var addressModel = new AddressModel();
         if (address != null)
@@ -212,7 +215,6 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
         SetAddressFieldsAsRequired(addressModel);
         model.Address = addressModel;
 
-        // prepare nested model
         await _baseAdminModelFactory.PrepareWarehousesAsync(model.AddErpSalesOrgWarehouseModel.AvailableWarehouses, true, "Select");
         model.AddErpSalesOrgWarehouseModel.Id = model.Id;
         model.AddErpSalesOrgWarehouseModel.ErpSalesOrgId = model.Id;
@@ -248,6 +250,7 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
                     ErpWarehouseCode = erpWarehouse?.Code ?? string.Empty,
                     LastUpdateTime = (await _dateTimeHelper.ConvertToUserTimeAsync(erpWarehouse.LastUpdateTime, DateTimeKind.Utc)).ToString(),
                 };
+
                 return salesOrgWarehouseModel;
             });
         });

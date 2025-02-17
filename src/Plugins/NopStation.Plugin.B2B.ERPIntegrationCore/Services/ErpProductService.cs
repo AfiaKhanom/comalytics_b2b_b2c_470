@@ -37,6 +37,43 @@ public class ErpProductService : IErpProductService
 
     #region Methods
 
+    public async Task<Product> GetProductBySkuAsync(string sku, bool filterOutDeleted = true)
+    {
+        if (string.IsNullOrEmpty(sku))
+            return null;
+
+        sku = sku.Trim().ToLower();
+
+        var query = from p in _productRepository.Table
+                    orderby p.Id
+                    where p.Sku.Trim().ToLower() == sku
+                    select p;
+
+        if (filterOutDeleted)
+            query = query.Where(p => !p.Deleted);
+
+        return await query.FirstOrDefaultAsync();
+    }
+
+    public async Task<IList<Product>> GetProductsBySkuAsync(string[] skuArray, int vendorId = 0, bool filterOutDeleted = false, bool filterOutUnpublished = false)
+    {
+        ArgumentNullException.ThrowIfNull(skuArray);
+
+        var query = _productRepository.Table;
+        query = query.Where(p => skuArray.Any(s => p.Sku.Trim().ToLower() == s.Trim().ToLower()));
+
+        if (filterOutDeleted)
+            query = query.Where(p => !p.Deleted);
+
+        if (filterOutUnpublished)
+            query = query.Where(p => p.Published);
+
+        if (vendorId != 0)
+            query = query.Where(p => p.VendorId == vendorId);
+
+        return await query.ToListAsync();
+    }
+
     public async Task UnpublishAllOldProduct(DateTime syncStartTime)
     {
         if (syncStartTime == DateTime.MinValue)
@@ -62,7 +99,7 @@ public class ErpProductService : IErpProductService
         return await query.ToListAsync();
     }
 
-    public async Task UpdateProductsAsync(List<Product> products)
+    public async Task UpdateProductsAsync(IList<Product> products)
     {
         if (products == null || !products.Any())
             return;

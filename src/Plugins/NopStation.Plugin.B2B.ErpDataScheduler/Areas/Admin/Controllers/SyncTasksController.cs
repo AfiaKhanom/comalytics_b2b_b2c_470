@@ -1,19 +1,21 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
 using Nop.Core.Infrastructure;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Security;
-using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using NopStation.Plugin.B2B.ErpDataScheduler.Areas.Admin.Factories;
 using NopStation.Plugin.B2B.ErpDataScheduler.Areas.Admin.Models;
+using NopStation.Plugin.B2B.ErpDataScheduler.Services.NopStationSyncServices;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
-using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncTaskScheduler;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 using NopStation.Plugin.Misc.Core.Controllers;
+using Quartz;
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Areas.Admin.Controllers;
 
@@ -27,10 +29,10 @@ public class SyncTasksController : NopStationAdminController
     private readonly IPermissionService _permissionService;
     private readonly ISyncTaskModelFactory _taskModelFactory;
     private readonly ISyncTaskService _syncTaskService;
-    private readonly ISyncTaskRunner _taskRunner;
     private readonly ISyncLogService _erpSyncLogService;
     private readonly INopFileProvider _fileProvider;
     private readonly ILogger _logger;
+    private readonly INopStationScheduler _nopStationScheduler;
     private const string EDIT_TASK_SYSTEM_KEYWORD = "Erp_EditSyncTask";
 
     #endregion
@@ -43,10 +45,10 @@ public class SyncTasksController : NopStationAdminController
         IPermissionService permissionService,
         ISyncTaskModelFactory taskModelFactory,
         ISyncTaskService taskService,
-        ISyncTaskRunner taskRunner,
         ISyncLogService erpSyncLogService,
         INopFileProvider nopFileProvider,
-        ILogger logger)
+        ILogger logger,
+        INopStationScheduler nopStationScheduler)
     {
         _erpActivityLogsService = erpActivityLogsService;
         _localizationService = localizationService;
@@ -54,10 +56,10 @@ public class SyncTasksController : NopStationAdminController
         _permissionService = permissionService;
         _taskModelFactory = taskModelFactory;
         _syncTaskService = taskService;
-        _taskRunner = taskRunner;
         _erpSyncLogService = erpSyncLogService;
         _fileProvider = nopFileProvider;
         _logger = logger;
+        _nopStationScheduler = nopStationScheduler;
     }
 
     #endregion
@@ -95,6 +97,7 @@ public class SyncTasksController : NopStationAdminController
         return Ok(model);
     }
 
+
     [HttpGet]
     public virtual async Task<IActionResult> Edit(int id)
     {
@@ -113,6 +116,7 @@ public class SyncTasksController : NopStationAdminController
         return View(taskModel);
     }
 
+
     [HttpPost]
     public virtual async Task<IActionResult> Edit(int id, SyncTaskDataModel data)
     {
@@ -125,17 +129,61 @@ public class SyncTasksController : NopStationAdminController
         if (task is null)
             return RedirectToAction("List");
 
+        var oldSlot = task.DayTimeSlots;
         task.DayTimeSlots = string.Empty;
 
-        if (data.DayOfWeekData is not null && data.DayOfWeekData[0].IsSelected)
+        if (data is not null && data.DayOfWeekData is not null && data.DayOfWeekData[0].IsSelected)
         {
+            //Schedule triggers
+            foreach (var dayData in data.DayOfWeekData)
+            {
+                if (!dayData.IsSelected)
+                    continue;
+
+                var dayofweek = dayData.DayOfWeek + 1;
+
+                foreach (var timeData in dayData.TimeSlots)
+                {
+                    if (!timeData.IsSelected || timeData.TimeSlot is null)
+                        continue;
+
+                    await _nopStationScheduler.CreateTriggerAsync(data.QuartzJobName, dayofweek, timeData.TimeSlot);
+                }
+            }
+
+            //Unschedule triggers
+            var unscheduleSlots = await GetUnscheduledSlotsAsync(oldSlot, data.DayOfWeekData);
+
+            foreach (var unscheduleSlot in unscheduleSlots)
+            {
+                if (!unscheduleSlot.IsSelected)
+                    continue;
+
+                var triggerKeys = new List<TriggerKey>();
+                var dayofweek = unscheduleSlot.DayOfWeek + 1;
+
+                foreach (var item in unscheduleSlot.TimeSlots)
+                {
+                    if (string.IsNullOrEmpty(item.TimeSlot) && !item.IsSelected)
+                        continue;
+
+                    var triggerKey = _nopStationScheduler.PrepareTriggerKey(data.QuartzJobName, dayofweek, item.TimeSlot!);
+
+                    triggerKeys.Add(triggerKey);
+                }
+
+                await _nopStationScheduler.UnscheduleTriggerAsync(triggerKeys);
+            }
+
             task.DayTimeSlots = JsonConvert.SerializeObject(data.DayOfWeekData);
         }
 
         await _syncTaskService.UpdateTaskAsync(task);
 
         //activity log
-        await _erpActivityLogsService.InsertErpActivityAsync(EDIT_TASK_SYSTEM_KEYWORD, string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ErpDataScheduler.ErpActivityLogs.EditSyncTask"), task.Id, task.Name), task);
+        await _erpActivityLogsService.InsertErpActivityAsync(EDIT_TASK_SYSTEM_KEYWORD, string.Format(
+            await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ErpDataScheduler.ErpActivityLogs.EditSyncTask"),
+            task.Id, task.Name), task);
 
         if (ModelState.IsValid)
         {
@@ -150,6 +198,47 @@ public class SyncTasksController : NopStationAdminController
 
         //if we got this far, something failed, redisplay form
         return View(taskSlotModel);
+    }
+
+    private static async Task<IList<SyncTaskDaySlotModel>> GetUnscheduledSlotsAsync(string dayTimeSlots, List<SyncTaskDaySlotModel> dayOfWeekData)
+    {
+        var unscheduleSlots = new List<SyncTaskDaySlotModel>();
+
+        if (string.IsNullOrEmpty(dayTimeSlots))
+        {
+            return unscheduleSlots;
+        }
+
+        var oldSlots = JsonConvert.DeserializeObject<List<SyncTaskDaySlotModel>>(dayTimeSlots);
+
+        if (oldSlots is null)
+        {
+            return unscheduleSlots;
+        }
+
+        foreach (var oldSlot in oldSlots)
+        {
+            var data = dayOfWeekData.Find(d => d.DayOfWeek == oldSlot.DayOfWeek && d.IsSelected);
+
+            if (data is not null)
+            {
+                var missingSlots = await oldSlot.TimeSlots
+                    .Where(t => !data.TimeSlots.Exists(t2 => t2.TimeSlot == t.TimeSlot))
+                    .ToListAsync();
+
+                if (missingSlots.Count > 0)
+                {
+                    unscheduleSlots.Add(new SyncTaskDaySlotModel
+                    {
+                        DayOfWeek = oldSlot.DayOfWeek,
+                        TimeSlots = missingSlots,
+                        IsSelected = oldSlot.IsSelected
+                    });
+                }
+            }
+        }
+
+        return unscheduleSlots;
     }
 
     [HttpPost]
@@ -170,25 +259,46 @@ public class SyncTasksController : NopStationAdminController
             model.SyncLogSearchModel.SyncTaskId = task.Id;
             ModelState.Remove(nameof(model.Name));
             ModelState.Remove(nameof(model.SyncLogSearchModel.SyncTaskName));
+            ModelState.Remove(nameof(model.QuartzJobName));
         }
 
         if (!ModelState.IsValid)
             return BadRequest(ModelState.SerializeErrors());
 
-        if (!task.Enabled && model.Enabled)
-            task.LastEnabledUtc = DateTime.UtcNow;
+        task.StopOnError = model.StopOnError;
 
-        task = model.ToEntity(task);
+        if (model.Enabled && !task.Enabled)
+        {
+            task.Enabled = true;
+            await _nopStationScheduler.EnableScheduleJobAsync(task.QuartzJobName);
+        }
+        else if (!model.Enabled && task.Enabled)
+        {
+            task.Enabled = false;
+            await _nopStationScheduler.DisableScheduleJobAsync(task.QuartzJobName);
+        }
+
+        if (model.IsIncremental && !task.IsIncremental)
+        {
+            task.IsIncremental = true;
+        }
+        else if (!model.IsIncremental && task.IsIncremental)
+        {
+            task.IsIncremental = false;
+        }
 
         await _syncTaskService.UpdateTaskAsync(task);
 
         //activity log
-        await _erpActivityLogsService.InsertErpActivityAsync(EDIT_TASK_SYSTEM_KEYWORD, string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ErpDataScheduler.ErpActivityLogs.EditSyncTask"), task.Id, task.Name), task);
+        await _erpActivityLogsService.InsertErpActivityAsync(EDIT_TASK_SYSTEM_KEYWORD,
+            string.Format(await _localizationService.GetResourceAsync(
+                "Plugin.Misc.NopStation.ErpDataScheduler.ErpActivityLogs.EditSyncTask"),
+                task.Id, task.Name), task);
 
         return NoContent();
     }
 
-    public virtual async Task<IActionResult> RunNow(int id)
+    public virtual async Task<IActionResult> Execute(int id)
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageScheduleTasks))
             return AccessDeniedView();
@@ -196,24 +306,79 @@ public class SyncTasksController : NopStationAdminController
         //try to get a schedule task with the specified id
         var task = await _syncTaskService.GetTaskByIdAsync(id);
 
-        try
+        if (task is not null)
         {
-            await _taskRunner.ExecuteAsync(task, true, true, true);
+            try
+            {
+                task.LastStartUtc = DateTime.UtcNow;
+                await _syncTaskService.UpdateTaskAsync(task);
+                await _nopStationScheduler.ExecuteSchedulerAsync(task.QuartzJobName, task.IsIncremental);
 
-            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ErpDataScheduler.Tasks.RunNow.Done"));
-        }
-        catch (Exception exc)
-        {
-            await _erpSyncLogService.SyncLogSaveOnFileAsync(
-                    task.Name,
-                    0,
-                    exc.Message,
-                    exc.StackTrace);
-
-            await _notificationService.ErrorNotificationAsync(exc);
+                _notificationService.SuccessNotification(await _localizationService
+                    .GetResourceAsync("Plugin.Misc.NopStation.ErpDataScheduler.Tasks.RunNow.Progress"));
+            }
+            catch (Exception exc)
+            {
+                await _notificationService.ErrorNotificationAsync(exc);
+                await _erpSyncLogService.SyncLogSaveOnFileAsync(task.Name, 0, exc.Message, exc.StackTrace ?? string.Empty);
+            }
         }
 
         return RedirectToAction("List");
+    }
+
+    public virtual async Task<IActionResult> Terminate(int id, CancellationToken cancellationToken)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageScheduleTasks))
+            return AccessDeniedView();
+
+        //try to get a schedule task with the specified id
+        var task = await _syncTaskService.GetTaskByIdAsync(id);
+
+        if (task is not null)
+        {
+            try
+            {
+                task.LastEndUtc = DateTime.UtcNow;
+                await _syncTaskService.UpdateTaskAsync(task);
+                await _nopStationScheduler.TerminateSchedulerAsync(task.QuartzJobName, cancellationToken);
+
+                _notificationService.SuccessNotification(string.Format(await _localizationService
+                    .GetResourceAsync("Plugin.Misc.NopStation.ErpDataScheduler.Tasks.Terminate"), task.Name));
+            }
+            catch (Exception exc)
+            {
+                await _notificationService.ErrorNotificationAsync(exc);
+                await _erpSyncLogService.SyncLogSaveOnFileAsync(task.Name, 0, exc.Message, exc.StackTrace ?? string.Empty);
+            }
+        }
+
+        return RedirectToAction("List");
+    }
+
+    [HttpGet]
+    public async Task JobStatus(CancellationToken cancellationToken)
+    {
+        HttpContext.Response.Headers.Append(HeaderNames.ContentType, "text/event-stream");
+
+        void onJobStatusChangedHandler(string status)
+        {
+            Response.WriteAsync($"data: {status}\n\n", cancellationToken: cancellationToken)
+                .Wait(cancellationToken);
+
+            Response.Body.FlushAsync(cancellationToken).Wait(cancellationToken);
+        }
+
+        NopStationJobListener.OnJobStatusChanged += onJobStatusChangedHandler;
+
+        try
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+        }
+        finally
+        {
+            NopStationJobListener.OnJobStatusChanged -= onJobStatusChangedHandler;
+        }
     }
 
     #endregion

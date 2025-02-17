@@ -14,12 +14,23 @@
     <OutputPath>..\..\Presentation\Nop.Web\Plugins\NopStation.Plugin.B2B.ErpDataScheduler</OutputPath>
     <OutDir>$(OutputPath)</OutDir>
     <!--Set this parameter to true to get the dlls copied from the NuGet cache to the output of your    project. You need to set this parameter to true if your plugin has a nuget package to ensure that   the dlls copied from the NuGet cache to the output of your project-->
-    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup> 
 
   <ItemGroup>
     <None Remove="Areas\Admin\Views\ErpDataScheduler\Configure.cshtml" />
     <None Remove="Areas\Admin\Views\ErpDataScheduler\_Configure.SyncFromDate.cshtml" />
+    <None Remove="Areas\Admin\Views\PartialSync\Index.cshtml" />
+    <None Remove="Areas\Admin\Views\PartialSync\_PartialSync.DeliveryRoute.cshtml" />
+    <None Remove="Areas\Admin\Views\PartialSync\_PartialSync.ErpAccount.cshtml" />
+    <None Remove="Areas\Admin\Views\PartialSync\_PartialSync.ErpAccountCredit.cshtml" />
+    <None Remove="Areas\Admin\Views\PartialSync\_PartialSync.ErpGroupPrice.cshtml" />
+    <None Remove="Areas\Admin\Views\PartialSync\_PartialSync.ErpInvoice.cshtml" />
+    <None Remove="Areas\Admin\Views\PartialSync\_PartialSync.ErpOrder.cshtml" />
+    <None Remove="Areas\Admin\Views\PartialSync\_PartialSync.ErpProduct.cshtml" />
+    <None Remove="Areas\Admin\Views\PartialSync\_PartialSync.ErpShipToAddress.cshtml" />
+    <None Remove="Areas\Admin\Views\PartialSync\_PartialSync.ErpSpecialPrice.cshtml" />
+    <None Remove="Areas\Admin\Views\PartialSync\_PartialSync.ErpStock.cshtml" />
     <None Remove="Areas\Admin\Views\SyncTasks\_CreateOrUpdate.SyncLogs.cshtml" />
     <None Remove="Areas\Admin\Views\_ViewImports.cshtml" />
   </ItemGroup>
@@ -37,6 +48,42 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\ErpDataScheduler\_Configure.SyncFromDate.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\PartialSync\Index.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\PartialSync\_PartialSync.ErpOrder.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\PartialSync\_PartialSync.DeliveryRoute.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\PartialSync\_PartialSync.ErpAccount.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\PartialSync\_PartialSync.ErpAccountCredit.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\PartialSync\_PartialSync.ErpGroupPrice.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\PartialSync\_PartialSync.ErpInvoice.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\PartialSync\_PartialSync.ErpProduct.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\PartialSync\_PartialSync.ErpShipToAddress.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\PartialSync\_PartialSync.ErpSpecialPrice.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\PartialSync\_PartialSync.ErpStock.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\ErpDataScheduler\_Configure.SyncErrorEmailNotification.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\SyncTasks\_CreateOrUpdate.SchedulerSettings.cshtml">
@@ -87,6 +134,25 @@
       <Private>False</Private>
       <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Quartz.AspNetCore" Version="3.13.1" />
+    <PackageReference Include="Quartz.Serialization.Json" Version="3.13.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="..\packages\quartz.aspnetcore\3.13.0\lib\net8.0\Quartz.AspNetCore.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="..\packages\quartz.serialization.json\3.13.1\lib\net462\Quartz.Serialization.Json.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="..\packages\quartz.serialization.json\3.13.1\lib\net472\Quartz.Serialization.Json.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Update="logo.png">

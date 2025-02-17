@@ -1,5 +1,4 @@
-﻿using Nop.Data.Mapping;
-using NopStation.Plugin.B2B.ErpDataScheduler.Areas.Admin.Models;
+﻿using NopStation.Plugin.B2B.ErpDataScheduler.Areas.Admin.Models;
 using NopStation.Plugin.B2B.ErpDataScheduler.Domain;
 using Nop.Services.Localization;
 using Nop.Web.Framework.Validators;

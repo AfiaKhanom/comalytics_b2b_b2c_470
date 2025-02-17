@@ -6206,13 +6206,61 @@
     <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.EnableAccountStatementDownload.Hint">
         <Value>Enable account statement download</Value>
     </LocaleResource>
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.VendorAccessDenied">
+        <Value>Vendors cannot access this functionality</Value>
+    <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.ShowDiscountPercentageOnCartItems.Hint">
+        <Value>Check to Show Discount Percentage On Cart Items</Value>
+    </LocaleResource>
+
+    <!-- Card: 2933-2804-bug-all-the-scheduler-sync-issues-and-changes - 10-Feb-2025 -->
+    
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpAccountSyncTimeOnUtc">
+        <Value>Last Erp Accounts Synced On Utc</Value>
+    </LocaleResource>
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpAccountSyncTimeOnUtc.Hint">
+        <Value>The last utc time this sales org's erp accounts were synced</Value>
+    </LocaleResource>
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpAccountCreditSyncTimeOnUtc">
+        <Value>Last Erp Accounts Credit Synced On Utc</Value>
+    </LocaleResource>
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpAccountCreditSyncTimeOnUtc.Hint">
+        <Value>The last utc time this sales org's erp accounts credit were synced</Value>
+    </LocaleResource>
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpGroupPriceSyncTimeOnUtc">
+        <Value>Last Erp Group Prices Synced On Utc</Value>
     <LocaleResource Name="Admin.ErpShipToAddress.BackToList">
         <Value>Back to Erp Ship To Address list</Value>
     </LocaleResource>
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpGroupPriceSyncTimeOnUtc.Hint">
+        <Value>The last utc time this sales org's erp grup prices were synced</Value>
+    </LocaleResource>
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpShipToAddressSyncTimeOnUtc">
+        <Value>Last Erp Ship To Addresses Synced On Utc</Value>
+    </LocaleResource>
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpShipToAddressSyncTimeOnUtc.Hint">
+        <Value>The last utc time this sales org's erp ship to addresses were synced</Value>
+    </LocaleResource>
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpProductSyncTimeOnUtc">
+        <Value>Last Erp Products Synced On Utc</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.AccessDenied">
+        <Value>Access Denied</Value>
+    </LocaleResource>    
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.NoOrderItemFound">
+        <Value>No order item found with the specified id</Value>
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpProductSyncTimeOnUtc.Hint">
+        <Value>The last utc time products were synced</Value>
+    </LocaleResource>
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpStockSyncTimeOnUtc">
+        <Value>Last Erp Stocks Synced On Utc</Value>
     <LocaleResource Name="Admin.ErpShipToAddress.EditErpShipToAddressDetails">
         <Value>Erp Ship To Address Details</Value>
     </LocaleResource>
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.IntegrationMethodFindResult.NoIntegrationMethodFound">
         <Value>No integration method was found</Value>
+    </LocaleResource>
+    
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpStockSyncTimeOnUtc.Hint">
+        <Value>The last utc time product stocks were synced</Value>
     </LocaleResource>
 </Language>

@@ -10,14 +10,11 @@ using Nop.Core.Domain.Discounts;
 using Nop.Core.Domain.Stores;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
-using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Discounts;
 using Nop.Services.Orders;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
-using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
@@ -90,7 +87,7 @@ public class OverridenPriceCalculationService : PriceCalculationService
     private async Task<(decimal, decimal)> GetGroupPriceAsync(ErpAccount erpAccount, int productId)
     {
         var priceGroupProductPricing = await _erpGroupPriceService
-            .GetB2BPriceGroupProductPricingByErpPriceGroupCodeAndProductId(erpAccount.B2BPriceGroupCodeId ?? 0, productId);
+            .GetErpGroupPriceByErpPriceGroupCodeAndProductId(erpAccount.B2BPriceGroupCodeId ?? 0, productId);
 
         if (priceGroupProductPricing != null && priceGroupProductPricing.Id > 0)
         {

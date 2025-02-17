@@ -1,12 +1,15 @@
-﻿using Nop.Core.Domain.Common;
+﻿using FluentValidation;
+using Nop.Core.Domain.Common;
 using Nop.Services.Common;
 using Nop.Services.Directory;
 using NopStation.Plugin.B2B.B2BB2CFeatures;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
+using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Validators.Helpers;
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncTaskServices;
 
@@ -26,6 +29,8 @@ public class ErpAccountSyncService : IErpAccountSyncService
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
     private const string HIDE_STOCK_VALUES = "HideStockValues";
     private const int ALLOWED_STOCK_PERCENTAGE = 100;
+    private readonly IValidator<ErpAccount> _validator;
+    private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
 
     #endregion
 
@@ -40,7 +45,9 @@ public class ErpAccountSyncService : IErpAccountSyncService
         IErpGroupPriceCodeService erpGroupPriceCodeService,
         IErpDataClearCacheService erpDataClearCacheService,
         IErpIntegrationPluginManager erpIntegrationPluginService,
-        B2BB2CFeaturesSettings b2BB2CFeaturesSettings)
+        B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
+        IValidator<ErpAccount> validator,
+        ISyncWorkflowMessageService syncWorkflowMessageService)
     {
         _addressService = addressService;
         _countryService = countryService;
@@ -52,13 +59,39 @@ public class ErpAccountSyncService : IErpAccountSyncService
         _erpDataClearCacheService = erpDataClearCacheService;
         _erpIntegrationPluginManager = erpIntegrationPluginService;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
+        _validator = validator;
+        _syncWorkflowMessageService = syncWorkflowMessageService;
+    }
+
+    #endregion
+
+    #region Utilities
+
+    private async Task<bool> IsValidErpAccountAsync(ErpAccount erpAccount)
+    {
+        if (erpAccount is null)
+            return false;
+
+        var validationResult = await _validator.ValidateAsync(erpAccount);
+
+        if (!validationResult.IsValid)
+        {
+            var errorMessages = ErpDataValidationHelper.PrepareValidationLog(validationResult);
+
+            await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
+                ErpSyncLevel.Account,
+                $"Data mapping skiped for {erpAccount.AccountName}. \r\n {errorMessages}");
+        }
+
+        return validationResult.IsValid;
     }
 
     #endregion
 
     #region Method
 
-    public virtual async Task<bool> IsErpAccountSyncSuccessfulAsync()
+    public virtual async Task<bool> IsErpAccountSyncSuccessfulAsync(string? erpAccountNumber, bool isManualTrigger = false, bool isIncrementalSync = true, CancellationToken cancellationToken = default)
     {
         var erpIntegrationPlugin = await _erpIntegrationPluginManager.LoadActiveERPIntegrationPlugin();
 
@@ -67,7 +100,7 @@ public class ErpAccountSyncService : IErpAccountSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
                 ErpSyncLevel.Account,
-                "No integration method found.");
+                $"No integration method found. Unable to run {ErpDataSchedulerDefaults.ErpAccountSyncTaskName}.");
 
             return false;
         }
@@ -76,6 +109,8 @@ public class ErpAccountSyncService : IErpAccountSyncService
         {
             #region Data collections
 
+            var erpAccountUpdateList = new List<ErpAccount>();
+            var erpAccountInsertList = new List<ErpAccount>();
             var listOfSalesOrgs = new List<ErpSalesOrg>();
             var salesOrgCode = await erpIntegrationPlugin.GetSalesOrgCodeFromIntegrationSettings();
             if (!string.IsNullOrWhiteSpace(salesOrgCode))
@@ -110,9 +145,7 @@ public class ErpAccountSyncService : IErpAccountSyncService
             var allStateProvinces = (await _stateProvinceService.GetStateProvincesAsync()).ToList();
             var countryId = 0;
             var stateProvinceId = 0;
-            var erpAccountUpdateList = new List<ErpAccount>();
-            var erpAccountInsertList = new List<ErpAccount>();
-            var syncStartTime = DateTime.UtcNow.AddMinutes(-10);
+            //var syncStartTime = DateTime.UtcNow.AddMinutes(-10);
 
             #endregion
 
@@ -128,12 +161,16 @@ public class ErpAccountSyncService : IErpAccountSyncService
                 var start = "0";
                 var lastSyncedErpAccountNumber = string.Empty;
                 var totalSyncedSoFar = 0;
+                var totalNotSyncedSoFar = 0;
 
                 while (true)
                 {
                     var erpGetRequestModel = new ErpGetRequestModel
                     {
                         Start = start,
+                        CompanyPassword = salesOrg.Password,
+                        DateFrom = isIncrementalSync ? salesOrg.LastErpAccountSyncTimeOnUtc : null,
+                        AccountNumber = erpAccountNumber,
                         Location = salesOrg.Code
                     };
 
@@ -148,6 +185,12 @@ public class ErpAccountSyncService : IErpAccountSyncService
                             ErpSyncLevel.Account,
                             response.ErpResponseModel.ErrorShortMessage,
                             response.ErpResponseModel.ErrorFullMessage);
+
+                        await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
+                            DateTime.UtcNow,
+                            ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
+                            response.ErpResponseModel.ErrorShortMessage + "\n\n" + response.ErpResponseModel.ErrorFullMessage);
+
                         break;
                     }
                     else if (response.Data is null)
@@ -159,8 +202,8 @@ public class ErpAccountSyncService : IErpAccountSyncService
                     start = response.ErpResponseModel.Next;
 
                     var responseData = response.Data
-                        .Where(x => !string.IsNullOrWhiteSpace(x.AccountNumber))
-                        .GroupBy(x => x.AccountNumber)
+                        .Where(x => !string.IsNullOrWhiteSpace(x.AccountNumber.Trim()))
+                        .GroupBy(x => x.AccountNumber.Trim())
                         .Select(g => g.Last());
 
                     foreach (var erpAccount in responseData)
@@ -270,6 +313,12 @@ public class ErpAccountSyncService : IErpAccountSyncService
                             oldErpAccount.UpdatedOnUtc = DateTime.UtcNow;
                             oldErpAccount.LastErpAccountSyncDate = DateTime.UtcNow;
 
+                            if (!await IsValidErpAccountAsync(oldErpAccount))
+                            {
+                                totalNotSyncedSoFar++;
+                                continue;
+                            }
+
                             erpAccountInsertList.Add(oldErpAccount);
                         }
                         else
@@ -319,24 +368,44 @@ public class ErpAccountSyncService : IErpAccountSyncService
                             oldErpAccount.UpdatedOnUtc = DateTime.UtcNow;
                             oldErpAccount.LastErpAccountSyncDate = DateTime.UtcNow;
 
+                            if (!await IsValidErpAccountAsync(oldErpAccount))
+                            {
+                                totalNotSyncedSoFar++;
+                                continue;
+                            }
+
                             erpAccountUpdateList.Add(oldErpAccount);
                         }
-
-                        lastSyncedErpAccountNumber = oldErpAccount.AccountNumber;
-                        totalSyncedSoFar++;
                     }
 
                     if (erpAccountInsertList.Count != 0)
                     {
                         await _erpAccountService.InsertErpAccountsAsync(erpAccountInsertList);
+                        totalSyncedSoFar += erpAccountInsertList.Count;
+                        lastSyncedErpAccountNumber = erpAccountInsertList.LastOrDefault()?.AccountNumber;
                         erpAccountInsertList.Clear();
                     }
 
                     if (erpAccountUpdateList.Count != 0)
                     {
                         await _erpAccountService.UpdateErpAccountsAsync(erpAccountUpdateList);
+                        totalSyncedSoFar += erpAccountUpdateList.Count;
+                        lastSyncedErpAccountNumber = erpAccountUpdateList.LastOrDefault()?.AccountNumber;
                         await _erpDataClearCacheService.ClearCacheOfEntities(erpAccountUpdateList);
                         erpAccountUpdateList.Clear();
+                    }
+
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        await _erpSyncLogService.SyncLogSaveOnFileAsync(ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
+                            ErpSyncLevel.Account,
+                            "The Erp Account Sync run is cancelled. " +
+                            (!string.IsNullOrWhiteSpace(lastSyncedErpAccountNumber) ?
+                            $"The last synced Erp Account: {lastSyncedErpAccountNumber}, for Sales Org: ({salesOrg.Code}) {salesOrg.Name}. " : string.Empty) +
+                            $"Total erp accounts synced in this session: {totalSyncedSoFar} " +
+                            $"And total not synced due to invalid data: {totalNotSyncedSoFar}");
+
+                        return false;
                     }
                 }
 
@@ -344,25 +413,29 @@ public class ErpAccountSyncService : IErpAccountSyncService
                 {
                     //await _erpAccountService.InActiveAllOldAccount(syncStartTime);
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
-                            ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
-                            ErpSyncLevel.Account,
-                            $"Erp Accounts sync is successful for Sales Org: {salesOrg.Name}. The accounts which were updated before " +
-                            $"{syncStartTime} are deactivated.");
+                        ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
+                        ErpSyncLevel.Account,
+                        $"Erp Accounts sync is successful for Sales Org: ({salesOrg.Code}) {salesOrg.Name}. "
+                        /*+ $"The accounts which were updated before {syncStartTime} are deactivated."*/);
                 }
                 else
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
-                            ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
-                            ErpSyncLevel.Account,
-                            $"Erp Accounts sync is partially or not successful for Sales Org: {salesOrg.Name}");
+                        ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
+                        ErpSyncLevel.Account,
+                        $"Erp Accounts sync is partially or not successful for Sales Org: ({salesOrg.Code}) {salesOrg.Name}");
                 }
 
                 await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
                     ErpSyncLevel.Account,
                     (!string.IsNullOrWhiteSpace(lastSyncedErpAccountNumber) ?
-                    $"The last synced Erp Account: {lastSyncedErpAccountNumber}, for Sales Org: {salesOrg.Name}. " : string.Empty) +
-                    $"Total synced in this session: {totalSyncedSoFar}");
+                    $"The last synced Erp Account: {lastSyncedErpAccountNumber}, for Sales Org: ({salesOrg.Code}) {salesOrg.Name}. " : string.Empty) +
+                    $"Total synced in this session: {totalSyncedSoFar} " +
+                    $"And total not synced due to invalid data: {totalNotSyncedSoFar}");
+
+                salesOrg.LastErpAccountSyncTimeOnUtc = DateTime.UtcNow;
+                await _erpSalesOrgService.UpdateErpSalesOrgAsync(salesOrg);
             }
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
@@ -378,7 +451,12 @@ public class ErpAccountSyncService : IErpAccountSyncService
                 ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
                 ErpSyncLevel.Account,
                 ex.Message,
-                ex.StackTrace);
+                ex.StackTrace ?? string.Empty);
+
+            await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
+                DateTime.UtcNow,
+                ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
+                ex.Message + "\n\n" + ex.StackTrace);
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpAccountSyncTaskName,

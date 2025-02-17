@@ -24,9 +24,9 @@ public interface IErpGroupPriceService
 
     Task<IList<ErpGroupPrice>> GetErpGroupPriceByProductIdAsync(int productId);
 
-    Task<ErpGroupPrice> GetB2BPriceGroupProductPricingByErpPriceGroupCodeAndProductId(int priceGroupCodeId, int productId);
+    Task<ErpGroupPrice> GetErpGroupPriceByErpPriceGroupCodeAndProductId(int priceGroupCodeId, int productId);
 
-    Task<bool> CheckAnyPriceGroupProductPricingExistWithProductIdAndPriceGroupCodeId(int prouctdId, int priceGroupCodeId);
+    Task<bool> CheckAnyErpGroupPriceExistWithProductIdAndErpGroupPriceCodeId(int prouctdId, int priceGroupCodeId);
     Task InActiveAllOldGroupPrice(DateTime syncStartTime);
 }
 

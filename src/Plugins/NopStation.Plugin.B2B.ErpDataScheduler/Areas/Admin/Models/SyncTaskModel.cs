@@ -3,9 +3,6 @@ using Nop.Web.Framework.Models;
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Areas.Admin.Models;
 
-/// <summary>
-/// Represents a schedule task model
-/// </summary>
 public partial record SyncTaskModel : BaseNopEntityModel
 {
     public SyncTaskModel() 
@@ -30,6 +27,14 @@ public partial record SyncTaskModel : BaseNopEntityModel
 
     [NopResourceDisplayName("Plugin.Misc.NopStation.ErpDataScheduler.Tasks.LastSuccess")]
     public string? LastSuccessUtc { get; set; }
+
+    [NopResourceDisplayName("Plugin.Misc.NopStation.ErpDataScheduler.Tasks.IsRunning")]
+    public bool IsRunning { get; set; }
+
+    [NopResourceDisplayName("Plugin.Misc.NopStation.ErpDataScheduler.Tasks.IsIncremental")]
+    public bool IsIncremental { get; set; }
+
+    public string QuartzJobName { get; set; }
 
     public List<SyncTaskDaySlotModel> DayOfWeekSlots { get; set; } = new List<SyncTaskDaySlotModel> { new() };
 

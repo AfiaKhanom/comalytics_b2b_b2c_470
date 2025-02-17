@@ -17,6 +17,8 @@ public interface IErpOrderAdditionalDataService
 
     Task<bool> CheckQuoteOrderStatusAsync(ErpOrderAdditionalData erpOrderAdditionalData);
 
+    Task<Dictionary<string, bool>> CheckAccountHasOrders(string salesOrgCode, string[] erpAccountNumbers);
+
     Task<ErpOrderAdditionalData> GetErpOrderAdditionalDataByIdAsync(int id);
 
     Task<IPagedList<ErpOrderAdditionalData>> GetAllErpOrderAdditionalDataAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, int accountId = 0, int nopCustomerId = 0, string email = null,  string erpOrderNumber = null, string nopOrderNumber = null, int erpOrderOriginTypeId = 0, int erpOrderTypeId = 0, int integrationStatusTypeId = 0, DateTime? searchOrderDateFrom = null, DateTime? searchOrderDateTo = null);

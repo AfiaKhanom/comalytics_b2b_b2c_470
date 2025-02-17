@@ -16,7 +16,9 @@ public interface IErpIntegrationAccountService
 
     Task<ErpResponseData<string>> GetInvoicePdfByteCodeByDocumentNoFromErpAsync(ErpGetRequestModel erpRequest);
 
-    Task<ErpResponseData<IList<ErpShipToAddressDataModel>>> GetShipToAddressByAccountNumberFromErpAsync(ErpGetRequestModel erpRequest);
+    Task<ErpResponseData<string>> GetStatementPdfByteCodeFromErpAsync(ErpGetRequestModel erpRequest);
+
+    Task<ErpResponseData<IList<ErpShipToAddressDataModel>>> GetShipToAddressesFromErpAsync(ErpGetRequestModel erpRequest);
 
     Task<ErpResponseData<IList<ErpAccountDataModel>>> GetAllAccountCreditFromErpAsync(ErpGetRequestModel erpRequest);
 }

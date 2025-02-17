@@ -172,8 +172,8 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
             return Task.FromResult<IList<string>>(new List<string> { string.Empty });
         }
 
-        return Task.FromResult<IList<string>>(new List<string> 
-        { 
+        return Task.FromResult<IList<string>>(new List<string>
+        {
             PublicWidgetZones.HeaderLinksBefore,
             PublicWidgetZones.HeadHtmlTag,
             PublicWidgetZones.OrderSummaryContentDeals,
@@ -284,7 +284,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
 
     public override async Task UpdateAsync(string currentVersion, string targetVersion)
     {
-        if (targetVersion != currentVersion && targetVersion == "4.70.2.1")
+        if (targetVersion != currentVersion && targetVersion == "4.70.2.35")
         {            
             await InstalLocalResourseStringFromXmlFileAsync();
         }
@@ -306,7 +306,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
             IconClass = "nav-icon fas fa-cube",
             Visible = true,
             ChildNodes = new List<SiteMapNode>() {
-                new SiteMapNode()
+                new ()
                 {
                     SystemName = "NopStation.B2BB2CFeatures.Configuration",
                     Title = "Configuration",
@@ -316,7 +316,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
                     Visible = true,
                     ChildNodes = new List<SiteMapNode>() { }
                 },
-                new SiteMapNode()
+                new ()
                 {
                     SystemName = "NopStation.B2BB2CFeatures.ErpAccounts",
                     Title = "ERP Accounts",
@@ -326,7 +326,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
                     Visible = true,
                     ChildNodes = new List<SiteMapNode>() { }
                 },
-                new SiteMapNode()
+                new ()
                 {
                     SystemName = "NopStation.B2BB2CFeatures.ErpRegistrationApplication",
                     Title = "Registration Applications",
@@ -336,7 +336,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
                     Visible = true,
                     ChildNodes = new List<SiteMapNode>() { }
                 },
-                new SiteMapNode()
+                new ()
                 {
                     SystemName = "NopStation.B2BB2CFeatures.ErpSalesOrgs",
                     Title = "ERP Sales Orgs",
@@ -346,7 +346,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
                     Visible = true,
                     ChildNodes = new List<SiteMapNode>() { }
                 },
-                new SiteMapNode()
+                new ()
                 {
                     SystemName = "NopStation.B2BB2CFeatures.ErpShipToAddress",
                     Title = "ERP Account Branch",
@@ -356,7 +356,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
                     Visible = true,
                     ChildNodes = new List<SiteMapNode>() { }
                 },
-                new SiteMapNode()
+                new ()
                 {
                     SystemName = "NopStation.B2BB2CFeatures.ErpNopUsers",
                     Title = "ERP Nop Users",
@@ -366,7 +366,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
                     Visible = true,
                     ChildNodes = new List<SiteMapNode>() { }
                 },
-                new SiteMapNode()
+                new ()
                 {
                     SystemName = "NopStation.B2BB2CFeatures.ErpGroupPriceCode",
                     Title = "ERP Group Price Code",
@@ -376,7 +376,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
                     Visible = true,
                     ChildNodes = new List<SiteMapNode>() { }
                 },
-                new SiteMapNode()
+                new ()
                 {
                     SystemName = "NopStation.B2BB2CFeatures.ErpInvoices",
                     Title = "ERP Invoices",
@@ -386,7 +386,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
                     Visible = true,
                     ChildNodes = new List<SiteMapNode>() { }
                 },
-                new SiteMapNode()
+                new ()
                 {
                     SystemName = "NopStation.B2BB2CFeatures.SalesRepresentatives",
                     Title = "Sales representatives",
@@ -396,7 +396,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
                     Visible = true,
                     ChildNodes = new List<SiteMapNode>() { }
                 },
-                new SiteMapNode()
+                new ()
                 {
                     SystemName = "NopStation.B2BB2CFeatures.ErpAllProducts",
                     Title = "All ERP Products",
@@ -406,7 +406,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
                     Visible = true,
                     ChildNodes = new List<SiteMapNode>() { }
                 },
-                new SiteMapNode()
+                new ()
                 {
                     SystemName = "NopStation.B2BB2CFeatures.ErpOrder",
                     Title = "All ERP Orders",
@@ -440,7 +440,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
             IconClass = "nav-icon fas fa-cube",
             Visible = true,
             ChildNodes = new List<SiteMapNode>() {
-                new SiteMapNode()
+                new ()
                 {
                     SystemName = "NopStation.B2BB2CFeatures.ErpActivityLogsList",
                     Title = "ERP Activity Logs List",
@@ -450,7 +450,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
                     Visible = true,
                     ChildNodes = new List<SiteMapNode>() { }
                 },
-                new SiteMapNode()
+                new ()
                 {
                     SystemName = "NopStation.B2BB2CFeatures.ErpActivityLogsTypes",
                     Title = "ERP Activity Logs Types",

@@ -1,10 +1,14 @@
-﻿using Nop.Core.Domain.Directory;
+﻿using FluentValidation;
+using Nop.Core;
+using Nop.Core.Domain.Directory;
 using Nop.Services.Directory;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
+using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Validators.Helpers;
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncTaskServices;
 
@@ -20,7 +24,9 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly IErpDataClearCacheService _erpDataClearCacheService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginService;
+    private readonly IValidator<ErpInvoice> _erpInvoiceValidator;
     private readonly ErpDataSchedulerSettings _erpDataSchedulerSettings;
+    private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
 
     #endregion
 
@@ -34,7 +40,9 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
         IErpSalesOrgService erpSalesOrgService,
         IErpDataClearCacheService erpDataClearCacheService,
         IErpIntegrationPluginManager erpIntegrationPluginService,
-        ErpDataSchedulerSettings erpDataSchedulerSettings)
+        IValidator<ErpInvoice> erpInvoiceValidator,
+        ErpDataSchedulerSettings erpDataSchedulerSettings,
+        ISyncWorkflowMessageService syncWorkflowMessageService)
     {
         _currencyService = currencyService;
         _currencySettings = currencySettings;
@@ -44,14 +52,40 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
         _erpSalesOrgService = erpSalesOrgService;
         _erpDataClearCacheService = erpDataClearCacheService;
         _erpIntegrationPluginService = erpIntegrationPluginService;
+        _erpInvoiceValidator = erpInvoiceValidator;
         _erpDataSchedulerSettings = erpDataSchedulerSettings;
+        _syncWorkflowMessageService = syncWorkflowMessageService;
+    }
+
+    #endregion
+
+    #region Utilities
+
+    private async Task<bool> IsvalidErpInvoiceAsync(ErpInvoice erpInvoice)
+    {
+        if (erpInvoice is null)
+            return false;
+
+        var validationResult = await _erpInvoiceValidator.ValidateAsync(erpInvoice);
+
+        if (!validationResult.IsValid)
+        {
+            var errorMessages = ErpDataValidationHelper.PrepareValidationLog(validationResult);
+
+            await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
+                ErpSyncLevel.Invoice,
+                $"Data mapping skiped for {nameof(erpInvoice)}, {nameof(ErpInvoice.ErpAccountId)}: {erpInvoice.Id}. \r\n {errorMessages}");
+        }
+
+        return validationResult.IsValid;
     }
 
     #endregion
 
     #region Method
 
-    public async virtual Task<bool> IsErpInvoiceSyncSuccessfulAsync()
+    public virtual async Task<bool> IsErpInvoiceSyncSuccessfulAsync(string? erpAccountNumber, bool isManualTrigger = false, bool isIncrementalSync = true, CancellationToken cancellationToken = default)
     {
         var erpIntegrationPlugin = await _erpIntegrationPluginService.LoadActiveERPIntegrationPlugin();
 
@@ -60,7 +94,7 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
                 ErpSyncLevel.Invoice,
-                "No integration method found.");
+                $"No integration method found. Unable to run {ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName}.");
 
             return false;
         }
@@ -100,6 +134,23 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                 }
             }
 
+            ErpAccount? specificErpAccount = null;
+            var specificErpAccountSalesOrgFound = false;
+            if (!string.IsNullOrWhiteSpace(erpAccountNumber))
+            {
+                specificErpAccount = await _erpAccountService.GetErpAccountByErpAccountNumberAsync(erpAccountNumber);
+
+                if (specificErpAccount == null)
+                {
+                    await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                        ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
+                        ErpSyncLevel.Invoice,
+                        $"No Erp Account found with Account Number: {erpAccountNumber}");
+
+                    return false;
+                }
+            }
+
             var currency = await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId);
 
             var erpInvoiceUpdateList = new List<ErpInvoice>();
@@ -114,20 +165,42 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
 
             foreach (var salesOrg in listOfSalesOrgs)
             {
-                var oldErpAccounts = await _erpAccountService.GetErpAccountsOfOnlyActiveErpNopUsersAsync(salesOrgId: salesOrg.Id);
+                List<ErpAccount> oldErpAccounts;
 
-                if (oldErpAccounts == null || oldErpAccounts?.Count == 0)
+                if (specificErpAccount != null)
+                {
+                    if (specificErpAccount.ErpSalesOrgId == salesOrg.Id)
+                    {
+                        specificErpAccountSalesOrgFound = true;
+                        oldErpAccounts = new List<ErpAccount> { specificErpAccount };
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    oldErpAccounts = (await _erpAccountService.GetErpAccountsOfOnlyActiveErpNopUsersAsync(salesOrgId: salesOrg.Id)).ToList();
+                }
+
+                if (oldErpAccounts.Count == 0)
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
                         ErpSyncLevel.Invoice,
                         $"No Erp Accounts found with Active Nop Users for Sales org : {salesOrg.Name}");
+
+                    if (specificErpAccount != null)
+                        return false;
+
                     continue;
                 }
 
                 var lastErpInvoiceSynced = string.Empty;
                 var lastErpInvoiceSyncedOfErpAccount = string.Empty;
                 var totalSyncedSoFar = 0;
+                var totalNotSyncedSoFar = 0;
                 var isError = false;
                 var lastErrorMessage = "";
 
@@ -135,7 +208,7 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                 {
                     var start = "0";
                     var erpInvoices = await _erpInvoiceService.GetErpInvoicesByErpAccountIdAsync(erpAccount.Id);
-                    var dateFrom = _erpDataSchedulerSettings.SyncFromDate ?? DateTime.MinValue;
+                    lastErpInvoiceSyncedOfErpAccount = erpAccount.AccountNumber;
 
                     while (true)
                     {
@@ -144,7 +217,8 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                             Start = start,
                             AccountNumber = erpAccount.AccountNumber,
                             Location = salesOrg.Code,
-                            DateFrom = erpAccount.LastTimeOrderSyncOnUtc.HasValue ? erpAccount.LastTimeOrderSyncOnUtc : dateFrom
+                            DateFrom = isIncrementalSync ? erpAccount.LastTimeOrderSyncOnUtc : null,
+                            CompanyPassword = salesOrg.Password
                         };
 
                         var response = await erpIntegrationPlugin.GetInvoiceByAccountNoFromErpAsync(erpGetRequestModel);
@@ -153,6 +227,12 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                         {
                             isError = true;
                             lastErrorMessage = $"The last error: {response.ErpResponseModel.ErrorShortMessage}";
+
+                            await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
+                                DateTime.UtcNow,
+                                ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
+                                response.ErpResponseModel.ErrorShortMessage + "\n\n" + response.ErpResponseModel.ErrorFullMessage);
+
                             break;
                         }
                         else if (response.Data is null)
@@ -164,8 +244,8 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                         start = response.ErpResponseModel.Next;
 
                         var responseData = response.Data
-                            .Where(x => !string.IsNullOrWhiteSpace(x.ErpDocumentNumber))
-                            .GroupBy(x => x.ErpDocumentNumber)
+                            .Where(x => !string.IsNullOrWhiteSpace(x.ErpDocumentNumber.Trim()))
+                            .GroupBy(x => x.ErpDocumentNumber.Trim())
                             .Select(g => g.Last());
 
                         foreach (var erpInvoice in responseData)
@@ -195,7 +275,12 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                                 }
                                 oldErpInvoiceByThisAccount.DocumentDisplayName = parsedDocumentType.ToString();
 
-                                erpInvoiceInsertList.Add(oldErpInvoiceByThisAccount);
+                                if (await IsvalidErpInvoiceAsync(oldErpInvoiceByThisAccount))
+                                {
+                                    erpInvoiceInsertList.Add(oldErpInvoiceByThisAccount);
+                                }
+                                else
+                                    totalNotSyncedSoFar++;
                             }
                             else
                             {
@@ -219,27 +304,49 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                                 }
                                 oldErpInvoiceByThisAccount.DocumentDisplayName = parsedDocumentType.ToString();
 
-                                erpInvoiceUpdateList.Add(oldErpInvoiceByThisAccount);
+                                if (await IsvalidErpInvoiceAsync(oldErpInvoiceByThisAccount))
+                                {
+                                    erpInvoiceUpdateList.Add(oldErpInvoiceByThisAccount);
+                                }
+                                else
+                                    totalNotSyncedSoFar++;
                             }
-
-                            lastErpInvoiceSynced = oldErpInvoiceByThisAccount.ErpDocumentNumber;
-                            lastErpInvoiceSyncedOfErpAccount = erpAccount.AccountNumber;
-                            totalSyncedSoFar++;
                         }
 
                         if (erpInvoiceInsertList.Count != 0)
                         {
                             await _erpInvoiceService.InsertErpInvoicesAsync(erpInvoiceInsertList);
+                            lastErpInvoiceSynced = erpInvoiceInsertList.LastOrDefault()?.ErpDocumentNumber;
+                            totalSyncedSoFar += erpInvoiceInsertList.Count;
                             erpInvoiceInsertList.Clear();
                         }
 
                         if (erpInvoiceUpdateList.Count != 0)
                         {
                             await _erpInvoiceService.UpdateErpInvoicesAsync(erpInvoiceUpdateList);
+                            lastErpInvoiceSynced = erpInvoiceUpdateList.LastOrDefault()?.ErpDocumentNumber;
+                            totalSyncedSoFar += erpInvoiceUpdateList.Count;
                             await _erpDataClearCacheService.ClearCacheOfEntities(erpInvoiceUpdateList);
                             erpInvoiceUpdateList.Clear();
                         }
+
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                                ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
+                                ErpSyncLevel.Invoice,
+                                "The Erp Invoice Sync run is cancelled. " +
+                                (!string.IsNullOrWhiteSpace(lastErpInvoiceSynced) ?
+                                $"The last synced Erp Invoice: {lastErpInvoiceSynced}, of Erp Account: {lastErpInvoiceSyncedOfErpAccount} for Sales Org: ({salesOrg.Code}) {salesOrg.Name}. " : string.Empty) +
+                                $"Total invoices synced in this session: {totalSyncedSoFar} " +
+                                $"And total not synced due to invalid data: {totalNotSyncedSoFar}");
+
+                            return false;
+                        }
                     }
+
+                    erpAccount.LastTimeOrderSyncOnUtc = DateTime.UtcNow;
+                    await _erpAccountService.UpdateErpAccountAsync(erpAccount);
                 }
 
                 if (!isError)
@@ -247,14 +354,14 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
                         ErpSyncLevel.Invoice,
-                        $"Erp Invoice sync successful for Sales Org: {salesOrg.Name}");
+                        $"Erp Invoice sync successful for Sales Org: ({salesOrg.Code}) {salesOrg.Name}");
                 }
                 else
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
                         ErpSyncLevel.Invoice,
-                        $"Erp Invoice sync is partially or not successful for Sales Org: {salesOrg.Name}",
+                        $"Erp Invoice sync is partially or not successful for Sales Org: ({salesOrg.Code}) {salesOrg.Name}",
                         lastErrorMessage);
                 }
 
@@ -262,9 +369,17 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                     ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
                     ErpSyncLevel.Invoice,
                     (!string.IsNullOrWhiteSpace(lastErpInvoiceSynced) ?
-                    $"The last synced Erp Invoice: {lastErpInvoiceSynced}, of Erp Account: {lastErpInvoiceSyncedOfErpAccount} " +
-                    $"for Sales Org: {salesOrg.Name}. " : string.Empty) +
-                    $"Total synced in this session: {totalSyncedSoFar}");
+                    $"The last synced Erp Invoice: {lastErpInvoiceSynced}, of Erp Account: {lastErpInvoiceSyncedOfErpAccount} for Sales Org: ({salesOrg.Code}) {salesOrg.Name}. " : string.Empty) +
+                    $"Total synced in this session: {totalSyncedSoFar} " +
+                    $"And total not synced due to invalid data: {totalNotSyncedSoFar}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(erpAccountNumber) && !specificErpAccountSalesOrgFound)
+            {
+                await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                    ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
+                    ErpSyncLevel.Invoice,
+                    $"No Sales org found for the Erp Account : {erpAccountNumber} to sync Invoices.");
             }
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
@@ -280,7 +395,12 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                 ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
                 ErpSyncLevel.Invoice,
                 ex.Message,
-                ex.StackTrace);
+                ex.StackTrace ?? string.Empty);
+
+            await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
+                DateTime.UtcNow,
+                ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
+                ex.Message + "\n\n" + ex.StackTrace);
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,

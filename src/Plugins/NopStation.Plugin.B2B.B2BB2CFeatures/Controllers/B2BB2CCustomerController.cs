@@ -567,7 +567,7 @@ public class B2BB2CCustomerController : CustomerController
                                         try
                                         {
                                             //fetch shipToAddress from ERP for new ErpAccount
-                                            var erpShipToAddressesbyErpAccount = await erpIntegrationPlugin.GetShipToAddressByAccountNumberFromErpAsync(new ErpGetRequestModel
+                                            var erpShipToAddressesbyErpAccount = await erpIntegrationPlugin.GetShipToAddressesFromErpAsync(new ErpGetRequestModel
                                             {
                                                 AccountNumber = erpAccountInfo.AccountNumber
                                             });

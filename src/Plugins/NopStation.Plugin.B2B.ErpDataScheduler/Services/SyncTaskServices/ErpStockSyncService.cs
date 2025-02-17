@@ -1,8 +1,9 @@
-﻿using Nop.Core.Domain.Catalog;
+﻿using Nop.Core.Caching;
+using Nop.Core.Domain.Catalog;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
-using NopStation.Plugin.B2B.B2BB2CFeatures;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
+using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
@@ -22,6 +23,8 @@ public class ErpStockSyncService : IErpStockSyncService
     private readonly IErpWarehouseAdditionalDataService _erpWarehouseAdditionalDataService;
     private readonly IGenericAttributeService _genericAttributeService;
     private readonly ErpDataSchedulerSettings _erpDataSchedulerSettings;
+    private readonly IStaticCacheManager _staticCacheManager;
+    private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
 
     #endregion
 
@@ -34,7 +37,9 @@ public class ErpStockSyncService : IErpStockSyncService
         IErpSalesOrgService erpSalesOrgService,
         IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService,
         IGenericAttributeService genericAttributeService,
-        ErpDataSchedulerSettings erpDataSchedulerSettings)
+        ErpDataSchedulerSettings erpDataSchedulerSettings,
+        IStaticCacheManager staticCacheManager,
+        ISyncWorkflowMessageService syncWorkflowMessageService)
     {
         _productService = productService;
         _erpSyncLogService = erpSyncLogService;
@@ -44,13 +49,27 @@ public class ErpStockSyncService : IErpStockSyncService
         _erpWarehouseAdditionalDataService = erpWarehouseAdditionalDataService;
         _genericAttributeService = genericAttributeService;
         _erpDataSchedulerSettings = erpDataSchedulerSettings;
+        _staticCacheManager = staticCacheManager;
+        _syncWorkflowMessageService = syncWorkflowMessageService;
+    }
+
+    #endregion
+
+    #region Utilities
+
+    private async Task MapProductAndStockQuantityHistory(Dictionary<string, int> skuStockQuantityMap, string productSku, int stockQuantity)
+    {
+        if (!skuStockQuantityMap.TryAdd(productSku, stockQuantity))
+        {
+            skuStockQuantityMap[productSku] += stockQuantity;
+        }
     }
 
     #endregion
 
     #region Method
 
-    public async virtual Task<bool> IsErpStockSyncSuccessfulAsync()
+    public virtual async Task<bool> IsErpStockSyncSuccessfulAsync(string? stockCode, bool isManualTrigger = false, bool isIncrementalSync = true, CancellationToken cancellationToken = default)
     {
         var erpIntegrationPlugin = await _erpIntegrationPluginService.LoadActiveERPIntegrationPlugin();
 
@@ -112,22 +131,17 @@ public class ErpStockSyncService : IErpStockSyncService
                 var isError = false;
                 var lastErpProductStockSynced = string.Empty;
                 var totalSyncedSoFar = 0;
-
-                var lastStockRefreshTime = await _genericAttributeService.GetAttributeAsync<DateTime?>(salesOrg, B2BB2CFeaturesDefaults.LastStockSyncDateTime);
-                if (lastStockRefreshTime == null || lastStockRefreshTime == DateTime.MinValue)
-                {
-                    lastStockRefreshTime = _erpDataSchedulerSettings.SyncFromDate ?? null;
-                }
-
-                await _genericAttributeService.SaveAttributeAsync(salesOrg, B2BB2CFeaturesDefaults.LastStockSyncDateTime, DateTime.UtcNow);
+                var totalNotSyncedSoFar = 0;
 
                 while (true)
                 {
                     var erpGetRequestModel = new ErpGetRequestModel
                     {
                         Start = start,
-                        DateFrom = lastStockRefreshTime,
-                        Location = salesOrg.Code
+                        DateFrom = isIncrementalSync ? salesOrg.LastErpStockSyncTimeOnUtc : null,
+                        Location = salesOrg.Code,
+                        ProductSku = stockCode,
+                        CompanyPassword = salesOrg.Password
                     };
 
                     var response = await erpIntegrationPlugin.GetStocksFromErpAsync(erpGetRequestModel);
@@ -141,6 +155,11 @@ public class ErpStockSyncService : IErpStockSyncService
                             ErpSyncLevel.Stock,
                             response.ErpResponseModel?.ErrorShortMessage ?? string.Empty,
                             response.ErpResponseModel?.ErrorFullMessage ?? string.Empty);
+
+                        await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
+                            DateTime.UtcNow,
+                            ErpDataSchedulerDefaults.ErpStockSyncTaskName,
+                            response.ErpResponseModel?.ErrorShortMessage + "\n\n" + response.ErpResponseModel?.ErrorFullMessage);
 
                         break;
                     }
@@ -156,9 +175,21 @@ public class ErpStockSyncService : IErpStockSyncService
                     var pwiToUpdate = new List<ProductWarehouseInventory>();
                     var stockQuantityHistoriesToInsert = new List<StockQuantityHistory>();
 
-                    var products = await (await _productService.GetProductsBySkuAsync(response.Data.Where(x => !string.IsNullOrWhiteSpace(x.Sku)).Select(x => x.Sku).ToArray())).ToListAsync();
+                    var responseData = response.Data
+                            .Where(x => !string.IsNullOrWhiteSpace(x.Sku.Trim().ToLower()) && !string.IsNullOrWhiteSpace(x.WarehouseNameOrCode))
+                            .GroupBy(x => new { Sku = x.Sku.Trim().ToLower(), WarehouseCode = x.WarehouseNameOrCode })
+                            .Select(g => g.Last());
+
+                    var products = await _erpProductService
+                        .GetProductsBySkuAsync(
+                            responseData
+                            .Select(x => x.Sku.Trim().ToLower()).ToArray(),
+                            filterOutDeleted: true
+                        );
+
                     if (products is null || products.Count == 0)
                     {
+                        totalNotSyncedSoFar += response.Data.Count;
                         isError = false;
                         break;
                     }
@@ -170,19 +201,22 @@ public class ErpStockSyncService : IErpStockSyncService
                         inventories = await (await _erpProductService.GetProductWarehouseInventoryByProductIdsAndNopWarehouseIdsAsync(products.Select(x => x.Id).ToArray(), erpSalesOrgWarehouse.Select(x => x.NopWarehouseId).ToArray())).ToListAsync();
                     }
 
-                    var responseData = response.Data
-                            .Where(x => !string.IsNullOrWhiteSpace(x.Sku) && !string.IsNullOrWhiteSpace(x.WarehouseNameOrCode))
-                            .GroupBy(x => new { x.Sku, x.WarehouseNameOrCode })
-                            .Select(g => g.Last());
+                    var skuWarehouseStockMapForThisProduct = new Dictionary<string, int>();
 
                     foreach (var erpStock in responseData)
                     {
                         if (string.IsNullOrWhiteSpace(erpStock.Sku) || !erpStock.QuantityOnHand.HasValue)
+                        {
+                            totalNotSyncedSoFar++;
                             continue;
+                        }
 
-                        var product = products.Find(x => x.Sku.Equals(erpStock.Sku));
+                        var product = products.FirstOrDefault(x => x.Sku.Equals(erpStock.Sku));
                         if (product == null || product.Id == 0)
+                        {
+                            totalNotSyncedSoFar++;
                             continue;
+                        }
 
                         if (!string.IsNullOrEmpty(erpStock.WarehouseNameOrCode))
                         {
@@ -232,6 +266,8 @@ public class ErpStockSyncService : IErpStockSyncService
                                     }
                                 }
 
+                                await MapProductAndStockQuantityHistory(skuWarehouseStockMapForThisProduct, product.Sku, inventory.StockQuantity);
+
                                 product.StockQuantity = 0;
                                 product.ManageInventoryMethodId = (int)ManageInventoryMethod.ManageStock;
                                 product.UseMultipleWarehouses = true;
@@ -252,10 +288,27 @@ public class ErpStockSyncService : IErpStockSyncService
                     await _erpProductService.InsertBulkProductWarehouseInventoryAsync(pwiToInsert);
                     await _erpProductService.InsertBulkStockQuantityHistoryAsync(stockQuantityHistoriesToInsert);
 
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                            ErpDataSchedulerDefaults.ErpStockSyncTaskName,
+                            ErpSyncLevel.Stock,
+                            "The Erp Stock sync run is cancelled. " +
+                            (!string.IsNullOrWhiteSpace(lastErpProductStockSynced) ?
+                            $"The last synced Stock of Erp Product : {lastErpProductStockSynced}. " : string.Empty) +
+                            $"Total product stock synced so far: {totalSyncedSoFar}, " +
+                            $"And total not synced due to invalid data or product not found: {totalNotSyncedSoFar}");
+
+                        return false;
+                    }
+
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpStockSyncTaskName,
                         ErpSyncLevel.Stock,
-                        (!string.IsNullOrWhiteSpace(lastErpProductStockSynced) ? $"The last synced Stock of Erp Product : {lastErpProductStockSynced} in this batch. " : string.Empty) + $"Total product stock synced so far: {totalSyncedSoFar}");
+                        (!string.IsNullOrWhiteSpace(lastErpProductStockSynced) ?
+                        $"The last synced Stock of Erp Product : {lastErpProductStockSynced} in this batch. " : string.Empty) +
+                        $"Total product stock synced so far: {totalSyncedSoFar}, " +
+                        $"And total not synced due to invalid data or product not found: {totalNotSyncedSoFar}");
                 }
 
                 if (!isError)
@@ -263,20 +316,26 @@ public class ErpStockSyncService : IErpStockSyncService
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpStockSyncTaskName,
                         ErpSyncLevel.Stock,
-                        $"Erp Stock sync successful for Sales Org: {salesOrg.Name}.");
+                        $"Erp Stock sync successful for Sales Org: ({salesOrg.Code}) {salesOrg.Name}.");
                 }
                 else
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpStockSyncTaskName,
                         ErpSyncLevel.Stock,
-                        $"Erp Stock sync is partially or not successful for Sales Org: {salesOrg.Name}.");
+                        $"Erp Stock sync is partially or not successful for Sales Org: ({salesOrg.Code}) {salesOrg.Name}.");
                 }
 
                 await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpStockSyncTaskName,
                     ErpSyncLevel.Stock,
-                    (!string.IsNullOrWhiteSpace(lastErpProductStockSynced) ? $"The last synced Stock of Erp Product : {lastErpProductStockSynced} in this batch. " : string.Empty) + $"Total product stock synced so far: {totalSyncedSoFar}");
+                    (!string.IsNullOrWhiteSpace(lastErpProductStockSynced) ?
+                    $"The last synced Stock of Erp Product: {lastErpProductStockSynced} for Sales Org: ({salesOrg.Code}) {salesOrg.Name}. " : string.Empty) +
+                    $"Total product stock synced so far: {totalSyncedSoFar}, " +
+                    $"And total not synced due to invalid data or product not found: {totalNotSyncedSoFar}");
+
+                salesOrg.LastErpStockSyncTimeOnUtc = DateTime.UtcNow;
+                await _erpSalesOrgService.UpdateErpSalesOrgAsync(salesOrg);
             }
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
@@ -292,7 +351,12 @@ public class ErpStockSyncService : IErpStockSyncService
                 ErpDataSchedulerDefaults.ErpStockSyncTaskName,
                 ErpSyncLevel.Stock,
                 ex.Message,
-                ex.StackTrace);
+                ex.StackTrace ?? string.Empty);
+
+            await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
+                DateTime.UtcNow,
+                ErpDataSchedulerDefaults.ErpStockSyncTaskName,
+                ex.Message + "\n\n" + ex.StackTrace);
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpStockSyncTaskName,

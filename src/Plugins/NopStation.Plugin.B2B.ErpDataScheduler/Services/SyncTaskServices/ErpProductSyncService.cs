@@ -1,6 +1,8 @@
 ﻿using System.Reflection;
 using System.Text.RegularExpressions;
+using FluentValidation;
 using Nop.Core;
+using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
@@ -10,10 +12,12 @@ using Nop.Services.Tax;
 using Nop.Services.Vendors;
 using NopStation.Plugin.B2B.B2BB2CFeatures;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
+using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Validators.Helpers;
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncTaskServices;
 
@@ -39,12 +43,17 @@ public class ErpProductSyncService : IErpProductSyncService
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
+    private readonly IStaticCacheManager _staticCacheManager;
+    private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
     private const int CATEGORY_PAGE_SIZE = 5;
     private const string MANUFACTURER_TEMPLATE_VIEWPATH = "ManufacturerTemplate.ProductsInGridOrLines";
     private const string PRODUCT_TEMPLATE_VIEWPATH = "ProductTemplate.Simple";
     private const string CATEGORY_TEMPLATE_VIEWPATH = "CategoryTemplate.ProductsInGridOrLines";
     private const int MANUFACTURER_PAGE_SIZE = 6;
     private const string MANUFACTURER_PAGE_SIZE_OPTIONS = "6, 3, 9";
+    private readonly IValidator<Product> _productValidator;
+    private readonly IValidator<Manufacturer> _manufacturerValidator;
+    private readonly IValidator<Category> _categoryValidator;
 
     #endregion
 
@@ -68,7 +77,13 @@ public class ErpProductSyncService : IErpProductSyncService
         IErpDataClearCacheService erpDataClearCacheService,
         IErpIntegrationPluginManager erpIntegrationPluginManager,
         IErpSalesOrgService erpSalesOrgService,
-        B2BB2CFeaturesSettings b2BB2CFeaturesSettings)
+        IErpIntegrationPluginManager erpIntegrationPluginService,
+        B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
+        IValidator<Product> productValidator,
+        IValidator<Manufacturer> manufacturerValidator,
+        IValidator<Category> categoryValidatory,
+        IStaticCacheManager staticCacheManager,
+        ISyncWorkflowMessageService syncWorkflowMessageService)
     {
         _vendorService = vendorService;
         _productService = productService;
@@ -87,7 +102,11 @@ public class ErpProductSyncService : IErpProductSyncService
         _erpProductService = erpProductService;
         _erpSalesOrgService = erpSalesOrgService;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
-        _erpIntegrationPluginManager = erpIntegrationPluginManager;
+        _productValidator = productValidator;
+        _manufacturerValidator = manufacturerValidator;
+        _categoryValidator = categoryValidatory;
+        _staticCacheManager = staticCacheManager;
+        _syncWorkflowMessageService = syncWorkflowMessageService;
     }
 
     #endregion
@@ -128,11 +147,68 @@ public class ErpProductSyncService : IErpProductSyncService
         }
     }
 
+    private async Task<bool> IsValidProductAsync(Product product)
+    {
+        if (product is null)
+            return false;
+
+        var validationResult = await _productValidator.ValidateAsync(product);
+
+        if (!validationResult.IsValid)
+        {
+            var errorMessages = ErpDataValidationHelper.PrepareValidationLog(validationResult);
+
+            await _erpSyncLogService.SyncLogSaveOnFileAsync(ErpDataSchedulerDefaults.ErpProductSyncTaskName,
+                ErpSyncLevel.Product,
+                $"Data mapping skiped for {nameof(Product)}, {nameof(Product.Sku)}: {product.Sku}. \r\n {errorMessages}");
+        }
+
+        return validationResult.IsValid;
+    }
+
+    private async Task<bool> IsValidCategoryAsync(Category category)
+    {
+        if (category is null)
+            return false;
+
+        var validationResult = await _categoryValidator.ValidateAsync(category);
+
+        if (!validationResult.IsValid)
+        {
+            var errorMessages = ErpDataValidationHelper.PrepareValidationLog(validationResult);
+
+            await _erpSyncLogService.SyncLogSaveOnFileAsync(ErpDataSchedulerDefaults.ErpProductSyncTaskName,
+                ErpSyncLevel.Product,
+                $"Data mapping skiped for {nameof(Category)}, {nameof(Category.Name)}: {category.Name}. \r\n {errorMessages}");
+        }
+
+        return validationResult.IsValid;
+    }
+
+    private async Task<bool> IsValidManufacturerAsync(Manufacturer manufacturer)
+    {
+        if (manufacturer is null)
+            return false;
+
+        var validationResult = await _manufacturerValidator.ValidateAsync(manufacturer);
+
+        if (!validationResult.IsValid)
+        {
+            var errorMessages = ErpDataValidationHelper.PrepareValidationLog(validationResult);
+
+            await _erpSyncLogService.SyncLogSaveOnFileAsync(ErpDataSchedulerDefaults.ErpProductSyncTaskName,
+                ErpSyncLevel.Product,
+                $"Data mapping skiped for {nameof(Manufacturer)}, {nameof(Manufacturer.Name)}: {manufacturer.Name}. \r\n {errorMessages}");
+        }
+
+        return validationResult.IsValid;
+    }
+
     #endregion
 
     #region Method
 
-    public async virtual Task<bool> IsErpProductSyncSuccessfulAsync()
+    public virtual async Task<bool> IsErpProductSyncSuccessfulAsync(string? stockCode, bool isManualTrigger = false, bool isIncrementalSync = true, CancellationToken cancellationToken = default)
     {
         var erpIntegrationPlugin = await _erpIntegrationPluginManager.LoadActiveERPIntegrationPlugin();
 
@@ -141,7 +217,7 @@ public class ErpProductSyncService : IErpProductSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpProductSyncTaskName,
                 ErpSyncLevel.Product,
-                "No integration method found.");
+                $"No integration method found. Unable to run {ErpDataSchedulerDefaults.ErpProductSyncTaskName}.");
 
             return false;
         }
@@ -229,19 +305,18 @@ public class ErpProductSyncService : IErpProductSyncService
                 previousStart = "0";
                 var isError = false;
                 var totalSyncedSoFar = 0;
-
-                if (_erpDataSchedulerSettings.StartProductSyncAfterLastSyncedProduct)
-                {
-                    start = (await _genericAttributeService.GetAttributeAsync<string?>(new Product(), ErpDataSchedulerDefaults.LastSyncedProductSkuFromErp)) ?? "0";
-                    syncStartTime = (await _genericAttributeService.GetAttributeAsync<DateTime?>(new Product(), ErpDataSchedulerDefaults.LastSyncStartTimeBeforeDisruption)) ?? DateTime.UtcNow.AddMinutes(-10);
-                }
+                var totalNotSyncedSoFar = 0;
+                List<Product> products;
 
                 while (true)
                 {
                     var erpGetRequestModel = new ErpGetRequestModel
                     {
                         Start = start,
-                        Location = salesOrg.Code
+                        Location = salesOrg.Code,
+                        ProductSku = stockCode,
+                        DateFrom = isIncrementalSync ? salesOrg.LastErpProductSyncTimeOnUtc : null,
+                        CompanyPassword = salesOrg.Password
                     };
 
                     var response = await erpIntegrationPlugin.GetProductsFromErpAsync(erpGetRequestModel);
@@ -255,6 +330,11 @@ public class ErpProductSyncService : IErpProductSyncService
                             ErpSyncLevel.Product,
                             response.ErpResponseModel.ErrorShortMessage,
                             response.ErpResponseModel.ErrorFullMessage);
+
+                        await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
+                            DateTime.UtcNow,
+                            ErpDataSchedulerDefaults.ErpProductSyncTaskName,
+                            response.ErpResponseModel.ErrorShortMessage + "\n\n" + response.ErpResponseModel.ErrorFullMessage);
 
                         break;
                     }
@@ -272,11 +352,24 @@ public class ErpProductSyncService : IErpProductSyncService
                         .GroupBy(x => x.Sku)
                         .Select(g => g.Last());
 
+                    if (responseData == null)
+                    {
+                        isError = false;
+                        break;
+                    }
+
+                    products = (List<Product>?)await _erpProductService
+                            .GetProductsBySkuAsync(
+                                responseData.Select(x => x.Sku.Trim().ToLower()).ToArray(),
+                                filterOutDeleted: true,
+                                filterOutUnpublished: false);
+
                     foreach (var erpProduct in responseData)
                     {
                         #region Products
 
-                        var oldErpProduct = await _productService.GetProductBySkuAsync(erpProduct.Sku);
+                        var shouldCount = false;
+                        var oldErpProduct = products.FirstOrDefault(x => x.Sku.Trim().ToLower() == erpProduct.Sku.Trim().ToLower());
 
                         if (oldErpProduct is null)
                         {
@@ -334,10 +427,15 @@ public class ErpProductSyncService : IErpProductSyncService
 
                             oldErpProduct.Deleted = erpProduct.Published;
                             oldErpProduct.Published = erpProduct.Published;
+                            oldErpProduct.Deleted = false;
                             oldErpProduct.CreatedOnUtc = DateTime.UtcNow;
                             oldErpProduct.UpdatedOnUtc = DateTime.UtcNow;
 
-                            await _productService.InsertProductAsync(oldErpProduct);
+                            if (await IsValidProductAsync(oldErpProduct))
+                            {
+                                shouldCount = true;
+                                await _productService.InsertProductAsync(oldErpProduct);
+                            }
                         }
                         else
                         {
@@ -395,7 +493,11 @@ public class ErpProductSyncService : IErpProductSyncService
                             oldErpProduct.Published = erpProduct.Published;
                             oldErpProduct.UpdatedOnUtc = DateTime.UtcNow;
 
-                            await _productService.UpdateProductAsync(oldErpProduct);
+                            if (await IsValidProductAsync(oldErpProduct))
+                            {
+                                shouldCount = true;
+                                await _productService.UpdateProductAsync(oldErpProduct);
+                            }
                         }
 
                         //search engine name
@@ -460,7 +562,11 @@ public class ErpProductSyncService : IErpProductSyncService
                                     currentCategory.ParentCategoryId = parentCategoryId;
                                     await _categoryService.InsertCategoryAsync(currentCategory);
 
-                                    allCategories.Add(currentCategory);
+                                    if (await IsValidCategoryAsync(currentCategory))
+                                    {
+                                        await _categoryService.InsertCategoryAsync(currentCategory);
+                                        allCategories.Add(currentCategory);
+                                    }
                                 }
                                 else
                                 {
@@ -468,36 +574,42 @@ public class ErpProductSyncService : IErpProductSyncService
                                     await _categoryService.UpdateCategoryAsync(currentCategory);
                                 }
 
-                                //search engine name
-                                await SaveOrUpdateEntitySeNameAsync(currentCategory);
+                                if (await IsValidCategoryAsync(currentCategory))
+                                {
+                                    //search engine name
+                                    await SaveOrUpdateEntitySeNameAsync(currentCategory);
 
-                                parentCategoryId = currentCategory.Id;
-                                incommingCategoryIds.Add(currentCategory.Id);
+                                    parentCategoryId = currentCategory.Id;
+                                    incommingCategoryIds.Add(currentCategory.Id);
+                                }
                             }
 
-                            var existingCategoryMapping = allProductCategories.Where(pc => pc.ProductId == oldErpProduct.Id).ToList();
-
-                            if (parentCategoryId > 0 &&
-                                !existingCategoryMapping.Exists(a => a.CategoryId == parentCategoryId && a.ProductId == oldErpProduct.Id))
+                            if (await IsValidProductAsync(oldErpProduct))
                             {
-                                var newProductCategory = new ProductCategory
+                                var existingCategoryMapping = allProductCategories.Where(pc => pc.ProductId == oldErpProduct.Id).ToList();
+
+                                if (parentCategoryId > 0 &&
+                                    !existingCategoryMapping.Exists(a => a.CategoryId == parentCategoryId && a.ProductId == oldErpProduct.Id))
                                 {
-                                    ProductId = oldErpProduct.Id,
-                                    CategoryId = parentCategoryId,
-                                    DisplayOrder = 0
-                                };
+                                    var newProductCategory = new ProductCategory
+                                    {
+                                        ProductId = oldErpProduct.Id,
+                                        CategoryId = parentCategoryId,
+                                        DisplayOrder = 0
+                                    };
 
-                                await _categoryService.InsertProductCategoryAsync(newProductCategory);
+                                    await _categoryService.InsertProductCategoryAsync(newProductCategory);
 
-                                allProductCategories.Add(newProductCategory);
-                                existingCategoryMapping.Add(newProductCategory);
-                            }
+                                    allProductCategories.Add(newProductCategory);
+                                    existingCategoryMapping.Add(newProductCategory);
+                                }
 
-                            if (parentCategoryId > 0)
-                            {
-                                foreach (var category in existingCategoryMapping.Where(a => a.CategoryId != parentCategoryId))
+                                if (parentCategoryId > 0)
                                 {
-                                    await _categoryService.DeleteProductCategoryAsync(category);
+                                    foreach (var category in existingCategoryMapping.Where(a => a.CategoryId != parentCategoryId))
+                                    {
+                                        await _categoryService.DeleteProductCategoryAsync(category);
+                                    }
                                 }
                             }
                         }
@@ -531,7 +643,7 @@ public class ErpProductSyncService : IErpProductSyncService
 
                             foreach (var attrVal in attributeValues.Select(x => x.Trim()))
                             {
-                                int specAttrOptionId = specificationAttributeOptions?.FirstOrDefault(o => o.Name == attrVal)?.Id ?? 0;
+                                var specAttrOptionId = specificationAttributeOptions?.FirstOrDefault(o => o.Name == attrVal)?.Id ?? 0;
 
                                 if (specAttrOptionId == 0)
                                 {
@@ -544,48 +656,51 @@ public class ErpProductSyncService : IErpProductSyncService
                                     specAttrOptionId = specAttrOption.Id;
                                 }
 
-                                var psaMappings = await _specificationAttributeService.GetProductSpecificationAttributesAsync(oldErpProduct.Id, specAttrOptionId);
-                                var psaMapping = psaMappings.FirstOrDefault();
-
-                                if (psaMapping is null)
+                                if (await IsValidProductAsync(oldErpProduct))
                                 {
-                                    psaMapping = new ProductSpecificationAttribute();
-                                    psaMapping.ProductId = oldErpProduct.Id;
-                                    psaMapping.SpecificationAttributeOptionId = specAttrOptionId;
-                                    psaMapping.AttributeTypeId = (int)SpecificationAttributeType.Option;
-                                    psaMapping.CustomValue = attrVal;
-                                    if (specAttr.Name.Equals(uomSpecificAttribute?.Name))
-                                    {
-                                        psaMapping.ShowOnProductPage = true;
-                                        psaMapping.AllowFiltering = true;
-                                    }
-                                    if (specAttr.Name.Equals(preFilterSpecificAttribute?.Name))
-                                    {
-                                        psaMapping.ShowOnProductPage = false;
-                                        psaMapping.AllowFiltering = false;
-                                    }
-                                    await _specificationAttributeService.InsertProductSpecificationAttributeAsync(psaMapping);
-                                }
-                                else
-                                {
-                                    psaMapping.SpecificationAttributeOptionId = specAttrOptionId;
-                                    psaMapping.AttributeTypeId = (int)SpecificationAttributeType.Option;
-                                    psaMapping.CustomValue = attrVal;
-                                    if (specAttr.Name.Equals(uomSpecificAttribute?.Name ?? "UnitOfMeasure"))
-                                    {
-                                        psaMapping.ShowOnProductPage = true;
-                                        psaMapping.AllowFiltering = true;
-                                    }
-                                    if (specAttr.Name.Equals(preFilterSpecificAttribute?.Name ?? "PrefilterFacet"))
-                                    {
-                                        psaMapping.ShowOnProductPage = false;
-                                        psaMapping.AllowFiltering = false;
-                                    }
-                                    await _specificationAttributeService.UpdateProductSpecificationAttributeAsync(psaMapping);
-                                }
+                                    var psaMappings = await _specificationAttributeService.GetProductSpecificationAttributesAsync(oldErpProduct.Id, specAttrOptionId);
+                                    var psaMapping = psaMappings.FirstOrDefault();
 
-                                existingSpecAttrOptionIds.Add(specAttrOptionId);
-                                productSpecAttrMappingToDelete.AddRange(psaMappings?.Where(x => x.Id != psaMapping.Id));
+                                    if (psaMapping is null)
+                                    {
+                                        psaMapping = new ProductSpecificationAttribute();
+                                        psaMapping.ProductId = oldErpProduct.Id;
+                                        psaMapping.SpecificationAttributeOptionId = specAttrOptionId;
+                                        psaMapping.AttributeTypeId = (int)SpecificationAttributeType.Option;
+                                        psaMapping.CustomValue = attrVal;
+                                        if (specAttr.Name.Equals(uomSpecificAttribute?.Name))
+                                        {
+                                            psaMapping.ShowOnProductPage = true;
+                                            psaMapping.AllowFiltering = true;
+                                        }
+                                        if (specAttr.Name.Equals(preFilterSpecificAttribute?.Name))
+                                        {
+                                            psaMapping.ShowOnProductPage = false;
+                                            psaMapping.AllowFiltering = false;
+                                        }
+                                        await _specificationAttributeService.InsertProductSpecificationAttributeAsync(psaMapping);
+                                    }
+                                    else
+                                    {
+                                        psaMapping.SpecificationAttributeOptionId = specAttrOptionId;
+                                        psaMapping.AttributeTypeId = (int)SpecificationAttributeType.Option;
+                                        psaMapping.CustomValue = attrVal;
+                                        if (specAttr.Name.Equals(uomSpecificAttribute?.Name ?? "UnitOfMeasure"))
+                                        {
+                                            psaMapping.ShowOnProductPage = true;
+                                            psaMapping.AllowFiltering = true;
+                                        }
+                                        if (specAttr.Name.Equals(preFilterSpecificAttribute?.Name ?? "PrefilterFacet"))
+                                        {
+                                            psaMapping.ShowOnProductPage = false;
+                                            psaMapping.AllowFiltering = false;
+                                        }
+                                        await _specificationAttributeService.UpdateProductSpecificationAttributeAsync(psaMapping);
+                                    }
+
+                                    existingSpecAttrOptionIds.Add(specAttrOptionId);
+                                    productSpecAttrMappingToDelete.AddRange(psaMappings?.Where(x => x.Id != psaMapping.Id));
+                                }
                             }
 
                             foreach (var specAttrOption in specificationAttributeOptions?.Where(o => !existingSpecAttrOptionIds.Contains(o.Id)))
@@ -655,9 +770,12 @@ public class ErpProductSyncService : IErpProductSyncService
                                 currentManufacturer.DisplayOrder = 1;
                                 currentManufacturer.CreatedOnUtc = DateTime.UtcNow;
                                 currentManufacturer.UpdatedOnUtc = DateTime.UtcNow;
-                                await _manufacturerService.InsertManufacturerAsync(currentManufacturer);
 
-                                allManufacturers.Add(currentManufacturer);
+                                if (await IsValidManufacturerAsync(currentManufacturer))
+                                {
+                                    await _manufacturerService.InsertManufacturerAsync(currentManufacturer);
+                                    allManufacturers.Add(currentManufacturer);
+                                }
                             }
                             else
                             {
@@ -665,118 +783,128 @@ public class ErpProductSyncService : IErpProductSyncService
                                 await _manufacturerService.UpdateManufacturerAsync(currentManufacturer);
                             }
 
-                            //search engine name
-                            await SaveOrUpdateEntitySeNameAsync(currentManufacturer);
-
-                            if (existingProductManufacturers.Any())
+                            if (await IsValidManufacturerAsync(currentManufacturer))
                             {
-                                var productManufacturer = existingProductManufacturers.FirstOrDefault();
-                                var productManufacturersToDelete = existingProductManufacturers.Skip(1).ToList();
+                                //search engine name
+                                await SaveOrUpdateEntitySeNameAsync(currentManufacturer);
 
-                                foreach (var prodMfct in productManufacturersToDelete)
+                                if (existingProductManufacturers.Any())
                                 {
-                                    existingProductManufacturers.Remove(prodMfct);
-                                    await _manufacturerService.DeleteProductManufacturerAsync(prodMfct);
+                                    var productManufacturer = existingProductManufacturers.FirstOrDefault();
+                                    var productManufacturersToDelete = existingProductManufacturers.Skip(1).ToList();
+
+                                    foreach (var prodMfct in productManufacturersToDelete)
+                                    {
+                                        existingProductManufacturers.Remove(prodMfct);
+                                        await _manufacturerService.DeleteProductManufacturerAsync(prodMfct);
+                                    }
+
+                                    if (productManufacturer.ManufacturerId != currentManufacturer.Id)
+                                    {
+                                        productManufacturer.ManufacturerId = currentManufacturer.Id;
+                                        await _manufacturerService.UpdateProductManufacturerAsync(productManufacturer);
+                                    }
                                 }
-
-                                if (productManufacturer.ManufacturerId != currentManufacturer.Id)
+                                else
                                 {
-                                    productManufacturer.ManufacturerId = currentManufacturer.Id;
-                                    await _manufacturerService.UpdateProductManufacturerAsync(productManufacturer);
+                                    var newProductManufacturer = new ProductManufacturer
+                                    {
+                                        ManufacturerId = currentManufacturer.Id,
+                                        ProductId = oldErpProduct.Id,
+                                        IsFeaturedProduct = false,
+                                        DisplayOrder = 1
+                                    };
+
+                                    await _manufacturerService.InsertProductManufacturerAsync(newProductManufacturer);
                                 }
-                            }
-                            else
-                            {
-                                var newProductManufacturer = new ProductManufacturer
-                                {
-                                    ManufacturerId = currentManufacturer.Id,
-                                    ProductId = oldErpProduct.Id,
-                                    IsFeaturedProduct = false,
-                                    DisplayOrder = 1
-                                };
-
-                                await _manufacturerService.InsertProductManufacturerAsync(newProductManufacturer);
                             }
                         }
 
                         #endregion
 
-                        lastSyncedErpProduct = oldErpProduct.Sku;
-                        totalSyncedSoFar++;
+                        if (shouldCount)
+                        {
+                            lastSyncedErpProduct = oldErpProduct.Sku;
+                            totalSyncedSoFar++;
+                        }
+                        else
+                        {
+                            totalNotSyncedSoFar++;
+                        }
                     }
 
-                    if (_erpDataSchedulerSettings.StartProductSyncAfterLastSyncedProduct)
+                    if (cancellationToken.IsCancellationRequested)
                     {
-                        await _genericAttributeService.SaveAttributeAsync<string?>(
-                            new Product(),
-                            ErpDataSchedulerDefaults.LastSyncedProductSkuFromErp,
-                            $"{(!string.IsNullOrWhiteSpace(lastSyncedErpProduct) ? lastSyncedErpProduct : previousStart)}");
+                        await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                            ErpDataSchedulerDefaults.ErpProductSyncTaskName,
+                            ErpSyncLevel.Product,
+                            $"The Erp Product Sync run is cancelled for Sales Org: ({salesOrg.Code}) {salesOrg.Name}." +
+                            (!string.IsNullOrWhiteSpace(lastSyncedErpProduct) ? 
+                            $"The last synced Erp Product: {lastSyncedErpProduct} in this batch. " : string.Empty) +
+                            $"Total products synced so far: {totalSyncedSoFar} " +
+                            $"And total products not sync due to invalid data: {totalNotSyncedSoFar}");
+
+                        return false;
                     }
 
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpProductSyncTaskName,
                         ErpSyncLevel.Product,
-                        (!string.IsNullOrWhiteSpace(lastSyncedErpProduct) ? $"The last synced Erp Product: {lastSyncedErpProduct} in this batch. " : string.Empty) +
+                        (!string.IsNullOrWhiteSpace(lastSyncedErpProduct) ?
+                        $"The last synced Erp Product: {lastSyncedErpProduct} in this batch. " : string.Empty) +
                         $"Total product synced so far: {totalSyncedSoFar}");
                 }
 
                 if (!isError)
                 {
-                    await _erpProductService.UnpublishAllOldProduct(syncStartTime);
-
+                    //await _erpProductService.UnpublishAllOldProduct(syncStartTime);
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpProductSyncTaskName,
                         ErpSyncLevel.Product,
-                        $"Erp Product sync successful. The products which were updated before {syncStartTime} are unpublished.");
-
-                    // Clear attributes if sync successful.
-                    if (_erpDataSchedulerSettings.StartProductSyncAfterLastSyncedProduct)
-                    {
-                        await _genericAttributeService.SaveAttributeAsync<string?>(new Product(), ErpDataSchedulerDefaults.LastSyncedProductSkuFromErp, null);
-                        await _genericAttributeService.SaveAttributeAsync<DateTime?>(new Product(), ErpDataSchedulerDefaults.LastSyncStartTimeBeforeDisruption, null);
-                    }
+                        $"Erp Product sync successful for Sales Org: ({salesOrg.Code}) {salesOrg.Name}");
                 }
                 else
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpProductSyncTaskName,
                         ErpSyncLevel.Product,
-                         $"Erp Product sync is partially or not successful");
-
-                    if (_erpDataSchedulerSettings.StartProductSyncAfterLastSyncedProduct)
-                    {
-                        await _genericAttributeService.SaveAttributeAsync<string?>(new Product(), ErpDataSchedulerDefaults.LastSyncedProductSkuFromErp, $"{(!string.IsNullOrWhiteSpace(lastSyncedErpProduct) ? lastSyncedErpProduct : previousStart)}");
-                        await _genericAttributeService.SaveAttributeAsync<DateTime?>(new Product(), ErpDataSchedulerDefaults.LastSyncStartTimeBeforeDisruption, syncStartTime);
-                    }
+                        $"Erp Product sync is partially or not successful for Sales Org: ({salesOrg.Code}) {salesOrg.Name}");
                 }
 
                 await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpProductSyncTaskName,
                     ErpSyncLevel.Product,
-                    (!string.IsNullOrWhiteSpace(lastSyncedErpProduct) ? $"The last synced Erp Product: {lastSyncedErpProduct} in this batch. " : string.Empty) +
-                    $"Total product synced so far: {totalSyncedSoFar}");
+                    (!string.IsNullOrWhiteSpace(lastSyncedErpProduct) ? 
+                    $"The last synced Erp Product: {lastSyncedErpProduct}. " : string.Empty) +
+                    $"Total product synced so far: {totalSyncedSoFar} " +
+                    $"And total products not sync due to invalid data: {totalNotSyncedSoFar}");
+
+                salesOrg.LastErpProductSyncTimeOnUtc = DateTime.UtcNow;
+                await _erpSalesOrgService.UpdateErpSalesOrgAsync(salesOrg);
             }
 
+            await _staticCacheManager.RemoveByPrefixAsync("nop.pres.jcarousel.");
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
-                    ErpDataSchedulerDefaults.ErpProductSyncTaskName,
-                    ErpSyncLevel.Product,
-                    "Erp Product Sync ended.");
+                ErpDataSchedulerDefaults.ErpProductSyncTaskName,
+                ErpSyncLevel.Product,
+                "Erp Product Sync ended.");
 
             return true;
         }
         catch (Exception ex)
         {
-            if (_erpDataSchedulerSettings.StartProductSyncAfterLastSyncedProduct)
-            {
-                await _genericAttributeService.SaveAttributeAsync<string?>(new Product(), ErpDataSchedulerDefaults.LastSyncedProductSkuFromErp, $"{(!string.IsNullOrWhiteSpace(lastSyncedErpProduct) ? lastSyncedErpProduct : previousStart)}");
-                await _genericAttributeService.SaveAttributeAsync<DateTime?>(new Product(), ErpDataSchedulerDefaults.LastSyncStartTimeBeforeDisruption, syncStartTime);
-            }
+            await _staticCacheManager.RemoveByPrefixAsync("nop.pres.jcarousel.");
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpProductSyncTaskName,
                 ErpSyncLevel.Product,
                 ex.Message,
-                ex.StackTrace);
+                ex.StackTrace ?? string.Empty);
+
+            await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
+                DateTime.UtcNow,
+                ErpDataSchedulerDefaults.ErpProductSyncTaskName,
+                ex.Message + "\n\n" + ex.StackTrace);
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpProductSyncTaskName,

@@ -17,6 +17,8 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
 
     private readonly IRepository<ErpOrderAdditionalData> _erpOrderAdditionalDataRepository;
     private readonly IRepository<Order> _orderRepository;
+    private readonly IRepository<ErpAccount> _erpAccountRepository;
+    private readonly IRepository<ErpSalesOrg> _erpSalesOrgRepository;
     private readonly IOrderService _orderService;
 
     #endregion
@@ -25,10 +27,14 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
 
     public ErpOrderAdditionalDataService(IRepository<ErpOrderAdditionalData> erpOrderAdditionalDataRepository,
         IRepository<Order> orderRepository,
+        IRepository<ErpAccount> erpAccountRepository,
+        IRepository<ErpSalesOrg> erpSalesOrgRepository,
         IOrderService orderService)
     {
         _erpOrderAdditionalDataRepository = erpOrderAdditionalDataRepository;
         _orderRepository = orderRepository;
+        _erpAccountRepository = erpAccountRepository;
+        _erpSalesOrgRepository = erpSalesOrgRepository;
         _orderService = orderService;
     }
 
@@ -69,6 +75,22 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
     #endregion
 
     #region Read
+
+    public async Task<Dictionary<string, bool>> CheckAccountHasOrders(string salesOrgCode, string[] erpAccountNumbers)
+    {
+        var orders = (
+            from erpOrder in _erpOrderAdditionalDataRepository.Table
+            join erpAccount in _erpAccountRepository.Table on erpOrder.ErpAccountId equals erpAccount.Id
+            join salesOrg in _erpSalesOrgRepository.Table on erpAccount.ErpSalesOrgId equals salesOrg.Id
+            where salesOrg.Code == salesOrgCode && erpAccountNumbers.Contains(erpAccount.AccountNumber)
+            select new { erpAccount.AccountNumber }
+        ).Distinct().ToList();
+
+        return erpAccountNumbers.ToDictionary(
+            accountNumber => accountNumber,
+            accountNumber => orders.Exists(o => o.AccountNumber == accountNumber)
+        );
+    }
 
     public async Task<bool> IfCustomerReferenceExistWithThisErpAccount(string customerReference, int erpAccountId)
     {

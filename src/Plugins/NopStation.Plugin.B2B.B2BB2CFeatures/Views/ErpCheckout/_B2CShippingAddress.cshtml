@@ -124,39 +124,37 @@
 
                             <div class="shipping-addresses" id="shipping-addresses-form">
                                 @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.CheckoutShippingAddressTop, additionalData = Model })
-                                    @if (Model.ExistingErpShipToAddresses.Count > 0)
-                                    {
-                                        <div class="section select-shipping-address">
-                                            <div class="title">
-                                                <strong>@T("Checkout.SelectShippingAddress")</strong>
-                                            </div>
-                                            <div class="shipping-address-body" style="text-align:center;">
-                                            @foreach (var item in Model.ExistingErpShipToAddresses)
-                                            {
-                                                var addressLine = string.Join(", ", new string[] {
-                                                        item.ShipToName,
-                                                        item.Address1,
-                                                        item.Address2,
-                                                        item.Suburb,
-                                                        item.City,
-                                                        item.StateProvinceName,
-                                                        item.ZipPostalCode
-                                                    }.Where(s => !string.IsNullOrEmpty(s)));
 
-                                                <label id="shipping-address-select" class="address-select-radio">
-                                                    <input id="shipToAddress"
+                                @if (Model.SelectedShipToAddress != null)
+                                {
+                                    var addressLine = string.Join(", ", new string[] {
+                                        Model.SelectedShipToAddress.ShipToName,
+                                        Model.SelectedShipToAddress.Address1,
+                                        Model.SelectedShipToAddress.Address2,
+                                        Model.SelectedShipToAddress.Suburb,
+                                        Model.SelectedShipToAddress.City,
+                                        Model.SelectedShipToAddress.StateProvinceName,
+                                        Model.SelectedShipToAddress.ZipPostalCode
+                                    }.Where(s => !string.IsNullOrEmpty(s)));
+
+                                    <div class="section select-shipping-address">
+                                        <div class="title">
+                                            <strong>@T("Checkout.SelectShippingAddress")</strong>
+                                        </div>
+                                        <div class="shipping-address-body" style="text-align:center;">
+                                            <label id="shipping-address-select" class="address-select-radio">
+                                                <input id="shipToAddress-@Model.SelectedShipToAddress.Id"
                                                     type="radio"
-                                                    data-id="@item.Id" 
-                                                    data-suburb="@item.Suburb" 
-                                                    data-city="@item.City" 
-                                                    checked="@((Model.ErpShipToAddressId == item.Id) || (Model.ExistingErpShipToAddresses.Count() == 1) ? true : false)" 
-                                                    asp-for="@Model.ErpShipToAddressId"
-                                                    value="@item.Id" />
-                                                    <span class="checkmark"></span>
-                                                    @(addressLine)
-                                                </label>
-                                                <br />
-                                            }
+                                                    data-id="@Model.SelectedShipToAddress.Id"
+                                                    data-suburb="@Model.SelectedShipToAddress.Suburb"
+                                                    data-city="@Model.SelectedShipToAddress.City"
+                                                    checked=true
+                                                    asp-for="@Model.SelectedShipToAddress.Id"
+                                                    value="@Model.SelectedShipToAddress.Id" />
+                                                <span class="checkmark"></span>
+                                                @(addressLine)
+                                            </label>
+                                            <br />
                                             <br />
                                             @if (Model.AllowAddressEdit)
                                             {

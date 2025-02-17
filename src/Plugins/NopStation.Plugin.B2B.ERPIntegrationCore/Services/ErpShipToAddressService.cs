@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using LinqToDB.Common;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Customers;
@@ -213,30 +214,76 @@ public class ErpShipToAddressService : IErpShipToAddressService
 
         var erpShipToAddresses = await _erpShipToAddressRepository.GetAllAsync(query =>
         {
-            if (erpAccountId > 0)
-            {
-                query = from address in _erpShipToAddressRepository.Table
-                        join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
-                        where cam.ErpAccountId == erpAccountId
-                        select address;
-            }
-            else
-            {
-                query = from address in _erpShipToAddressRepository.Table
-                        join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
-                        where cam.ErpAccountId > 0
-                        select address;
-            }
+            query = from address in _erpShipToAddressRepository.Table
+                    join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
+                    where cam.ErpAccountId == erpAccountId
+                    select address;
+            
             if (!showHidden)
                 query = query.Where(egp => egp.IsActive);
 
             query = query.Where(egp => !egp.IsDeleted);
             query = query.OrderBy(ei => ei.Id);
             return query;
-
         });
 
         return erpShipToAddresses;
+    }
+
+    public async Task<IList<ErpShipToAddress>> GetAllErpShipToAddressesByErpAccountIdsAsync(int[] erpAccountIds, bool showHidden = false, bool isActiveOnly = false)
+    {
+        return await _erpShipToAddressRepository.GetAllAsync(query =>
+        {
+            query = from address in _erpShipToAddressRepository.Table
+                    join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
+                    where !erpAccountIds.IsNullOrEmpty() && erpAccountIds.Contains(cam.ErpAccountId)
+                    select address;
+
+            if (!showHidden)
+                query = query.Where(b => !b.IsDeleted);
+
+            if (isActiveOnly)
+                query = query.Where(b => b.IsActive);
+
+            query = query.OrderBy(ei => ei.ShipToCode);
+            return query;
+        });
+    }
+
+    public async Task<Dictionary<int, List<ErpShipToAddress>>> GetErpAccountShipToAddressMappingAsync(int[] erpAccountIds, bool showHidden = false, bool isActiveOnly = false)
+    {
+        var query = from address in _erpShipToAddressRepository.Table
+                    join cam in _erpShiptoAddressErpAccountMapRepository.Table
+                    on address.Id equals cam.ErpShiptoAddressId
+                    where erpAccountIds != null && erpAccountIds.Length > 0 && erpAccountIds.Contains(cam.ErpAccountId)
+                    select new
+                    {
+                        ErpAccountId = cam.ErpAccountId,
+                        ErpShipToAddress = address
+                    };
+
+        if (!showHidden)
+        {
+            query = query.Where(x => !x.ErpShipToAddress.IsDeleted);
+        }
+
+        if (isActiveOnly)
+        {
+            query = query.Where(x => x.ErpShipToAddress.IsActive);
+        }
+
+        query = query.OrderBy(x => x.ErpShipToAddress.ShipToCode);
+
+        var results = await query.ToListAsync();
+
+        var mappedResults = results
+            .GroupBy(x => x.ErpAccountId)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(x => x.ErpShipToAddress).ToList()
+            );
+
+        return mappedResults;
     }
 
     public async Task<ErpShipToAddress> GetErpShipToAddressByShippingAddressIdAsync(int shippingAddressId)
@@ -279,7 +326,7 @@ public class ErpShipToAddressService : IErpShipToAddressService
         return erpShipToAddresses.ToList();
     }
 
-    public async Task<ErpShipToAddress> GetErpShipToAddressByShiptocodeAndAccountIdAsync(string shipToCode, int erpAccountId)
+    public async Task<ErpShipToAddress> GetErpShipToAddressByShipToCodeAndErpAccountIdAsync(string shipToCode, int erpAccountId)
     {
         if (erpAccountId < 1)
             return null;
@@ -298,6 +345,16 @@ public class ErpShipToAddressService : IErpShipToAddressService
 
     #region ErpShipToAddressErpAccountMap
 
+    public async Task<IList<ErpShiptoAddressErpAccountMap>> GetErpShipToAddressErpAccountMapsByErpAccountIdsAsync(int[] erpAccountIds)
+    {
+        if (!erpAccountIds.Any())
+            return null;
+
+        return await _erpShiptoAddressErpAccountMapRepository.Table
+            .Where(m => erpAccountIds.Contains(m.ErpAccountId))
+            .ToListAsync();
+    }
+
     public virtual async Task<ErpShiptoAddressErpAccountMap> GetErpShipToAddressErpAccountMapByErpShipToAddressIdAsync(int erpShipToAddressId)
     {
         if (erpShipToAddressId == 0)
@@ -309,8 +366,7 @@ public class ErpShipToAddressService : IErpShipToAddressService
 
     public virtual async Task RemoveErpShipToAddressErpAccountMapAsync(ErpAccount erpAccount, ErpShipToAddress erpShipToAddress)
     {
-        if (erpAccount == null)
-            throw new ArgumentNullException(nameof(erpAccount));
+        ArgumentNullException.ThrowIfNull(erpAccount);
 
         if (await _erpShiptoAddressErpAccountMapRepository.Table
             .FirstOrDefaultAsync(m => m.ErpShiptoAddressId == erpShipToAddress.Id && m.ErpAccountId == erpAccount.Id)
@@ -325,11 +381,7 @@ public class ErpShipToAddressService : IErpShipToAddressService
 
     public virtual async Task InsertErpShipToAddressErpAccountMapAsync(ErpAccount erpAccount, ErpShipToAddress erpShipToAddress)
     {
-        if (erpAccount is null)
-            throw new ArgumentNullException(nameof(erpAccount));
-
-        if (erpAccount is null)
-            throw new ArgumentNullException(nameof(erpAccount));
+        ArgumentNullException.ThrowIfNull(erpAccount);
 
         if (await _erpShiptoAddressErpAccountMapRepository.Table
             .FirstOrDefaultAsync(m => m.ErpShiptoAddressId == erpShipToAddress.Id && m.ErpAccountId == erpAccount.Id) is null)

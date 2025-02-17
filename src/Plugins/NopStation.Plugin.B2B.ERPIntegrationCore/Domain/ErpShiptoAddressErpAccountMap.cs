@@ -6,6 +6,4 @@ public partial class ErpShiptoAddressErpAccountMap : BaseEntity
 {
     public int ErpAccountId { get; set; }
     public int ErpShiptoAddressId { get; set; }
-    public ErpAccount ErpAccount { get; set; }
-    public ErpShipToAddress ErpShipToAddress { get; set; }
 }

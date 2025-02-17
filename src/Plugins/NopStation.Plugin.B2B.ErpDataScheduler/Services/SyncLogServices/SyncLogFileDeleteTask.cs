@@ -1,6 +1,6 @@
 ﻿using Nop.Core.Infrastructure;
 using Nop.Services.ScheduleTasks;
-using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncTaskScheduler;
+using NopStation.Plugin.B2B.ErpDataScheduler.Services.NopStationSyncServices;
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
 

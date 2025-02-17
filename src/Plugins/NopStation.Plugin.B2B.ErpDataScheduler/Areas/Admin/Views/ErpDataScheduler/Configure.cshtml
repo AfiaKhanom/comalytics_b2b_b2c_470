@@ -13,6 +13,9 @@
 
     const string hideSyncFromDateBlockAttributeName = "Configure.HideSyncFromDateBlock";
     var hideSyncFromDateBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideSyncFromDateBlockAttributeName);
+
+    const string hideSyncErrorEmailNotificationBlockAttributeName = "Configure.HideSyncErrorEmailNotificationBlock";
+    var hideSyncErrorEmailNotificationBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideSyncErrorEmailNotificationBlockAttributeName);
 }
 
 <form asp-controller="ErpDataScheduler" asp-action="Configure" method="post">
@@ -31,7 +34,22 @@
         <div class="container-fluid">
             <div class="form-horizontal">
                 <nop-cards id="configure-cards">
-                    <nop-card asp-name="configure-sync-from-date" asp-icon="fas fa-info" asp-title="@T("Plugin.Misc.NopStation.ErpDataScheduler.Admin.Configure.Block.Configure")" asp-hide-block-attribute-name="@hideSyncFromDateBlockAttributeName" asp-hide="@hideSyncFromDateBlock" asp-advanced="false">@await Html.PartialAsync("_Configure.SyncFromDate", Model)</nop-card>
+                    <nop-card 
+                        asp-name="configure-sync-from-date" 
+                        asp-icon="fas fa-info" 
+                        asp-title="@T("Plugin.Misc.NopStation.ErpDataScheduler.Admin.Configure.Block.SyncFromDate")" 
+                        asp-hide-block-attribute-name="@hideSyncFromDateBlockAttributeName" 
+                        asp-hide="@hideSyncFromDateBlock" 
+                        asp-advanced="false">@await Html.PartialAsync("_Configure.SyncFromDate", Model)
+                    </nop-card>
+                    <nop-card 
+                        asp-name="configure-sync-notification" 
+                        asp-icon="fas fa-info" 
+                        asp-title="@("Plugin.Misc.NopStation.ErpDataScheduler.Admin.Configure.Block.SyncNotification")" 
+                        asp-hide-block-attribute-name="@hideSyncErrorEmailNotificationBlockAttributeName" 
+                        asp-hide="@hideSyncErrorEmailNotificationBlock" 
+                        asp-advanced="false">@await Html.PartialAsync("_Configure.SyncErrorEmailNotification", Model)
+                    </nop-card>
                  </nop-cards>
             </div>
         </div>

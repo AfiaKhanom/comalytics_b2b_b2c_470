@@ -246,6 +246,57 @@ public class ErpAccountService : IErpAccountService
         return erpAccounts;
     }
 
+    public async Task<IList<ErpAccount>> GetErpAccountListAsync(string accontNumber = null,
+    string accountName = null,
+    string email = null,
+    int salesOrgId = 0,
+    int erpAccountStatusTypeId = 0,
+    bool filterDeleted = true,
+    bool? showHidden = null)
+    {
+        var erpAccounts = await _erpAccountRepository.GetAllAsync(query =>
+        {
+            // showHidden is null for getting all, true for only inactives and false for only actives
+            if (showHidden.HasValue)
+            {
+                if (!showHidden.Value)
+                    query = query.Where(v => v.IsActive);
+                else
+                    query = query.Where(v => !v.IsActive);
+            }
+
+            if (erpAccountStatusTypeId > 0)
+                query = query.Where(c => c.ErpAccountStatusTypeId.Equals(erpAccountStatusTypeId));
+
+            if (!string.IsNullOrWhiteSpace(accontNumber))
+                query = query.Where(c => c.AccountNumber.Contains(accontNumber));
+
+            if (salesOrgId > 0)
+                query = query.Where(c => c.ErpSalesOrgId.Equals(salesOrgId));
+
+            if (!string.IsNullOrWhiteSpace(accountName))
+                query = query.Where(c => c.AccountName.Contains(accountName));
+
+            if (filterDeleted)
+                query = query.Where(v => !v.IsDeleted);
+
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                query = query.Join(_addressRepository.Table, x => x.BillingAddressId, y => y.Id,
+                        (x, y) => new { ErpAccount = x, Address = y })
+                    .Where(z => z.Address.Email.Contains(email) || z.ErpAccount.EmailAddresses.Contains(email))
+                    .Select(z => z.ErpAccount)
+                    .Distinct();
+            }
+
+            query = query.OrderBy(ea => ea.Id);
+
+            return query;
+        });
+
+        return erpAccounts;
+    }
+
     public async Task<IList<ErpSalesRepErpAccountMap>> GetAllErpAccountsBySalesRepIdAsync(string erpSalesRepId = null)
     {
         var erpAccounts = await _erpSalesRepErpAccountMapRepository.GetAllAsync(query =>

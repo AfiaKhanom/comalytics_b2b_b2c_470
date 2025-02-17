@@ -8,9 +8,11 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 public interface IErpShipToAddressService
 {
     Task InsertErpShipToAddressAsync(ErpShipToAddress erpShipToAddress);
+
     Task InsertErpShipToAddressesAsync(IList<ErpShipToAddress> erpShipToAddresses);
 
     Task UpdateErpShipToAddressAsync(ErpShipToAddress erpShipToAddress);
+
     Task UpdateErpShipToAddressesAsync(IList<ErpShipToAddress> erpShipToAddresses);
 
     Task DeleteErpShipToAddressByIdAsync(int id);
@@ -25,7 +27,9 @@ public interface IErpShipToAddressService
 
     Task<ErpShipToAddress> GetErpShipToAddressByShippingAddressIdAsync(int shippingAddressId);
 
-    Task<IList<ErpShipToAddress>> GetAllErpShipToAddressesAsync(bool showHidden = false, bool isActiveOnly = false);
+    Task<IList<ErpShipToAddress>> GetAllErpShipToAddressesByErpAccountIdsAsync(int[] erpAccountIds, bool showHidden = false, bool isActiveOnly = false);
+
+    Task<Dictionary<int, List<ErpShipToAddress>>> GetErpAccountShipToAddressMappingAsync(int[] erpAccountIds, bool showHidden = false, bool isActiveOnly = false);
 
     Task<IPagedList<ErpShipToAddress>> GetAllErpShipToAddressesAsync(string shipToCode = "",
         string shipToName = "", int erpAccountId = 0, string repNum = "", string repFullName = "", string repEmail = "",
@@ -36,6 +40,7 @@ public interface IErpShipToAddressService
     Task RemoveErpShipToAddressErpAccountMapAsync(ErpAccount erpAccount, ErpShipToAddress erpShipToAddress);
 
     Task InsertErpShipToAddressErpAccountMapAsync(ErpAccount erpAccount, ErpShipToAddress erpShipToAddress);
+
     Task InsertErpShipToAddressErpAccountMapsAsync(IList<ErpShiptoAddressErpAccountMap> erpShiptoAddressErpAccountMaps);
 
     Task<IList<ErpShipToAddress>> GetErpShipToAddressesByAccountIdAsync(bool showHidden = false, bool isActiveOnly = false, int accountId = 0);
@@ -45,5 +50,8 @@ public interface IErpShipToAddressService
     Task<ErpShipToAddress> GetCustomerBillingAddressAsync(ErpAccount erpAccount);
 
     Task<List<ErpShipToAddress>> GetErpShipToAddressesByCustomerAddressesAsync(int customerId, int erpAccountId = 0, bool isActiveOnly = false);
-    Task<ErpShipToAddress> GetErpShipToAddressByShiptocodeAndAccountIdAsync(string shipToCode, int erpAccountId);
+
+    Task<ErpShipToAddress> GetErpShipToAddressByShipToCodeAndErpAccountIdAsync(string shipToCode, int erpAccountId);
+
+    Task<IList<ErpShiptoAddressErpAccountMap>> GetErpShipToAddressErpAccountMapsByErpAccountIdsAsync(int[] erpAccountIds);
 }

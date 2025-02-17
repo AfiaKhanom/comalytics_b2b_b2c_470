@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Nop.Core;
@@ -422,7 +421,7 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
                             processedErpGroupPriceCodes.Add(oldErpGroupPriceCode.Code);
                         }
 
-                        var oldErpGroupPrice = await _erpGroupPriceService.GetB2BPriceGroupProductPricingByErpPriceGroupCodeAndProductId
+                        var oldErpGroupPrice = await _erpGroupPriceService.GetErpGroupPriceByErpPriceGroupCodeAndProductId
                             (productId: product.Id, priceGroupCodeId: oldErpGroupPriceCode.Id);
 
                         if (oldErpGroupPrice == null)
@@ -481,7 +480,7 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
                                     erpGroupPriceCodeUpdateList.Add(oldErpGroupPriceCode);
                                 }
 
-                                var oldErpGroupPrice = await _erpGroupPriceService.GetB2BPriceGroupProductPricingByErpPriceGroupCodeAndProductId
+                                var oldErpGroupPrice = await _erpGroupPriceService.GetErpGroupPriceByErpPriceGroupCodeAndProductId
                                                                     (productId: product.Id, priceGroupCodeId: oldErpGroupPriceCode.Id);
                                 if (oldErpGroupPrice == null)
                                 {

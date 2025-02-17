@@ -4,17 +4,10 @@ using NopStation.Plugin.B2B.ErpDataScheduler.Domain;
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Data.Mapping.Builder;
 
-/// <summary>
-/// Represents a task entity builder
-/// </summary>
 public partial class SyncTaskBuilder : NopEntityBuilder<SyncTask>
 {
     #region Methods
 
-    /// <summary>
-    /// Apply entity configuration
-    /// </summary>
-    /// <param name="table">Create table expression builder</param>
     public override void MapEntity(CreateTableExpressionBuilder table)
     {
         table
@@ -27,7 +20,10 @@ public partial class SyncTaskBuilder : NopEntityBuilder<SyncTask>
             .WithColumn(nameof(SyncTask.LastStartUtc)).AsDateTime2().Nullable()
             .WithColumn(nameof(SyncTask.LastEndUtc)).AsDateTime2().Nullable()
             .WithColumn(nameof(SyncTask.LastSuccessUtc)).AsDateTime2().Nullable()
-            .WithColumn(nameof(SyncTask.DayTimeSlots)).AsString(int.MaxValue).Nullable();
+            .WithColumn(nameof(SyncTask.DayTimeSlots)).AsString(int.MaxValue).Nullable()
+            .WithColumn(nameof(SyncTask.QuartzJobName)).AsString().Nullable()
+            .WithColumn(nameof(SyncTask.IsIncremental)).AsBoolean()
+            .WithColumn(nameof(SyncTask.IsRunning)).AsBoolean();
     }
 
     #endregion

@@ -1,8 +1,11 @@
-﻿using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
+﻿using FluentValidation;
+using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
+using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Validators.Helpers;
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncTaskServices;
 
@@ -15,6 +18,8 @@ public class ErpAccountCreditSyncService : IErpAccountCreditSyncService
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly IErpDataClearCacheService _erpDataClearCacheService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
+    private readonly IValidator<ErpAccount> _validator;
+    private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
 
     #endregion
 
@@ -24,20 +29,48 @@ public class ErpAccountCreditSyncService : IErpAccountCreditSyncService
         IErpAccountService erpAccountService,
         IErpSalesOrgService erpSalesOrgService,
         IErpDataClearCacheService erpDataClearCacheService,
-        IErpIntegrationPluginManager erpIntegrationPluginService)
+        IErpIntegrationPluginManager erpIntegrationPluginService,
+        IValidator<ErpAccount> validator,
+        ISyncWorkflowMessageService syncWorkflowMessageService)
     {
         _erpSyncLogService = erpSyncLogService;
         _erpAccountService = erpAccountService;
         _erpSalesOrgService = erpSalesOrgService;
         _erpDataClearCacheService = erpDataClearCacheService;
         _erpIntegrationPluginManager = erpIntegrationPluginService;
+        _validator = validator;
+        _syncWorkflowMessageService = syncWorkflowMessageService;
+    }
+
+    #endregion
+
+    #region Utilities
+
+    private async Task<bool> IsValidErpAccountAsync(ErpAccount erpAccount)
+    {
+        if (erpAccount is null)
+            return false;
+
+        var validationResult = await _validator.ValidateAsync(erpAccount);
+
+        if (!validationResult.IsValid)
+        {
+            var errorMessages = ErpDataValidationHelper.PrepareValidationLog(validationResult);
+
+            await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                ErpDataSchedulerDefaults.ErpAccountCreditSyncTaskName,
+                ErpSyncLevel.Account,
+                $"Data mapping skiped for {erpAccount.AccountName}. \r\n {errorMessages}");
+        }
+
+        return validationResult.IsValid;
     }
 
     #endregion
 
     #region Method
 
-    public virtual async Task<bool> IsErpAccountCreditSyncSuccessfulAsync()
+    public virtual async Task<bool> IsErpAccountCreditSyncSuccessfulAsync(string? erpAccountNumber, bool isManualTrigger = false, bool isIncrementalSync = true, CancellationToken cancellationToken = default)
     {
         var erpIntegrationPlugin = await _erpIntegrationPluginManager.LoadActiveERPIntegrationPlugin();
 
@@ -46,7 +79,7 @@ public class ErpAccountCreditSyncService : IErpAccountCreditSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpAccountCreditSyncTaskName,
                 ErpSyncLevel.Account,
-                "No integration method found.");
+                $"No integration method found. Unable to run {ErpDataSchedulerDefaults.ErpAccountCreditSyncTaskName}.");
 
             return false;
         }
@@ -86,7 +119,7 @@ public class ErpAccountCreditSyncService : IErpAccountCreditSyncService
             }
 
             var erpAccountUpdateList = new List<ErpAccount>();
-            var syncStartTime = DateTime.UtcNow.AddMinutes(-10);
+            //var syncStartTime = DateTime.UtcNow.AddMinutes(-10);
 
             #endregion
 
@@ -104,7 +137,7 @@ public class ErpAccountCreditSyncService : IErpAccountCreditSyncService
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpAccountCreditSyncTaskName,
                         ErpSyncLevel.Account,
-                        $"No Erp Accounts found with the Sales org : {salesOrg.Name}");
+                        $"No Erp Accounts found with the Sales Org: ({salesOrg.Code}) {salesOrg.Name}");
 
                     continue;
                 }
@@ -113,13 +146,17 @@ public class ErpAccountCreditSyncService : IErpAccountCreditSyncService
                 var start = "0";
                 var lastSyncedErpAccountNumber = string.Empty;
                 var totalSyncedSoFar = 0;
+                var totalNotSyncedSoFar = 0;
 
                 while (true)
                 {
                     var erpGetRequestModel = new ErpGetRequestModel
                     {
                         Start = start,
-                        Location = salesOrg.Code
+                        Location = salesOrg.Code,
+                        DateFrom = isIncrementalSync ? salesOrg.LastErpAccountCreditSyncTimeOnUtc : null,
+                        CompanyPassword = salesOrg.Password,
+                        AccountNumber = erpAccountNumber
                     };
 
                     var response = await erpIntegrationPlugin.GetAllAccountCreditFromErpAsync(erpGetRequestModel);
@@ -133,6 +170,12 @@ public class ErpAccountCreditSyncService : IErpAccountCreditSyncService
                             ErpSyncLevel.Account,
                             response.ErpResponseModel.ErrorShortMessage,
                             response.ErpResponseModel.ErrorFullMessage);
+
+                        await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
+                            DateTime.UtcNow,
+                            ErpDataSchedulerDefaults.ErpAccountCreditSyncTaskName,
+                            response.ErpResponseModel.ErrorShortMessage + "\n\n" + response.ErpResponseModel.ErrorFullMessage);
+
                         break;
                     }
                     else if (response.Data is null)
@@ -144,8 +187,8 @@ public class ErpAccountCreditSyncService : IErpAccountCreditSyncService
                     start = response.ErpResponseModel.Next;
 
                     var responseData = response.Data
-                        .Where(x => !string.IsNullOrWhiteSpace(x.AccountNumber))
-                        .GroupBy(x => x.AccountNumber)
+                        .Where(x => !string.IsNullOrWhiteSpace(x.AccountNumber.Trim()))
+                        .GroupBy(x => x.AccountNumber.Trim())
                         .Select(g => g.Last());
 
                     foreach (var erpAccount in responseData)
@@ -154,6 +197,7 @@ public class ErpAccountCreditSyncService : IErpAccountCreditSyncService
 
                         if (oldErpAccount is null)
                         {
+                            totalNotSyncedSoFar++;
                             continue;
                         }
 
@@ -165,43 +209,66 @@ public class ErpAccountCreditSyncService : IErpAccountCreditSyncService
                         oldErpAccount.UpdatedOnUtc = DateTime.UtcNow;
                         oldErpAccount.LastErpAccountSyncDate = DateTime.UtcNow;
 
-                        erpAccountUpdateList.Add(oldErpAccount);
+                        if (!await IsValidErpAccountAsync(oldErpAccount))
+                        {
+                            totalNotSyncedSoFar++;
+                            continue;
+                        }
 
-                        lastSyncedErpAccountNumber = oldErpAccount.AccountNumber;
-                        totalSyncedSoFar++;
+                        erpAccountUpdateList.Add(oldErpAccount);
                     }
 
                     if (erpAccountUpdateList.Count != 0)
                     {
                         await _erpAccountService.UpdateErpAccountsAsync(erpAccountUpdateList);
+                        lastSyncedErpAccountNumber = erpAccountUpdateList.LastOrDefault()?.AccountNumber;
+                        totalSyncedSoFar += erpAccountUpdateList.Count;
                         await _erpDataClearCacheService.ClearCacheOfEntities(erpAccountUpdateList);
                         erpAccountUpdateList.Clear();
                     }
+
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        await _erpSyncLogService.SyncLogSaveOnFileAsync(ErpDataSchedulerDefaults.ErpAccountCreditSyncTaskName,
+                            ErpSyncLevel.Account,
+                            "The Erp Account Credit Sync run is cancelled. " +
+                            (!string.IsNullOrWhiteSpace(lastSyncedErpAccountNumber) ?
+                            $"The last synced Credit of Erp Account: {lastSyncedErpAccountNumber}, for Sales Org: ({salesOrg.Code}) {salesOrg.Name}. " : string.Empty) +
+                            $"Total erp accounts credit synced in this session: {totalSyncedSoFar} " +
+                            $"And total not synced due to invalid data: {totalNotSyncedSoFar}");
+
+                        return false;
+                    }
+
                 }
 
                 if (!isError)
                 {
                     //await _erpAccountService.InActiveAllOldAccount(syncStartTime);
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
-                            ErpDataSchedulerDefaults.ErpAccountCreditSyncTaskName,
-                            ErpSyncLevel.Account,
-                            $"Erp Account Credit sync is successful for Sales Org: {salesOrg.Name}. The accounts which were updated before " +
-                            $"{syncStartTime} are deactivated.");
+                        ErpDataSchedulerDefaults.ErpAccountCreditSyncTaskName,
+                        ErpSyncLevel.Account,
+                        $"Erp Account Credit sync is successful for Sales Org: ({salesOrg.Code}) {salesOrg.Name}. "
+                        /*+ $"The accounts which were updated before {syncStartTime} are deactivated."*/);
                 }
                 else
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
-                            ErpDataSchedulerDefaults.ErpAccountCreditSyncTaskName,
-                            ErpSyncLevel.Account,
-                            $"Erp Account Credit sync is partially or not successful for Sales Org: {salesOrg.Name}");
+                        ErpDataSchedulerDefaults.ErpAccountCreditSyncTaskName,
+                        ErpSyncLevel.Account,
+                        $"Erp Account Credit sync is partially or not successful for Sales Org: ({salesOrg.Code}) {salesOrg.Name}");
                 }
 
                 await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpAccountCreditSyncTaskName,
                     ErpSyncLevel.Account,
                     (!string.IsNullOrWhiteSpace(lastSyncedErpAccountNumber) ?
-                    $"The last synced Erp Account: {lastSyncedErpAccountNumber}, for Sales Org: {salesOrg.Name}. " : string.Empty) +
-                    $"Total synced in this session: {totalSyncedSoFar}");
+                    $"The last synced Erp Account: {lastSyncedErpAccountNumber}, for Sales Org: ({salesOrg.Code}) {salesOrg.Name}. " : string.Empty) +
+                    $"Total synced in this session: {totalSyncedSoFar} " +
+                    $"And total not synced due to invalid data: {totalNotSyncedSoFar}");
+
+                salesOrg.LastErpAccountCreditSyncTimeOnUtc = DateTime.UtcNow;
+                await _erpSalesOrgService.UpdateErpSalesOrgAsync(salesOrg);
             }
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
@@ -217,7 +284,12 @@ public class ErpAccountCreditSyncService : IErpAccountCreditSyncService
                 ErpDataSchedulerDefaults.ErpAccountCreditSyncTaskName,
                 ErpSyncLevel.Account,
                 ex.Message,
-                ex.StackTrace);
+                ex.StackTrace ?? string.Empty);
+
+            await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
+                DateTime.UtcNow,
+                ErpDataSchedulerDefaults.ErpAccountCreditSyncTaskName,
+                ex.Message + "\n\n" + ex.StackTrace);
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpAccountCreditSyncTaskName,

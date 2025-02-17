@@ -1,8 +1,10 @@
-﻿using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncTaskScheduler;
+﻿using NopStation.Plugin.B2B.ErpDataScheduler.Areas.Admin.Models.PartialSyncModels;
+using Quartz;
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncTaskServices;
 
-public partial class ErpAccountCreditSyncTask : ISyncTask
+[DisallowConcurrentExecution]
+public partial class ErpAccountCreditSyncTask : IJob
 {
     #region Fields
 
@@ -21,9 +23,18 @@ public partial class ErpAccountCreditSyncTask : ISyncTask
 
     #region Methods
 
-    public virtual async Task ExecuteAsync()
+    public async Task Execute(IJobExecutionContext context)
     {
-        await _erpAccountCreditSyncService.IsErpAccountCreditSyncSuccessfulAsync();
+        if (context.JobDetail.JobDataMap.TryGetBooleanValue(ErpDataSchedulerDefaults.JobShouldExecute, out var shouldExecute) && shouldExecute)
+        {
+            context.MergedJobDataMap.TryGetBoolean(ErpDataSchedulerDefaults.IsManualTrigger, out var isManualTrigger);
+
+            context.MergedJobDataMap.TryGetBoolean(ErpDataSchedulerDefaults.IsIncrementalSync, out var isIncrementalSync);
+
+            context.MergedJobDataMap.TryGetString(nameof(ErpAccountCreditPartialSyncModel.ErpAccountNumber), out var erpAccountNumber);
+
+            await _erpAccountCreditSyncService.IsErpAccountCreditSyncSuccessfulAsync(erpAccountNumber, isManualTrigger, isIncrementalSync, context.CancellationToken);
+        }
     }
 
     #endregion

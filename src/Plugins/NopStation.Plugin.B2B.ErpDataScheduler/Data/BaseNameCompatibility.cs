@@ -7,7 +7,8 @@ public class BaseNameCompatibility : INameCompatibility
 {
     public Dictionary<Type, string> TableNames => new()
     {
-        { typeof(SyncTask), "Erp_Data_Sync_Task" }
+        { typeof(SyncTask), "Erp_Data_Sync_Task" },
+        { typeof(QRTZ_JOB_DETAILS), "QRTZ_JOB_DETAILS" },
     };
 
     public Dictionary<(Type, string), string> ColumnName => new()

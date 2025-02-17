@@ -166,40 +166,43 @@ public class ErpGroupPriceService : IErpGroupPriceService
         return erpGroupPrices;
     }
 
-        public async Task<IList<ErpGroupPrice>> GetErpGroupPriceByProductIdAsync(int productId)
-        {
-            if (productId == 0)
-                return null;
+    public async Task<IList<ErpGroupPrice>> GetErpGroupPriceByProductIdAsync(int productId)
+    {
+        if (productId == 0)
+            return null;
 
-            var erpGroupPrices = await _erpGroupPriceRepository.GetAllAsync(query =>
-            {
-                return from egp in query
-                       where egp.NopProductId == productId && !egp.IsDeleted && egp.IsActive
-                       orderby egp.Id descending
-                       select egp;
-            }, cache => cache.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpProductPricingGroupPriceByProductIdCacheKey, productId));
+
+        var erpGroupPrices = await _erpGroupPriceRepository.GetAllAsync(query =>
+        {
+            return from egp in query
+                   where egp.NopProductId == productId && !egp.IsDeleted && egp.IsActive
+                   orderby egp.Id descending
+                   select egp;
+        }, cache => cache.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpProductPricingGroupPriceByProductIdCacheKey, productId));
 
         return erpGroupPrices;
     }
 
-        public async Task<ErpGroupPrice> GetB2BPriceGroupProductPricingByErpPriceGroupCodeAndProductId(int priceGroupCodeId, int productId)
-        {
-            if (productId == 0 || priceGroupCodeId == 0)
-                return null;
+
+    public async Task<ErpGroupPrice> GetErpGroupPriceByErpPriceGroupCodeAndProductId(int priceGroupCodeId, int productId)
+    {
+        if (productId == 0 || priceGroupCodeId == 0)
+            return null;
 
         var key = _staticCacheManager.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpProductPricingGroupPriceByProductIdAndPriceGroupIdCacheKey, productId, priceGroupCodeId);
 
-        var query = _erpGroupPriceRepository.Table.Where(egp => egp.NopProductId == productId && egp.ErpNopGroupPriceCodeId == priceGroupCodeId && !egp.IsDeleted && egp.IsActive);
+        var query = _erpGroupPriceRepository.Table
+            .Where(egp => egp.NopProductId == productId && egp.ErpNopGroupPriceCodeId == priceGroupCodeId && !egp.IsDeleted && egp.IsActive);
 
         return await _staticCacheManager.GetAsync(key, async () => await query.FirstOrDefaultAsync());
     }
 
-    public async Task<bool> CheckAnyPriceGroupProductPricingExistWithProductIdAndPriceGroupCodeId(int prouctdId, int priceGroupCodeId)
+    public async Task<bool> CheckAnyErpGroupPriceExistWithProductIdAndErpGroupPriceCodeId(int prouctdId, int priceGroupCodeId)
     {
         if (prouctdId == 0 || priceGroupCodeId == 0)
             return false;
 
-        return await GetB2BPriceGroupProductPricingByErpPriceGroupCodeAndProductId(priceGroupCodeId, prouctdId) != null;
+        return await GetErpGroupPriceByErpPriceGroupCodeAndProductId(priceGroupCodeId, prouctdId) != null;
     }
 
     public async Task InActiveAllOldGroupPrice(DateTime syncStartTime)

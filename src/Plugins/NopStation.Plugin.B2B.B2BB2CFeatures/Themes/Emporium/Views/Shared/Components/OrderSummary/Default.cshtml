@@ -852,4 +852,56 @@
         });
     });
 
+    var ajaxB2BOrderSummeryDataLoad = {
+        loadCurrentCartItemsLiveStockCheck: function () {
+            $.ajax({
+                cache: true,
+                url: "@Url.RouteUrl("CurrentCartItemsLiveStockCheck")",
+                type: 'GET',
+                dataType: "json",
+                error: function () {
+                    console.log("Live Stock Check failed");
+                }
+            });
+        },
+
+        loadOrderSummeryItemB2BData: function () {
+            $.ajax({
+                cache: true,
+                url: "@Url.RouteUrl("LoadB2BCartItemData")",
+                type: 'GET',
+                dataType: "json",
+                success: function (response) {
+                    if (response.Data) {
+                        for (var i = 0; i < response.Data.Items.length; i++) {
+                            var itemId = response.Data.Items[i].Id;
+                            $('#uom_' + itemId).html("<label class='td-title'>UOM:</label> <span class='product-uom'>" + response.Data.Items[i].Uom + "</span >");                            
+                        }
+                    }
+                },
+                error: function () {
+                    console.log("Can Not Load B2B Data");
+                }
+            });
+        }
+    };
+
+    function loadB2BAccountInfoFromErpAjax() {
+        $.ajax({
+            cache: true,
+            type: "GET",
+            url: "@Url.Action("GetCustomerAccountSavingsForthisYear", "B2BAccountPublic")",
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                if (data.success) {
+                    $('.b2b-customer-savings').html('<h3>@T("B2B.B2BAccountPublic.Cart.CustomerAccountSavings") ' + data.totalSavings + '</h3>');
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.log("customer savings data sync failed");
+            }
+        });
+    }
+</script>
+
 </script>

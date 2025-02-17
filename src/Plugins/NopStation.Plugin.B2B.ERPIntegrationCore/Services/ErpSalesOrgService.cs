@@ -65,14 +65,6 @@ public class ErpSalesOrgService : IErpSalesOrgService
 
     #region Read
 
-    /// <summary>
-    /// Gets an ErpAccount by Id
-    /// </summary>
-    /// <param name="id">ErpAccount identifier</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the ErpAccount
-    /// </returns>
     public async Task<ErpSalesOrg> GetErpSalesOrgByIdAsync(int id)
     {
         if (id == 0)
@@ -86,14 +78,6 @@ public class ErpSalesOrgService : IErpSalesOrgService
         return erpSalesOrg;
     }
 
-    /// <summary>
-    /// Gets an ErpAccount by Id if it is active
-    /// </summary>
-    /// <param name="id">ErpAccount identifier</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the ErpAccount if it is activ
-    /// </returns>
     public async Task<ErpSalesOrg> GetErpSalesOrgByIdWithActiveAsync(int id)
     {
         if (id == 0)
@@ -107,16 +91,6 @@ public class ErpSalesOrgService : IErpSalesOrgService
         return erpSalesOrg;
     }
 
-    /// <summary>
-    /// Gets all ErpAccounts
-    /// </summary>
-    /// <param name="pageIndex">Page number</param>
-    /// <param name="pageSize">Page size</param>
-    /// <param name="getOnlyTotalCount">If only total no of account needed or not</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains all the ErpAccounts
-    /// </returns>
     public async Task<IPagedList<ErpSalesOrg>> GetAllErpSalesOrgAsync(int pageIndex = 0, int pageSize = int.MaxValue, string name = null, string email = null, string code = null, bool? showHidden = null, bool getOnlyTotalCount = false)
     {
         var erpSalesOrgs = await _erpErpSalesOrgRepository.GetAllPagedAsync(query =>
@@ -170,4 +144,3 @@ public class ErpSalesOrgService : IErpSalesOrgService
 
     #endregion
 }
-

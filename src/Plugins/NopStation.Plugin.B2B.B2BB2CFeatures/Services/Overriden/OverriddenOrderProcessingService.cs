@@ -125,7 +125,6 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
         IErpAccountService erpAccountService,
         IErpNopUserService erpNopUserService,
         IErpLogsService erpLogsService,
-        IB2BB2CWorkContext b2BB2CWorkContext,
         IErpIntegrationPluginManager erpIntegrationPluginManager,
         IErpSpecificationAttributeService erpSpecificationAttributeService,
         IErpWorkflowMessageService erpWorkflowMessageService,
