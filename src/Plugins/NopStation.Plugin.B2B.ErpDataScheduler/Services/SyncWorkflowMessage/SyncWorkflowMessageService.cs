@@ -182,16 +182,16 @@ public partial class SyncWorkflowMessageService : ISyncWorkflowMessageService
 
         var emailAccount = await GetEmailAccountOfMessageTemplateAsync(messageTemplate, languageId);
 
-        if (_erpDataSchedulerSettings.EnalbeSendingEmailNotificationOnSyncError && emailAccount != null)
+        if (_erpDataSchedulerSettings.EnalbeSendingEmailNotificationToStoreOwnerOnSyncError && emailAccount != null)
         {
             var emailList = new List<(string toEmailAddress, string toName)>
             {
                 (emailAccount.Email, $"{emailAccount.Username}")
             };
 
-            if (!string.IsNullOrWhiteSpace(_erpDataSchedulerSettings.EmailAddresses))
+            if (!string.IsNullOrWhiteSpace(_erpDataSchedulerSettings.AdditionalEmailAddresses))
             {
-                var emails = _erpDataSchedulerSettings.EmailAddresses.Split(';');
+                var emails = _erpDataSchedulerSettings.AdditionalEmailAddresses.Split(';');
                 foreach (var email in emails)
                 {
                     if (!emailList.Exists(x => x.toEmailAddress == email.Trim()))

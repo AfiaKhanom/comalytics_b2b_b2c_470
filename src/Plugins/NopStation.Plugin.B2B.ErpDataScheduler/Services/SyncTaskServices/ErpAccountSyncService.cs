@@ -81,7 +81,7 @@ public class ErpAccountSyncService : IErpAccountSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
                 ErpSyncLevel.Account,
-                $"Data mapping skiped for {erpAccount.AccountName}. \r\n {errorMessages}");
+                $"Data mapping skipped for {erpAccount.AccountName}. \r\n {errorMessages}");
         }
 
         return validationResult.IsValid;

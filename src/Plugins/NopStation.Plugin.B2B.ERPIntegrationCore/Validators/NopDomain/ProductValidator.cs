@@ -10,7 +10,7 @@ public class ProductValidator : BaseNopValidator<Product>
 
     public ProductValidator()
     {
-        RuleFor(product => product.Name)
+        RuleFor(product => product.Sku)
             .NotEmpty()
             .MaximumLength(400);
     }

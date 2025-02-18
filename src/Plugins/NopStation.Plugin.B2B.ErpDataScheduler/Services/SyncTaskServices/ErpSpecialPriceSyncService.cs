@@ -76,7 +76,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskName,
                 ErpSyncLevel.SpecialPrice,
-                $"Data mapping skiped for {nameof(erpSpecialPrice)}. One or more field under validation is invalid.");
+                $"Data mapping skipped for {nameof(erpSpecialPrice)}. One or more field under validation is invalid.");
         }
 
         return validationResult.IsValid;

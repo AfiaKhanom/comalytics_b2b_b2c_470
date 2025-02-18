@@ -19,7 +19,6 @@
 
   <ItemGroup>
     <None Remove="Areas\Admin\Views\ErpDataScheduler\Configure.cshtml" />
-    <None Remove="Areas\Admin\Views\ErpDataScheduler\_Configure.SyncFromDate.cshtml" />
     <None Remove="Areas\Admin\Views\PartialSync\Index.cshtml" />
     <None Remove="Areas\Admin\Views\PartialSync\_PartialSync.DeliveryRoute.cshtml" />
     <None Remove="Areas\Admin\Views\PartialSync\_PartialSync.ErpAccount.cshtml" />
@@ -47,7 +46,7 @@
     <Content Include="Areas\Admin\Views\ErpDataScheduler\Configure.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Areas\Admin\Views\ErpDataScheduler\_Configure.SyncFromDate.cshtml">
+    <Content Include="Areas\Admin\Views\ErpDataScheduler\_Configure.General.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\PartialSync\Index.cshtml">
@@ -81,9 +80,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\PartialSync\_PartialSync.ErpStock.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Areas\Admin\Views\ErpDataScheduler\_Configure.SyncErrorEmailNotification.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Areas\Admin\Views\SyncTasks\_CreateOrUpdate.SchedulerSettings.cshtml">

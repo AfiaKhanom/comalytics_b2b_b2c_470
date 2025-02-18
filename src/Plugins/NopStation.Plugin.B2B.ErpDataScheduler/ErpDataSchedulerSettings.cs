@@ -6,6 +6,6 @@ public class ErpDataSchedulerSettings : ISettings
 {
     public DateTime? SyncFromDate { get; set; }
     public bool NeedQuoteOrderCall { get; set; }
-    public bool EnalbeSendingEmailNotificationOnSyncError { get; set; }
-    public string? EmailAddresses { get; set; }
+    public bool EnalbeSendingEmailNotificationToStoreOwnerOnSyncError { get; set; }
+    public string? AdditionalEmailAddresses { get; set; }
 }

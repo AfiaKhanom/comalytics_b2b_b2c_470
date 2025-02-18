@@ -74,14 +74,21 @@ public class ErpDataSchedulerController : NopStationAdminController
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManagePlugins))
             return AccessDeniedView();
 
+        /*if (model.EnalbeSendingEmailNotificationToStoreOwnerOnSyncError
+            && string.IsNullOrWhiteSpace(model.EmailAddresses))
+        {
+            ModelState.AddModelError(nameof(model.EmailAddresses), await _localizationService.GetResourceAsync(
+                "Plugin.Misc.NopStation.ErpDataScheduler.Admin.Configure.Fields.Error.EmailEmptyError"));
+        }*/
+
         if (!ModelState.IsValid)
         {
             return View(model);
         }
 
-        if (!model.EnalbeSendingEmailNotificationOnSyncError)
+        if (!model.EnalbeSendingEmailNotificationToStoreOwnerOnSyncError)
         {
-            model.EmailAddresses = "";
+            model.AdditionalEmailAddresses = "";
         }
 
         var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
@@ -89,8 +96,8 @@ public class ErpDataSchedulerController : NopStationAdminController
 
         await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.SyncFromDate, model.SyncFromDate_OverrideForStore, storeScope, false);
         await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.NeedQuoteOrderCall, model.NeedQuoteOrderCall_OverrideForStore, storeScope, false);
-        await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.EnalbeSendingEmailNotificationOnSyncError, model.EnalbeSendingEmailNotificationOnSyncError_OverrideForStore, storeScope, false);
-        await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.EmailAddresses, model.EmailAddresses_OverrideForStore, storeScope, false);
+        await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.EnalbeSendingEmailNotificationToStoreOwnerOnSyncError, model.EnalbeSendingEmailNotificationToStoreOwnerOnSyncError_OverrideForStore, storeScope, false);
+        await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.AdditionalEmailAddresses, model.AdditionalEmailAddresses_OverrideForStore, storeScope, false);
         await _settingService.ClearCacheAsync();
 
         await _erpActivityLogsService.InsertErpActivityAsync(EDIT_SETTINGS_SYSTEM_KEYWORD, await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ErpDataScheduler.ErpActivityLogs.EditConfigurations"));

@@ -6,6 +6,8 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Validators;
 
 public class ErpAccountValidator : BaseNopValidator<ErpAccount>
 {
+    #region Ctor
+
     public ErpAccountValidator()
     {
         // Required string fields with length validation
@@ -90,4 +92,6 @@ public class ErpAccountValidator : BaseNopValidator<ErpAccount>
         RuleFor(x => x.OverrideStockDisplayFormatConfigSetting).NotNull();
         RuleFor(x => x.IsDefaultPaymentAccount).NotNull();
     }
+
+    #endregion
 }

@@ -76,7 +76,7 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
                 ErpSyncLevel.Account,
-                $"Data mapping skiped for {nameof(erpShipToAddress)}. One or more field under validation is invalid.");
+                $"Data mapping skipped for {nameof(erpShipToAddress)}. One or more field under validation is invalid.");
         }
 
         return validationResult.IsValid;

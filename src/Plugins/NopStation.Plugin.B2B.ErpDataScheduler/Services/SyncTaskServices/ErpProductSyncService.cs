@@ -147,7 +147,7 @@ public class ErpProductSyncService : IErpProductSyncService
         }
     }
 
-    private async Task<bool> IsValidProductAsync(Product product)
+    private async Task<bool> IsthisProductIsValidAsync(Product product)
     {
         if (product is null)
             return false;
@@ -160,7 +160,7 @@ public class ErpProductSyncService : IErpProductSyncService
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(ErpDataSchedulerDefaults.ErpProductSyncTaskName,
                 ErpSyncLevel.Product,
-                $"Data mapping skiped for {nameof(Product)}, {nameof(Product.Sku)}: {product.Sku}. \r\n {errorMessages}");
+                $"Data mapping skipped for {nameof(Product)}, {nameof(Product.Sku)}: {product.Sku}. \r\n {errorMessages}");
         }
 
         return validationResult.IsValid;
@@ -179,7 +179,7 @@ public class ErpProductSyncService : IErpProductSyncService
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(ErpDataSchedulerDefaults.ErpProductSyncTaskName,
                 ErpSyncLevel.Product,
-                $"Data mapping skiped for {nameof(Category)}, {nameof(Category.Name)}: {category.Name}. \r\n {errorMessages}");
+                $"Data mapping skipped for {nameof(Category)}, {nameof(Category.Name)}: {category.Name}. \r\n {errorMessages}");
         }
 
         return validationResult.IsValid;
@@ -198,7 +198,7 @@ public class ErpProductSyncService : IErpProductSyncService
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(ErpDataSchedulerDefaults.ErpProductSyncTaskName,
                 ErpSyncLevel.Product,
-                $"Data mapping skiped for {nameof(Manufacturer)}, {nameof(Manufacturer.Name)}: {manufacturer.Name}. \r\n {errorMessages}");
+                $"Data mapping skipped for {nameof(Manufacturer)}, {nameof(Manufacturer.Name)}: {manufacturer.Name}. \r\n {errorMessages}");
         }
 
         return validationResult.IsValid;
@@ -368,7 +368,7 @@ public class ErpProductSyncService : IErpProductSyncService
                     {
                         #region Products
 
-                        var shouldCount = false;
+                        var thisProductIsValid = false;
                         var oldErpProduct = products.FirstOrDefault(x => x.Sku.Trim().ToLower() == erpProduct.Sku.Trim().ToLower());
 
                         if (oldErpProduct is null)
@@ -431,9 +431,9 @@ public class ErpProductSyncService : IErpProductSyncService
                             oldErpProduct.CreatedOnUtc = DateTime.UtcNow;
                             oldErpProduct.UpdatedOnUtc = DateTime.UtcNow;
 
-                            if (await IsValidProductAsync(oldErpProduct))
+                            if (await IsthisProductIsValidAsync(oldErpProduct))
                             {
-                                shouldCount = true;
+                                thisProductIsValid = true;
                                 await _productService.InsertProductAsync(oldErpProduct);
                             }
                         }
@@ -493,9 +493,9 @@ public class ErpProductSyncService : IErpProductSyncService
                             oldErpProduct.Published = erpProduct.Published;
                             oldErpProduct.UpdatedOnUtc = DateTime.UtcNow;
 
-                            if (await IsValidProductAsync(oldErpProduct))
+                            if (await IsthisProductIsValidAsync(oldErpProduct))
                             {
-                                shouldCount = true;
+                                thisProductIsValid = true;
                                 await _productService.UpdateProductAsync(oldErpProduct);
                             }
                         }
@@ -584,7 +584,7 @@ public class ErpProductSyncService : IErpProductSyncService
                                 }
                             }
 
-                            if (await IsValidProductAsync(oldErpProduct))
+                            if (thisProductIsValid)
                             {
                                 var existingCategoryMapping = allProductCategories.Where(pc => pc.ProductId == oldErpProduct.Id).ToList();
 
@@ -656,7 +656,7 @@ public class ErpProductSyncService : IErpProductSyncService
                                     specAttrOptionId = specAttrOption.Id;
                                 }
 
-                                if (await IsValidProductAsync(oldErpProduct))
+                                if (thisProductIsValid)
                                 {
                                     var psaMappings = await _specificationAttributeService.GetProductSpecificationAttributesAsync(oldErpProduct.Id, specAttrOptionId);
                                     var psaMapping = psaMappings.FirstOrDefault();
@@ -703,9 +703,12 @@ public class ErpProductSyncService : IErpProductSyncService
                                 }
                             }
 
-                            foreach (var specAttrOption in specificationAttributeOptions?.Where(o => !existingSpecAttrOptionIds.Contains(o.Id)))
+                            if (thisProductIsValid)
                             {
-                                productSpecAttrMappingToDelete.AddRange(await _specificationAttributeService.GetProductSpecificationAttributesAsync(oldErpProduct.Id, specAttrOption.Id));
+                                foreach (var specAttrOption in specificationAttributeOptions?.Where(o => !existingSpecAttrOptionIds.Contains(o.Id)))
+                                {
+                                    productSpecAttrMappingToDelete.AddRange(await _specificationAttributeService.GetProductSpecificationAttributesAsync(oldErpProduct.Id, specAttrOption.Id));
+                                }
                             }
 
                             if (productSpecAttrMappingToDelete.Count != 0)
@@ -783,7 +786,7 @@ public class ErpProductSyncService : IErpProductSyncService
                                 await _manufacturerService.UpdateManufacturerAsync(currentManufacturer);
                             }
 
-                            if (await IsValidManufacturerAsync(currentManufacturer))
+                            if (await IsValidManufacturerAsync(currentManufacturer) && thisProductIsValid)
                             {
                                 //search engine name
                                 await SaveOrUpdateEntitySeNameAsync(currentManufacturer);
@@ -822,7 +825,7 @@ public class ErpProductSyncService : IErpProductSyncService
 
                         #endregion
 
-                        if (shouldCount)
+                        if (thisProductIsValid)
                         {
                             lastSyncedErpProduct = oldErpProduct.Sku;
                             totalSyncedSoFar++;

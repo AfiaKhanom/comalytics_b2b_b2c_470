@@ -6,12 +6,10 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Validators;
 
 public class ErpInvoiceValidator : BaseNopValidator<ErpInvoice>
 {
+    #region Ctor
+
     public ErpInvoiceValidator()
     {
-        // Mandatory DateTime fields
-        RuleFor(x => x.PostingDateUtc)
-            .NotEmpty();
-
         // Mandatory string fields
         RuleFor(x => x.ErpDocumentNumber)
             .NotEmpty();
@@ -20,4 +18,6 @@ public class ErpInvoiceValidator : BaseNopValidator<ErpInvoice>
         RuleFor(x => x.ErpAccountId)
             .GreaterThan(0);
     }
+
+    #endregion
 }

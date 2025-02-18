@@ -75,7 +75,7 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
                 ErpSyncLevel.Invoice,
-                $"Data mapping skiped for {nameof(erpInvoice)}, {nameof(ErpInvoice.ErpAccountId)}: {erpInvoice.Id}. \r\n {errorMessages}");
+                $"Data mapping skipped for {nameof(erpInvoice)}, {nameof(ErpInvoice.ErpAccountId)}: {erpInvoice.Id}. \r\n {errorMessages}");
         }
 
         return validationResult.IsValid;

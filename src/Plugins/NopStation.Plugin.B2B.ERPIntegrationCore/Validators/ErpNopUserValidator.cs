@@ -3,9 +3,11 @@ using Nop.Web.Framework.Validators;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
 namespace NopStation.Plugin.B2B.ERPIntegrationCore.Validators;
+
 public class ErpNopUserValidator : BaseNopValidator<ErpNopUser>
 {
     #region Ctor
+
     public ErpNopUserValidator()
     {
         // Mandatory integer field
@@ -23,5 +25,6 @@ public class ErpNopUserValidator : BaseNopValidator<ErpNopUser>
         RuleFor(x => x.ErpUserTypeId)
             .GreaterThan(0);
     }
+
     #endregion
 }

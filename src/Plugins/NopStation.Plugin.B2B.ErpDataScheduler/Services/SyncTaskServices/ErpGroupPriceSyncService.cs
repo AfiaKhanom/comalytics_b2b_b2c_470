@@ -70,7 +70,7 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpGroupPriceSyncTaskName,
                 ErpSyncLevel.GroupPrice,
-                $"Data mapping skiped for {nameof(erpGroupPrice)}, {nameof(ErpGroupPrice.NopProductId)}: {erpGroupPrice.NopProductId}. \r\n {errorMessages}");
+                $"Data mapping skipped for {nameof(erpGroupPrice)}, {nameof(ErpGroupPrice.NopProductId)}: {erpGroupPrice.NopProductId}. \r\n {errorMessages}");
         }
 
         return validationResult.IsValid;
@@ -90,7 +90,7 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpGroupPriceSyncTaskName,
                 ErpSyncLevel.GroupPrice,
-                $"Data mapping skiped for {nameof(erpGroupPriceCode)}, {nameof(ErpGroupPriceCode.Code)}: {erpGroupPriceCode.Code}. \r\n {errorMessages}");
+                $"Data mapping skipped for {nameof(erpGroupPriceCode)}, {nameof(ErpGroupPriceCode.Code)}: {erpGroupPriceCode.Code}. \r\n {errorMessages}");
         }
 
         return validationResult.IsValid;

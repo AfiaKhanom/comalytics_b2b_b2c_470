@@ -3,9 +3,11 @@ using Nop.Web.Framework.Validators;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
 namespace NopStation.Plugin.B2B.ERPIntegrationCore.Validators;
+
 public class ErpSpecialPriceValidator : BaseNopValidator<ErpSpecialPrice>
 {
     #region Ctor
+
     public ErpSpecialPriceValidator()
     {
         // Mandatory fields
@@ -21,5 +23,6 @@ public class ErpSpecialPriceValidator : BaseNopValidator<ErpSpecialPrice>
         RuleFor(x => x.ErpAccountId)
             .GreaterThan(0);
     }
+
     #endregion
 }

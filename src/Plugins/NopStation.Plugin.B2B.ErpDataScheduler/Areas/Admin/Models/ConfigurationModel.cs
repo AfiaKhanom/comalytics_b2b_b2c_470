@@ -18,11 +18,11 @@ public record ConfigurationModel : BaseNopModel, ISettingsModel
     public bool NeedQuoteOrderCall { get; set; }
     public bool NeedQuoteOrderCall_OverrideForStore { get; set; }
 
-    [NopResourceDisplayName("Plugin.Misc.NopStation.ErpDataScheduler.Admin.Configure.Fields.EnalbeSendingEmailNotificationOnSyncError")]
-    public bool EnalbeSendingEmailNotificationOnSyncError { get; set; }
-    public bool EnalbeSendingEmailNotificationOnSyncError_OverrideForStore { get; set; }
+    [NopResourceDisplayName("Plugin.Misc.NopStation.ErpDataScheduler.Admin.Configure.Fields.EnalbeSendingEmailNotificationToStoreOwnerOnSyncError")]
+    public bool EnalbeSendingEmailNotificationToStoreOwnerOnSyncError { get; set; }
+    public bool EnalbeSendingEmailNotificationToStoreOwnerOnSyncError_OverrideForStore { get; set; }
 
-    [NopResourceDisplayName("Plugin.Misc.NopStation.ErpDataScheduler.Admin.Configure.Fields.EmailAddresses")]
-    public string? EmailAddresses { get; set; }
-    public bool EmailAddresses_OverrideForStore { get; set; }
+    [NopResourceDisplayName("Plugin.Misc.NopStation.ErpDataScheduler.Admin.Configure.Fields.AdditionalEmailAddresses")]
+    public string? AdditionalEmailAddresses { get; set; }
+    public bool AdditionalEmailAddresses_OverrideForStore { get; set; }
 }

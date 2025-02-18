@@ -6,6 +6,8 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Validators;
 
 public class ErpOrderAdditionalDataValidator : BaseNopValidator<ErpOrderAdditionalData>
 {
+    #region Ctor
+
     public ErpOrderAdditionalDataValidator()
     {
         // Required integer fields
@@ -96,4 +98,6 @@ public class ErpOrderAdditionalDataValidator : BaseNopValidator<ErpOrderAddition
             .Must(x => true)
             .When(x => x.ChangedOnUtc.HasValue);
     }
+
+    #endregion
 }

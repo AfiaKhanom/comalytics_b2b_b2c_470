@@ -3,9 +3,11 @@ using Nop.Web.Framework.Validators;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
 namespace NopStation.Plugin.B2B.ERPIntegrationCore.Validators;
+
 public class ErpGroupPriceCodeValidator : BaseNopValidator<ErpGroupPriceCode>
 {
     #region Ctor
+
     public ErpGroupPriceCodeValidator()
     {
         // Validate Code
@@ -17,5 +19,6 @@ public class ErpGroupPriceCodeValidator : BaseNopValidator<ErpGroupPriceCode>
         RuleFor(x => x.LastUpdateTime)
             .NotEmpty();
     }
+
     #endregion
 }
