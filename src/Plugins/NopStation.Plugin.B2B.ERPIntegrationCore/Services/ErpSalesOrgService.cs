@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using LinqToDB;
 using Nop.Core;
 using Nop.Data;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
@@ -14,18 +13,25 @@ public class ErpSalesOrgService : IErpSalesOrgService
 
     private readonly IRepository<ErpSalesOrg> _erpErpSalesOrgRepository;
     private readonly IRepository<ErpAccount> _erpAccountRepository;
+    private readonly IRepository<ErpWarehouseAdditionalData> _erpWarehouseAdditionalDataRepository;
+    private readonly IRepository<ErpWarehouseSalesOrgMap> _erpWarehouseSalesOrgMapRepository;
 
-    #endregion
+    #endregion Fields
 
     #region Ctor
 
-    public ErpSalesOrgService(IRepository<ErpSalesOrg> erpSalesOrgRepository, IRepository<ErpAccount> erpAccountRepository)
+    public ErpSalesOrgService(IRepository<ErpSalesOrg> erpSalesOrgRepository,
+        IRepository<ErpAccount> erpAccountRepository,
+        IRepository<ErpWarehouseAdditionalData> erpWarehouseAdditionalDataRepository,
+        IRepository<ErpWarehouseSalesOrgMap> erpWarehouseSalesOrgMapRepository)
     {
         _erpErpSalesOrgRepository = erpSalesOrgRepository;
         _erpAccountRepository = erpAccountRepository;
+        _erpWarehouseAdditionalDataRepository = erpWarehouseAdditionalDataRepository;
+        _erpWarehouseSalesOrgMapRepository = erpWarehouseSalesOrgMapRepository;
     }
 
-    #endregion
+    #endregion Ctor
 
     #region Methods
 
@@ -41,7 +47,7 @@ public class ErpSalesOrgService : IErpSalesOrgService
         await _erpErpSalesOrgRepository.UpdateAsync(erpSalesOrg);
     }
 
-    #endregion
+    #endregion Insert/Update
 
     #region Delete
 
@@ -61,7 +67,7 @@ public class ErpSalesOrgService : IErpSalesOrgService
         }
     }
 
-    #endregion
+    #endregion Delete
 
     #region Read
 
@@ -116,7 +122,6 @@ public class ErpSalesOrgService : IErpSalesOrgService
             query = query.Where(egp => !egp.IsDeleted);
             query = query.OrderBy(egp => egp.Id);
             return query;
-
         }, pageIndex, pageSize, getOnlyTotalCount);
 
         return erpSalesOrgs;
@@ -140,7 +145,40 @@ public class ErpSalesOrgService : IErpSalesOrgService
         return isMapped;
     }
 
-    #endregion
+    public async Task<ErpSalesOrg> GetSalesOrgByCodeAsync(string salesorgCode)
+    {
+        if (string.IsNullOrWhiteSpace(salesorgCode))
+            return null;
 
-    #endregion
+        var erpSalesOrg = await _erpErpSalesOrgRepository.Table.FirstOrDefaultAsync(x => x.Code.Trim().ToLower() == salesorgCode.Trim().ToLower());
+
+        if (erpSalesOrg == null || erpSalesOrg.IsDeleted)
+            return null;
+
+        return erpSalesOrg;
+    }
+
+    /// <summary>
+    /// This method retrieves the ErpSalesOrg associated with a given warehouseCode
+    /// </summary>
+    /// <param name="warehouseCode"></param>
+    /// <returns></returns>
+    public async Task<ErpSalesOrg> GetSalesOrgByWarehouseCodeAsync(string warehouseCode)
+    {
+        if (string.IsNullOrEmpty(warehouseCode))
+            return null;
+        warehouseCode = warehouseCode.Trim();
+
+        return await (from warehouse in _erpWarehouseAdditionalDataRepository.Table
+                       where warehouse.IsActive && !warehouse.IsDeleted && warehouse.Code.Trim() == warehouseCode
+                       join map in _erpWarehouseSalesOrgMapRepository.Table
+                           on warehouse.Id equals map.ErpWarehouseId
+                       join salesOrg in _erpErpSalesOrgRepository.Table
+                           on map.ErpSalesOrgId equals salesOrg.Id
+                       select salesOrg).FirstOrDefaultAsync();
+    }
+
+    #endregion Read
+
+    #endregion Methods
 }

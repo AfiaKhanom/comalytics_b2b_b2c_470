@@ -29,6 +29,8 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
 
         Task<bool> IsMappedWithAnyERPAccountAsync(int erpSalesOrgId);
 
+        Task<ErpSalesOrg> GetSalesOrgByCodeAsync(string salesorgCode);
+
+        Task<ErpSalesOrg> GetSalesOrgByWarehouseCodeAsync(string warehouseCode);
     }
 }
-

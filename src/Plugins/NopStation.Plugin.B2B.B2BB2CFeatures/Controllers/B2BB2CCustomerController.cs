@@ -1258,10 +1258,6 @@ public class B2BB2CCustomerController : CustomerController
             {
                 case CustomerLoginResults.Successful:
                     {
-                        customer = _customerSettings.UsernamesEnabled
-                            ? await _customerService.GetCustomerByUsernameAsync(customerUserName)
-                            : await _customerService.GetCustomerByEmailAsync(customerEmail);
-
                         return await _customerRegistrationService.SignInCustomerAsync(customer, returnUrl, model.RememberMe);
                     }
                 case CustomerLoginResults.MultiFactorAuthenticationRequired:
