@@ -8,6 +8,8 @@ using NopStation.Plugin.B2B.ErpDataScheduler.Areas.Admin.Models;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.NopStationSyncServices;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.QuartzServices;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Areas.Admin.Factories;
 
@@ -21,6 +23,7 @@ public partial class SyncTaskModelFactory : ISyncTaskModelFactory
     private readonly INopFileProvider _fileProvider;
     private readonly IQuartzJobDetailService _quartzJobDetailService;
     private readonly IQrtzFiredTriggersService _qrtzFiredTriggersService;
+    private readonly IErpLogsService _erpLogsService;
 
     #endregion
 
@@ -31,7 +34,8 @@ public partial class SyncTaskModelFactory : ISyncTaskModelFactory
         ISyncLogService erpSyncLogService,
         INopFileProvider fileProvider,
         IQuartzJobDetailService quartzJobDetailService,
-        IQrtzFiredTriggersService qrtzFiredTriggersService)
+        IQrtzFiredTriggersService qrtzFiredTriggersService,
+        IErpLogsService erpLogsService)
     {
         _dateTimeHelper = dateTimeHelper;
         _syncTaskService = taskService;
@@ -39,6 +43,37 @@ public partial class SyncTaskModelFactory : ISyncTaskModelFactory
         _fileProvider = fileProvider;
         _quartzJobDetailService = quartzJobDetailService;
         _qrtzFiredTriggersService = qrtzFiredTriggersService;
+        _erpLogsService = erpLogsService;
+    }
+
+    #endregion
+
+    #region Utilities
+
+    private async Task<ErpSyncLevel> GetErpSyncLevelBySyncTaskType(string syncTaskType)
+    {
+        if (syncTaskType == ErpDataSchedulerDefaults.ErpAccountSyncTask || syncTaskType == ErpDataSchedulerDefaults.ErpAccountCreditSyncTask)
+            return ErpSyncLevel.Account;
+        if (syncTaskType == ErpDataSchedulerDefaults.ErpProductSyncTask)
+            return ErpSyncLevel.Product;
+        if (syncTaskType == ErpDataSchedulerDefaults.ErpOrderSyncTask)
+            return ErpSyncLevel.Order;
+        if (syncTaskType == ErpDataSchedulerDefaults.ErpStockSyncTask)
+            return ErpSyncLevel.Stock;
+        if (syncTaskType == ErpDataSchedulerDefaults.ErpShipToAddressSyncTask)
+            return ErpSyncLevel.ShipToAddress;
+        if (syncTaskType == ErpDataSchedulerDefaults.ErpSpecialPriceSyncTask)
+            return ErpSyncLevel.SpecialPrice;
+        if (syncTaskType == ErpDataSchedulerDefaults.ErpGroupPriceSyncTask)
+            return ErpSyncLevel.GroupPrice;
+        if (syncTaskType == ErpDataSchedulerDefaults.ErpInvoiceSyncTask)
+            return ErpSyncLevel.Invoice;
+        if (syncTaskType == ErpDataSchedulerDefaults.ErpDeliveryRoutesSyncTask)
+            return ErpSyncLevel.DeliveryRoutes;
+        if (syncTaskType == ErpDataSchedulerDefaults.ErpDealsSyncTask)
+            return ErpSyncLevel.Deals;
+
+        return 0;
     }
 
     #endregion
@@ -103,8 +138,20 @@ public partial class SyncTaskModelFactory : ISyncTaskModelFactory
         }
 
         var model = task.ToModel<SyncTaskModel>();
+        
+        var dayOfWeekSlots = new List<SyncTaskDaySlotModel>();
 
-        var dayOfWeekSlots = JsonConvert.DeserializeObject<List<SyncTaskDaySlotModel>>(task.DayTimeSlots);
+        try
+        {
+            dayOfWeekSlots = task.DayTimeSlots != null
+                ? JsonConvert.DeserializeObject<List<SyncTaskDaySlotModel>>(task.DayTimeSlots) ?? new List<SyncTaskDaySlotModel>()
+                : new List<SyncTaskDaySlotModel>();
+        }
+        catch (Exception ex)
+        {
+            await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Error, await GetErpSyncLevelBySyncTaskType(task.Type), ex.Message, ex.StackTrace);
+            dayOfWeekSlots = new List<SyncTaskDaySlotModel>();
+        }
 
         #region DayOfWeek Slots arrangements
 
