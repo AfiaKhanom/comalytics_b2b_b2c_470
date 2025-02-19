@@ -70,8 +70,6 @@ public class ErpCheckoutController : CheckoutController
     private readonly IErpAccountService _erpAccountService;
     private readonly IErpActivityLogsService _erpActivityLogsService;
     private readonly ICustomerActivityService _customerActivityService;
-    private readonly IErpAccountCreditSyncFunctionality _erpAccountCreditSyncFunctionality;
-    private readonly IOpsiIntegrationService _opsiIntegrationService;
     private readonly IOrderTotalCalculationService _orderTotalCalculationService;
     private readonly ICurrencyService _currencyService;
     private readonly IErpSalesOrgService _erpSalesOrgService;
@@ -129,7 +127,6 @@ public class ErpCheckoutController : CheckoutController
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
         IErpIntegrationPluginManager erpIntegrationPluginManager,
         ICustomerActivityService customerActivityService,
-        IErpAccountCreditSyncFunctionality erpAccountCreditSyncFunctionality,
         IOrderTotalCalculationService orderTotalCalculationService,
         ICurrencyService currencyService,
         IErpSalesOrgService erpSalesOrgService) : base(addressSettings,
@@ -179,7 +176,6 @@ public class ErpCheckoutController : CheckoutController
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
         _erpIntegrationPluginManager = erpIntegrationPluginManager;
         _customerActivityService = customerActivityService;
-        _erpAccountCreditSyncFunctionality = erpAccountCreditSyncFunctionality;
         _orderTotalCalculationService = orderTotalCalculationService;
         _currencyService = currencyService;
         _erpSalesOrgService = erpSalesOrgService;
@@ -292,6 +288,14 @@ public class ErpCheckoutController : CheckoutController
                 await _erpLogsService.ErrorAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit Check error: No integration method found.", ErpSyncLevel.Account, customer: customer);
             }
         }
+    }
+    private async Task<DateTime> ParseDeliveryDateFromUser(string dateTimeFromUser)
+    {
+        if (DateTime.TryParseExact(dateTimeFromUser, "yyyy/MM/dd", new CultureInfo("en-US"), DateTimeStyles.None, out var dateTimeForDelivery))
+            return dateTimeForDelivery;
+        else if (DateTime.TryParseExact(dateTimeFromUser, "dd/MM/yyyy", new CultureInfo("en-US"), DateTimeStyles.None, out var dateTimeForDelivery1))
+            return dateTimeForDelivery1;
+        return DateTime.MinValue;
     }
 
     #endregion
@@ -935,46 +939,27 @@ public class ErpCheckoutController : CheckoutController
             ModelState.AddModelError("", error);
         }
 
-        var newAddress = model.SelectedShipToAddress;
-
-        /*if (model.IsFullLoadRequired)
-        {
-            (var minDeliveryDate, var maxDeliveryDate) = await _erpCustomerFunctionalityService.GetMinimumAndMaximumDeliveryDateForShippingAddress();
-            model.DeliveryDate = minDeliveryDate.Date;
-        }*/
         // validate DeliveryDate
         if (!model.ErpToDetermineDate)
         {
             if (model.CustomDeliveryDateString is null)
                 ModelState.AddModelError("DeliveryDateString", "Please provide a valid delivery date");
             else
-                model.DeliveryDate = DateTime.ParseExact(model.CustomDeliveryDateString, "dd/MM/yyyy", CultureInfo.InvariantCulture);
-            //else
-            //{
-            //    if (!DateTime.TryParseExact(model.CustomDeliveryDateString, "dd/MM/yyyy", new CultureInfo("en-GB"), DateTimeStyles.None, out var selectedDeliveryDate))
-            //        ModelState.AddModelError("DeliveryDate", "Please provide a valid delivery date");
-
-            //    model.DeliveryDate = selectedDeliveryDate;
-            //}
+            {
+               model.DeliveryDate = await ParseDeliveryDateFromUser(model.CustomDeliveryDateString);
+            }
 
             if (model.DeliveryDate <= DateTime.Now)
                 ModelState.AddModelError("DeliveryDate", "Please provide a valid delivery date");
-
-            /*(var minDeliveryDate, var maxDeliveryDate) = await _erpCustomerFunctionalityService.GetMinimumAndMaximumDeliveryDateForShippingAddress();
-
-            if (model.DeliveryDate < minDeliveryDate.Date || model.DeliveryDate > maxDeliveryDate)
-                ModelState.AddModelError("DeliveryDate", "Please provide a valid delivery date");*/
         }
+        else if (model.ErpToDetermineDate && model.DeliveryDateString is null)
+            ModelState.AddModelError("DeliveryDate", "Please provide a valid delivery date");
 
-        /*if (model.DeliveryDateString == null || !DateTime.TryParseExact(model.DeliveryDateString, "dd/MM/yyyy", null, DateTimeStyles.None, out var selectedDeliveryDate))
-            ModelState.AddModelError("DeliveryDate", "Please provide a valid delivery date");*/
-
-        //getB2BId for validation
         model.ErpAccountId = erpAccount.Id;
 
         erpUser.ErpShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdWithActiveAsync(model.ErpShipToAddressId);
 
-        if (ModelState.IsValid && erpUser != null && erpUser.ErpUserType == ErpUserType.B2BUser && erpUser.ErpShipToAddress != null && model.ErpShipToAddressId > 0)
+        if (ModelState.IsValid && erpUser.ErpUserType == ErpUserType.B2BUser && erpUser.ErpShipToAddress != null && model.ErpShipToAddressId > 0)
         {
             // try to find an address with the same values (don't duplicate records)
             var shipToAddress = erpUser.ErpShipToAddress;
@@ -988,11 +973,13 @@ public class ErpCheckoutController : CheckoutController
             {
                 try
                 {
-                    var date = model.DeliveryDate;
-                    if (DateTime.TryParseExact(model.CustomDeliveryDateString, "dd/MM/yyyy", new CultureInfo("en-GB"), DateTimeStyles.None, out var dateTimeForDelivery))
-                        date = dateTimeForDelivery;
+                    var customDeliveryDate = await ParseDeliveryDateFromUser(model.CustomDeliveryDateString);
+                    var deliveryDate = await ParseDeliveryDateFromUser(model.DeliveryDateString);
 
-                    await _genericAttributeService.SaveAttributeAsync(customer, B2BB2CFeaturesDefaults.SelectedB2BDeliveryDateAttribute, date, store.Id);
+                    if (customDeliveryDate != DateTime.MinValue)
+                        await _genericAttributeService.SaveAttributeAsync(customer, B2BB2CFeaturesDefaults.SelectedB2BDeliveryDateAttribute, customDeliveryDate, store.Id);
+                    else if (deliveryDate != DateTime.MinValue)
+                        await _genericAttributeService.SaveAttributeAsync(customer, B2BB2CFeaturesDefaults.SelectedB2BDeliveryDateAttribute, deliveryDate, store.Id);
                 }
                 catch
                 {
@@ -3260,9 +3247,9 @@ public class ErpCheckoutController : CheckoutController
     #region B2B Checkout Data
 
     [HttpPost]
-    public async Task<IActionResult> GetERPDeliveryDates(string suburb, string city)
+    public async Task<IActionResult> GetERPDeliveryDates(int shipToAddressId)
     {
-        var (deliveyDates, isSucceed) = await _erpCheckoutModelFactory.GetDeliveryDatesBySuburbOrCityAsync(suburb, city);
+        var (deliveyDates, isSucceed) = await _erpCheckoutModelFactory.GetDeliveryDatesByShipToAddressAsync(shipToAddressId);
 
         return Json(new
         {
@@ -3360,7 +3347,7 @@ public class ErpCheckoutController : CheckoutController
         await _genericAttributeService.SaveAttributeAsync(currentCustomer, NopCustomerDefaults.SelectedShippingOptionAttribute, pickUpInStoreShippingOption, store.Id);
         await _genericAttributeService.SaveAttributeAsync(currentCustomer, NopCustomerDefaults.SelectedPickupPointAttribute, defaultPoint, store.Id);
 
-        return Json(await RenderViewComponentToStringAsync(typeof(NopStation.Plugin.B2B.B2BB2CFeatures.Components.OrderTotalsViewComponent), new { isEditable = false }));
+        return Json(await RenderViewComponentToStringAsync(typeof(OrderTotalsViewComponent), new { isEditable = false }));
     }
 
 
@@ -3387,7 +3374,7 @@ public class ErpCheckoutController : CheckoutController
         await _genericAttributeService.SaveAttributeAsync<ShippingOption>(currentCustomer, NopCustomerDefaults.SelectedShippingOptionAttribute, null, currentStore.Id);
         await _genericAttributeService.SaveAttributeAsync<PickupPoint>(currentCustomer, NopCustomerDefaults.SelectedPickupPointAttribute, null, currentStore.Id);
 
-        return Json(await RenderViewComponentToStringAsync(typeof(NopStation.Plugin.B2B.B2BB2CFeatures.Components.OrderTotalsViewComponent), new { isEditable = false }));
+        return Json(await RenderViewComponentToStringAsync(typeof(OrderTotalsViewComponent), new { isEditable = false }));
     }
 
     #endregion

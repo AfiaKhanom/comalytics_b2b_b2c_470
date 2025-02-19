@@ -6,7 +6,6 @@
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts
 @using NopStation.Plugin.B2B.ERPIntegrationCore.Enums
 @using System.Globalization
-@using Nop.Core
 @inject IErpCustomerFunctionalityService b2BCustomerFunctionality
 @inject IWebHelper webHelper
 @inject IB2BB2CWorkContext workContext
@@ -51,7 +50,7 @@
                 <input hidden asp-for="ErpAccountId" value="@Model.ErpAccountId" />
                 <input hidden asp-for="ErpAccountId" value="@Model.ErpShipToAddressId" />
 
-                @if (Model.ExistingErpShipToAddresses.Count > 0)
+                @if (Model.SelectedShipToAddress.DeliveryOptionId == (int)DeliveryOption.Deliver)
                 {
                     <div id="shippingTabDeliver" class="tab-content deliver">
                         <h1 id="delivery-header-text">@T("Checkout.ShippingAddress.SelectYourDeliveryAddress")</h1>
@@ -122,13 +121,13 @@
                                 @if (Model.SelectedShipToAddress != null)
                                 {
                                     var addressLine = string.Join(", ", new string[] {
-                        Model.SelectedShipToAddress.ShipToName,
-                        Model.SelectedShipToAddress.Address1,
-                        Model.SelectedShipToAddress.Address2,
-                        Model.SelectedShipToAddress.Suburb,
-                        Model.SelectedShipToAddress.City,
-                        Model.SelectedShipToAddress.StateProvinceName,
-                        Model.SelectedShipToAddress.ZipPostalCode
+                                        Model.SelectedShipToAddress.ShipToName,
+                                        Model.SelectedShipToAddress.Address1,
+                                        Model.SelectedShipToAddress.Address2,
+                                        Model.SelectedShipToAddress.Suburb,
+                                        Model.SelectedShipToAddress.City,
+                                        Model.SelectedShipToAddress.StateProvinceName,
+                                        Model.SelectedShipToAddress.ZipPostalCode
                                     }.Where(s => !string.IsNullOrEmpty(s)));
 
                                     <div class="section select-shipping-address">
@@ -271,7 +270,7 @@
 
             </div>
             <div class="section order-summary">
-                @* <div class="title">
+                <div class="title">
                     <strong>@T("Checkout.OrderSummary")</strong>
                 </div>
                 @await Component.InvokeAsync(typeof(OrderSummaryViewComponent))

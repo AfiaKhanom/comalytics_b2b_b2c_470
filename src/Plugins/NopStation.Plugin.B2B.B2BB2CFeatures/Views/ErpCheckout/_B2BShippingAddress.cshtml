@@ -2,13 +2,14 @@
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Model.Checkout
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Enums
 @inject IErpCustomerFunctionalityService b2BCustomerFunctionality
 @inject IWebHelper webHelper
 
 @{
     var storeLocation = webHelper.GetStoreLocation();
     var datePickerFormat = Html.GetJQueryDateFormat();//java-script format
-    var minDate = DateTime.Today.AddDays(1).ToString("yyyy-MM-dd");
+    var minDate = DateTime.Today.AddDays(1).ToString("dd-MM-yyyy");
 }
 
 <style>
@@ -116,24 +117,24 @@
                                             @foreach (var item in Model.ExistingErpShipToAddresses)
                                             {
                                                 var addressLine = string.Join(", ", new string[] {
-                                item.ShipToName,
-                                item.Address1,
-                                item.Address2,
-                                item.Suburb,
-                                item.City,
-                                item.StateProvinceName,
-                                item.ZipPostalCode
+                                                        item.ShipToName,
+                                                        item.Address1,
+                                                        item.Address2,
+                                                        item.Suburb,
+                                                        item.City,
+                                                        item.StateProvinceName,
+                                                        item.ZipPostalCode
                                                     }.Where(s => !string.IsNullOrEmpty(s)));
 
                                                 <label id="shipping-address-select" class="address-select-radio">
                                                     <input id="shipToAddress"
-                                                           type="radio"
-                                                           data-id="@item.Id"
-                                                           data-suburb="@item.Suburb"
-                                                           data-city="@item.City"
-                                                           checked="@((Model.ErpShipToAddressId == item.Id) || (Model.ExistingErpShipToAddresses.Count() == 1) ? true : false)"
-                                                           asp-for="@Model.ErpShipToAddressId"
-                                                           value="@item.Id" />
+                                                        type="radio"
+                                                        data-id="@item.Id"
+                                                        data-suburb="@item.Suburb"
+                                                        data-city="@item.City"
+                                                        checked="@((Model.ErpShipToAddressId == item.Id) || (Model.ExistingErpShipToAddresses.Count() == 1) ? true : false)"
+                                                        asp-for="@Model.ErpShipToAddressId"
+                                                        value="@item.Id" />
                                                     <span class="checkmark"></span>
                                                     @(addressLine)
                                                 </label>
@@ -345,8 +346,11 @@
 
             var suburbData = $('input[name="ErpShipToAddressId"]:checked').attr("data-suburb");
             var cityData = $('input[name="ErpShipToAddressId"]:checked').attr("data-city");
+            var shipToAddressId = $('input[name="ErpShipToAddressId"]:checked').attr("data-id");
+
             console.log("suburb: " + suburbData);
             console.log("city: " + cityData);
+            console.log("Ship-to-address Id: " + shipToAddressId);
 
             var selectedData = { shipToAddressId: shipToAddressId };
             addAntiForgeryToken(selectedData);

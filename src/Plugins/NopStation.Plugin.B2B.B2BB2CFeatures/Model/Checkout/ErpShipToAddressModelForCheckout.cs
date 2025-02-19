@@ -110,4 +110,6 @@ public record ErpShipToAddressModelForCheckout : BaseNopEntityModel
     public bool IsFullLoadRequired { get; set; }
     public IList<SelectListItem> AvailableCountries { get; set; }
     public IList<SelectListItem> AvailableStates { get; set; }
+
+    public int DeliveryOptionId { get; set; }
 }

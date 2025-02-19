@@ -19,12 +19,10 @@ using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Discounts;
 using Nop.Services.Localization;
-using Nop.Services.Logging;
 using Nop.Services.Media;
 using Nop.Services.Orders;
 using Nop.Services.Shipping;
 using Nop.Services.Shipping.Pickup;
-using Nop.Services.Stores;
 using Nop.Services.Tax;
 using Nop.Services.Vendors;
 using Nop.Web.Models.Checkout;
@@ -66,11 +64,7 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
     private readonly ITaxService _taxService;
     private readonly IShippingPluginManager _shippingPluginManager;
     private readonly CaptchaSettings _captchaSettings;
-    private readonly IErpWarehouseSalesOrgMapService _erpWarehouseSalesOrgMap;
-    private readonly IErpWarehouseAdditionalDataService _erpWarehouseAdditionalDataService;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
-    private readonly ILogger _logger;
-    private readonly IErpLogsService _erpLogsService;
 
     #endregion
 
@@ -111,12 +105,7 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
         ITaxService taxService,
         IShippingPluginManager shippingPluginManager,
         CaptchaSettings captchaSettings,
-        IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMap,
-        B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
-        IStoreMappingService storeMappingService,
-        ILogger logger,
-        IErpLogsService erpLogsService,
-        IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService)
+        B2BB2CFeaturesSettings b2BB2CFeaturesSettings)
     {
         _workContext = workContext;
         _localizationService = localizationService;
@@ -143,34 +132,7 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
         _taxService = taxService;
         _shippingPluginManager = shippingPluginManager;
         _captchaSettings = captchaSettings;
-        _erpWarehouseSalesOrgMap = erpWarehouseSalesOrgMap;
-        _erpWarehouseAdditionalDataService = erpWarehouseAdditionalDataService;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
-        _logger = logger;
-        _erpLogsService = erpLogsService;
-    }
-
-    #endregion
-
-    #region Utilities
-
-    private bool IsDateValid(DateTime dateTime, string cutoffTime)
-    {
-        TimeSpan cutoffTimeSpan = TimeSpan.Parse(cutoffTime);
-
-        bool isToday = dateTime.Date == DateTime.Today;
-
-        if (dateTime > DateTime.Now)
-        {
-            return true;
-        }
-
-        if (isToday && DateTime.Now.TimeOfDay < cutoffTimeSpan)
-        {
-            return true;
-        }
-
-        return false;
     }
 
     #endregion
@@ -855,38 +817,17 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
         return model;
     }
 
-    public async Task<(IList<SelectListItem>, bool)> GetDeliveryDatesByAreaAndPlantAsync(string suburb, string city, string warehouseCode)
+    public async Task<(IList<SelectListItem>, bool)> GetDeliveryDatesByShipToAddressAsync(int shipToAddressId)
     {
-        //load settings for current Store
-        var b2BB2CFeaturesSettings = _settingService.LoadSetting<B2BB2CFeaturesSettings>((await _storeContext.GetCurrentStoreAsync()).Id);
-        if (!b2BB2CFeaturesSettings.ERPToDetermineDate)
+        if (!_b2BB2CFeaturesSettings.ERPToDetermineDate)
             return (null, false);
 
-        #region Call By Suburb
-
-        //ToDo - will come from ERP
         var deliveryDateResponse = new ErpDeliveryDateResponseModel();
-        if (deliveryDateResponse != null && deliveryDateResponse.IsFullLoadRequired)
-            return (null, true);
 
-        #endregion
-
-        #region Call By City
-
-        if (deliveryDateResponse == null || deliveryDateResponse.DeliveryDates.Count < 1)
-            deliveryDateResponse = new ErpDeliveryDateResponseModel();
-
-        if (deliveryDateResponse != null && deliveryDateResponse.IsFullLoadRequired)
-            return (null, true);
-
-        #endregion
-
-        deliveryDateResponse = new ErpDeliveryDateResponseModel();
+        deliveryDateResponse.DeliveryDates = new List<ERPIntegrationCore.Model.DeliveryDate>();
 
         if (deliveryDateResponse.IsFullLoadRequired)
             return (null, true);
-
-        //await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Information, ErpSyncLevel.DeliveryRoutes, $"Dates Received: {string.Join(", ", deliveryDatesList)}");
 
         if (deliveryDateResponse.DeliveryDates.Count <= 0)
             return (null, false);

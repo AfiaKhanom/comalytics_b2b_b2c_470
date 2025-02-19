@@ -18,5 +18,5 @@ public interface IErpCheckoutModelFactory
     Task<CheckoutErpShippingAddressModel> PrepareCheckoutB2CShippingAddressModelAsync(IList<ShoppingCartItem> cart, ErpNopUser b2CUser, ErpAccount b2BAccount);
     Task<ErpCheckoutShippingAddressModel> PrepareShippingAddressModelAsync(ErpNopUser b2BUser, ErpAccount b2BAccount, int? selectedCountryId = null,
         bool prePopulateNewAddressWithCustomerFields = false, string overrideAttributesXml = "");
-    Task<(IList<SelectListItem>, bool)> GetDeliveryDatesBySuburbOrCityAsync(string suburb, string city);
+    Task<(IList<SelectListItem>, bool)> GetDeliveryDatesByShipToAddressAsync(int shipToAddressId);
 }
