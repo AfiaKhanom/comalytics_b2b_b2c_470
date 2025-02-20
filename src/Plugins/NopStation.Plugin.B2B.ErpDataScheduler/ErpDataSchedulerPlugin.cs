@@ -31,7 +31,7 @@ public class ErpDataSchedulerPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin,
     private const string PLUGIN_TITLE = "Erp Data Scheduler";
     private const string PLUGIN_ICON_CLASS = "nav-icon fas fa-cube";
     private const bool PLUGIN_VISIBLE = true;
-    private const string PLUGIN_NEXT_VERSION = "4.70.3.00";
+    private const string PLUGIN_NEXT_VERSION = "4.70.3.10";
     private const string CHILD_NODE_CONFIG_SYSTEM_NAME = "NopStation.ErpDataScheduler.Configuration";
     private const string CHILD_NODE_CONFIG_TITLE = "Configuration";
     private const string CHILD_NODE_CONFIG_CONTROLLER_NAME = "ErpDataScheduler";
