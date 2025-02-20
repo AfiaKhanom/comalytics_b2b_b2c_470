@@ -20,7 +20,6 @@ public class ErpSalesOrgBuilder : NopEntityBuilder<ErpSalesOrg>
             .WithColumn(nameof(ErpSalesOrg.Password)).AsString().Nullable()
             .WithColumn(nameof(ErpSalesOrg.AuthenticationKey)).AsString().Nullable()
             .WithColumn(nameof(ErpSalesOrg.LastErpAccountSyncTimeOnUtc)).AsDateTime2().Nullable()
-            .WithColumn(nameof(ErpSalesOrg.LastErpAccountCreditSyncTimeOnUtc)).AsDateTime2().Nullable()
             .WithColumn(nameof(ErpSalesOrg.LastErpGroupPriceSyncTimeOnUtc)).AsDateTime2().Nullable()
             .WithColumn(nameof(ErpSalesOrg.LastErpShipToAddressSyncTimeOnUtc)).AsDateTime2().Nullable()
             .WithColumn(nameof(ErpSalesOrg.LastErpProductSyncTimeOnUtc)).AsDateTime2().Nullable()

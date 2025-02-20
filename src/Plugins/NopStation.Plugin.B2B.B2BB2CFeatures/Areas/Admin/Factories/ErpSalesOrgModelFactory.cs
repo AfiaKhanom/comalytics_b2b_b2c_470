@@ -151,7 +151,6 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
                         IntegrationClientId = erpSalesOrg.IntegrationClientId,
                         AuthenticationKey = erpSalesOrg.AuthenticationKey,
                         LastErpAccountSyncTimeOnUtc = erpSalesOrg.LastErpAccountSyncTimeOnUtc,
-                        LastErpAccountCreditSyncTimeOnUtc = erpSalesOrg.LastErpAccountCreditSyncTimeOnUtc,
                         LastErpGroupPriceSyncTimeOnUtc = erpSalesOrg.LastErpGroupPriceSyncTimeOnUtc,
                         LastErpShipToAddressSyncTimeOnUtc = erpSalesOrg.LastErpShipToAddressSyncTimeOnUtc,
                         LastErpStockSyncTimeOnUtc = erpSalesOrg.LastErpStockSyncTimeOnUtc,
@@ -184,7 +183,6 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
             model.IntegrationClientId = erpSalesOrg.IntegrationClientId;
             model.AuthenticationKey = erpSalesOrg.AuthenticationKey;
             model.LastErpAccountSyncTimeOnUtc = erpSalesOrg.LastErpAccountSyncTimeOnUtc;
-            model.LastErpAccountCreditSyncTimeOnUtc = erpSalesOrg.LastErpAccountCreditSyncTimeOnUtc;
             model.LastErpGroupPriceSyncTimeOnUtc = erpSalesOrg.LastErpGroupPriceSyncTimeOnUtc;
             model.LastErpShipToAddressSyncTimeOnUtc = erpSalesOrg.LastErpShipToAddressSyncTimeOnUtc;
             model.LastErpStockSyncTimeOnUtc = erpSalesOrg.LastErpStockSyncTimeOnUtc;

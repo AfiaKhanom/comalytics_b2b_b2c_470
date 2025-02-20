@@ -40,7 +40,6 @@ public class NopStartup : INopStartup
         services.AddScoped<IErpOrderSyncService, ErpOrderSyncService>();
         services.AddScoped<IErpProductSyncService, ErpProductSyncService>();
         services.AddScoped<IErpStockSyncService, ErpStockSyncService>();
-        services.AddScoped<IErpAccountCreditSyncService, ErpAccountCreditSyncService>();
 
         services.AddScoped<ISyncLogService, SyncLogService>();
         services.AddScoped<IQuartzJobDetailService, QuartzJobDetailService>();

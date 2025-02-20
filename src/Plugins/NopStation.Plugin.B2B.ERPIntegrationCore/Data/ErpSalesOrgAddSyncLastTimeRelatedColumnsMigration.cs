@@ -27,13 +27,6 @@ public class ErpSalesOrgAddSyncLastTimeRelatedColumnsMigration : AutoReversingMi
                     .AsDateTime2()
                     .Nullable();
             }
-            if (!Schema.Table(erpSalesOrgTableName).Column(nameof(ErpSalesOrg.LastErpAccountCreditSyncTimeOnUtc)).Exists())
-            {
-                Create.Column(nameof(ErpSalesOrg.LastErpAccountCreditSyncTimeOnUtc))
-                    .OnTable(erpSalesOrgTableName)
-                    .AsDateTime2()
-                    .Nullable();
-            }
             if (!Schema.Table(erpSalesOrgTableName).Column(nameof(ErpSalesOrg.LastErpGroupPriceSyncTimeOnUtc)).Exists())
             {
                 Create.Column(nameof(ErpSalesOrg.LastErpGroupPriceSyncTimeOnUtc))
