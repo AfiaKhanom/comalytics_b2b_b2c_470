@@ -216,7 +216,7 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                         Location = salesOrg.Code,
                         AccountNumber = erpAccountNumber,
                         DateFrom = isIncrementalSync ? salesOrg.LastErpShipToAddressSyncTimeOnUtc : null,
-                        CompanyPassword = salesOrg.Password
+                        
                     };
 
                     var response = await erpIntegrationPlugin.GetShipToAddressesFromErpAsync(erpGetRequestModel);

@@ -1,9 +1,6 @@
 ﻿using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Messages;
-using Nop.Core.Events;
-using Nop.Services.Common;
-using Nop.Services.Customers;
 using Nop.Services.Localization;
 using Nop.Services.Messages;
 
@@ -15,17 +12,12 @@ public partial class SyncWorkflowMessageService : ISyncWorkflowMessageService
 
     private readonly EmailAccountSettings _emailAccountSettings;
     private readonly IEmailAccountService _emailAccountService;
-    private readonly IEventPublisher _eventPublisher;
     private readonly ILanguageService _languageService;
     private readonly ILocalizationService _localizationService;
     private readonly IMessageTemplateService _messageTemplateService;
-    private readonly IMessageTokenProvider _messageTokenProvider;
     private readonly IQueuedEmailService _queuedEmailService;
     private readonly IStoreContext _storeContext;
     private readonly ITokenizer _tokenizer;
-    private readonly ICustomerService _customerService;
-    private readonly MessagesSettings _messagesSettings;
-    private readonly IAddressService _addressService;
     private readonly ErpDataSchedulerSettings _erpDataSchedulerSettings;
     private readonly IWorkContext _workContext;
 
@@ -36,33 +28,23 @@ public partial class SyncWorkflowMessageService : ISyncWorkflowMessageService
     public SyncWorkflowMessageService(
         EmailAccountSettings emailAccountSettings,
         IEmailAccountService emailAccountService,
-        IEventPublisher eventPublisher,
         ILanguageService languageService,
         ILocalizationService localizationService,
         IMessageTemplateService messageTemplateService,
-        IMessageTokenProvider messageTokenProvider,
         IQueuedEmailService queuedEmailService,
         IStoreContext storeContext,
         ITokenizer tokenizer,
-        ICustomerService customerService,
-        MessagesSettings messagesSettings,
-        IAddressService addressService,
         ErpDataSchedulerSettings erpDataSchedulerSettings,
         IWorkContext workContext)
     {
         _emailAccountSettings = emailAccountSettings;
         _emailAccountService = emailAccountService;
-        _eventPublisher = eventPublisher;
         _languageService = languageService;
         _localizationService = localizationService;
         _messageTemplateService = messageTemplateService;
-        _messageTokenProvider = messageTokenProvider;
         _queuedEmailService = queuedEmailService;
         _storeContext = storeContext;
         _tokenizer = tokenizer;
-        _customerService = customerService;
-        _messagesSettings = messagesSettings;
-        _addressService = addressService;
         _erpDataSchedulerSettings = erpDataSchedulerSettings;
         _workContext = workContext;
     }

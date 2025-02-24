@@ -1,5 +1,4 @@
 ﻿using FluentValidation;
-using Nop.Core;
 using Nop.Core.Domain.Directory;
 using Nop.Services.Directory;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
@@ -25,7 +24,6 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
     private readonly IErpDataClearCacheService _erpDataClearCacheService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginService;
     private readonly IValidator<ErpInvoice> _erpInvoiceValidator;
-    private readonly ErpDataSchedulerSettings _erpDataSchedulerSettings;
     private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
 
     #endregion
@@ -41,7 +39,6 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
         IErpDataClearCacheService erpDataClearCacheService,
         IErpIntegrationPluginManager erpIntegrationPluginService,
         IValidator<ErpInvoice> erpInvoiceValidator,
-        ErpDataSchedulerSettings erpDataSchedulerSettings,
         ISyncWorkflowMessageService syncWorkflowMessageService)
     {
         _currencyService = currencyService;
@@ -53,7 +50,6 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
         _erpDataClearCacheService = erpDataClearCacheService;
         _erpIntegrationPluginService = erpIntegrationPluginService;
         _erpInvoiceValidator = erpInvoiceValidator;
-        _erpDataSchedulerSettings = erpDataSchedulerSettings;
         _syncWorkflowMessageService = syncWorkflowMessageService;
     }
 
@@ -217,8 +213,7 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                             Start = start,
                             AccountNumber = erpAccount.AccountNumber,
                             Location = salesOrg.Code,
-                            DateFrom = isIncrementalSync ? erpAccount.LastTimeOrderSyncOnUtc : null,
-                            CompanyPassword = salesOrg.Password
+                            DateFrom = isIncrementalSync ? erpAccount.LastTimeOrderSyncOnUtc : null
                         };
 
                         var response = await erpIntegrationPlugin.GetInvoiceByAccountNoFromErpAsync(erpGetRequestModel);

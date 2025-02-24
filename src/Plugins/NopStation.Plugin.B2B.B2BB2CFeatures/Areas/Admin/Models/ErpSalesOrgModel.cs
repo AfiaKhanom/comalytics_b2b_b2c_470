@@ -43,9 +43,6 @@ public record ErpSalesOrgModel : BaseNopEntityModel
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.AuthenticationKey")]
     public string AuthenticationKey { get; set; }
 
-    [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.Password")]
-    public string Password { get; set; }
-
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.CreatedOnUtc")]
     public DateTime CreatedOn { get; set; }
 

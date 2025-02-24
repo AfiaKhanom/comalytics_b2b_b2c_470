@@ -272,7 +272,6 @@ public class ErpOrderSyncService : IErpOrderSyncService
                             AccountNumber = erpAccount.AccountNumber,
                             Location = salesOrg.Code,
                             DateFrom = dateFrom,
-                            CompanyPassword = salesOrg.Password,
                             OrderNumber = orderNumber
                         };
 
@@ -351,7 +350,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
                                 AccountNumber = erpAccount.AccountNumber,
                                 Location = salesOrg.Code,
                                 DateFrom = isIncrementalSync ? erpAccount.LastTimeOrderSyncOnUtc : null,
-                                CompanyPassword = salesOrg.Password
+                                
                             };
 
                             var response = await erpIntegrationPlugin.GetQuoteByAccountFromErpAsync(erpGetRequestModel);
@@ -493,6 +492,11 @@ public class ErpOrderSyncService : IErpOrderSyncService
             #region Nop Order
 
             ErpNopUser? erpNopUser = null;
+
+            if (!IsValidEmail(erpOrder.CustomerEmail))
+            {
+                continue;
+            }
 
             var oldNopOrder = await _orderService.GetOrderByCustomOrderNumberAsync(erpOrder.CustomOrderNumber);
 

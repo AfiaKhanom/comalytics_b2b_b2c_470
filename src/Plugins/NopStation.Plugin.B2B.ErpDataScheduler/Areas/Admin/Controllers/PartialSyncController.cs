@@ -43,50 +43,6 @@ public class PartialSyncController : NopStationAdminController
     }
 
     [HttpPost]
-    public async Task<IActionResult> SyncErpAccountCredit(ErpAccountCreditPartialSyncModel model)
-    {
-        //try to get a schedule task with the specified id
-        var task = await _syncTaskService.GetTaskByQuartzJobNameAsync(ErpDataSchedulerDefaults.ErpAccountCreditSyncTaskIdentity);
-
-        if (task is null)
-        {
-            return Json(new
-            {
-                Success = false,
-                Message = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ErpDataScheduler.Admin.PartialSync.RequestedTaskNotFound")
-            });
-        }
-
-        try
-        {
-            var dataMapList = new List<KeyValuePair<string, object>>
-            {
-                new(nameof(ErpAccountCreditPartialSyncModel.ErpAccountNumber), model.ErpAccountNumber)
-            };
-
-            var jobDataMap = _nopStationScheduler.PrepareJobDataMap(dataMapList);
-
-            await _nopStationScheduler.ExecuteSchedulerAsync(task.QuartzJobName, jobDataMap);
-
-            return Json(new
-            {
-                Success = true,
-                Message = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ErpDataScheduler.Admin.PartialSync.TaskScheduledToExecute")
-            });
-        }
-        catch (Exception ex)
-        {
-            await _syncLogService.SyncLogSaveOnFileAsync(task.Name, 0, ex.Message, ex.StackTrace ?? string.Empty);
-
-            return Json(new
-            {
-                Success = false,
-                Message = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ErpDataScheduler.Admin.PartialSync.InternalServerError")
-            });
-        }
-    }
-
-    [HttpPost]
     public async Task<IActionResult> SyncErpAccount(ErpAccountPartialSyncModel model)
     {
         //try to get a schedule task with the specified id

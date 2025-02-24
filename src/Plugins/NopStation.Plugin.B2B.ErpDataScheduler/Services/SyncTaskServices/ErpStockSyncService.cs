@@ -1,8 +1,5 @@
-﻿using Nop.Core;
-using Nop.Core.Caching;
+﻿using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
-using Nop.Services.Catalog;
-using Nop.Services.Common;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
@@ -16,14 +13,11 @@ public class ErpStockSyncService : IErpStockSyncService
 {
     #region Fields
 
-    private readonly IProductService _productService;
     private readonly ISyncLogService _erpSyncLogService;
     private readonly IErpProductService _erpProductService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginService;
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly IErpWarehouseAdditionalDataService _erpWarehouseAdditionalDataService;
-    private readonly IGenericAttributeService _genericAttributeService;
-    private readonly ErpDataSchedulerSettings _erpDataSchedulerSettings;
     private readonly IStaticCacheManager _staticCacheManager;
     private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
 
@@ -31,25 +25,19 @@ public class ErpStockSyncService : IErpStockSyncService
 
     #region Ctor
 
-    public ErpStockSyncService(IProductService productService,
-        ISyncLogService erpSyncLogService,
+    public ErpStockSyncService(ISyncLogService erpSyncLogService,
         IErpProductService erpProductService,
         IErpIntegrationPluginManager erpIntegrationPluginService,
         IErpSalesOrgService erpSalesOrgService,
         IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService,
-        IGenericAttributeService genericAttributeService,
-        ErpDataSchedulerSettings erpDataSchedulerSettings,
         IStaticCacheManager staticCacheManager,
         ISyncWorkflowMessageService syncWorkflowMessageService)
     {
-        _productService = productService;
         _erpSyncLogService = erpSyncLogService;
         _erpProductService = erpProductService;
         _erpIntegrationPluginService = erpIntegrationPluginService;
         _erpSalesOrgService = erpSalesOrgService;
         _erpWarehouseAdditionalDataService = erpWarehouseAdditionalDataService;
-        _genericAttributeService = genericAttributeService;
-        _erpDataSchedulerSettings = erpDataSchedulerSettings;
         _staticCacheManager = staticCacheManager;
         _syncWorkflowMessageService = syncWorkflowMessageService;
     }
@@ -142,7 +130,7 @@ public class ErpStockSyncService : IErpStockSyncService
                         DateFrom = isIncrementalSync ? salesOrg.LastErpStockSyncTimeOnUtc : null,
                         Location = salesOrg.Code,
                         ProductSku = stockCode,
-                        CompanyPassword = salesOrg.Password
+                        
                     };
 
                     var response = await erpIntegrationPlugin.GetStocksFromErpAsync(erpGetRequestModel);

@@ -17,7 +17,6 @@ public class ErpSalesOrgBuilder : NopEntityBuilder<ErpSalesOrg>
             .WithColumn(nameof(ErpSalesOrg.Email)).AsString()
             .WithColumn(NameCompatibilityManager.GetColumnName(typeof(ErpSalesOrg), nameof(ErpSalesOrg.AddressId))).AsInt32()
             .WithColumn(nameof(ErpSalesOrg.IntegrationClientId)).AsString().Nullable()
-            .WithColumn(nameof(ErpSalesOrg.Password)).AsString().Nullable()
             .WithColumn(nameof(ErpSalesOrg.AuthenticationKey)).AsString().Nullable()
             .WithColumn(nameof(ErpSalesOrg.LastErpAccountSyncTimeOnUtc)).AsDateTime2().Nullable()
             .WithColumn(nameof(ErpSalesOrg.LastErpGroupPriceSyncTimeOnUtc)).AsDateTime2().Nullable()

@@ -155,7 +155,6 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
                         LastErpShipToAddressSyncTimeOnUtc = erpSalesOrg.LastErpShipToAddressSyncTimeOnUtc,
                         LastErpStockSyncTimeOnUtc = erpSalesOrg.LastErpStockSyncTimeOnUtc,
                         LastErpProductSyncTimeOnUtc = erpSalesOrg.LastErpProductSyncTimeOnUtc,
-                        Password = erpSalesOrg.Password ?? string.Empty,
                         CreatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(erpSalesOrg.CreatedOnUtc, DateTimeKind.Utc),
                         UpdatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(erpSalesOrg.UpdatedOnUtc, DateTimeKind.Utc),
                         IsActive = erpSalesOrg.IsActive,
@@ -187,7 +186,6 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
             model.LastErpShipToAddressSyncTimeOnUtc = erpSalesOrg.LastErpShipToAddressSyncTimeOnUtc;
             model.LastErpStockSyncTimeOnUtc = erpSalesOrg.LastErpStockSyncTimeOnUtc;
             model.LastErpProductSyncTimeOnUtc = erpSalesOrg.LastErpProductSyncTimeOnUtc;
-            model.Password = erpSalesOrg.Password;
             model.CreatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(erpSalesOrg.CreatedOnUtc, DateTimeKind.Utc);
             model.UpdatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(erpSalesOrg.UpdatedOnUtc, DateTimeKind.Utc);
             model.IsActive = erpSalesOrg.IsActive;

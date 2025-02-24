@@ -44,10 +44,6 @@ public static class ErpDataSchedulerDefaults
 
     public static int DefaultSyncLogFileDeleteTaskInverval => 3600;
 
-    public static string ErpAccountCreditSyncTaskName => "Erp Account Credit Synchronization";
-
-    public static string ErpAccountCreditSyncTaskIdentity => "ErpAccountCreditSync";
-
     public static string ErpAccountSyncTaskIdentity => "ErpAccountSync";
 
     public static string ErpGroupPriceSyncTaskIdentity => "ErpGroupPriceSync";

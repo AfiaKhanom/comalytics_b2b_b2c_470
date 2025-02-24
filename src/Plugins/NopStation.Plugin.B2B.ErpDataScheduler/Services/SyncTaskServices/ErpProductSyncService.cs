@@ -5,7 +5,6 @@ using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Services.Catalog;
-using Nop.Services.Common;
 using Nop.Services.Seo;
 using Nop.Services.Shipping;
 using Nop.Services.Tax;
@@ -34,10 +33,8 @@ public class ErpProductSyncService : IErpProductSyncService
     private readonly IManufacturerService _manufacturerService;
     private readonly IProductTemplateService _productTemplateService;
     private readonly ICategoryTemplateService _categoryTemplateService;
-    private readonly IGenericAttributeService _genericAttributeService;
     private readonly IManufacturerTemplateService _manufacturerTemplateService;
     private readonly ISpecificationAttributeService _specificationAttributeService;
-    private readonly ErpDataSchedulerSettings _erpDataSchedulerSettings;
     private readonly ISyncLogService _erpSyncLogService;
     private readonly IErpProductService _erpProductService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
@@ -68,16 +65,12 @@ public class ErpProductSyncService : IErpProductSyncService
         IManufacturerService manufacturerService,
         IProductTemplateService productTemplateService,
         ICategoryTemplateService categoryTemplateService,
-        IGenericAttributeService genericAttributeService,
         IManufacturerTemplateService manufacturerTemplateService,
         ISpecificationAttributeService specificationAttributeService,
-        ErpDataSchedulerSettings erpDataSchedulerSettings,
         ISyncLogService erpSyncLogService,
         IErpProductService erpProductService,
-        IErpDataClearCacheService erpDataClearCacheService,
         IErpIntegrationPluginManager erpIntegrationPluginManager,
         IErpSalesOrgService erpSalesOrgService,
-        IErpIntegrationPluginManager erpIntegrationPluginService,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
         IValidator<Product> productValidator,
         IValidator<Manufacturer> manufacturerValidator,
@@ -94,10 +87,8 @@ public class ErpProductSyncService : IErpProductSyncService
         _manufacturerService = manufacturerService;
         _productTemplateService = productTemplateService;
         _categoryTemplateService = categoryTemplateService;
-        _genericAttributeService = genericAttributeService;
         _manufacturerTemplateService = manufacturerTemplateService;
         _specificationAttributeService = specificationAttributeService;
-        _erpDataSchedulerSettings = erpDataSchedulerSettings;
         _erpSyncLogService = erpSyncLogService;
         _erpProductService = erpProductService;
         _erpSalesOrgService = erpSalesOrgService;
@@ -107,6 +98,7 @@ public class ErpProductSyncService : IErpProductSyncService
         _categoryValidator = categoryValidatory;
         _staticCacheManager = staticCacheManager;
         _syncWorkflowMessageService = syncWorkflowMessageService;
+        _erpIntegrationPluginManager = erpIntegrationPluginManager;
     }
 
     #endregion
@@ -224,7 +216,7 @@ public class ErpProductSyncService : IErpProductSyncService
 
         var previousStart = "0";
         var lastSyncedErpProduct = string.Empty;
-        var syncStartTime = DateTime.UtcNow.AddMinutes(-10);
+        //var syncStartTime = DateTime.UtcNow.AddMinutes(-10);
 
         try
         {
@@ -316,7 +308,7 @@ public class ErpProductSyncService : IErpProductSyncService
                         Location = salesOrg.Code,
                         ProductSku = stockCode,
                         DateFrom = isIncrementalSync ? salesOrg.LastErpProductSyncTimeOnUtc : null,
-                        CompanyPassword = salesOrg.Password
+                        
                     };
 
                     var response = await erpIntegrationPlugin.GetProductsFromErpAsync(erpGetRequestModel);

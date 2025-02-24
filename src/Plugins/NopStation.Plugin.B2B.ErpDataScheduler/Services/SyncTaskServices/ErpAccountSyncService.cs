@@ -168,7 +168,6 @@ public class ErpAccountSyncService : IErpAccountSyncService
                     var erpGetRequestModel = new ErpGetRequestModel
                     {
                         Start = start,
-                        CompanyPassword = salesOrg.Password,
                         DateFrom = isIncrementalSync ? salesOrg.LastErpAccountSyncTimeOnUtc : null,
                         AccountNumber = erpAccountNumber,
                         Location = salesOrg.Code

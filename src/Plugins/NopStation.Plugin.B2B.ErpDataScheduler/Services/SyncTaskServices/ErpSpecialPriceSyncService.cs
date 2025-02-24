@@ -1,7 +1,6 @@
 ﻿using FluentValidation;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
-using NopStation.Plugin.B2B.B2BB2CFeatures;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
 using NopStation.Plugin.B2B.ERPIntegrationCore;
@@ -23,9 +22,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
     private readonly IErpSpecialPriceService _erpSpecialPriceService;
     private readonly IErpDataClearCacheService _erpDataClearCacheService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginService;
-    private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
     private readonly IStaticCacheManager _staticCacheManager;
-    private readonly ErpDataSchedulerSettings _erpDataSchedulerSettings;
     private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
     private readonly IValidator<ErpSpecialPrice> _erpSpecialPriceValidator;
 
@@ -40,10 +37,8 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
         IErpSpecialPriceService erpSpecialPriceService,
         IErpDataClearCacheService erpDataClearCacheService,
         IErpIntegrationPluginManager erpIntegrationPluginService,
-        B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
         IValidator<ErpSpecialPrice> erpSpecialPriceValidator,
         IStaticCacheManager staticCacheManager,
-        ErpDataSchedulerSettings erpDataSchedulerSettings,
         ISyncWorkflowMessageService syncWorkflowMessageService)
     {
         _erpProductService = erpProductService;
@@ -53,9 +48,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
         _erpSpecialPriceService = erpSpecialPriceService;
         _erpDataClearCacheService = erpDataClearCacheService;
         _erpIntegrationPluginService = erpIntegrationPluginService;
-        _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
         _staticCacheManager = staticCacheManager;
-        _erpDataSchedulerSettings = erpDataSchedulerSettings;
         _syncWorkflowMessageService = syncWorkflowMessageService;
         _erpSpecialPriceValidator = erpSpecialPriceValidator;
     }
@@ -220,7 +213,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                             DateFrom = isIncrementalSync ? erpAccount.LastPriceRefresh : null,
                             AccountNumber = erpAccount.AccountNumber,
                             ProductSku = stockCode,
-                            CompanyPassword = salesOrg.Password
+                            
                         };
 
                         var response = await erpIntegrationPlugin.GetProductSpecialPricesFromErpAsync(erpGetRequestModel);
@@ -413,7 +406,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                 ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskName,
                 ErpSyncLevel.SpecialPrice,
                 ex.Message,
-                ex.StackTrace);
+                ex.StackTrace ?? string.Empty);
 
             await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
                 DateTime.UtcNow,
