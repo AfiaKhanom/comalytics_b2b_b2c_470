@@ -20,6 +20,7 @@ public class ErpShipToAddressService : IErpShipToAddressService
     private readonly IRepository<ErpShiptoAddressErpAccountMap> _erpShiptoAddressErpAccountMapRepository;
     private readonly IStaticCacheManager _staticCacheManager;
     private readonly IRepository<CustomerAddressMapping> _customerAddressMappingRepository;
+    private readonly IRepository<ErpAccount> _erpAccountRepository;
 
     #endregion
 
@@ -28,12 +29,14 @@ public class ErpShipToAddressService : IErpShipToAddressService
     public ErpShipToAddressService(IRepository<ErpShipToAddress> erpShipToAddressRepository,
         IRepository<ErpShiptoAddressErpAccountMap> erpShiptoAddressErpAccountMap,
         IStaticCacheManager staticCacheManager,
-        IRepository<CustomerAddressMapping> customerAddressMappingRepository)
+        IRepository<CustomerAddressMapping> customerAddressMappingRepository,
+        IRepository<ErpAccount> erpAccountRepository)
     {
         _erpShipToAddressRepository = erpShipToAddressRepository;
         _erpShiptoAddressErpAccountMapRepository = erpShiptoAddressErpAccountMap;
         _staticCacheManager = staticCacheManager;
         _customerAddressMappingRepository = customerAddressMappingRepository;
+        _erpAccountRepository = erpAccountRepository;
     }
 
     #endregion
@@ -92,14 +95,6 @@ public class ErpShipToAddressService : IErpShipToAddressService
 
     #region Read
 
-    /// <summary>
-    /// Gets an ErpShipToAddress by Id
-    /// </summary>
-    /// <param name="id">ErpShipToAddress identifier</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the ErpShipToAddress
-    /// </returns>
     public async Task<ErpShipToAddress> GetErpShipToAddressByIdAsync(int id)
     {
         if (id == 0)
@@ -113,14 +108,6 @@ public class ErpShipToAddressService : IErpShipToAddressService
         return erpShipToAddress;
     }
 
-    /// <summary>
-    /// Gets an ErpShipToAddress by Id if it is active
-    /// </summary>
-    /// <param name="id">ErpShipToAddress identifier</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the ErpShipToAddress if it is activ
-    /// </returns>
     public async Task<ErpShipToAddress> GetErpShipToAddressByIdWithActiveAsync(int id)
     {
         if (id == 0)
@@ -134,31 +121,6 @@ public class ErpShipToAddressService : IErpShipToAddressService
         return erpShipToAddress;
     }
 
-    public async Task<IList<ErpShipToAddress>> GetAllErpShipToAddressesAsync(bool showHidden = false, bool isActiveOnly = false)
-    {
-        var query = _erpShipToAddressRepository.Table;
-
-        if (!showHidden)
-            query = query.Where(b => !b.IsDeleted);
-
-        if (isActiveOnly)
-            query = query.Where(b => b.IsActive);
-
-        query = query.OrderBy(b => b.ShipToCode);
-
-        return query.ToList();
-    }
-
-    /// <summary>
-    /// Gets all ErpShipToAddress
-    /// </summary>
-    /// <param name="pageIndex">Page number</param>
-    /// <param name="pageSize">Page size</param>
-    /// <param name="getOnlyTotalCount">If only total no of account needed or not</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains all the ErpShipToAddress
-    /// </returns>
     public virtual async Task<IPagedList<ErpShipToAddress>> GetAllErpShipToAddressesAsync(string shipToCode = "",
         string shipToName = "", int erpAccountId = 0, string repNum = "", string repFullName = "", string repEmail = "",
         int pageIndex = 0, int pageSize = int.MaxValue, bool? showHidden = null, string emailAddresses = "", bool isForOrder = false)
@@ -259,37 +221,38 @@ public class ErpShipToAddressService : IErpShipToAddressService
         });
     }
 
-    public async Task<Dictionary<int, List<ErpShipToAddress>>> GetErpAccountShipToAddressMappingAsync(int[] erpAccountIds, bool showHidden = false, bool isActiveOnly = false)
+    public async Task<Dictionary<string, List<ErpShipToAddress>>> GetErpAccountShipToAddressMappingAsync(int[] erpAccountIds, bool showHidden = false, bool isActiveOnly = false)
     {
         var query = from address in _erpShipToAddressRepository.Table
                     join cam in _erpShiptoAddressErpAccountMapRepository.Table
                     on address.Id equals cam.ErpShiptoAddressId
                     where erpAccountIds != null && erpAccountIds.Length > 0 && erpAccountIds.Contains(cam.ErpAccountId)
+                    join erpAcc in _erpAccountRepository.Table on cam.ErpAccountId equals erpAcc.Id
                     select new
                     {
-                        ErpAccountId = cam.ErpAccountId,
-                        ErpShipToAddress = address
+                        ErpAccountNumber = erpAcc.AccountNumber,
+                        ShipToAddress = address
                     };
 
         if (!showHidden)
         {
-            query = query.Where(x => !x.ErpShipToAddress.IsDeleted);
+            query = query.Where(x => !x.ShipToAddress.IsDeleted);
         }
 
         if (isActiveOnly)
         {
-            query = query.Where(x => x.ErpShipToAddress.IsActive);
+            query = query.Where(x => x.ShipToAddress.IsActive);
         }
 
-        query = query.OrderBy(x => x.ErpShipToAddress.ShipToCode);
+        query = query.OrderBy(x => x.ShipToAddress.ShipToCode);
 
         var results = await query.ToListAsync();
 
         var mappedResults = results
-            .GroupBy(x => x.ErpAccountId)
+            .GroupBy(x => x.ErpAccountNumber)
             .ToDictionary(
                 group => group.Key,
-                group => group.Select(x => x.ErpShipToAddress).ToList()
+                group => group.Select(x => x.ShipToAddress).ToList()
             );
 
         return mappedResults;
@@ -356,7 +319,7 @@ public class ErpShipToAddressService : IErpShipToAddressService
 
     public async Task<IList<ErpShiptoAddressErpAccountMap>> GetErpShipToAddressErpAccountMapsByErpAccountIdsAsync(int[] erpAccountIds)
     {
-        if (!erpAccountIds.Any())
+        if (erpAccountIds.Length == 0)
             return null;
 
         return await _erpShiptoAddressErpAccountMapRepository.Table
@@ -445,8 +408,7 @@ public class ErpShipToAddressService : IErpShipToAddressService
 
     public virtual async Task<ErpShipToAddress> GetCustomerBillingAddressAsync(ErpAccount erpAccount)
     {
-        if (erpAccount is null)
-            throw new ArgumentNullException(nameof(erpAccount));
+        ArgumentNullException.ThrowIfNull(erpAccount);
 
         return await GetErpShipToAddressAsync(erpAccount.Id, erpAccount.BillingAddressId ?? 0);
     }

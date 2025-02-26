@@ -8,6 +8,7 @@ using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Validators.Helpers;
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncTaskServices;
 
@@ -66,10 +67,13 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
 
         if (!validationResult.IsValid)
         {
+            var errorMessages = ErpDataValidationHelper.PrepareValidationLog(validationResult);
+
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskName,
                 ErpSyncLevel.SpecialPrice,
-                $"Data mapping skipped for {nameof(erpSpecialPrice)}. One or more field under validation is invalid.");
+                $"Data mapping skipped for {nameof(ErpSpecialPrice)}, of {nameof(ErpSpecialPrice.ErpAccountId)}: {erpSpecialPrice.ErpAccountId} " +
+                $"and {nameof(ErpSpecialPrice.NopProductId)}: {erpSpecialPrice.NopProductId}.\r\n {errorMessages}");
         }
 
         return validationResult.IsValid;
@@ -374,7 +378,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                     ($"The last synced Erp Special Price: {lastErpSpecialPriceSynced}, on Product: {lastErpSpecialPriceSyncedOfProduct}, " +
                     $"of Erp Account: {lastErpSpecialPriceSyncedOfErpAccount} for Sales Org: ({salesOrg.Code}) {salesOrg.Name}. ") : string.Empty) +
                     $"Total synced in this session: {totalSyncedSoFar}, " +
-                    $"And total not synced due to invalid data or product not found - {totalNotSyncedSoFar}");
+                    $"And total not synced due to invalid data or product not found: {totalNotSyncedSoFar}");
             }
 
             if (!string.IsNullOrWhiteSpace(erpAccountNumber) && !specificErpAccountSalesOrgFound)

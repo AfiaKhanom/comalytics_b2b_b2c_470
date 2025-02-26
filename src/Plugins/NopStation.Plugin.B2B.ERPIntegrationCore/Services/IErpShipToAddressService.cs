@@ -29,7 +29,7 @@ public interface IErpShipToAddressService
 
     Task<IList<ErpShipToAddress>> GetAllErpShipToAddressesByErpAccountIdsAsync(int[] erpAccountIds, bool showHidden = false, bool isActiveOnly = false);
 
-    Task<Dictionary<int, List<ErpShipToAddress>>> GetErpAccountShipToAddressMappingAsync(int[] erpAccountIds, bool showHidden = false, bool isActiveOnly = false);
+    Task<Dictionary<string, List<ErpShipToAddress>>> GetErpAccountShipToAddressMappingAsync(int[] erpAccountIds, bool showHidden = false, bool isActiveOnly = false);
 
     Task<IPagedList<ErpShipToAddress>> GetAllErpShipToAddressesAsync(string shipToCode = "",
         string shipToName = "", int erpAccountId = 0, string repNum = "", string repFullName = "", string repEmail = "",

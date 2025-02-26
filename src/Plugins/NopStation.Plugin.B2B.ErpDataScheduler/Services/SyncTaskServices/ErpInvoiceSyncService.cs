@@ -71,7 +71,7 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
                 ErpSyncLevel.Invoice,
-                $"Data mapping skipped for {nameof(erpInvoice)}, {nameof(ErpInvoice.ErpAccountId)}: {erpInvoice.Id}. \r\n {errorMessages}");
+                $"Data mapping skipped for {nameof(ErpInvoice)}, {nameof(ErpInvoice.ErpAccountId)}: {erpInvoice.Id}. \r\n {errorMessages}");
         }
 
         return validationResult.IsValid;
@@ -111,7 +111,7 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
                     ErpSyncLevel.Invoice,
-                    $"No Sales org found with Sales org code: {salesOrgCode}. Unable to run {ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName}.");
+                    $"No Sales org found. Unable to run {ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName}.");
 
                     return false;
                 }

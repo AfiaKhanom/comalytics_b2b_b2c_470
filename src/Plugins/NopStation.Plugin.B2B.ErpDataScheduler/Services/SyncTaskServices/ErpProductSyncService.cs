@@ -234,7 +234,7 @@ public class ErpProductSyncService : IErpProductSyncService
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpProductSyncTaskName,
                     ErpSyncLevel.Product,
-                    $"No Sales org found with Sales org code: {salesOrgCode}. Unable to run {ErpDataSchedulerDefaults.ErpProductSyncTaskName}.");
+                    $"No Sales org found. Unable to run {ErpDataSchedulerDefaults.ErpProductSyncTaskName}.");
 
                     return false;
                 }

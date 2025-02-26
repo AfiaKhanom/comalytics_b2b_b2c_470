@@ -70,7 +70,7 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpGroupPriceSyncTaskName,
                 ErpSyncLevel.GroupPrice,
-                $"Data mapping skipped for {nameof(erpGroupPrice)}, {nameof(ErpGroupPrice.NopProductId)}: {erpGroupPrice.NopProductId}. \r\n {errorMessages}");
+                $"Data mapping skipped for {nameof(ErpGroupPrice)}, {nameof(ErpGroupPrice.NopProductId)}: {erpGroupPrice.NopProductId}. \r\n {errorMessages}");
         }
 
         return validationResult.IsValid;
@@ -90,7 +90,7 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpGroupPriceSyncTaskName,
                 ErpSyncLevel.GroupPrice,
-                $"Data mapping skipped for {nameof(erpGroupPriceCode)}, {nameof(ErpGroupPriceCode.Code)}: {erpGroupPriceCode.Code}. \r\n {errorMessages}");
+                $"Data mapping skipped for {nameof(ErpGroupPriceCode)}, {nameof(ErpGroupPriceCode.Code)}: {erpGroupPriceCode.Code}. \r\n {errorMessages}");
         }
 
         return validationResult.IsValid;
@@ -123,7 +123,7 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
                 await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpGroupPriceSyncTaskName,
                     ErpSyncLevel.GroupPrice,
-                    $"No Erp Sales Org found to perform the Erp Group Price Sync service. Unable to run {ErpDataSchedulerDefaults.ErpGroupPriceSyncTaskName}.");
+                    $"No Erp Sales Org found. Unable to run {ErpDataSchedulerDefaults.ErpGroupPriceSyncTaskName}.");
 
                 return false;
             }

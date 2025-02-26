@@ -67,7 +67,7 @@ public class ErpStockSyncService : IErpStockSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpStockSyncTaskName,
                 ErpSyncLevel.Stock,
-                "No integration method found.");
+                $"No integration method found. Unable to run {ErpDataSchedulerDefaults.ErpStockSyncTaskName}.");
 
             return false;
         }
@@ -231,7 +231,7 @@ public class ErpStockSyncService : IErpStockSyncService
                                     stockQuantityHistory.CreatedOnUtc = DateTime.UtcNow;
                                     stockQuantityHistory.ProductId = inventory.ProductId;
                                     stockQuantityHistory.WarehouseId = erpWarehouse.NopWarehouseId;
-                                    stockQuantityHistory.Message = $"Product Stock updated. The stock quantity has been updated by Integration.";
+                                    stockQuantityHistory.Message = $"Product Stock updated. The stock quantity has been updated by Erp Integration.";
                                     stockQuantityHistoriesToInsert.Add(stockQuantityHistory);
                                 }
                                 else
@@ -250,7 +250,7 @@ public class ErpStockSyncService : IErpStockSyncService
                                         stockQuantityHistory.CreatedOnUtc = DateTime.UtcNow;
                                         stockQuantityHistory.ProductId = inventory.ProductId;
                                         stockQuantityHistory.WarehouseId = erpWarehouse.NopWarehouseId;
-                                        stockQuantityHistory.Message = $"Product Stock updated. The stock quantity has been updated by Integration.";
+                                        stockQuantityHistory.Message = $"Product Stock updated. The stock quantity has been updated by Erp Integration.";
                                         stockQuantityHistoriesToInsert.Add(stockQuantityHistory);
                                     }
                                 }
@@ -284,7 +284,7 @@ public class ErpStockSyncService : IErpStockSyncService
                             ErpSyncLevel.Stock,
                             "The Erp Stock sync run is cancelled. " +
                             (!string.IsNullOrWhiteSpace(lastErpProductStockSynced) ?
-                            $"The last synced Stock of Erp Product : {lastErpProductStockSynced}. " : string.Empty) +
+                            $"The last synced Stock of Product : {lastErpProductStockSynced}. " : string.Empty) +
                             $"Total product stock synced so far: {totalSyncedSoFar}, " +
                             $"And total not synced due to invalid data or product not found: {totalNotSyncedSoFar}");
 
@@ -295,7 +295,7 @@ public class ErpStockSyncService : IErpStockSyncService
                         ErpDataSchedulerDefaults.ErpStockSyncTaskName,
                         ErpSyncLevel.Stock,
                         (!string.IsNullOrWhiteSpace(lastErpProductStockSynced) ?
-                        $"The last synced Stock of Erp Product : {lastErpProductStockSynced} in this batch. " : string.Empty) +
+                        $"The last synced Stock of Product : {lastErpProductStockSynced} in this batch. " : string.Empty) +
                         $"Total product stock synced so far: {totalSyncedSoFar}, " +
                         $"And total not synced due to invalid data or product not found: {totalNotSyncedSoFar}");
                 }
@@ -318,7 +318,7 @@ public class ErpStockSyncService : IErpStockSyncService
                     ErpDataSchedulerDefaults.ErpStockSyncTaskName,
                     ErpSyncLevel.Stock,
                     (!string.IsNullOrWhiteSpace(lastErpProductStockSynced) ?
-                    $"The last synced Stock of Erp Product: {lastErpProductStockSynced} for Sales Org: ({salesOrg.Code}) {salesOrg.Name}. " : string.Empty) +
+                    $"The last synced Stock of Product: {lastErpProductStockSynced} for Sales Org: ({salesOrg.Code}) {salesOrg.Name}. " : string.Empty) +
                     $"Total product stock synced so far: {totalSyncedSoFar}, " +
                     $"And total not synced due to invalid data or product not found: {totalNotSyncedSoFar}");
 

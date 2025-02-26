@@ -136,7 +136,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpOrderSyncTaskName,
                 ErpSyncLevel.Order,
-                "No integration method found.");
+                $"No integration method found. Unable to run {ErpDataSchedulerDefaults.ErpOrderSyncTaskName}.");
 
             return false;
         }
@@ -157,7 +157,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpOrderSyncTaskName,
                         ErpSyncLevel.Order,
-                        $"No Sales org found with Sales org code: {salesOrgCode}. Unable to run {ErpDataSchedulerDefaults.ErpOrderSyncTaskName}.");
+                        $"No Sales org found. Unable to run {ErpDataSchedulerDefaults.ErpOrderSyncTaskName}.");
 
                     return false;
                 }

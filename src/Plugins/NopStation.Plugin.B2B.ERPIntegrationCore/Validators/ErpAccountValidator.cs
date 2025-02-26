@@ -15,10 +15,6 @@ public class ErpAccountValidator : BaseNopValidator<ErpAccount>
             .NotEmpty()
             .MaximumLength(50);
 
-        RuleFor(x => x.AccountName)
-            .NotEmpty()
-            .MaximumLength(100);
-
         // Optional string fields with length validation
         RuleFor(x => x.BillingSuburb)
             .MaximumLength(200)
@@ -82,15 +78,6 @@ public class ErpAccountValidator : BaseNopValidator<ErpAccount>
         RuleFor(x => x.TotalSavingsForAllTime)
             .GreaterThanOrEqualTo(0)
             .When(x => x.TotalSavingsForAllTime.HasValue);
-
-        // Required boolean fields
-        RuleFor(x => x.AllowOverspend).NotNull();
-        RuleFor(x => x.OverrideBackOrderingConfigSetting).NotNull();
-        RuleFor(x => x.AllowAccountsBackOrdering).NotNull();
-        RuleFor(x => x.OverrideAddressEditOnCheckoutConfigSetting).NotNull();
-        RuleFor(x => x.AllowAccountsAddressEditOnCheckout).NotNull();
-        RuleFor(x => x.OverrideStockDisplayFormatConfigSetting).NotNull();
-        RuleFor(x => x.IsDefaultPaymentAccount).NotNull();
     }
 
     #endregion

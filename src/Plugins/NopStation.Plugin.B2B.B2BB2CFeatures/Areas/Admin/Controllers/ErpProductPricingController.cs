@@ -342,13 +342,11 @@ public class ErpProductPricingController : NopStationAdminController
 
         if (ModelState.IsValid)
         {
-            var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
-            var erpGroupPriceCode = await _erpGroupPriceCodeService.GetErpGroupPriceCodeByIdAsync(model.ErpGroupPriceCodeId);
+            var customer = await _workContext.GetCurrentCustomerAsync();
             var erpProductPricing = new ErpGroupPrice
             {
                 NopProductId = productId,
                 ErpNopGroupPriceCodeId = model.ErpGroupPriceCodeId,
-                ErpNopGroupPriceCode = erpGroupPriceCode,
                 Price = model.Price,
                 IsActive = true,
                 CreatedById = customer.Id,
