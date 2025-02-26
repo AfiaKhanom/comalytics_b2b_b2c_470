@@ -76,7 +76,7 @@ public class ErpDataSchedulerPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin,
 
     #endregion
 
-    #region Method
+    #region Methods
 
     public override async Task InstallAsync()
     {
@@ -402,8 +402,6 @@ public class ErpDataSchedulerPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin,
 
     #endregion
 
-    #endregion
-
     #region Register Jobs
 
     private async Task RegisterScheduleJobsAsync()
@@ -414,8 +412,7 @@ public class ErpDataSchedulerPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin,
 
         if (erpAccountSyncTask is not null)
         {
-            await _nopStationScheduler.CreateScheduleJobAsync<ErpAccountSyncTask>(
-                ErpDataSchedulerDefaults.ErpAccountSyncTaskIdentity, true);
+            await _nopStationScheduler.CreateScheduleJobAsync<ErpAccountSyncTask>(ErpDataSchedulerDefaults.ErpAccountSyncTaskIdentity, true);
 
             erpAccountSyncTask.Enabled = true;
             erpAccountSyncTask.QuartzJobName = ErpDataSchedulerDefaults.ErpAccountSyncTaskIdentity;
@@ -431,8 +428,7 @@ public class ErpDataSchedulerPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin,
 
         if (erpGroupPriceSyncTask is not null)
         {
-            await _nopStationScheduler.CreateScheduleJobAsync<ErpGroupPriceSyncTask>(
-                ErpDataSchedulerDefaults.ErpGroupPriceSyncTaskIdentity, true);
+            await _nopStationScheduler.CreateScheduleJobAsync<ErpGroupPriceSyncTask>(ErpDataSchedulerDefaults.ErpGroupPriceSyncTaskIdentity, true);
 
             erpGroupPriceSyncTask.Enabled = true;
             erpGroupPriceSyncTask.QuartzJobName = ErpDataSchedulerDefaults.ErpGroupPriceSyncTaskIdentity;
@@ -448,8 +444,7 @@ public class ErpDataSchedulerPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin,
 
         if (erpInvoiceSyncTask is not null)
         {
-            await _nopStationScheduler.CreateScheduleJobAsync<ErpInvoiceSyncTask>(
-                ErpDataSchedulerDefaults.ErpInvoiceSyncTaskIdentity, true);
+            await _nopStationScheduler.CreateScheduleJobAsync<ErpInvoiceSyncTask>(ErpDataSchedulerDefaults.ErpInvoiceSyncTaskIdentity, true);
 
             erpInvoiceSyncTask.Enabled = true;
             erpInvoiceSyncTask.QuartzJobName = ErpDataSchedulerDefaults.ErpInvoiceSyncTaskIdentity;
@@ -465,8 +460,7 @@ public class ErpDataSchedulerPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin,
 
         if (erpOrderSyncTask is not null)
         {
-            await _nopStationScheduler.CreateScheduleJobAsync<ErpOrderSyncTask>(
-                ErpDataSchedulerDefaults.ErpOrderSyncTaskIdentity, true);
+            await _nopStationScheduler.CreateScheduleJobAsync<ErpOrderSyncTask>(ErpDataSchedulerDefaults.ErpOrderSyncTaskIdentity, true);
 
             erpOrderSyncTask.Enabled = true;
             erpOrderSyncTask.QuartzJobName = ErpDataSchedulerDefaults.ErpOrderSyncTaskIdentity;
@@ -482,8 +476,7 @@ public class ErpDataSchedulerPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin,
 
         if (erpProductSyncTask is not null)
         {
-            await _nopStationScheduler.CreateScheduleJobAsync<ErpProductSyncTask>(
-                ErpDataSchedulerDefaults.ErpProductSyncTaskIdentity, true);
+            await _nopStationScheduler.CreateScheduleJobAsync<ErpProductSyncTask>(ErpDataSchedulerDefaults.ErpProductSyncTaskIdentity, true);
 
             erpProductSyncTask.Enabled = true;
             erpProductSyncTask.QuartzJobName = ErpDataSchedulerDefaults.ErpProductSyncTaskIdentity;
@@ -499,8 +492,7 @@ public class ErpDataSchedulerPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin,
 
         if (erpShipToAddressSyncTask is not null)
         {
-            await _nopStationScheduler.CreateScheduleJobAsync<ErpShipToAddressSyncTask>(
-                ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskIdentity, true);
+            await _nopStationScheduler.CreateScheduleJobAsync<ErpShipToAddressSyncTask>(ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskIdentity, true);
 
             erpShipToAddressSyncTask.Enabled = true;
             erpShipToAddressSyncTask.QuartzJobName = ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskIdentity;
@@ -516,8 +508,7 @@ public class ErpDataSchedulerPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin,
 
         if (erpSpecialPriceSyncTask is not null)
         {
-            await _nopStationScheduler.CreateScheduleJobAsync<ErpSpecialPriceSyncTask>(
-                ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskIdentity, true);
+            await _nopStationScheduler.CreateScheduleJobAsync<ErpSpecialPriceSyncTask>(ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskIdentity, true);
 
             erpSpecialPriceSyncTask.Enabled = true;
             erpSpecialPriceSyncTask.QuartzJobName = ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskIdentity;
@@ -533,8 +524,7 @@ public class ErpDataSchedulerPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin,
 
         if (erpStockSyncTask is not null)
         {
-            await _nopStationScheduler.CreateScheduleJobAsync<ErpStockSyncTask>(
-                ErpDataSchedulerDefaults.ErpStockSyncTaskIdentity, true);
+            await _nopStationScheduler.CreateScheduleJobAsync<ErpStockSyncTask>(ErpDataSchedulerDefaults.ErpStockSyncTaskIdentity, true);
 
             erpStockSyncTask.Enabled = true;
             erpStockSyncTask.QuartzJobName = ErpDataSchedulerDefaults.ErpStockSyncTaskIdentity;
@@ -544,6 +534,8 @@ public class ErpDataSchedulerPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin,
 
         #endregion
     }
+
+    #endregion
 
     #endregion
 }

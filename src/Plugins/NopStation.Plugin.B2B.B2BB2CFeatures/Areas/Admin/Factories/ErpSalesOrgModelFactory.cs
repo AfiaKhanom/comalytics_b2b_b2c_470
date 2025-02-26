@@ -114,7 +114,6 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
-        //get ERP Sales Orgs
         var erpSalesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgAsync(pageIndex: searchModel.Page - 1,
             pageSize: searchModel.PageSize,
             name: searchModel.Name,
@@ -122,18 +121,14 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
             code: searchModel.Code,
             showHidden: searchModel.ShowInActive == 0 ? null : (searchModel.ShowInActive == 2));
 
-        //prepare list model
         var model = await new ErpSalesOrgListModel().PrepareToGridAsync(searchModel, erpSalesOrgs, () =>
         {
-            //fill in model values from the entity
             return erpSalesOrgs.SelectAwait(async erpSalesOrg =>
             {
                 var erpSalesOrgModel = new ErpSalesOrgModel();
 
-                //Additional Infos
                 if (erpSalesOrg != null)
                 {
-                    //prepare address model
                     var address = await _addressService.GetAddressByIdAsync(erpSalesOrg.AddressId);
                     var addressModel = new AddressModel();
                     if (address != null)
@@ -238,6 +233,7 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
                     ErpWarehouseCode = erpWarehouse.Code,
                     LastUpdateTime = (await _dateTimeHelper.ConvertToUserTimeAsync(erpWarehouse.LastUpdateTime, DateTimeKind.Utc)).ToString(),
                 };
+
                 return salesOrgWarehouseModel;
             }).Where(x => x != null);
         });

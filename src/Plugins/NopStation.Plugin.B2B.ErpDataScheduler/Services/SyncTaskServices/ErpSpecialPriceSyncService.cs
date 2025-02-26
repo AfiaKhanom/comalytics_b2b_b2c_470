@@ -101,35 +101,15 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
         {
             #region Data collection
 
-            var listOfSalesOrgs = new List<ErpSalesOrg>();
-            var salesOrgCode = await erpIntegrationPlugin.GetSalesOrgCodeFromIntegrationSettings();
-
-            if (!string.IsNullOrWhiteSpace(salesOrgCode))
+            var salesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
+            if (!salesOrgs.Any())
             {
-                var salesOrg = (await _erpSalesOrgService.GetAllErpSalesOrgAsync(code: salesOrgCode)).FirstOrDefault();
+                await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                    ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskName,
+                    ErpSyncLevel.SpecialPrice,
+                    $"No Sales org found. Unable to run {ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskName}.");
 
-                if (salesOrg == null)
-                {
-                    await _erpSyncLogService.SyncLogSaveOnFileAsync(
-                        ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskName,
-                        ErpSyncLevel.SpecialPrice,
-                        $"No Sales org found with Sales org code: {salesOrgCode}. Unable to run {ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskName}.");
-
-                    return false;
-                }
-                else
-                {
-                    listOfSalesOrgs.Add(salesOrg);
-                }
-            }
-            else
-            {
-                var salesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
-
-                if (salesOrgs.Any())
-                {
-                    listOfSalesOrgs.AddRange(salesOrgs);
-                }
+                return false;
             }
 
             ErpAccount? specificErpAccount = null;
@@ -159,7 +139,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                 ErpSyncLevel.SpecialPrice,
                 "Erp Special Price Sync started.");
 
-            foreach (var salesOrg in listOfSalesOrgs)
+            foreach (var salesOrg in salesOrgs)
             {
                 List<ErpAccount> oldErpAccounts;
 
@@ -275,6 +255,16 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                                 oldSpecialPrice.PercentageOfAllocatedStockResetTimeUtc = DateTime.MinValue;
                                 oldSpecialPrice.VolumeDiscount = true;
                                 oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;                                
+                                oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
+
+                                if (await IsValidErpSpecialPriceAsync(oldSpecialPrice))
+                                {
+                                    erpSpecialPriceInsertList.Add(oldSpecialPrice);
+                                }
+                                else
+                                {
+                                    oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;
+                                }
                                 oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
 
                                 if (await IsValidErpSpecialPriceAsync(oldSpecialPrice))

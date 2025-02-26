@@ -14,7 +14,6 @@ public class MapperConfiguration : Profile, IOrderedMapperProfile
         #region Configuration
 
         CreateMap<ErpDataSchedulerSettings, ConfigurationModel>()
-            .ForMember(model => model.SyncFromDate_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.NeedQuoteOrderCall_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.EnalbeSendingEmailNotificationToStoreOwnerOnSyncError_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.AdditionalEmailAddresses_OverrideForStore, options => options.Ignore())

@@ -2,7 +2,6 @@
 using Nop.Core.Domain.Catalog;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
-using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
@@ -76,35 +75,15 @@ public class ErpStockSyncService : IErpStockSyncService
         {
             #region Data collection
 
-            var listOfSalesOrgs = new List<ErpSalesOrg>();
-            var salesOrgCode = await erpIntegrationPlugin.GetSalesOrgCodeFromIntegrationSettings();
-
-            if (!string.IsNullOrWhiteSpace(salesOrgCode))
+            var salesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
+            if (!salesOrgs.Any())
             {
-                var salesOrg = (await _erpSalesOrgService.GetAllErpSalesOrgAsync(code: salesOrgCode)).FirstOrDefault();
-
-                if (salesOrg == null)
-                {
-                    await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpStockSyncTaskName,
                     ErpSyncLevel.Stock,
-                    $"No Sales org found with Sales org code: {salesOrgCode}. Unable to run {ErpDataSchedulerDefaults.ErpStockSyncTaskName}.");
+                    $"No Sales org found. Unable to run {ErpDataSchedulerDefaults.ErpStockSyncTaskName}.");
 
-                    return false;
-                }
-                else
-                {
-                    listOfSalesOrgs.Add(salesOrg);
-                }
-            }
-            else
-            {
-                var salesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
-
-                if (salesOrgs.Any())
-                {
-                    listOfSalesOrgs.AddRange(salesOrgs);
-                }
+                return false;
             }
 
             #endregion
@@ -114,7 +93,7 @@ public class ErpStockSyncService : IErpStockSyncService
                 ErpSyncLevel.Stock,
                 "Erp Stock Sync started.");
 
-            foreach (var salesOrg in listOfSalesOrgs)
+            foreach (var salesOrg in salesOrgs)
             {
                 var start = "0";
                 var isError = false;
@@ -314,6 +293,7 @@ public class ErpStockSyncService : IErpStockSyncService
                         ErpSyncLevel.Stock,
                         $"Erp Stock sync is partially or not successful for Sales Org: ({salesOrg.Code}) {salesOrg.Name}.");
                 }
+
                 await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpStockSyncTaskName,
                     ErpSyncLevel.Stock,

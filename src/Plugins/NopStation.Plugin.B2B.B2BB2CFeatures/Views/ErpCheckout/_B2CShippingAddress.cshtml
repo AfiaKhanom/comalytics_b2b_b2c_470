@@ -137,13 +137,13 @@
                                         <div class="shipping-address-body" style="text-align:center;">
                                             <label id="shipping-address-select" class="address-select-radio">
                                                 <input id="shipToAddress-@Model.SelectedShipToAddress.Id"
-                                                       type="radio"
-                                                       data-id="@Model.SelectedShipToAddress.Id"
-                                                       data-suburb="@Model.SelectedShipToAddress.Suburb"
-                                                       data-city="@Model.SelectedShipToAddress.City"
-                                                       checked=true
-                                                       asp-for="@Model.SelectedShipToAddress.Id"
-                                                       value="@Model.SelectedShipToAddress.Id" />
+                                                    type="radio"
+                                                    data-id="@Model.SelectedShipToAddress.Id"
+                                                    data-suburb="@Model.SelectedShipToAddress.Suburb"
+                                                    data-city="@Model.SelectedShipToAddress.City"
+                                                    checked=true
+                                                    asp-for="@Model.SelectedShipToAddress.Id"
+                                                    value="@Model.SelectedShipToAddress.Id" />
                                                 <span class="checkmark"></span>
                                                 @(addressLine)
                                             </label>

@@ -205,7 +205,19 @@ public partial class SyncTaskModelFactory : ISyncTaskModelFactory
 
         var model = task.ToModel<SyncTaskModel>();
 
-        var dayOfWeekSlots = JsonConvert.DeserializeObject<List<SyncTaskDaySlotModel>>(task.DayTimeSlots);
+        var dayOfWeekSlots = new List<SyncTaskDaySlotModel>();
+
+        try
+        {
+            dayOfWeekSlots = task.DayTimeSlots != null
+                ? JsonConvert.DeserializeObject<List<SyncTaskDaySlotModel>>(task.DayTimeSlots) ?? new List<SyncTaskDaySlotModel>()
+                : new List<SyncTaskDaySlotModel>();
+        }
+        catch (Exception ex)
+        {
+            await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Error, await GetErpSyncLevelBySyncTaskType(task.Type), ex.Message, ex.StackTrace);
+            dayOfWeekSlots = new List<SyncTaskDaySlotModel>();
+        }
 
         #region DayOfWeek Slots arrangements
 

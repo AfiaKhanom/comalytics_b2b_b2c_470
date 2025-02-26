@@ -55,7 +55,7 @@ public partial class SyncLogFileDeleteTask : IScheduleTask
             }
             catch (Exception ex)
             {
-                await _syncLogService.SyncLogSaveOnFileAsync(syncTask.Name, 0, ex.Message, ex.StackTrace);
+                await _syncLogService.SyncLogSaveOnFileAsync(syncTask.Name, 0, ex.Message, ex.StackTrace ?? string.Empty);
             }
         }
 

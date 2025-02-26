@@ -24,7 +24,6 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
     private readonly IErpAccountService _erpAccountService;
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly IErpShipToAddressService _erpShipToAddressService;
-    private readonly IErpDataClearCacheService _erpDataClearCacheService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginService;
     private readonly IValidator<ErpShipToAddress> _erpShipToAddressValidator;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
@@ -41,7 +40,6 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
         IErpAccountService erpAccountService,
         IErpSalesOrgService erpSalesOrgService,
         IErpShipToAddressService erpShipToAddressService,
-        IErpDataClearCacheService erpDataClearCacheService,
         IErpIntegrationPluginManager erpIntegrationPluginService,
         IValidator<ErpShipToAddress> erpShipToAddressValidator,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
@@ -54,7 +52,6 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
         _erpAccountService = erpAccountService;
         _erpSalesOrgService = erpSalesOrgService;
         _erpShipToAddressService = erpShipToAddressService;
-        _erpDataClearCacheService = erpDataClearCacheService;
         _erpIntegrationPluginService = erpIntegrationPluginService;
         _erpShipToAddressValidator = erpShipToAddressValidator;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
@@ -107,35 +104,15 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
         {
             #region Data collection
 
-            var listOfSalesOrgs = new List<ErpSalesOrg>();
-            var salesOrgCode = await erpIntegrationPlugin.GetSalesOrgCodeFromIntegrationSettings();
-
-            if (!string.IsNullOrWhiteSpace(salesOrgCode))
+            var salesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
+            if (!salesOrgs.Any())
             {
-                var salesOrg = (await _erpSalesOrgService.GetAllErpSalesOrgAsync(code: salesOrgCode)).FirstOrDefault();
+                await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                    ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName,
+                    ErpSyncLevel.ShipToAddress,
+                    $"No Sales org found. Unable to run {ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName}.");
 
-                if (salesOrg == null)
-                {
-                    await _erpSyncLogService.SyncLogSaveOnFileAsync(
-                        ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName,
-                        ErpSyncLevel.ShipToAddress,
-                        $"No Sales org found. Unable to run {ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName}.");
-
-                    return false;
-                }
-                else
-                {
-                    listOfSalesOrgs.Add(salesOrg);
-                }
-            }
-            else
-            {
-                var salesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
-
-                if (salesOrgs.Any())
-                {
-                    listOfSalesOrgs.AddRange(salesOrgs);
-                }
+                return false;
             }
 
             ErpAccount? specificErpAccount = null;
@@ -170,7 +147,7 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                 ErpSyncLevel.ShipToAddress,
                 "Erp ShipToAddress Sync started.");
 
-            foreach (var salesOrg in listOfSalesOrgs)
+            foreach (var salesOrg in salesOrgs)
             {
                 if (specificErpAccount != null)
                 {
@@ -372,7 +349,6 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                             oldShipToAddressByThisAccount.UpdatedOnUtc = DateTime.UtcNow;
                             oldShipToAddressByThisAccount.UpdatedById = 1;
                             oldShipToAddressByThisAccount.LastShipToAddressSyncDate = DateTime.UtcNow;
-                            oldShipToAddressByThisAccount.RouteCode = erpShipToAddress.RouteCode;
 
                             if (await IsvalidErpShipToAddressAsync(oldShipToAddressByThisAccount))
                             {
@@ -504,6 +480,11 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                 ErpSyncLevel.ShipToAddress,
                 ex.Message,
                 ex.StackTrace);
+
+            await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
+                DateTime.UtcNow,
+                ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName,
+                ex.Message + "\n\n" + ex.StackTrace);
 
             await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
                 DateTime.UtcNow,

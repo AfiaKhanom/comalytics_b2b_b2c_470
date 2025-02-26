@@ -12,7 +12,6 @@ using Nop.Services.Vendors;
 using NopStation.Plugin.B2B.B2BB2CFeatures;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
-using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
@@ -220,37 +219,17 @@ public class ErpProductSyncService : IErpProductSyncService
 
         try
         {
-            #region Collections
+            #region Data Collections
 
-            var listOfSalesOrgs = new List<ErpSalesOrg>();
-            var salesOrgCode = await erpIntegrationPlugin.GetSalesOrgCodeFromIntegrationSettings();
-
-            if (!string.IsNullOrWhiteSpace(salesOrgCode))
+            var salesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
+            if (!salesOrgs.Any())
             {
-                var salesOrg = (await _erpSalesOrgService.GetAllErpSalesOrgAsync(code: salesOrgCode)).FirstOrDefault();
-
-                if (salesOrg == null)
-                {
-                    await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpProductSyncTaskName,
                     ErpSyncLevel.Product,
                     $"No Sales org found. Unable to run {ErpDataSchedulerDefaults.ErpProductSyncTaskName}.");
 
-                    return false;
-                }
-                else
-                {
-                    listOfSalesOrgs.Add(salesOrg);
-                }
-            }
-            else
-            {
-                var salesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
-
-                if (salesOrgs.Any())
-                {
-                    listOfSalesOrgs.AddRange(salesOrgs);
-                }
+                return false;
             }
 
             var lineBreakReplacer = new Regex(@"\r?\n");
@@ -291,7 +270,7 @@ public class ErpProductSyncService : IErpProductSyncService
                     ErpSyncLevel.Product,
                     "Erp Product Sync started.");
 
-            foreach (var salesOrg in listOfSalesOrgs)
+            foreach (var salesOrg in salesOrgs)
             {
                 var start = "0";
                 previousStart = "0";
@@ -417,7 +396,6 @@ public class ErpProductSyncService : IErpProductSyncService
                                 oldErpProduct.TaxCategoryId = allTaxCategories.FirstOrDefault(x => x.Name.Equals(erpProduct.TaxCategoryName))?.Id ?? 0;
                             }
 
-                            oldErpProduct.Deleted = erpProduct.Published;
                             oldErpProduct.Published = erpProduct.Published;
                             oldErpProduct.Deleted = false;
                             oldErpProduct.CreatedOnUtc = DateTime.UtcNow;
@@ -482,7 +460,6 @@ public class ErpProductSyncService : IErpProductSyncService
                                 oldErpProduct.TaxCategoryId = allTaxCategories.FirstOrDefault(x => x.Name.Equals(erpProduct.TaxCategoryName))?.Id ?? 0;
                             }
 
-                            oldErpProduct.Deleted = erpProduct.Published;
                             oldErpProduct.Published = erpProduct.Published;
                             oldErpProduct.UpdatedOnUtc = DateTime.UtcNow;
 

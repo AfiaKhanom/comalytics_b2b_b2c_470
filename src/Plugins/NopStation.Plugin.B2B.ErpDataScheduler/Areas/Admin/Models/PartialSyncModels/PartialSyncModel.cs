@@ -4,7 +4,6 @@ public record PartialSyncModel
 {
     #region Properties
     
-    public ErpAccountCreditPartialSyncModel AccountCreditPartialSyncModel { get; set; } = new();
     public ErpAccountPartialSyncModel AccountPartialSyncModel { get; set; } = new();
     public ErpGroupPricePartialSyncModel GroupPricePartialSyncModel { get; set; } = new();
     public ErpInvoicePartialSyncModel InvoicePartialSyncModel { get; set; } = new();
@@ -12,7 +11,6 @@ public record PartialSyncModel
     public ErpShipToAddressPartialSyncModel ShipToAddressPartialSyncModel { get; set; } = new();
     public ErpSpecialPricePartialSyncModel SpecialPricePartialSyncModel { get; set; } = new();
     public ErpStockPartialSyncModel StockPartialSyncModel { get; set; } = new();
-    public ErpDeliveryRoutePartialSyncModel DeliveryRoutePartialSyncModel { get; set; } = new();
     public ErpOrderPartialSyncModel OrderPartialSyncModel { get; set; } = new();
     
     #endregion

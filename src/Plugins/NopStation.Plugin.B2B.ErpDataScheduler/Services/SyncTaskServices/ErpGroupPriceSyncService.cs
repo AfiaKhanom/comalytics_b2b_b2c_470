@@ -123,7 +123,7 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
                 await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpGroupPriceSyncTaskName,
                     ErpSyncLevel.GroupPrice,
-                    $"No Erp Sales Org found. Unable to run {ErpDataSchedulerDefaults.ErpGroupPriceSyncTaskName}.");
+                    $"No Sales Org found. Unable to run {ErpDataSchedulerDefaults.ErpGroupPriceSyncTaskName}.");
 
                 return false;
             }
@@ -236,6 +236,8 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
                                     oldErpGroupPriceCode.UpdatedOnUtc = DateTime.UtcNow;
                                     oldErpGroupPriceCode.IsActive = true;
                                     oldErpGroupPriceCode.IsDeleted = false;
+
+                                    await _erpGroupPriceCodeService.InsertErpGroupPriceCodeAsync(oldErpGroupPriceCode);
                                 }
                                 else
                                 {

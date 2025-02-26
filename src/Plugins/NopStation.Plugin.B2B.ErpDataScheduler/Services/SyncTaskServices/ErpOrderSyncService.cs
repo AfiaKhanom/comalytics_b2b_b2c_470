@@ -145,35 +145,15 @@ public class ErpOrderSyncService : IErpOrderSyncService
         {
             #region Data collection
 
-            var listOfSalesOrgs = new List<ErpSalesOrg>();
-            var salesOrgCode = await erpIntegrationPlugin.GetSalesOrgCodeFromIntegrationSettings();
-
-            if (!string.IsNullOrWhiteSpace(salesOrgCode))
+            var salesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
+            if (!salesOrgs.Any())
             {
-                var salesOrg = (await _erpSalesOrgService.GetAllErpSalesOrgAsync(code: salesOrgCode)).FirstOrDefault();
+                await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                    ErpDataSchedulerDefaults.ErpOrderSyncTaskName,
+                    ErpSyncLevel.Order,
+                    $"No Sales org found. Unable to run {ErpDataSchedulerDefaults.ErpOrderSyncTaskName}.");
 
-                if (salesOrg == null)
-                {
-                    await _erpSyncLogService.SyncLogSaveOnFileAsync(
-                        ErpDataSchedulerDefaults.ErpOrderSyncTaskName,
-                        ErpSyncLevel.Order,
-                        $"No Sales org found. Unable to run {ErpDataSchedulerDefaults.ErpOrderSyncTaskName}.");
-
-                    return false;
-                }
-                else
-                {
-                    listOfSalesOrgs.Add(salesOrg);
-                }
-            }
-            else
-            {
-                var salesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
-
-                if (salesOrgs.Any())
-                {
-                    listOfSalesOrgs.AddRange(salesOrgs);
-                }
+                return false;
             }
 
             ErpAccount? specificErpAccount = null;
@@ -204,7 +184,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 ErpSyncLevel.Order,
                 "Erp Order Sync started.");
 
-            foreach (var salesOrg in listOfSalesOrgs)
+            foreach (var salesOrg in salesOrgs)
             {
                 List<ErpAccount> oldErpAccounts;
 
@@ -833,7 +813,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
             #endregion
 
-            lastErpOrderSynced = oldErpOrder.ErpOrderNumber;
+            lastErpOrderSynced = oldErpOrder?.ErpOrderNumber ?? string.Empty;
             lastErpOrderSyncedOfErpAccount = erpAccount.AccountNumber;
             totalSyncedSoFar++;
         }

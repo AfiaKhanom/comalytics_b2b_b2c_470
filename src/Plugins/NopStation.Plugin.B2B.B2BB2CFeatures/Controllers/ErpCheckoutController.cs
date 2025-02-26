@@ -1647,7 +1647,7 @@ public class ErpCheckoutController : CheckoutController
                         if (erpAccount != null)
                         {
                             if (b2BUser != null && b2BUser.Id > 0)
-                            {
+                            {                               
                                 await _overriddenOrderProcessingService.PlaceErpOrderAtNopAsync(placeOrderResult.PlacedOrder, ErpOrderType.B2BSalesOrder);
                             }
                             else if (b2CUser != null && b2CUser.Id > 0)

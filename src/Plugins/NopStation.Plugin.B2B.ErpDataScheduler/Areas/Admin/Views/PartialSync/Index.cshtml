@@ -12,7 +12,7 @@
     var customer = await workContext.GetCurrentCustomerAsync();
     const string hideErpAccountPartialSyncBlockAttributeName = "NopStation.ErpDataScheduler.PartialSync.HideErpAccountPartialSyncBlock";
     var hideErpAccountPartialSyncBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideErpAccountPartialSyncBlockAttributeName);
-
+    
     const string hideErpGroupPricePartialSyncBlockAttributeName = "NopStation.ErpDataScheduler.PartialSync.hideErpGroupPricePartialSyncBlock";
     var hideErpGroupPricePartialSyncBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideErpGroupPricePartialSyncBlockAttributeName);
 
@@ -30,7 +30,7 @@
 
     const string hideErpStockPartialSyncBlockAttributeName = "NopStation.ErpDataScheduler.PartialSync.hideErpStockPartialSyncBlock";
     var hideErpStockPartialSyncBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideErpStockPartialSyncBlockAttributeName);
-
+    
     const string hideErpOrderPartialSyncBlockAttributeName = "NopStation.ErpDataScheduler.PartialSync.hideErpOrderPartialSyncBlock";
     var hideErpOrderPartialSyncBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideErpOrderPartialSyncBlockAttributeName);
 }

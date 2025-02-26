@@ -1,6 +1,4 @@
-﻿using Nop.Core;
-using Nop.Services.Configuration;
-using Quartz;
+﻿using Quartz;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Services.NopStationSyncServices;
@@ -10,8 +8,6 @@ public class NopStationScheduler : INopStationScheduler
     #region Fields
 
     private readonly ISchedulerFactory _schedulerFactory;
-    private readonly IWorkContext _workContext;
-    private readonly ISettingService _settingService;
     private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
 
     #endregion
@@ -19,13 +15,9 @@ public class NopStationScheduler : INopStationScheduler
     #region Ctor
 
     public NopStationScheduler(ISchedulerFactory schedulerFactory,
-        IWorkContext workContext,
-        ISettingService settingService,
         ISyncWorkflowMessageService syncWorkflowMessageService)
     {
         _schedulerFactory = schedulerFactory;
-        _workContext = workContext;
-        _settingService = settingService;
         _syncWorkflowMessageService = syncWorkflowMessageService;
     }
 

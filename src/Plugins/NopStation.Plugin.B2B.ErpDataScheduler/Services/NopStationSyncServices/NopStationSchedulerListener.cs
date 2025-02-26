@@ -6,18 +6,15 @@ public class NopStationSchedulerListener : ISchedulerListener
 {
     #region Fields
 
-    private readonly INopStationScheduler _nopStationScheduler;
     private readonly ISyncTaskService _syncTaskService;
 
     #endregion
 
     #region Ctor
 
-    public NopStationSchedulerListener(ISyncTaskService syncTaskService,
-        INopStationScheduler nopStationScheduler)
+    public NopStationSchedulerListener(ISyncTaskService syncTaskService)
     {
         _syncTaskService = syncTaskService;
-        _nopStationScheduler = nopStationScheduler;
     }
 
     #endregion

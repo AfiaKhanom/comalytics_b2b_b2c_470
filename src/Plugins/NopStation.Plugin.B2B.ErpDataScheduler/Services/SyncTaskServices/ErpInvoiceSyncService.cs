@@ -99,35 +99,15 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
         {
             #region Data collections
 
-            var listOfSalesOrgs = new List<ErpSalesOrg>();
-            var salesOrgCode = await erpIntegrationPlugin.GetSalesOrgCodeFromIntegrationSettings();
-
-            if (!string.IsNullOrWhiteSpace(salesOrgCode))
+            var salesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
+            if (!salesOrgs.Any())
             {
-                var salesOrg = (await _erpSalesOrgService.GetAllErpSalesOrgAsync(code: salesOrgCode)).FirstOrDefault();
-
-                if (salesOrg == null)
-                {
-                    await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
                     ErpSyncLevel.Invoice,
                     $"No Sales org found. Unable to run {ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName}.");
 
-                    return false;
-                }
-                else
-                {
-                    listOfSalesOrgs.Add(salesOrg);
-                }
-            }
-            else
-            {
-                var salesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
-
-                if (salesOrgs.Any())
-                {
-                    listOfSalesOrgs.AddRange(salesOrgs);
-                }
+                return false;
             }
 
             ErpAccount? specificErpAccount = null;
@@ -159,7 +139,7 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                 ErpSyncLevel.Invoice,
                 "Erp Invoice Sync started.");
 
-            foreach (var salesOrg in listOfSalesOrgs)
+            foreach (var salesOrg in salesOrgs)
             {
                 List<ErpAccount> oldErpAccounts;
 

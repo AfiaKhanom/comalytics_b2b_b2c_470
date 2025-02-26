@@ -111,35 +111,16 @@ public class ErpAccountSyncService : IErpAccountSyncService
 
             var erpAccountUpdateList = new List<ErpAccount>();
             var erpAccountInsertList = new List<ErpAccount>();
-            var listOfSalesOrgs = new List<ErpSalesOrg>();
 
-            var salesOrgCode = await erpIntegrationPlugin.GetSalesOrgCodeFromIntegrationSettings();
-            if (!string.IsNullOrWhiteSpace(salesOrgCode))
+            var salesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
+            if (!salesOrgs.Any())
             {
-                var salesOrg = (await _erpSalesOrgService.GetAllErpSalesOrgAsync(code: salesOrgCode)).FirstOrDefault();
+                await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                    ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
+                    ErpSyncLevel.Account,
+                    $"No Sales org found. Unable to run {ErpDataSchedulerDefaults.ErpAccountSyncTaskName}.");
 
-                if (salesOrg == null)
-                {
-                    await _erpSyncLogService.SyncLogSaveOnFileAsync(
-                        ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
-                        ErpSyncLevel.Account,
-                        $"No Sales org found with Sales org code: {salesOrgCode}. Unable to run {ErpDataSchedulerDefaults.ErpAccountSyncTaskName}.");
-
-                    return false;
-                }
-                else
-                {
-                    listOfSalesOrgs.Add(salesOrg);
-                }
-            }
-            else
-            {
-                var salesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
-
-                if (salesOrgs.Any())
-                {
-                    listOfSalesOrgs.AddRange(salesOrgs);
-                }
+                return false;
             }
 
             var allCountries = (await _countryService.GetAllCountriesAsync()).ToList();
@@ -155,7 +136,7 @@ public class ErpAccountSyncService : IErpAccountSyncService
                 ErpSyncLevel.Account,
                 "Erp Account Sync started.");
 
-            foreach (var salesOrg in listOfSalesOrgs)
+            foreach (var salesOrg in salesOrgs)
             {
                 var oldErpAccounts = await _erpAccountService.GetAllErpAccountsAsync(salesOrgId: salesOrg.Id, filterDeleted: false);
                 var isError = false;
