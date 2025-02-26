@@ -253,6 +253,7 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                     foreach (var erpShipToAddress in responseData)
                     {
                         ErpShipToAddress? oldShipToAddressByThisAccount = null;
+                        Address address = null;
 
                         var erpAccount = oldErpAccounts.Find(x => x.AccountNumber == erpShipToAddress.AccountNumber.Trim());
 
@@ -263,20 +264,16 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                         }
 
                         var matchingErpAccountShipToAddress = erpAccountShipToAddressesMap
-                            .FirstOrDefault(map => map.Key.Trim() == erpShipToAddress.AccountNumber.Trim());
+                            .FirstOrDefault(map => map.Key.Trim() == erpAccount.AccountNumber);
 
-                        var erpAccount = oldErpAccounts.Find(x => x.AccountNumber == matchingErpAccountShipToAddress.Key.Trim());
-
-                        if (erpAccount == null)
+                        if (matchingErpAccountShipToAddress.Key != null && 
+                            matchingErpAccountShipToAddress.Value.Exists(addr => addr.ShipToCode.Trim() == erpShipToAddress.ShipToCode.Trim()))
                         {
-                            totalNotSyncedSoFar++;
-                            continue;
-                        }
-                        
-                        oldShipToAddressByThisAccount = matchingErpAccountShipToAddress.Value
-                            .Find(addr => addr.ShipToCode.Trim() == erpShipToAddress.ShipToCode.Trim());
+                            oldShipToAddressByThisAccount = matchingErpAccountShipToAddress.Value
+                                .Find(addr => addr.ShipToCode.Trim() == erpShipToAddress.ShipToCode.Trim());
 
-                        var address = await _addressService.GetAddressByIdAsync(oldShipToAddressByThisAccount?.AddressId ?? 0);
+                            address = await _addressService.GetAddressByIdAsync(oldShipToAddressByThisAccount.AddressId);
+                        }
 
                         countryId = allCountries.FirstOrDefault(x =>
                             !string.IsNullOrWhiteSpace(x.Name) && x.Name.Equals(erpShipToAddress.Country)
@@ -348,7 +345,11 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
 
                             if (await IsvalidErpShipToAddressAsync(oldShipToAddressByThisAccount))
                             {
-                                erpShipToAddressInsertList.Add(erpAccount.Id, oldShipToAddressByThisAccount);
+                                if (!erpShipToAddressInsertList.ContainsKey(erpAccount.Id))
+                                    erpShipToAddressInsertList.Add(erpAccount.Id, [oldShipToAddressByThisAccount]);
+                                else
+                                    erpShipToAddressInsertList[erpAccount.Id].Add(oldShipToAddressByThisAccount);
+
                                 lastSyncedErpShipToAddressShipToCode = oldShipToAddressByThisAccount.ShipToCode;
                             }
                             else
