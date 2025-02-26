@@ -16,7 +16,10 @@ public partial class ErpSalesOrg : ErpBaseEntity
 
     public string AuthenticationKey { get; set; }
 
+    public string Password { get; set; }
+
     public DateTime? LastErpAccountSyncTimeOnUtc { get; set; }
+
 
     public DateTime? LastErpGroupPriceSyncTimeOnUtc { get; set; }
 

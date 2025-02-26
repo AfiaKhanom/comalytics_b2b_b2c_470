@@ -14,12 +14,6 @@ public class ErpShipToAddressValidator : BaseNopValidator<ErpShipToAddress>
         RuleFor(x => x.ShipToCode)
             .NotEmpty();
 
-        RuleFor(x => x.ShipToName)
-            .NotEmpty();
-
-        RuleFor(x => x.RepNumber)
-            .NotEmpty();
-
         // Mandatory integer field
         RuleFor(x => x.AddressId)
             .GreaterThan(0);

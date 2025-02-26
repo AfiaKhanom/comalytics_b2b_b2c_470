@@ -284,7 +284,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
 
     public override async Task UpdateAsync(string currentVersion, string targetVersion)
     {
-        if (targetVersion != currentVersion && targetVersion == "4.70.2.40")
+        if (targetVersion != currentVersion && targetVersion == "4.70.2.50")
         {            
             await InstalLocalResourseStringFromXmlFileAsync();
         }

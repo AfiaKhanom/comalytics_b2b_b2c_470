@@ -81,7 +81,7 @@ public class ErpAccountSyncService : IErpAccountSyncService
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpAccountSyncTaskName,
                 ErpSyncLevel.Account,
-                $"Data mapping skipped for {erpAccount.AccountName}. \r\n {errorMessages}");
+                $"Data mapping skipped for {nameof(ErpAccount)}, {nameof(ErpAccount.AccountNumber)}: {erpAccount.AccountNumber}. \r\n {errorMessages}");
         }
 
         return validationResult.IsValid;
@@ -112,6 +112,7 @@ public class ErpAccountSyncService : IErpAccountSyncService
             var erpAccountUpdateList = new List<ErpAccount>();
             var erpAccountInsertList = new List<ErpAccount>();
             var listOfSalesOrgs = new List<ErpSalesOrg>();
+
             var salesOrgCode = await erpIntegrationPlugin.GetSalesOrgCodeFromIntegrationSettings();
             if (!string.IsNullOrWhiteSpace(salesOrgCode))
             {

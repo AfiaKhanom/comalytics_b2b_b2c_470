@@ -2,7 +2,7 @@
   "Group": "Nop-Station",
   "FriendlyName": "NopStation Erp Data Scheduler",
   "SystemName": "NopStation.Plugin.B2B.ErpDataScheduler",
-  "Version": "4.70.3.10",
+  "Version": "4.70.3.20",
   "SupportedVersions": [ "4.70" ],
   "Author": "nopstation team",
   "DisplayOrder": 1,

@@ -14,5 +14,4 @@ public partial class ErpSpecialPrice : BaseEntity
     public bool VolumeDiscount { get; set; }
     public decimal DiscountPerc { get; set; }
     public string PricingNote { get; set; }
-    public ErpAccount ErpAccount { get; set; }    
 }

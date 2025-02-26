@@ -2,7 +2,7 @@
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Data.Migration;
 
-[NopMigration("2024/11/03 11:34:55:1689952", "Quartz schema migration", MigrationProcessType.Update)]
+[NopMigration("2024/11/03 11:34:55:1689952", "Quartz schema migration", MigrationProcessType.NoMatter)]
 public class QuartzSchemaMigration : FluentMigrator.Migration
 {
     public override void Up()
