@@ -41,6 +41,7 @@ public class NopStationJobListener : IJobListener
         {
             context.JobDetail.JobDataMap[ErpDataSchedulerDefaults.JobShouldExecute] = true;
             context.JobDetail.JobDataMap[ErpDataSchedulerDefaults.IsIncrementalSync] = syncTask.IsIncremental;
+            syncTask.LastStartUtc = context.FireTimeUtc.UtcDateTime;
             syncTask.IsRunning = true;
             await _syncTaskService.UpdateTaskAsync(syncTask);
         }
