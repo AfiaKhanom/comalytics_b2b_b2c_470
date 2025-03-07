@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Services.Localization;
 using Nop.Services.Messages;
@@ -148,6 +149,30 @@ public class ErpOrderController : NopStationAdminController
             erpOrder);
 
         return RedirectToAction("Edit", new { id = model.Id });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UpdateExpectedDeliveryDate(int id, DateTime expectedDeliveryDate)
+    {
+        try
+        {
+            var erpOrder = await _erpOrderAdditionalDataService.GetErpOrderAdditionalDataByIdAsync(id);
+
+            if (erpOrder == null)
+                return Json(new { success = false, message = "Erp Order not found!" });
+
+            erpOrder.DeliveryDate = expectedDeliveryDate;
+
+            await _erpOrderAdditionalDataService.UpdateErpOrderAdditionalDataAsync(erpOrder);
+            _notificationService.SuccessNotification(
+                await _localizationService.GetResourceAsync("NopStation.Plugin.NopStation.B2BB2CFeatures.Order.DeliveryDateUpdated"));
+
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
     }
 
     public async Task<IActionResult> ReProcess(int id)

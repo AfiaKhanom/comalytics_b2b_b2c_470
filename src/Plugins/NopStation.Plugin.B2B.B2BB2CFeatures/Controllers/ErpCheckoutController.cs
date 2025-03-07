@@ -1933,8 +1933,8 @@ public class ErpCheckoutController : CheckoutController
         if (!await IsUserValid(erpAccount, b2BUser, b2CUser))
             return RedirectToRoute("ShoppingCart");
 
-        var user = b2BUser != null ? b2BUser : b2CUser;
-        var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var user = b2BUser ?? b2CUser;
+        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
         var currentStore = await _storeContext.GetCurrentStoreAsync();
         var cart = await _shoppingCartService.GetShoppingCartAsync(currentCustomer, ShoppingCartType.ShoppingCart, currentStore.Id);
 
@@ -1965,7 +1965,7 @@ public class ErpCheckoutController : CheckoutController
 
         if (modelShipToAddress.IsFullLoadRequired)
         {
-            (var minDeliveryDate, var maxDeliveryDate) = await _erpCustomerFunctionalityService.GetMinimumAndMaximumDeliveryDateForShippingAddress();
+            (var minDeliveryDate, var _) = await _erpCustomerFunctionalityService.GetMinimumAndMaximumDeliveryDateForShippingAddress();
             modelShipToAddress.DeliveryDate = minDeliveryDate.Date;
         }
 
@@ -2004,9 +2004,7 @@ public class ErpCheckoutController : CheckoutController
 
                 if (lastShippingB2BShipToAddress == null)
                 {
-                    var currentShiptoAddress = await _erpShipToAddressService.GetErpShipToAddressByIdWithActiveAsync(modelShipToAddress.Id);
-                    if (currentShiptoAddress == null)
-                        throw new Exception("Ship to Address can't be loaded");
+                    var currentShiptoAddress = await _erpShipToAddressService.GetErpShipToAddressByIdWithActiveAsync(modelShipToAddress.Id) ?? throw new Exception("Ship to Address can't be loaded");
 
                     var address = new Address
                     {
@@ -2035,6 +2033,9 @@ public class ErpCheckoutController : CheckoutController
                     b2BShipToAddress.UpdatedById = currentCustomer.Id;
 
                     await _erpShipToAddressService.InsertErpShipToAddressAsync(b2BShipToAddress);
+                    await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync
+                        (erpAccount, b2BShipToAddress, ErpShipToAddressCreatedByType.User);
+
                     await _genericAttributeService.SaveAttributeAsync<int?>(currentCustomer, B2BB2CFeaturesDefaults.ShippingAddressModifiedIdInCheckoutAttribute, b2BShipToAddress.Id, currentStore.Id);
                     user.ShippingErpShipToAddressId = b2BShipToAddress.Id;
                     await _erpNopUserService.UpdateErpNopUserAsync(user);
@@ -2591,6 +2592,7 @@ public class ErpCheckoutController : CheckoutController
                         };
 
                         await _erpShipToAddressService.InsertErpShipToAddressAsync(b2BShipToAddress);
+                        await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync(erpAccount, b2BShipToAddress, ErpShipToAddressCreatedByType.User);
 
                         //erp activity log
                         await _erpActivityLogsService.InsertErpActivityAsync("Erp_AddNewErpShipToAddress",

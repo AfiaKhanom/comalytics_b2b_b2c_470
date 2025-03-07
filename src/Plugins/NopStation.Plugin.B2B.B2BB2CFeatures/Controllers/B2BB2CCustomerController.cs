@@ -860,7 +860,8 @@ public class B2BB2CCustomerController : CustomerController
                                         };
 
                                         await _erpShipToAddressService.InsertErpShipToAddressAsync(erpShipToAddress);
-                                        await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync(erpAccount, erpShipToAddress);
+                                        await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync(
+                                            erpAccount, erpShipToAddress, ErpShipToAddressCreatedByType.Admin);
                                         await _erpLogsService.InformationAsync($"{await _localizationService.GetResourceAsync("Admin.ErpShipToAddresss.Added")}, Erp Ship To Address Id: {erpShipToAddress.Id}. For register customer Id: {customer.Id}", ErpSyncLevel.Account, customer: customer);
 
                                         //erp activity log
@@ -902,7 +903,8 @@ public class B2BB2CCustomerController : CustomerController
                                     };
 
                                     await _erpShipToAddressService.InsertErpShipToAddressAsync(erpShipToAddress);
-                                    await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync(erpAccount, erpShipToAddress);
+                                    await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync(
+                                        erpAccount, erpShipToAddress, ErpShipToAddressCreatedByType.Admin);
                                     await _erpLogsService.InformationAsync($"{await _localizationService.GetResourceAsync("Admin.ErpShipToAddresss.Added")}, Erp Ship To Address Id: {erpShipToAddress.Id}. For register customer Id: {customer.Id}", ErpSyncLevel.Account, customer: customer);
 
                                     //erp activity log

@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Nop.Core;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 
 namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
@@ -39,7 +40,7 @@ public interface IErpShipToAddressService
 
     Task RemoveErpShipToAddressErpAccountMapAsync(ErpAccount erpAccount, ErpShipToAddress erpShipToAddress);
 
-    Task InsertErpShipToAddressErpAccountMapAsync(ErpAccount erpAccount, ErpShipToAddress erpShipToAddress);
+    Task InsertErpShipToAddressErpAccountMapAsync(ErpAccount erpAccount, ErpShipToAddress erpShipToAddress, ErpShipToAddressCreatedByType createdByType);
 
     Task InsertErpShipToAddressErpAccountMapsAsync(IList<ErpShiptoAddressErpAccountMap> erpShiptoAddressErpAccountMaps);
 

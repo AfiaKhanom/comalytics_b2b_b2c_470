@@ -681,6 +681,11 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 };
 
                 await _erpShipToAddressService.InsertErpShipToAddressAsync(newErpShiptoAddress);
+                await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync(
+                    erpAccount,
+                    newErpShiptoAddress,
+                    ErpShipToAddressCreatedByType.User
+                );
 
                 oldErpOrder = new ErpOrderAdditionalData();
                 oldErpOrder.NopOrderId = oldNopOrder.Id;

@@ -9,6 +9,7 @@ using Nop.Core.Domain.Customers;
 using Nop.Data;
 using Nop.Services.Customers;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 
 namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
@@ -129,17 +130,17 @@ public class ErpShipToAddressService : IErpShipToAddressService
         {
             if (erpAccountId > 0)
             {
-                query = from address in _erpShipToAddressRepository.Table
-                        join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
-                        where cam.ErpAccountId == erpAccountId
-                        select address;
+                query = from address in _erpShipToAddressRepository.Table 
+                        join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId 
+                        where cam.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin && cam.ErpAccountId == erpAccountId 
+                        select address; 
             }
             else
             {
-                query = from address in _erpShipToAddressRepository.Table
-                        join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
-                        where cam.ErpAccountId > 0
-                        select address;
+                query = from address in _erpShipToAddressRepository.Table 
+                        join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId 
+                        where cam.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin && cam.ErpAccountId > 0 
+                        select address; 
             }
 
             if (showHidden.HasValue)
@@ -187,7 +188,7 @@ public class ErpShipToAddressService : IErpShipToAddressService
         {
             query = from address in _erpShipToAddressRepository.Table
                     join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
-                    where cam.ErpAccountId == erpAccountId
+                    where cam.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin && cam.ErpAccountId == erpAccountId
                     select address;
             
             if (!showHidden)
@@ -207,7 +208,9 @@ public class ErpShipToAddressService : IErpShipToAddressService
         {
             query = from address in _erpShipToAddressRepository.Table
                     join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
-                    where !erpAccountIds.IsNullOrEmpty() && erpAccountIds.Contains(cam.ErpAccountId)
+                    where cam.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin && 
+                    !erpAccountIds.IsNullOrEmpty() && 
+                    erpAccountIds.Contains(cam.ErpAccountId)
                     select address;
 
             if (!showHidden)
@@ -226,7 +229,9 @@ public class ErpShipToAddressService : IErpShipToAddressService
         var query = from address in _erpShipToAddressRepository.Table
                     join cam in _erpShiptoAddressErpAccountMapRepository.Table
                     on address.Id equals cam.ErpShiptoAddressId
-                    where erpAccountIds != null && erpAccountIds.Length > 0 && erpAccountIds.Contains(cam.ErpAccountId)
+                    where cam.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin && 
+                    erpAccountIds != null && 
+                    erpAccountIds.Length > 0 && erpAccountIds.Contains(cam.ErpAccountId)
                     join erpAcc in _erpAccountRepository.Table on cam.ErpAccountId equals erpAcc.Id
                     select new
                     {
@@ -286,7 +291,8 @@ public class ErpShipToAddressService : IErpShipToAddressService
                     shipToAddress => shipToAddress.Id,
                     accountMap => accountMap.ErpShiptoAddressId,
                     (shipToAddress, accountMap) => new { shipToAddress, accountMap })
-                    .Where(@t => @t.accountMap.ErpAccountId == erpAccountId)
+                    .Where(@t => @t.accountMap.ErpAccountId == erpAccountId && 
+                    @t.accountMap.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin)
                     .Select(@t => @t.shipToAddress);
             }
 
@@ -305,7 +311,11 @@ public class ErpShipToAddressService : IErpShipToAddressService
 
         var query = from address in _erpShipToAddressRepository.Table
                     join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
-                    where cam.ErpAccountId == erpAccountId && address.IsActive && !address.IsDeleted && address.ShipToCode.Trim() == shipToCode.Trim()
+                    where cam.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin &&
+                    cam.ErpAccountId == erpAccountId && 
+                    address.IsActive && 
+                    !address.IsDeleted && 
+                    address.ShipToCode.Trim() == shipToCode.Trim()
                     select address;
 
         return await query.FirstOrDefaultAsync();
@@ -323,7 +333,8 @@ public class ErpShipToAddressService : IErpShipToAddressService
             return null;
 
         return await _erpShiptoAddressErpAccountMapRepository.Table
-            .Where(m => erpAccountIds.Contains(m.ErpAccountId))
+            .Where(m => erpAccountIds
+                .Contains(m.ErpAccountId) && m.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin)
             .ToListAsync();
     }
 
@@ -351,7 +362,7 @@ public class ErpShipToAddressService : IErpShipToAddressService
         }
     }
 
-    public virtual async Task InsertErpShipToAddressErpAccountMapAsync(ErpAccount erpAccount, ErpShipToAddress erpShipToAddress)
+    public virtual async Task InsertErpShipToAddressErpAccountMapAsync(ErpAccount erpAccount, ErpShipToAddress erpShipToAddress, ErpShipToAddressCreatedByType createdByType)
     {
         ArgumentNullException.ThrowIfNull(erpAccount);
 
@@ -361,7 +372,8 @@ public class ErpShipToAddressService : IErpShipToAddressService
             var mapping = new ErpShiptoAddressErpAccountMap
             {
                 ErpShiptoAddressId = erpShipToAddress.Id,
-                ErpAccountId = erpAccount.Id
+                ErpAccountId = erpAccount.Id,
+                ErpShipToAddressCreatedByTypeId = (int)createdByType
             };
 
             await _erpShiptoAddressErpAccountMapRepository.InsertAsync(mapping);
@@ -377,7 +389,7 @@ public class ErpShipToAddressService : IErpShipToAddressService
     {
         var query = from address in _erpShipToAddressRepository.Table
                     join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
-                    where cam.ErpAccountId == accountId
+                    where cam.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin && cam.ErpAccountId == accountId
                     select address;
 
         if (!showHidden)
@@ -398,7 +410,8 @@ public class ErpShipToAddressService : IErpShipToAddressService
 
         var query = from address in _erpShipToAddressRepository.Table
                     join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
-                    where cam.ErpAccountId == accountId && address.Id == erpShiptoAddressId
+                    where cam.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin && 
+                    cam.ErpAccountId == accountId && address.Id == erpShiptoAddressId
                     select address;
 
         var key = _staticCacheManager.PrepareKeyForDefaultCache(NopCustomerServicesDefaults.CustomerAddressCacheKey, accountId, erpShiptoAddressId);

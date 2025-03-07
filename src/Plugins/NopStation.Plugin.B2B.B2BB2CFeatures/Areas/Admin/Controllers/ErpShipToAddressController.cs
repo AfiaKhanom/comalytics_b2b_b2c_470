@@ -124,7 +124,7 @@ public class ErpShipToAddressController : NopStationAdminController
             erpShipToAddress.CreatedById = currentCustomer.Id;
             await _erpShipToAddressService.InsertErpShipToAddressAsync(erpShipToAddress);
             var erpAccount = await _accountService.GetErpAccountByIdAsync(model.ErpAccountId);
-            await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync(erpAccount, erpShipToAddress);
+            await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync(erpAccount, erpShipToAddress, ErpShipToAddressCreatedByType.Admin);
 
             var successMsg = await _localizationService.GetResourceAsync("Admin.ErpShipToAddresss.Added");
             _notificationService.SuccessNotification(successMsg);
@@ -191,7 +191,7 @@ public class ErpShipToAddressController : NopStationAdminController
 
             if (await _erpShipToAddressService.GetErpShipToAddressErpAccountMapByErpShipToAddressIdAsync(erpShipToAddress.Id) == null)
             {
-                await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync(await _accountService.GetErpAccountByIdAsync(model.ErpAccountId), erpShipToAddress);
+                await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync(await _accountService.GetErpAccountByIdAsync(model.ErpAccountId), erpShipToAddress, ErpShipToAddressCreatedByType.User);
             }
 
             var shipToAddressErpAccountMap = await _erpShipToAddressService.GetErpShipToAddressErpAccountMapByErpShipToAddressIdAsync(erpShipToAddress.Id);

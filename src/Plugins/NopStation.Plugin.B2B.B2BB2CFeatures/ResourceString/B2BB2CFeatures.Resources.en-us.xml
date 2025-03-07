@@ -6267,12 +6267,7 @@
     <!-- Card: 3124-make-erp-order-additional-details-delivery-date-editable - 25-Feb-2025 -->
     <LocaleResource Name="NopStation.Plugin.NopStation.B2BB2CFeatures.Order.DeliveryDateUpdated">
         <Value>Delivery date updated</Value>
-    </LocaleResource>    
-
-    <!-- Card: 3124-make-erp-order-additional-details-delivery-date-editable - 25-Feb-2025 -->
-    <LocaleResource Name="NopStation.Plugin.NopStation.B2BB2CFeatures.Order.DeliveryDateUpdated">
-        <Value>Delivery date updated</Value>
-    </LocaleResource>    
+    </LocaleResource>  
 
     <!-- Card: 3112 - JH Group - 2804 - Not able to delete lines from an order  - 13-Feb-2025 -->
 

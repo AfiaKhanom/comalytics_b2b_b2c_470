@@ -545,7 +545,12 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
             if (erpShipToAddress != null)
             {
                 await _erpShipToAddressService.InsertErpShipToAddressAsync(erpShipToAddress);
-                erpOrderAdditionalData.ErpShipToAddressId = erpShipToAddress?.Id;
+                await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync(
+                    erpAccount,
+                    erpShipToAddress,
+                    ErpShipToAddressCreatedByType.User
+                );
+                erpOrderAdditionalData.ErpShipToAddressId = erpShipToAddress.Id;
             }
 
             erpOrderAdditionalData.SpecialInstructions = erpShipToAddress?.DeliveryNotes + specialInstructions;

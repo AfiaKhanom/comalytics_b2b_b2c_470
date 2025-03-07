@@ -368,7 +368,8 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                                     erpShiptoAddressErpAccountMapInsertList.Add(new ErpShiptoAddressErpAccountMap
                                     {
                                         ErpAccountId = erpAccount.Id,
-                                        ErpShiptoAddressId = oldShipToAddressByThisAccount.Id
+                                        ErpShiptoAddressId = oldShipToAddressByThisAccount.Id,
+                                        ErpShipToAddressCreatedByTypeId = (int)ErpShipToAddressCreatedByType.Admin,
                                     });
                                 }
                                 lastSyncedErpShipToAddressShipToCode = oldShipToAddressByThisAccount.ShipToCode;
@@ -394,7 +395,8 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                                 erpShiptoAddressErpAccountMapInsertList.Add(new ErpShiptoAddressErpAccountMap
                                 {
                                     ErpAccountId = map.Key,
-                                    ErpShiptoAddressId = shipToAddress.Id
+                                    ErpShiptoAddressId = shipToAddress.Id,
+                                    ErpShipToAddressCreatedByTypeId = (int)ErpShipToAddressCreatedByType.Admin
                                 });
                             }
                         }
