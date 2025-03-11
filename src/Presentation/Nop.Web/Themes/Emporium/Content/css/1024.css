@@ -8,7 +8,6 @@
 }
 
 .admin-header-links {
-	float: left;
 	font-size: 12px;
     background: none;
 	color: #bbb;
@@ -314,7 +313,7 @@
 
 .category-navigation-list-wrapper .with-subcategories:after {
 	content: "\6a";
-	position: absolute;;
+	position: absolute;
 	top: 50%;
 	right: 20px;
 	left: auto;
