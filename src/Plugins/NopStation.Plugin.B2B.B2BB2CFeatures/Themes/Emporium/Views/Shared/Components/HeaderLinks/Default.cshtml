@@ -52,18 +52,15 @@
         @if (Model.IsAuthenticated)
         {
             <li>
-                @if (await customerService.IsInCustomerRoleAsync(customer, ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName) == false)
+                @if (!(await customerService.IsInCustomerRoleAsync(customer, ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName)))
                 {
                     <a href="@Url.RouteUrl("ErpAccountOrders")" class="ico-account opener">@T("Account.MyAccount")</a>
-                }
-                @if (await customerService.IsInCustomerRoleAsync(customer, ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName) == false)
-                {
                     <div class="profile-menu-box">
                         <div class="close-side-menu">
                             <span class="close-side-menu-text">@Model.CustomerName</span>
                             <span class="close-side-menu-btn">@T("SevenSpikes.Themes.Common.CloseMenu")</span>
                         </div>
-                        <a href="@Url.RouteUrl("ErpAccountOrders")" class="ico-account">@T("Account.MyAccount")@*@Model.CustomerName*@</a>
+                        <a href="@Url.RouteUrl("ErpAccountOrders")" class="ico-account">@T("Account.MyAccount")</a>
                         @if (Model.AllowPrivateMessages)
                         {
                             <a href="@Url.RouteUrl("PrivateMessages", new { tab = "" })" class="ico-inbox">
@@ -98,7 +95,6 @@
             ? url.ToString()
             : webHelper.GetRawUrl(Context.Request);
             <li>
-
                 <div class="header-links-mobile">
                     <div class="profile-menu-box">
                         <div class="close-side-menu">
@@ -147,116 +143,106 @@
                 {
                     @if (b2BB2CFeaturesSettings.IsErpAccountCustomerRegisterAllowed)
                     {
-                    <li>
-                        <a href="@Url.RouteUrl("ErpAccountCustomerRegistrationForm", new { returnUrl })" class="ico-register">
+                        <li>
+                            <a href="@Url.RouteUrl("ErpAccountCustomerRegistrationForm", new { returnUrl })" class="ico-register">
                                 @T("Plugin.Misc.NopStation.B2BB2CFeatures.Account.Register.Button.ApplyRegistration")
-                        </a>
-                    </li>
+                            </a>
+                        </li>
                     }
 
-                <li>
+                    <li>
                         @if (b2BB2CFeaturesSettings.IsB2BUserRegisterAllowed && b2BB2CFeaturesSettings.IsB2CUserRegisterAllowed)
                         {
-                        <a onclick="customRegisterButtonClick()" data-toggle="modal" data-target="#registrationTypeDialog" class="ico-register">@T("account.register.button")</a>
-                        <div id="registrationTypeDialog" class="registration-type-dialog" title='@T("NopStation.B2BB2CFeatures.Register.Notification.Title")' style="display: none;">
-                            <div class="dialog-center-register">
-                                <h2>@T("NopStation.B2BB2CFeatures.Register.Notification.Description")</h2>
-                            </div>
-                            <br />
-                            <div class="register-confirm-buttons login-page">
-                                <button type="button" class="button-1" onclick="redirectToB2BRegister()"><span>@T("NopStation.B2BB2CFeatures.Register.Notification.Yes")</span></button>
-                                <button type="button" class="button-1" onclick="redirectToB2CRegister()"><span>@T("NopStation.B2BB2CFeatures.Register.Notification.No")</span></button>
+                            <a onclick="customRegisterButtonClick()" data-toggle="modal" data-target="#registrationTypeDialog" class="ico-register">@T("account.register.button")</a>
+                            <div id="registrationTypeDialog" class="registration-type-dialog" title='@T("NopStation.B2BB2CFeatures.Register.Notification.Title")' style="display: none;">
+                                <div class="dialog-center-register">
+                                    <h2>@T("NopStation.B2BB2CFeatures.Register.Notification.Description")</h2>
+                                </div>
+                                <br />
+                                <div class="register-confirm-buttons login-page">
+                                    <button type="button" class="button-1" onclick="redirectToB2BRegister()">
+                                        <span>@T("NopStation.B2BB2CFeatures.Register.Notification.Yes")</span>
+                                    </button>
+                                    <button type="button" class="button-1" onclick="redirectToB2CRegister()">
+                                        <span>@T("NopStation.B2BB2CFeatures.Register.Notification.No")</span>
+                                    </button>
+                                </div>
+                                <script asp-location="Footer">
+                                    function redirectToB2BRegister() {
+                                        window.location.href = "@Url.RouteUrl("B2BRegister")";
+                                    }
+                                    function redirectToB2CRegister() {
+                                        window.location.href = "@Url.RouteUrl("B2CRegister")";
+                                    }
+                                </script>
                             </div>
                             <script asp-location="Footer">
-                                function redirectToB2BRegister() {
-                                    window.location.href = "@Url.RouteUrl("B2BRegister")";
-                                }
-                                function redirectToB2CRegister() {
-                                    window.location.href = "@Url.RouteUrl("B2CRegister")";
+                                function customRegisterButtonClick() {
+                                    $(".header .close-side-menu .close-side-menu-btn").click();
+                                    $("#registrationTypeDialog").dialog({
+                                        modal: true,
+                                        draggable: false,
+                                        closeOnEscape: true
+                                    });
                                 }
                             </script>
-                        </div>
-                        <script asp-location="Footer">
-                            function customRegisterButtonClick() {
-                                $(".header .close-side-menu .close-side-menu-btn").click();
-                                $("#registrationTypeDialog").dialog({
-                                    modal: true,
-                                    draggable: false,
-                                    closeOnEscape: true
-                                });
-                            }
-                        </script>
                         }
                         else if (b2BB2CFeaturesSettings.IsB2BUserRegisterAllowed)
                         {
-                        <a href="@Url.RouteUrl("B2BRegister")" class="ico-register">@T("Account.Register")</a>
+                            <a href="@Url.RouteUrl("B2BRegister")" class="ico-register">@T("Account.Register")</a>
                         }
                         else if (b2BB2CFeaturesSettings.IsB2CUserRegisterAllowed)
                         {
-                        <a href="@Url.RouteUrl("B2CRegister")" class="ico-register">@T("Account.Register")</a>
+                            <a href="@Url.RouteUrl("B2CRegister")" class="ico-register">@T("Account.Register")</a>
                         }
                         else
                         {
-                        <a href="@Url.RouteUrl("Register", new { returnUrl })" class="ico-register">@T("Account.Register")</a>
+                            <a href="@Url.RouteUrl("Register", new { returnUrl })" class="ico-register">@T("Account.Register")</a>
                         }
-                </li>
+                    </li>
                 }
-            <a href="@Url.RouteUrl("Login", new { returnUrl })" class="ico-login">@T("Account.Login")</a>
-
+                <a href="@Url.RouteUrl("Login", new { returnUrl })" class="ico-login">@T("Account.Login")</a>
             </li>
         }
-        @if (!await customerService.IsInCustomerRoleAsync(customer, ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName))
+        @if (!(await customerService.IsInCustomerRoleAsync(customer, ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName)))
         {
-            @if (Model.AllowPrivateMessages)
+            @if (compareProductsEnabled)
             {
-                <li>
-                    <a href="@Url.RouteUrl("PrivateMessages", new { tab = "" })" class="ico-inbox">
-                        <span class="inbox-label">@T("PrivateMessages.Inbox")</span>
-                        <span class="inbox-unread">@Model.UnreadPrivateMessages</span>
-                    </a>
-                </li>
+                <li><a href="@Url.RouteUrl("CompareProducts")" class="ico-compare">@T("Products.Compare.List")</a></li>
             }
-            @if (Model.WishlistEnabled)
+
+            @if (Model.IsAuthenticated && Model.WishlistEnabled)
             {
                 <li>
                     <a href="@Url.RouteUrl("Wishlist")" class="ico-wishlist">
                         <span class="wishlist-label">@T("Wishlist")</span>
-                        <span class="qty wishlist-qty">@T("Wishlist.HeaderQuantity", Model.WishlistItems)</span>
-                    </a>
-                </li>
-            }
-            @if (Model.ShoppingCartEnabled)
-            {
-                <li id="topcartlink">
-                    <a href="@Url.RouteUrl("ShoppingCart")" class="ico-cart">
-                        <span class="cart-label">@T("ShoppingCart")</span>
-                        <span class="qty cart-qty">@T("ShoppingCart.HeaderQuantity", Model.ShoppingCartItems)</span>
+                        <span class="wishlist-qty">@T("Wishlist.HeaderQuantity", Model.WishlistItems)</span>
                     </a>
                 </li>
             }
 
             @if (Model.IsAuthenticated && b2BB2CFeaturesSettings.DisplayAddToQuickListFavouriteButton && erpCustomer.ErpAccount != null)
             {
-
                 <li id="">
                     <a href="@Url.RouteUrl("QuickOrder")" class="ico-cart">@T("Plugin.Misc.NopStation.B2BB2CFeatures.QuickOrder.QuickOrder")</a>
                 </li>
             }
-
-            @if (Model.ShoppingCartEnabled)
-            {
-                <div class="mobile-flyout-wrapper">
-                    <div class="close-side-menu">
-                        <span class="close-side-menu-text">@T("SevenSpikes.Themes.Emporium.Common.ShoppingCart")</span>
-                        <span class="close-side-menu-btn">@T("SevenSpikes.Themes.Emporium.Common.Close")</span>
-                    </div>
-                    @await Component.InvokeAsync("FlyoutShoppingCart")
-                </div>
-            }
         }
         @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HeaderLinksAfter, additionalData = Model })
     </ul>
-
+    @if (await customerService.IsInCustomerRoleAsync(customer, ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName) == false)
+    {
+        @if (Model.ShoppingCartEnabled)
+        {
+            <div class="mobile-flyout-wrapper">
+                <div class="close-side-menu">
+                    <span class="close-side-menu-text">@T("SevenSpikes.Themes.Emporium.Common.ShoppingCart")</span>
+                    <span class="close-side-menu-btn">@T("SevenSpikes.Themes.Emporium.Common.Close")</span>
+                </div>
+                @await Component.InvokeAsync("FlyoutShoppingCart")
+            </div>
+        }
+    }
     @if (Model.AllowPrivateMessages && !string.IsNullOrEmpty(Model.AlertMessage))
     {
         //new private message notification

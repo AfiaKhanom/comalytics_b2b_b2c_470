@@ -32,10 +32,6 @@ public class ErpAccountValidator : BaseNopValidator<ErpAccount>
             .MaximumLength(10)
             .When(x => !string.IsNullOrEmpty(x.PaymentTypeCode));
 
-        RuleFor(x => x.EmailAddresses)
-            .MaximumLength(1000)
-            .When(x => !string.IsNullOrEmpty(x.EmailAddresses));
-
         // Required integer fields
         RuleFor(x => x.ErpSalesOrgId)
             .GreaterThan(0);

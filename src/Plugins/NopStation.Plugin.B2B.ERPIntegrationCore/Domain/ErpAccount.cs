@@ -72,8 +72,4 @@ public partial class ErpAccount : ErpBaseEntity
     public int StockDisplayFormatTypeId { get; set; }
 
     public decimal? PercentageOfStockAllowed { get; set; }
-
-    public ErpSalesOrg ErpSalesOrg { get; set; }
-
-    public string EmailAddresses { get; set; }
 }

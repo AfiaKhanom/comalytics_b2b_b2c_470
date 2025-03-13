@@ -8,7 +8,7 @@ public partial class ErpLogs : BaseEntity
 {
     public int ErpLogLevelId { get; set; }
 
-    public int ErpSyncLavelId { get; set; }
+    public int ErpSyncLevelId { get; set; }
      
     public string ShortMessage { get; set; }
      
@@ -31,7 +31,7 @@ public partial class ErpLogs : BaseEntity
     }
     public ErpSyncLevel ErpSyncLevel
     {
-        get => (ErpSyncLevel)ErpSyncLavelId;
-        set => ErpSyncLavelId = (int)value;
+        get => (ErpSyncLevel)ErpSyncLevelId;
+        set => ErpSyncLevelId = (int)value;
     }
 }

@@ -91,7 +91,7 @@ public class ErpLogsService : IErpLogsService
             ErpLogLevelId = (int)logLevel,
             ShortMessage = shortMessage,
             FullMessage = fullMessage,
-            ErpSyncLavelId = (int)syncLavel,
+            ErpSyncLevelId = (int)syncLavel,
             IpAddress = _webHelper.GetCurrentIpAddress(),
             CustomerId = customer?.Id,
             PageUrl = _webHelper.GetThisPageUrl(true),
@@ -114,7 +114,7 @@ public class ErpLogsService : IErpLogsService
             ErpLogLevelId = (int)logLevel,
             ShortMessage = shortMessage,
             FullMessage = fullMessage,
-            ErpSyncLavelId = (int)syncLavel,
+            ErpSyncLevelId = (int)syncLavel,
             IpAddress = _webHelper.GetCurrentIpAddress(),
             CustomerId = customer?.Id,
             PageUrl = _webHelper.GetThisPageUrl(true),
@@ -189,7 +189,7 @@ public class ErpLogsService : IErpLogsService
                 query = query.Where(x => x.ErpLogLevelId.Equals(logLevelId));
 
             if (syncLavelId > 0)
-                query = query.Where(x => x.ErpSyncLavelId.Equals(syncLavelId));
+                query = query.Where(x => x.ErpSyncLevelId.Equals(syncLavelId));
 
             if (!string.IsNullOrEmpty(nopCustomerEmail))
             {

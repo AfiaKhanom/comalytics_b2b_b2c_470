@@ -27,12 +27,4 @@ public partial class ErpShipToAddress : ErpBaseEntity
     public string RepEmail { get; set; }
 
     public DateTime? LastShipToAddressSyncDate { get; set; }
-
-    public string RouteCode { get; set; }
-
-    public string Latitute { get; set; }
-
-    public string Longitute { get; set; }
-
-    public int DeliveryOptionId { get; set; }
 }

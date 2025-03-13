@@ -22,7 +22,5 @@ public partial class ErpNopUser : ErpBaseEntity
         set => ErpUserTypeId = (int)value;
     }
 
-    public virtual ErpAccount ErpAccount { get; set; }
-
     public virtual ErpShipToAddress ErpShipToAddress { get; set; }
 }

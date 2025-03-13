@@ -115,7 +115,6 @@ public class ErpOrderSyncService : IErpOrderSyncService
         erpNopUser.ShippingErpShipToAddressId = customer.ShippingAddressId ?? 0;
         erpNopUser.BillingErpShipToAddressId = customer.BillingAddressId ?? 0;
         erpNopUser.ErpAccountId = erpAccount.Id;
-        erpNopUser.ErpAccount = erpAccount;
         erpNopUser.ErpUserType = ErpUserType.B2BUser;
         erpNopUser.IsActive = true;
         erpNopUser.UpdatedOnUtc = DateTime.UtcNow;

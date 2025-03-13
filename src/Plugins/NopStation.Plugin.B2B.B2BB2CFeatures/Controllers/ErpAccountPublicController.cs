@@ -7,11 +7,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Nop.Core;
-using Nop.Services.Catalog;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
-using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Security;
 using Nop.Web.Framework.Controllers;
@@ -43,7 +41,6 @@ public class ErpAccountPublicController : BasePluginController
     private readonly IErpCustomerFunctionalityService _erpCustomerFunctionalityService;
     private readonly ISettingService _settingService;
     private readonly IStoreContext _storeContext;
-    private readonly IErpIntegrationPluginManager _erpIntegrationPluginService;
     private readonly IErpLogsService _erpLogsService;
     private readonly INotificationService _notificationService;
     private readonly ILocalizationService _localizationService;
@@ -51,7 +48,7 @@ public class ErpAccountPublicController : BasePluginController
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly IErpInvoiceService _erpInvoiceService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
-    private readonly  IErpPriceSyncFunctionalityService _erpPriceSyncFunctionalityService;
+    private readonly IErpPriceSyncFunctionalityService _erpPriceSyncFunctionalityService;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
 
     #endregion
@@ -75,7 +72,6 @@ public class ErpAccountPublicController : BasePluginController
         ILocalizationService localizationService,
         IErpActivityLogsService erpActivityLogsService,
         IErpSalesOrgService erpSalesOrgService,
-        ILogger logger,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
         IErpIntegrationPluginManager erpIntegrationPluginManager,
         IErpPriceSyncFunctionalityService erpPriceSyncFunctionalityService,
@@ -91,7 +87,6 @@ public class ErpAccountPublicController : BasePluginController
         _erpCustomerFunctionalityService = erpCustomerFunctionalityService;
         _settingService = settingService;
         _storeContext = storeContext;
-        _erpIntegrationPluginService = erpIntegrationPluginService;
         _erpLogsService = erpLogsService;
         _notificationService = notificationService;
         _localizationService = localizationService;
@@ -99,8 +94,8 @@ public class ErpAccountPublicController : BasePluginController
         _erpSalesOrgService = erpSalesOrgService;
         _erpInvoiceService = erpInvoiceService;
         _erpIntegrationPluginManager = erpIntegrationPluginManager;
-        _erpPriceSyncFunctionalityService = erpPriceSyncFunctionalityService;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
+        _erpPriceSyncFunctionalityService = erpPriceSyncFunctionalityService;
     }
 
     #endregion
@@ -246,7 +241,7 @@ public class ErpAccountPublicController : BasePluginController
                 if (base64PDFData is not null)
                 {
                     // Decode the base64 string
-                    byte[] pdfBytes = Convert.FromBase64String(base64PDFData);
+                    var pdfBytes = Convert.FromBase64String(base64PDFData);
 
                     // Save the decoded binary data to a PDF file
                     var fileName = $"downloaded_pdf_{Guid.NewGuid()}.pdf";
@@ -290,15 +285,15 @@ public class ErpAccountPublicController : BasePluginController
 
         try
         {
-            FtpWebRequest listRequest = (FtpWebRequest)WebRequest.Create(baseUrl);
+            var listRequest = (FtpWebRequest)WebRequest.Create(baseUrl);
             listRequest.UsePassive = true;
             listRequest.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
             listRequest.Credentials = new NetworkCredential(b2BB2CFeaturesSettings.FtpUserName, b2BB2CFeaturesSettings.FtpPassword);
 
-            List<string> lines = new List<string>();
-            using (WebResponse listResponse = listRequest.GetResponse())
-            using (Stream listStream = listResponse.GetResponseStream())
-            using (StreamReader listReader = new StreamReader(listStream))
+            var lines = new List<string>();
+            using (var listResponse = listRequest.GetResponse())
+            using (var listStream = listResponse.GetResponseStream())
+            using (var listReader = new StreamReader(listStream))
             {
                 while (!listReader.EndOfStream)
                 {
@@ -310,8 +305,8 @@ public class ErpAccountPublicController : BasePluginController
 
             foreach (var line in lines)
             {
-                string[] tokens = line.Split(new[] { ' ' }, 9, StringSplitOptions.RemoveEmptyEntries);
-                string name = tokens[8];
+                var tokens = line.Split(new[] { ' ' }, 9, StringSplitOptions.RemoveEmptyEntries);
+                var name = tokens[8];
 
                 var fileNameWithoutExt = Path.GetFileNameWithoutExtension(name);
                 var invoicePath = Path.Combine(baseUrl, name);
@@ -323,11 +318,10 @@ public class ErpAccountPublicController : BasePluginController
                 if (string.IsNullOrEmpty(mimeType))
                     continue;
 
-                string[] nameTokens = fileNameWithoutExt.Split(new[] { '_' }, 2);
-                string invoiceNo = nameTokens[0];
+                var nameTokens = fileNameWithoutExt.Split(new[] { '_' }, 2);
+                var invoiceNo = nameTokens[0];
 
-
-                if (String.Equals(invoiceNo, id, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(invoiceNo, id, StringComparison.OrdinalIgnoreCase))
                 {
                     if (fileDictionary.ContainsKey(invoiceNo))
                     {
@@ -363,18 +357,14 @@ public class ErpAccountPublicController : BasePluginController
                             var fileName = Path.GetFileName(ftpFilePath);
                             var entry = zipArchive.CreateEntry(fileName);
 
-                            using (var entryStream = entry.Open())
-                            {
-                                var ftpRequest = (FtpWebRequest)WebRequest.Create(ftpFilePath);
-                                ftpRequest.Method = WebRequestMethods.Ftp.DownloadFile;
-                                ftpRequest.Credentials = new NetworkCredential(b2BB2CFeaturesSettings.FtpUserName, b2BB2CFeaturesSettings.FtpPassword);
+                            using var entryStream = entry.Open();
+                            var ftpRequest = (FtpWebRequest)WebRequest.Create(ftpFilePath);
+                            ftpRequest.Method = WebRequestMethods.Ftp.DownloadFile;
+                            ftpRequest.Credentials = new NetworkCredential(b2BB2CFeaturesSettings.FtpUserName, b2BB2CFeaturesSettings.FtpPassword);
 
-                                using (var ftpResponse = (FtpWebResponse)ftpRequest.GetResponse())
-                                using (var ftpStream = ftpResponse.GetResponseStream())
-                                {
-                                    ftpStream.CopyTo(entryStream);
-                                }
-                            }
+                            using var ftpResponse = (FtpWebResponse)ftpRequest.GetResponse();
+                            using var ftpStream = ftpResponse.GetResponseStream();
+                            ftpStream.CopyTo(entryStream);
                         }
                     }
 

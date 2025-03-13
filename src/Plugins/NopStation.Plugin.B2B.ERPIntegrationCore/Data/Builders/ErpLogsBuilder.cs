@@ -16,7 +16,7 @@ public class ErpLogsBuilder : NopEntityBuilder<ErpLogs>
     {
         table
             .WithColumn(nameof(ErpLogs.ErpLogLevelId)).AsInt32()
-            .WithColumn(nameof(ErpLogs.ErpSyncLavelId)).AsInt32()
+            .WithColumn(nameof(ErpLogs.ErpSyncLevelId)).AsInt32()
             .WithColumn(nameof(ErpLogs.ShortMessage)).AsString(int.MaxValue).Nullable()
             .WithColumn(nameof(ErpLogs.FullMessage)).AsString(int.MaxValue).Nullable()
             .WithColumn(nameof(ErpLogs.IpAddress)).AsString()

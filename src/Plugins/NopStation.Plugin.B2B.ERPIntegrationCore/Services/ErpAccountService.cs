@@ -284,7 +284,7 @@ public class ErpAccountService : IErpAccountService
             {
                 query = query.Join(_addressRepository.Table, x => x.BillingAddressId, y => y.Id,
                         (x, y) => new { ErpAccount = x, Address = y })
-                    .Where(z => z.Address.Email.Contains(email) || z.ErpAccount.EmailAddresses.Contains(email))
+                    .Where(z => z.Address.Email.Contains(email))
                     .Select(z => z.ErpAccount)
                     .Distinct();
             }

@@ -232,8 +232,7 @@ public class B2BB2CCustomerController : CustomerController
 
     protected override async Task<string> ParseCustomCustomerAttributesAsync(IFormCollection form)
     {
-        if (form is null)
-            throw new ArgumentNullException(nameof(form));
+        ArgumentNullException.ThrowIfNull(form);
 
         var attributesXml = string.Empty;
         var customerAttributes = await _customerAttributeService.GetAllAttributesAsync();
@@ -1278,7 +1277,6 @@ public class B2BB2CCustomerController : CustomerController
                     ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.Deleted"));
                     break;
                 case CustomerLoginResults.NotActive:
-
                     #region ERP
 
                     if (erpAccount != null && (erpAccount.ErpAccountStatusType == ErpAccountStatusType.BlockLogin || !erpAccount.IsActive))
@@ -1295,7 +1293,6 @@ public class B2BB2CCustomerController : CustomerController
                     }
 
                     #endregion
-
                     break;
                 case CustomerLoginResults.NotRegistered:
                     ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.NotRegistered"));
@@ -1441,7 +1438,7 @@ public class B2BB2CCustomerController : CustomerController
                     return Redirect(model.RedirectUrl);
                 }
 
-                erpUser.ErpShipToAddressId = defaultShipToAddress?.Id ?? 0;
+                erpUser.ErpShipToAddressId = defaultShipToAddress.Id;
 
                 await _erpNopUserService.UpdateErpNopUserAsync(erpUser);
 

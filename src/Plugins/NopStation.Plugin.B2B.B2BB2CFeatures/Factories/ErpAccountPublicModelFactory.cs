@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
-using DocumentFormat.OpenXml.EMMA;
 using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Services.Catalog;
@@ -11,15 +9,12 @@ using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
-using Nop.Services.Media;
 using Nop.Services.Orders;
 using Nop.Services.Shipping;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Web.Framework.Models.Extensions;
-using Nop.Web.Models.Media;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.ErpAccountPublic;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
@@ -42,7 +37,6 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
     private readonly IAddressModelFactory _addressModelFactory;
     private readonly AddressSettings _addressSettings;
     private readonly ILocalizationService _localizationService;
-    private readonly IStoreContext _storeContext;
     private readonly IErpAccountService _erpAccountService;
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly IErpInvoiceService _erpInvoiceService;
@@ -51,7 +45,6 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
     private readonly IErpWarehouseAdditionalDataService _erpWarehouseAdditionalDataService;
     private readonly IErpWarehouseSalesOrgMapService _erpWarehouseSalesOrgMapService;
     private readonly IErpCustomerFunctionalityService _erpCustomerFunctionalityService;
-    private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
     private readonly IErpNopUserService _erpNopUserService;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
 
@@ -69,7 +62,6 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
         IOrderService orderService,
         IAddressModelFactory addressModelFactory,
         AddressSettings addressSettings,
-        IStoreContext storeContext,
         IErpAccountService erpAccountService,
         IErpSalesOrgService erpSalesOrgService,
         IErpInvoiceService erpInvoiceService,
@@ -78,7 +70,6 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
         IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService,
         IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMapService,
         IErpCustomerFunctionalityService erpCustomerFunctionalityService,
-        IB2BB2CWorkContext b2BB2CWorkContext,
         IErpNopUserService erpNopUserService,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings)
     {
@@ -92,7 +83,6 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
         _orderService = orderService;
         _addressModelFactory = addressModelFactory;
         _addressSettings = addressSettings;
-        _storeContext = storeContext;
         _erpAccountService = erpAccountService;
         _erpSalesOrgService = erpSalesOrgService;
         _erpInvoiceService = erpInvoiceService;
@@ -101,7 +91,6 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
         _erpWarehouseAdditionalDataService = erpWarehouseAdditionalDataService;
         _erpWarehouseSalesOrgMapService = erpWarehouseSalesOrgMapService;
         _erpCustomerFunctionalityService = erpCustomerFunctionalityService;
-        _b2BB2CWorkContext = b2BB2CWorkContext;
         _erpNopUserService = erpNopUserService;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
     }
@@ -109,10 +98,7 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
     #endregion
 
     #region Utilities
-    /// <summary>
-    /// Set some address fields as required
-    /// </summary>
-    /// <param name="model">Address model</param>
+
     protected virtual void SetAddressFieldsAsRequired(AddressModel model)
     {
         model.FirstNameRequired = true;
@@ -162,22 +148,16 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
 
     public async Task<ErpAccountPublicListModel> PrepareErpAccountListModelAsync(ErpAccountPublicSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
-        //get ERP Accounts
         var erpAccounts = await _erpAccountService.GetAllErpAccountsAsync(pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize, showHidden: false);
 
-        //prepare list model
         var model = await new ErpAccountPublicListModel().PrepareToGridAsync(searchModel, erpAccounts, () =>
         {
-            //fill in model values from the entity
             return erpAccounts.SelectAwait(async erpAccount =>
             {
-                //Get addionalInfos
                 var erpAccountSalesOrgInfo = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount.ErpSalesOrgId);
 
-                //fill in model values from the entity
                 var erpAccountModel = new ErpAccountPublicModel
                 {
                     Id = erpAccount.Id,
@@ -187,10 +167,6 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
                     CurrentBalance = erpAccount.CurrentBalance,
                 };
 
-                var currentCulture = (await _workContext.GetWorkingLanguageAsync()).LanguageCulture;
-                var dtfi = new CultureInfo(currentCulture, false).DateTimeFormat;
-
-                //Additional Infos
                 if (erpAccountSalesOrgInfo != null)
                 {
                     var address = await _addressService.GetAddressByIdAsync(erpAccountSalesOrgInfo.AddressId);
@@ -203,7 +179,7 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
                         Email = erpAccountSalesOrgInfo.Email,
                         Address = addressModel,
                         IntegrationClientId = erpAccountSalesOrgInfo.IntegrationClientId,
-                        AuthenticationKey = erpAccountSalesOrgInfo.AuthenticationKey,
+                        AuthenticationKey = erpAccountSalesOrgInfo.AuthenticationKey
                     };
 
                     erpAccountModel.ErpSalesOrgModel = erpAccountSalesOrgModel;
@@ -256,7 +232,6 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
         }
 
         var language = await _workContext.GetWorkingLanguageAsync();
-        //prepare list model
         var model = await new RecentTransactionListModel().PrepareToGridAsync(erpAccountInfoModel, transactionPerAccounts, () =>
         {
             return transactionPerAccounts.SelectAwait(async transaction =>
@@ -288,28 +263,21 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
 
     public async Task<ErpAccountInfoModel> PrepareErpAccountInfoModelAsync(ErpAccount b2BAccount, ErpAccountInfoModel model, bool enableErpAccountUpdate = false)
     {
-        if (b2BAccount == null)
-            throw new ArgumentNullException(nameof(b2BAccount));
+        ArgumentNullException.ThrowIfNull(b2BAccount);
 
-        if (model == null)
-            throw new ArgumentNullException(nameof(model));
+        ArgumentNullException.ThrowIfNull(model);
 
         var currCustomer = await _workContext.GetCurrentCustomerAsync();
 
-        //customer currency
         var currencyTmp = await _currencyService.GetCurrencyByIdAsync(currCustomer.Id);
         var customerCurrency = currencyTmp != null && currencyTmp.Published ? currencyTmp : await _workContext.GetWorkingCurrencyAsync();
         var customerCurrencyCode = customerCurrency.CurrencyCode;
 
-        // ERP Account Update
-        //if (enableErpAccountUpdate)
-        //b2BAccount = _b2BERPIntegrationService.AccountBalanceUpdate(b2BAccount);
-
         model.ErpAccountId = b2BAccount.Id;
         model.AccountNumber = b2BAccount.AccountNumber;
         model.AccountName = b2BAccount.AccountName;
-        model.HasErpQuoteAssistantRole = false; //_b2bCustomerFunctionality.IsCurrentCustomerInB2BQuoteAssistantRole();
-        model.HasErpOrderAssistantRole = false; //_b2bCustomerFunctionality.IsCurrentCustomerInB2BOrderAssistantRole();
+        model.HasErpQuoteAssistantRole = false;
+        model.HasErpOrderAssistantRole = false;
 
         var availableBlanace = b2BAccount.CreditLimitAvailable;
 
@@ -339,13 +307,14 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
             model.AvailableCredit = await _priceFormatter.FormatPriceAsync(availableBlanace, true, customerCurrencyCode, true, language.Id);
             model.LastPaymentAmount = b2BAccount.LastPaymentAmount.HasValue ?
                 await _priceFormatter.FormatPriceAsync(b2BAccount.LastPaymentAmount.Value, true, customerCurrencyCode, true, language.Id) : string.Empty;
-            model.LastPaymentDate = b2BAccount.LastPaymentDate.HasValue ? b2BAccount.LastPaymentDate.Value.ToShortDateString() : string.Empty;          
+            model.LastPaymentDate = b2BAccount.LastPaymentDate.HasValue ? b2BAccount.LastPaymentDate.Value.ToShortDateString() : string.Empty;
         }
 
         //prepare page parameters
         if (!enableErpAccountUpdate)
         {
             model.SetGridPageSize();
+
         }
 
         return model;
@@ -353,15 +322,13 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
 
     public async Task<ErpAccountOrderSearchModel> PrepareErpAccountOrderSearchModelAsync(ErpAccount erpAccount, ErpNopUser erpNopUser, ErpAccountOrderSearchModel model)
     {
-        if (erpAccount == null)
-            throw new ArgumentNullException(nameof(erpAccount));
+        ArgumentNullException.ThrowIfNull(erpAccount);
+        ArgumentNullException.ThrowIfNull(erpNopUser);
+        ArgumentNullException.ThrowIfNull(model);
 
-        if (model == null)
-            throw new ArgumentNullException(nameof(model));
-
-        model.ErpAccountId = erpAccount?.Id ?? 0;
-        model.ErpAccountNumber = erpAccount?.AccountNumber;
-        model.ErpNopUserId = erpNopUser?.Id ?? 0;
+        model.ErpAccountId = erpAccount.Id;
+        model.ErpAccountNumber = erpAccount.AccountNumber;
+        model.ErpNopUserId = erpNopUser.Id;
 
         //prepare page parameters
         model.SetGridPageSize();
@@ -411,7 +378,6 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
             searchOrderDateFrom: orderPlacedOnDateFrom,
             searchOrderDateTo: orderPlacedOnDateTo);
 
-        //prepare list model
         var model = await new ErpAccountOrderListModel().PrepareToGridAsync(searchModel, erpOrderPerUsers, () =>
         {
             return erpOrderPerUsers.SelectAwait(async erpOrderAdditionalData =>
@@ -429,7 +395,6 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
                 if (warehouse != null && warehouse.Id > 0)
                     map = (await _erpWarehouseSalesOrgMapService.GetWarehouseSalesOrgMapByNopWarehouseIdAsync(warehouse.Id)).FirstOrDefault();
 
-                //fill in model values from the entity
                 var b2BAccountOrder = new ErpAccountOrderDetailsModel
                 {
                     ErpOrderOriginType = await _localizationService.GetLocalizedEnumAsync(erpOrderAdditionalData.ErpOrderOriginType),
@@ -473,15 +438,13 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
 
     public async Task<ErpAccountQuoteOrderSearchModel> PrepareErpAccountQuoteOrderSearchModelAsync(ErpAccount erpAccount, ErpNopUser erpNopUser, ErpAccountQuoteOrderSearchModel model)
     {
-        if (erpAccount == null)
-            throw new ArgumentNullException(nameof(erpAccount));
+        ArgumentNullException.ThrowIfNull(erpAccount);
+        ArgumentNullException.ThrowIfNull(erpNopUser);
+        ArgumentNullException.ThrowIfNull(model);
 
-        if (model == null)
-            throw new ArgumentNullException(nameof(model));
-
-        model.ErpAccountId = erpAccount?.Id ?? 0;
+        model.ErpAccountId = erpAccount.Id;
         model.ErpAccountNumber = erpAccount.AccountNumber;
-        model.ErpNopUserId = erpNopUser?.Id ?? 0;
+        model.ErpNopUserId = erpNopUser.Id;
 
         model.SetGridPageSize();
         return model;
@@ -528,7 +491,6 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
             searchOrderDateTo: orderPlacedOnDateTo,
             searchOrderDateFrom: orderPlacedOnDateFrom);
 
-        //prepare list model
         var model = await new ErpQuoteOrderListModel().PrepareToGridAsync(searchModel, erpQuoteOrders, () =>
         {
             return erpQuoteOrders.SelectAwait(async erpOrderAdditionalData =>
@@ -562,8 +524,8 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
                 {
                     quoteOrderModel.NopOrderId = nopOrder.Id;
                     quoteOrderModel.PlacedByCustomerEmail = erpOrderAdditionalData.ErpOrderOriginType == ErpOrderOriginType.ERPOrder ?
-                        (await _customerService.GetCustomerByIdAsync(erpOrderAdditionalData?.ChangedById ?? 0))?.Email :
-                        (await _customerService.GetCustomerByIdAsync(nopOrder?.CustomerId ?? 0))?.Email;
+                        (await _customerService.GetCustomerByIdAsync(erpOrderAdditionalData.ChangedById))?.Email :
+                        (await _customerService.GetCustomerByIdAsync(nopOrder.CustomerId))?.Email;
                     quoteOrderModel.QuoteDate = await _dateTimeHelper.ConvertToUserTimeAsync(nopOrder.CreatedOnUtc, DateTimeKind.Utc);
                     quoteOrderModel.TotalAmount = await _priceFormatter.FormatPriceAsync(
                         nopOrder.OrderTotal,
@@ -576,69 +538,9 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
                 return quoteOrderModel;
             });
         });
+
         return model;
     }
-
-    //public async Task<ErpAccountInfoAjaxLoadModel> PrepareB2BAccountInfoAjaxLoadModelAsync(ErpAccount erpAccount, bool enableErpAccountUpdate = false)
-    //{
-    //    if (erpAccount == null)
-    //        throw new ArgumentNullException(nameof(erpAccount));
-
-    //    var currCustomer = await _workContext.GetCurrentCustomerAsync();
-    //    var model = new ErpAccountInfoAjaxLoadModel();
-
-    //    //customer currency
-    //    var currencyTmp = await _currencyService.GetCurrencyByIdAsync(currCustomer.Id);
-    //    var customerCurrency = currencyTmp != null && currencyTmp.Published ? currencyTmp : await _workContext.GetWorkingCurrencyAsync();
-    //    var customerCurrencyCode = customerCurrency.CurrencyCode;
-
-    //    // ERP Account Update
-    //    if (enableErpAccountUpdate)
-    //        erpAccount = _erpIntegrationService.AccountBalanceUpdate(erpAccount);
-
-    //    model.ErpAccountId = erpAccount.Id;
-    //    model.HasErpQuoteAssistantRole = _b2bCustomerFunctionality.IsCurrentCustomerInB2BQuoteAssistantRole();
-    //    model.HasErpOrderAssistantRole = _b2bCustomerFunctionality.IsCurrentCustomerInB2BOrderAssistantRole();
-    //    var availableBlanace = b2BAccount.CreditLimitAvailable;
-
-    //    if (!model.HasB2BQuoteAssistantRole && !model.HasB2BOrderAssistantRole)
-    //    {
-    //        model.CreditLimit = _priceFormatter.FormatPrice(b2BAccount.CreditLimit, true, customerCurrencyCode, _workContext.WorkingLanguage, true);
-    //        model.CurrentBalance = _priceFormatter.FormatPrice(b2BAccount.CurrentBalance, true, customerCurrencyCode, _workContext.WorkingLanguage, true);
-    //        model.AvailableCredit = _priceFormatter.FormatPrice(availableBlanace, true, customerCurrencyCode, _workContext.WorkingLanguage, true);
-    //        model.LastPaymentAmount = b2BAccount.LastPaymentAmount.HasValue ?
-    //            _priceFormatter.FormatPrice(b2BAccount.LastPaymentAmount.Value, true, customerCurrencyCode, _workContext.WorkingLanguage, true) : string.Empty;
-    //        model.LastPaymentDate = b2BAccount.LastPaymentDate.HasValue ? b2BAccount.LastPaymentDate.Value.ToShortDateString() : string.Empty;
-    //    }
-
-    //    var allowOverSpend = b2BAccount.AllowOverspend;
-    //    model.AllowOverSpend = allowOverSpend;
-    //    if (!allowOverSpend)
-    //    {
-    //        var shoppingCartItems = _workContext.CurrentCustomer.ShoppingCartItems?.Where(x => x.ShoppingCartType == ShoppingCartType.ShoppingCart).ToList();
-    //        var shoppingCartTotalBase = _orderTotalCalculationService.GetShoppingCartTotal(shoppingCartItems, out var orderTotalDiscountAmountBase, out var _, out var appliedGiftCards, out var redeemedRewardPoints, out var redeemedRewardPointsAmount);
-    //        var orderTotal = decimal.Zero;
-
-    //        if (shoppingCartTotalBase.HasValue)
-    //        {
-    //            orderTotal = _currencyService.ConvertFromPrimaryStoreCurrency(shoppingCartTotalBase.Value, _workContext.WorkingCurrency);
-    //        }
-
-    //        model.CurrentBalanceWithCurrentOrderTotal = _priceFormatter.FormatPrice((b2BAccount.CurrentBalance + orderTotal), true, customerCurrencyCode, _workContext.WorkingLanguage, true);
-    //        model.CurrentOrderTotal = _priceFormatter.FormatPrice(orderTotal, true, customerCurrencyCode, _workContext.WorkingLanguage, true);
-    //        model.IsOverSpend = orderTotal > availableBlanace;
-    //        if (model.HasB2BOrderAssistantRole || model.HasB2BQuoteAssistantRole)
-    //        {
-    //            model.CreditWarningMessage = string.Format(_localizationService.GetResource("NopStation.Plugin.B2B.B2BB2CFeatures.B2BQouteOrder.CreditLimitExceed"));
-    //        }
-    //        else
-    //        {
-    //            model.CreditWarningMessage = string.Format(_localizationService.GetResource("NopStation.Plugin.B2B.B2BB2CFeatures.B2BQouteOrder.CreditLimitExceedWithValue"), model.AvailableCredit, model.CurrentOrderTotal);
-    //        }
-    //    }
-    //    return model;
-    //}
-
 
     #endregion
 }

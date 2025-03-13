@@ -84,13 +84,4 @@ public record ErpAccountInfoModel : BaseSearchModel
     public bool IsShowAccountStatementDownloadEnabled { get; set; }
 
     public bool HasErpCustomerAccountingPersonnelRole { get; set; }
-
-    [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.LoyaltyBalance")]
-    public string LoyaltyBalance { get; set; }
-
-    [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.LoyaltyCardNumber")]
-    public string LoyaltyCardNumber { get; set; }
-
-    [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.MinimumOrderValue")]
-    public string MinimumOrderValue { get; set; }
 }

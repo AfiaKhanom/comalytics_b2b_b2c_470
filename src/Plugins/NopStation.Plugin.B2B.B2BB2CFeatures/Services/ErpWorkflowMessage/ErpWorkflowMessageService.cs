@@ -134,35 +134,16 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
         return language.Id;
     }
 
-    /// <summary>
-    /// Send notification
-    /// </summary>
-    /// <param name="messageTemplate">Message template</param>
-    /// <param name="emailAccount">Email account</param>
-    /// <param name="languageId">Language identifier</param>
-    /// <param name="tokens">Tokens</param>
-    /// <param name="toEmailAddress">Recipient email address</param>
-    /// <param name="toName">Recipient name</param>
-    /// <param name="attachmentFilePath">Attachment file path</param>
-    /// <param name="attachmentFileName">Attachment file name</param>
-    /// <param name="replyToEmailAddress">"Reply to" email</param>
-    /// <param name="replyToName">"Reply to" name</param>
-    /// <param name="fromEmail">Sender email. If specified, then it overrides passed "emailAccount" details</param>
-    /// <param name="fromName">Sender name. If specified, then it overrides passed "emailAccount" details</param>
-    /// <param name="subject">Subject. If specified, then it overrides subject of a message template</param>
-    /// <returns>Queued email identifier</returns>
-    public virtual async Task<int> SendNotificationAsync(MessageTemplate messageTemplate,
+    public virtual async Task<List<int>> SendNotificationAsync(MessageTemplate messageTemplate,
         EmailAccount emailAccount, int languageId, IEnumerable<Token> tokens,
-        string toEmailAddress, string toName,
+        List<(string toEmailAddresses, string toName)> emailAddressesWithNames,
         string attachmentFilePath = null, string attachmentFileName = null,
         string replyToEmailAddress = null, string replyToName = null,
         string fromEmail = null, string fromName = null, string subject = null)
     {
-        if (messageTemplate == null)
-            throw new ArgumentNullException(nameof(messageTemplate));
+        ArgumentNullException.ThrowIfNull(messageTemplate);
 
-        if (emailAccount == null)
-            throw new ArgumentNullException(nameof(emailAccount));
+        ArgumentNullException.ThrowIfNull(emailAccount);
 
         var bcc = await _localizationService.GetLocalizedAsync(messageTemplate, mt => mt.BccEmailAddresses, languageId);
 
@@ -174,33 +155,41 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
         var subjectReplaced = _tokenizer.Replace(subject, tokens, false);
         var bodyReplaced = _tokenizer.Replace(body, tokens, true);
 
-        toName = CommonHelper.EnsureMaximumLength(toName, 300);
+        var results = new List<int>();
 
-        var email = new QueuedEmail
+        foreach (var emailAddresses in emailAddressesWithNames)
         {
-            Priority = QueuedEmailPriority.High,
-            From = !string.IsNullOrEmpty(fromEmail) ? fromEmail : emailAccount.Email,
-            FromName = !string.IsNullOrEmpty(fromName) ? fromName : emailAccount.DisplayName,
-            To = toEmailAddress,
-            ToName = toName,
-            ReplyTo = replyToEmailAddress,
-            ReplyToName = replyToName,
-            CC = string.Empty,
-            Bcc = bcc,
-            Subject = subjectReplaced,
-            Body = bodyReplaced,
-            AttachmentFilePath = attachmentFilePath,
-            AttachmentFileName = attachmentFileName,
-            AttachedDownloadId = messageTemplate.AttachedDownloadId,
-            CreatedOnUtc = DateTime.UtcNow,
-            EmailAccountId = emailAccount.Id,
-            DontSendBeforeDateUtc = !messageTemplate.DelayBeforeSend.HasValue ? null
-                : (DateTime.UtcNow + TimeSpan.FromHours(messageTemplate.DelayPeriod.ToHours(messageTemplate.DelayBeforeSend.Value)))
-        };
+            foreach (var emailAddress in emailAddresses.toEmailAddresses.Split(';').Distinct())
+            { 
+                var email = new QueuedEmail
+                {
+                    Priority = QueuedEmailPriority.High,
+                    From = !string.IsNullOrEmpty(fromEmail) ? fromEmail : emailAccount.Email,
+                    FromName = !string.IsNullOrEmpty(fromName) ? fromName : emailAccount.DisplayName,
+                    To = emailAddress,
+                    ToName = CommonHelper.EnsureMaximumLength(emailAddresses.toName, 300),
+                    ReplyTo = replyToEmailAddress,
+                    ReplyToName = replyToName,
+                    CC = string.Empty,
+                    Bcc = bcc,
+                    Subject = subjectReplaced,
+                    Body = bodyReplaced,
+                    AttachmentFilePath = attachmentFilePath,
+                    AttachmentFileName = attachmentFileName,
+                    AttachedDownloadId = messageTemplate.AttachedDownloadId,
+                    CreatedOnUtc = DateTime.UtcNow,
+                    EmailAccountId = emailAccount.Id,
+                    DontSendBeforeDateUtc = !messageTemplate.DelayBeforeSend.HasValue ? null
+                        : (DateTime.UtcNow + TimeSpan.FromHours(messageTemplate.DelayPeriod.ToHours(messageTemplate.DelayBeforeSend.Value)))
+                };
 
-        await _queuedEmailService.InsertQueuedEmailAsync(email);
+                await _queuedEmailService.InsertQueuedEmailAsync(email);
 
-        return email.Id;
+                results.Add(email.Id);
+            }
+        }
+
+        return results;
     }
 
     protected async Task<(string email, string name)> GetStoreOwnerNameAndEmailAsync(EmailAccount messageTemplateEmailAccount)
@@ -209,22 +198,6 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
         storeOwnerEmailAccount ??= messageTemplateEmailAccount;
 
         return (storeOwnerEmailAccount.Email, storeOwnerEmailAccount.DisplayName);
-    }
-
-    protected async Task<(string email, string name)> GetCustomerReplyToNameAndEmailAsync(MessageTemplate messageTemplate, Customer customer)
-    {
-        if (!messageTemplate.AllowDirectReply)
-            return (null, null);
-
-        var replyToEmail = await _customerService.IsGuestAsync(customer)
-            ? string.Empty
-            : customer.Email;
-
-        var replyToName = await _customerService.IsGuestAsync(customer)
-            ? string.Empty
-            : await _customerService.GetCustomerFullNameAsync(customer);
-
-        return (replyToEmail, replyToName);
     }
 
     protected async Task<(string email, string name)> GetCustomerReplyToNameAndEmailAsync(MessageTemplate messageTemplate, Order order)
@@ -243,7 +216,7 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
 
     #region Order workflow
 
-    public async Task<int> SendERPOrderPlaceFailedSalesRepNotificationAsync(Order order, int languageId, ErpShipToAddress erpShipToAddress)
+    public async Task<IList<int>> SendERPOrderPlaceFailedSalesRepNotificationAsync(Order order, int languageId, ErpShipToAddress erpShipToAddress)
     {
         ArgumentNullException.ThrowIfNull(order);
 
@@ -253,7 +226,7 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
         var messageTemplate = (await GetActiveMessageTemplatesAsync(B2BB2CFeaturesDefaults.MessageTemplateSystemNames_ERPOrderPlaceFailedSalesRepNotification, store.Id)).FirstOrDefault();
 
         if (messageTemplate is null)
-            return 0;
+            return[];
 
         var commonTokens = new List<Token>();
         var customer = await _customerService.GetCustomerByIdAsync(order.CustomerId);
@@ -270,7 +243,13 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
         var toEmail = erpShipToAddress.RepEmail;
         var toName = erpShipToAddress.RepFullName;
 
-        return await SendNotificationAsync(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
+        return await SendNotificationAsync(
+            messageTemplate,
+            emailAccount,
+            languageId,
+            tokens,
+            new List<(string toEmailAddresses, string toName)> { (toEmail, toName) }
+            );
     }
 
     public async Task<IList<int>> SendOrderPlacedStoreOwnerNotificationAsync(Order order, int languageId)
@@ -281,14 +260,16 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
         languageId = await EnsureLanguageIsActiveAsync(languageId, store.Id);
 
         var messageTemplates = await GetActiveMessageTemplatesAsync(MessageTemplateSystemNames.ORDER_PLACED_STORE_OWNER_NOTIFICATION, store.Id);
-        if (!messageTemplates.Any())
-            return new List<int>();
+        if (messageTemplates.Count == 0)
+            return [];
 
         var commonTokens = new List<Token>();
         await _messageTokenProvider.AddOrderTokensAsync(commonTokens, order, languageId);
         await _messageTokenProvider.AddCustomerTokensAsync(commonTokens, order.CustomerId);
 
-        return await messageTemplates.SelectAwait(async messageTemplate =>
+        var results = new List<int>();
+
+        foreach (var messageTemplate in messageTemplates)
         {
             var emailAccount = await GetEmailAccountOfMessageTemplateAsync(messageTemplate, languageId);
 
@@ -300,9 +281,16 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
             var (toEmail, toName) = await GetStoreOwnerNameAndEmailAsync(emailAccount);
             var (replyToEmail, replyToName) = await GetCustomerReplyToNameAndEmailAsync(messageTemplate, order);
 
-            return await SendNotificationAsync(messageTemplate, emailAccount, languageId, tokens, toEmail, toName,
-                replyToEmailAddress: replyToEmail, replyToName: replyToName);
-        }).ToListAsync();
+            results.AddRange(await SendNotificationAsync(
+                messageTemplate, 
+                emailAccount, 
+                languageId, 
+                tokens,
+                new List<(string toEmailAddresses, string toName)> { (toEmail, toName) },
+                replyToEmailAddress: replyToEmail, replyToName: replyToName));
+        }
+
+        return results;
     }
 
     public async Task<IList<int>> SendOrderPlacedVendorNotificationAsync(Order order, Vendor vendor, int languageId)
@@ -316,13 +304,18 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
 
         var messageTemplates = await GetActiveMessageTemplatesAsync(MessageTemplateSystemNames.ORDER_PLACED_VENDOR_NOTIFICATION, store.Id);
         if (!messageTemplates.Any())
-            return new List<int>();
+            return [];
 
         var commonTokens = new List<Token>();
         await _messageTokenProvider.AddOrderTokensAsync(commonTokens, order, languageId, vendor.Id);
         await _messageTokenProvider.AddCustomerTokensAsync(commonTokens, order.CustomerId);
 
-        return await messageTemplates.SelectAwait(async messageTemplate =>
+        var results = new List<int>();
+
+        var toEmail = vendor.Email;
+        var toName = vendor.Name;
+
+        foreach (var messageTemplate in messageTemplates)
         {
             var emailAccount = await GetEmailAccountOfMessageTemplateAsync(messageTemplate, languageId);
 
@@ -331,11 +324,16 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
 
             await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
 
-            var toEmail = vendor.Email;
-            var toName = vendor.Name;
+            results.AddRange(await SendNotificationAsync(
+                messageTemplate,
+                emailAccount,
+                languageId,
+                tokens,
+                new List<(string toEmailAddresses, string toName)> { (toEmail, toName) }
+                ));
+        }
 
-            return await SendNotificationAsync(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
-        }).ToListAsync();
+        return results;
     }
 
     public async Task<IList<int>> SendOrderPlacedAffiliateNotificationAsync(Order order, int languageId)
@@ -351,13 +349,19 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
 
         var messageTemplates = await GetActiveMessageTemplatesAsync(MessageTemplateSystemNames.ORDER_PLACED_AFFILIATE_NOTIFICATION, store.Id);
         if (!messageTemplates.Any())
-            return new List<int>();
+            return [];
 
         var commonTokens = new List<Token>();
         await _messageTokenProvider.AddOrderTokensAsync(commonTokens, order, languageId);
         await _messageTokenProvider.AddCustomerTokensAsync(commonTokens, order.CustomerId);
 
-        return await messageTemplates.SelectAwait(async messageTemplate =>
+        var results = new List<int>();
+
+        var affiliateAddress = await _addressService.GetAddressByIdAsync(affiliate.AddressId);
+        var toEmail = affiliateAddress.Email;
+        var toName = $"{affiliateAddress.FirstName} {affiliateAddress.LastName}";
+
+        foreach (var messageTemplate in messageTemplates)
         {
             var emailAccount = await GetEmailAccountOfMessageTemplateAsync(messageTemplate, languageId);
 
@@ -366,12 +370,16 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
 
             await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
 
-            var affiliateAddress = await _addressService.GetAddressByIdAsync(affiliate.AddressId);
-            var toEmail = affiliateAddress.Email;
-            var toName = $"{affiliateAddress.FirstName} {affiliateAddress.LastName}";
+            results.AddRange(await SendNotificationAsync(
+                messageTemplate,
+                emailAccount,
+                languageId,
+                tokens,
+                new List<(string toEmailAddresses, string toName)> { (toEmail, toName) }
+                ));
+        }
 
-            return await SendNotificationAsync(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
-        }).ToListAsync();
+        return results;
     }
 
     public async Task<IList<int>> SendOrderPlacedCustomerNotificationAsync(Order order, int languageId,
@@ -384,33 +392,41 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
 
         #region Prepare multiple email addresses
 
+        // 1. Customer email
         var customer = await _customerService.GetCustomerByIdAsync(order.CustomerId);
-        var erpNopUser = await _erpCustomerFunctionalityService.GetActiveErpNopUserByCustomerAsync(customer);
 
+        if (customer is null)
+            return [];
         var emailList = new List<(string toEmailAddress, string toName)>
         {
-            (customer?.Email, $"{customer?.FirstName} {customer?.LastName}")
+            (customer.Email, $"{customer.FirstName} {customer.LastName}")
         };
 
-        var erpShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(erpNopUser?.ErpShipToAddressId ?? 0);
-        if (erpShipToAddress is not null && erpShipToAddress.EmailAddresses is not null)
+        // 2. ShipToAddress emails
+        var erpNopUser = await _erpCustomerFunctionalityService.GetActiveErpNopUserByCustomerAsync(customer);
+
+        if (erpNopUser != null)
         {
-            var emails = erpShipToAddress.EmailAddresses.Split(';');
-            foreach (var email in emails)
+            var erpShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(erpNopUser.ErpShipToAddressId);
+
+            if (erpShipToAddress != null)
             {
-                if (!emailList.Exists(x => x.toEmailAddress == email.Trim()))
-                    emailList.Add((email.Trim(), $"{erpShipToAddress.ShipToName}"));
+                if (erpShipToAddress is not null && erpShipToAddress.EmailAddresses is not null)
+                {
+                    emailList.Add((erpShipToAddress.EmailAddresses.Trim(), $"{erpShipToAddress.ShipToName}"));
+                }
+
+                // 3. Sales Rep email
+                if (!string.IsNullOrWhiteSpace(erpShipToAddress.RepEmail) &&
+                    !emailList.Exists(x => x.toEmailAddress == erpShipToAddress.RepEmail.Trim()))
+                {
+                    emailList.Add((erpShipToAddress.RepEmail.Trim(), $"{erpShipToAddress.ShipToName}"));
+                }
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(erpShipToAddress.RepEmail) &&
-            !emailList.Exists(x => x.toEmailAddress == erpShipToAddress.RepEmail.Trim()))
-        {
-            emailList.Add((erpShipToAddress.RepEmail.Trim(), $"{erpShipToAddress.ShipToName}"));
-        }
-
+        // 4. Billing Address email
         var billingAddress = await _addressService.GetAddressByIdAsync(order.BillingAddressId);
-
         if (billingAddress != null && !emailList.Exists(x => x.toEmailAddress == billingAddress.Email.Trim()))
             emailList.Add((billingAddress.Email.Trim(), $"{billingAddress.FirstName} {billingAddress.LastName}"));
 
@@ -418,7 +434,7 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
 
         var messageTemplates = await GetActiveMessageTemplatesAsync(MessageTemplateSystemNames.ORDER_PLACED_CUSTOMER_NOTIFICATION, store.Id);
         if (!messageTemplates.Any())
-            return new List<int>();
+            return [];
 
         var commonTokens = new List<Token>();
         await _messageTokenProvider.AddOrderTokensAsync(commonTokens, order, languageId);
@@ -426,23 +442,26 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
 
         var results = new List<int>();
 
-        foreach (var email in emailList)
+        foreach (var messageTemplate in messageTemplates)
         {
-            foreach (var messageTemplate in messageTemplates)
-            {
-                var emailAccount = await GetEmailAccountOfMessageTemplateAsync(messageTemplate, languageId);
+            //email account
+            var emailAccount = await GetEmailAccountOfMessageTemplateAsync(messageTemplate, languageId);
 
-                var tokens = new List<Token>(commonTokens);
-                await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+            var tokens = new List<Token>(commonTokens);
+            await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
 
-                await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
+            //event notification
+            await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
 
-                var result = await SendNotificationAsync(messageTemplate, emailAccount, languageId, tokens,
-                    email.toEmailAddress, email.toName,
-                    attachmentFilePath, attachmentFileName);
-
-                results.Add(result);
-            }
+            // Send notification for each email
+            results.AddRange(await SendNotificationAsync(
+                messageTemplate, 
+                emailAccount, 
+                languageId, 
+                tokens,
+                emailList,
+                attachmentFilePath, 
+                attachmentFileName));
         }
 
         return results;
@@ -450,9 +469,9 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
 
     #endregion
 
-    #region ERP Customer Registration Application
+    #region Erp Customer Registration Application
 
-    public async Task<int> SendERPCustomerRegistrationApplicationCreatedNotificationAsync(ErpAccountCustomerRegistrationForm applicationForm, int languageId)
+    public async Task<IList<int>> SendERPCustomerRegistrationApplicationCreatedNotificationAsync(ErpAccountCustomerRegistrationForm applicationForm, int languageId)
     {
         ArgumentNullException.ThrowIfNull(applicationForm);
 
@@ -466,25 +485,39 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
 
         var emailAccount = await GetEmailAccountOfMessageTemplateAsync(messageTemplateToAdmin, languageId);
         var tokens = new List<Token>(commonTokens);
+        
         await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+        
         if (messageTemplateToAdmin is not null)
         {
             await _eventPublisher.MessageTokensAddedAsync(messageTemplateToAdmin, tokens);
             var toEmail = emailAccount.Email;
             var toName = !string.IsNullOrEmpty(emailAccount.DisplayName) ? emailAccount.DisplayName : "Admin";
-            await SendNotificationAsync(messageTemplateToAdmin, emailAccount, languageId, tokens, toEmail, toName);
+            await SendNotificationAsync(
+                messageTemplateToAdmin, 
+                emailAccount, 
+                languageId, 
+                tokens,
+                new List<(string toEmailAddresses, string toName)> { (toEmail, toName) });
         }
+        
         if (messageTemplateToCustomer is not null)
         {
             await _eventPublisher.MessageTokensAddedAsync(messageTemplateToCustomer, tokens);
             var toEmail = applicationForm.AccountsEmail;
             var toName = applicationForm.FullRegisteredName;
-            await SendNotificationAsync(messageTemplateToCustomer, emailAccount, languageId, tokens, toEmail, toName);
+            await SendNotificationAsync(
+                messageTemplateToCustomer, 
+                emailAccount, 
+                languageId, 
+                tokens,
+                new List<(string toEmailAddresses, string toName)> { (toEmail, toName) });
         }
-        return 0;
+
+        return [0];
     }
 
-    public async Task<int> SendERPCustomerRegistrationApplicationApprovedNotificationAsync(ErpAccountCustomerRegistrationForm applicationForm, int languageId)
+    public async Task<IList<int>> SendERPCustomerRegistrationApplicationApprovedNotificationAsync(ErpAccountCustomerRegistrationForm applicationForm, int languageId)
     {
         ArgumentNullException.ThrowIfNull(applicationForm);
 
@@ -498,15 +531,22 @@ public partial class ErpWorkflowMessageService : IErpWorkflowMessageService
         var emailAccount = await GetEmailAccountOfMessageTemplateAsync(messageTemplate, languageId);
         var tokens = new List<Token>(commonTokens);
         await _messageTokenProvider.AddStoreTokensAsync(tokens, store, emailAccount);
+        
         if (messageTemplate is null)
         {
-            return 0;
+            return [0];
         }
 
         await _eventPublisher.MessageTokensAddedAsync(messageTemplate, tokens);
         var toEmail = applicationForm.AccountsEmail;
         var toName = applicationForm.FullRegisteredName;
-        return await SendNotificationAsync(messageTemplate, emailAccount, languageId, tokens, toEmail, toName);
+        
+        return await SendNotificationAsync(
+            messageTemplate, 
+            emailAccount, 
+            languageId, 
+            tokens,
+            new List<(string toEmailAddresses, string toName)> { (toEmail, toName) });
     }
 
     public async Task AddApplicationFormTokensAsync(List<Token> tokens, ErpAccountCustomerRegistrationForm applicationForm)
