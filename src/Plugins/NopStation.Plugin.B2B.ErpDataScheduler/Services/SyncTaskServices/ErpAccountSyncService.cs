@@ -243,7 +243,6 @@ public class ErpAccountSyncService : IErpAccountSyncService
                         if (oldErpAccount is null)
                         {
                             oldErpAccount = new ErpAccount();
-                            oldErpAccount.ErpSalesOrg = salesOrg;
                             oldErpAccount.ErpSalesOrgId = salesOrg.Id;
 
                             oldErpAccount.AccountNumber = erpAccount.AccountNumber;

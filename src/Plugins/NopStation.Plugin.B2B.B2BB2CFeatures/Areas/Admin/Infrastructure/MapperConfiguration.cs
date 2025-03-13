@@ -94,8 +94,7 @@ public class MapperConfiguration : Profile, IOrderedMapperProfile
 
         CreateMap<ErpAccount, ErpAccountModel>();
         CreateMap<ErpAccountModel, ErpAccount>()
-            .ForMember(model => model.ErpAccountStatusType, options => options.Ignore())
-            .ForMember(model => model.ErpSalesOrg, options => options.Ignore());
+            .ForMember(model => model.ErpAccountStatusType, options => options.Ignore());
 
         #endregion
 

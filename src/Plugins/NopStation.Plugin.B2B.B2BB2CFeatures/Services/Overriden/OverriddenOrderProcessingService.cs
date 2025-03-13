@@ -202,8 +202,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
     public override async Task<PlaceOrderResult> PlaceOrderAsync(ProcessPaymentRequest processPaymentRequest)
     {
-        if (processPaymentRequest == null)
-            throw new ArgumentNullException(nameof(processPaymentRequest));
+        ArgumentNullException.ThrowIfNull(processPaymentRequest);
 
         var result = new PlaceOrderResult();
         try
@@ -213,10 +212,10 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
             var details = await PreparePlaceOrderDetailsAsync(processPaymentRequest);
 
-            var processPaymentResult = await GetProcessPaymentResultAsync(processPaymentRequest, details);
-
-            if (processPaymentResult == null)
-                throw new NopException("processPaymentResult is not available");
+            var processPaymentResult = await GetProcessPaymentResultAsync(
+                processPaymentRequest,
+                details
+            ) ?? throw new NopException("processPaymentResult is not available");
 
             if (processPaymentResult.Success)
             {
@@ -277,15 +276,11 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
     public async Task<PlaceOrderResult> PlaceQuoteOrderAsync(ProcessPaymentRequest processPaymentRequest)
     {
-        if (processPaymentRequest == null)
-            throw new ArgumentNullException(nameof(processPaymentRequest));
+        ArgumentNullException.ThrowIfNull(processPaymentRequest);
 
         (var b2BAccount, var b2BUser, var b2CUser) = await GetB2BAccountAndUserOfCurrentCustomerAsync();
 
-        if (b2BAccount == null)
-        {
-            throw new ArgumentNullException(nameof(b2BAccount));
-        }
+        ArgumentNullException.ThrowIfNull(b2BAccount);        
 
         if (b2BUser != null)
         {
@@ -535,10 +530,15 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
             if (modifiedShipToAddressIdOnCheckout > 0)
                 erpShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(modifiedShipToAddressIdOnCheckout);
             else
-            {
-                erpShipToAddress = await _erpShipToAddressService
-                    .GetErpShipToAddressByIdAsync((erpNopUser?.ShippingErpShipToAddressId > 0 ? erpNopUser?.ErpShipToAddressId : 0) ?? 0);
-            }
+                erpShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(
+                    erpNopUser?.ShippingErpShipToAddressId ?? erpNopUser?.ErpShipToAddressId ?? 0
+                );
+
+            erpShipToAddress ??= order.ShippingAddressId.HasValue
+                    ? await _erpShipToAddressService.GetErpShipToAddressByShippingAddressIdAsync(
+                        order.ShippingAddressId.Value
+                    )
+                    : null;
 
             erpShipToAddress ??= order.ShippingAddressId.HasValue ? await _erpShipToAddressService.GetErpShipToAddressByShippingAddressIdAsync(order.ShippingAddressId.Value) : null;
 
@@ -677,25 +677,41 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
     public async Task<(bool, string)> RetryPlaceErpOrderAtErpAsync(ErpOrderAdditionalData erpOrderAdditionalData, B2BB2CFeaturesSettings b2BB2CFeaturesSettings)
     {
         if (!b2BB2CFeaturesSettings.UseERPIntegration)
-            return (false, "Use of ERP Integration is disabled!");
+            return (false, "Use of Erp Integration is disabled!");
 
         if (erpOrderAdditionalData == null)
-            return (false, "Erp order details is null");
+            return (false, "Erp order details not found");
 
         if (erpOrderAdditionalData.IntegrationStatusType == IntegrationStatusType.Confirmed)
-            return (false, "Order already placed at ERP");
+            return (false, "Order already placed at Erp");
 
-        if (erpOrderAdditionalData.ErpOrderType != ErpOrderType.B2BQuote && erpOrderAdditionalData.ErpOrderType != ErpOrderType.B2CQuote && erpOrderAdditionalData.IntegrationStatusType == IntegrationStatusType.WaitingForPayment)
-            return (false, "This Order can't be placed at ERP, due to this order is not paid");
+        if (
+            erpOrderAdditionalData.ErpOrderType != ErpOrderType.B2BQuote
+            && erpOrderAdditionalData.ErpOrderType != ErpOrderType.B2CQuote
+            && erpOrderAdditionalData.IntegrationStatusType
+                == IntegrationStatusType.WaitingForPayment
+        )
+            return (false, "This Order can't be placed at Erp since this order is not paid");
 
         var nopOrder = await _orderService.GetOrderByIdAsync(erpOrderAdditionalData.NopOrderId);
         if (nopOrder == null)
-            return (false, "Nop Order is null");
+            return (false, "Nop Order is not found");
 
-        var erpNopUser = await _erpCustomerFunctionalityService.GetActiveErpNopUserByCustomerAsync(await _customerService.GetCustomerByIdAsync(nopOrder.CustomerId));
+        var customer = await _customerService.GetCustomerByIdAsync(nopOrder.CustomerId);
+        if (customer is null)
+            return (false, "Customer is not found");
+
+        var erpNopUser = await _erpCustomerFunctionalityService.GetActiveErpNopUserByCustomerAsync(
+            customer
+        );
         if (erpNopUser == null)
-            return (false, "B2B user is null");
+            return (false, "Erp user not found");
 
+        var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(
+            erpOrderAdditionalData.ErpAccountId
+        );
+        if (erpAccount is null)
+            return (false, "B2B account not found");
 
         var erpPlaceOrderItemList = new List<ErpPlaceOrderItemDataModel>();
 
@@ -739,12 +755,37 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
         if (erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2BSalesOrder || erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2CSalesOrder)
         {
-            if (erpOrderAdditionalData.IntegrationStatusType != IntegrationStatusType.WaitingForPayment)
-                await PlaceERPOrderAtERPAsync(nopOrder, erpOrderAdditionalData, erpNopUser, erpPlaceOrderItemList, maxRetries: b2BB2CFeaturesSettings.MaxErpIntegrationOrderPlaceRetries);
+            if (
+                erpOrderAdditionalData.IntegrationStatusType
+                != IntegrationStatusType.WaitingForPayment
+            )
+            {
+                erpOrderAdditionalData.IntegrationRetries ??= 0;
+                erpOrderAdditionalData.IntegrationRetries++;
+                await _erpOrderAdditionalDataService.UpdateErpOrderAdditionalDataAsync(erpOrderAdditionalData);
+
+                await PlaceERPOrderAtERPAsync(
+                    nopOrder,
+                    erpOrderAdditionalData,
+                    erpNopUser,
+                    erpPlaceOrderItemList,
+                    maxRetries: b2BB2CFeaturesSettings.MaxErpIntegrationOrderPlaceRetries
+                );
+            }
         }
         else
         {
-            await PlaceERPOrderAtERPAsync(nopOrder, erpOrderAdditionalData, erpNopUser, erpPlaceOrderItemList, maxRetries: b2BB2CFeaturesSettings.MaxErpIntegrationOrderPlaceRetries);
+            erpOrderAdditionalData.IntegrationRetries ??= 0;
+            erpOrderAdditionalData.IntegrationRetries++;
+            await _erpOrderAdditionalDataService.UpdateErpOrderAdditionalDataAsync(erpOrderAdditionalData);
+
+            await PlaceERPOrderAtERPAsync(
+                nopOrder,
+                erpOrderAdditionalData,
+                erpNopUser,
+                erpPlaceOrderItemList,
+                maxRetries: b2BB2CFeaturesSettings.MaxErpIntegrationOrderPlaceRetries
+            );
         }
 
         return (true, string.Empty);
@@ -915,25 +956,20 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
             try
             {
-                if (string.IsNullOrWhiteSpace(erpOrderAdditionalData.ErpOrderNumber))
-                {
-                    erpOrderAdditionalData.ErpOrderNumber = order.CustomOrderNumber;
-                    await _erpOrderAdditionalDataService.UpdateErpOrderAdditionalDataAsync(erpOrderAdditionalData);
-                }
-                await PlaceOrderOrQuoteOnERPAsync(erpPlaceOrderDataModel, erpOrderAdditionalData, order);
-
-                order.CustomOrderNumber = erpOrderAdditionalData.ErpOrderNumber;
-
-                await _erpLogsService.ErrorAsync($"1. Custom Order Number updated to -> {order.CustomOrderNumber}",
-                    ErpSyncLevel.Order,
-                    null,
-                    currentCustomer
+                await PlaceOrderOrQuoteOnERPAsync(
+                    erpPlaceOrderDataModel,
+                    erpOrderAdditionalData,
+                    order
                 );
             }
             catch (Exception ex)
             {
-                await _erpLogsService.ErrorAsync(ex.Message, ErpSyncLevel.Order, ex, currentCustomer);
-                erpOrderAdditionalData.IntegrationRetries++;
+                await _erpLogsService.ErrorAsync(
+                    ex.Message,
+                    ErpSyncLevel.Order,
+                    ex,
+                    currentCustomer
+                );
             }
 
             #region Email Notification
@@ -947,9 +983,17 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
                 if (!string.IsNullOrEmpty(erpShipToAddress?.RepEmail))
                 {
                     //sent email notification
-                    var queuedEmailId = await _erpWorkflowMessageService.SendERPOrderPlaceFailedSalesRepNotificationAsync(order, order.CustomerLanguageId, erpShipToAddress);
-                    if (queuedEmailId > 0)
-                        await AddOrderNoteAsync(order, $"\"erp {orderTypeString} place failed\" email (to sales rep) has been queued. queued email identifier: {queuedEmailId}.");
+                    var queuedEmailIds =
+                        await _erpWorkflowMessageService.SendERPOrderPlaceFailedSalesRepNotificationAsync(
+                            order,
+                            order.CustomerLanguageId,
+                            erpShipToAddress
+                        );
+                    if (queuedEmailIds.Any())
+                        await AddOrderNoteAsync(
+                            order,
+                            $"\"Erp {orderTypeString} place failed\" email (to sales rep) has been queued. queued email identifier: {string.Join(", ", queuedEmailIds)}."
+                        );
                 }
             }
 

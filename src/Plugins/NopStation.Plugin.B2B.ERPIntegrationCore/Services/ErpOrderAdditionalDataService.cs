@@ -130,8 +130,8 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
     }
 
     public async Task<IPagedList<ErpOrderAdditionalData>> GetAllErpOrderAdditionalDataAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false,
-        int accountId = 0, int nopCustomerId = 0, string email = null, string erpOrderNumber = null, string nopOrderNumber = null, int erpOrderOriginTypeId = 0,
-        int erpOrderTypeId = 0, int integrationStatusTypeId = 0, DateTime? searchOrderDateFrom = null, DateTime? searchOrderDateTo = null)
+            int accountId = 0, int nopCustomerId = 0, string email = null, string erpOrderNumber = null, string nopOrderNumber = null, int erpOrderOriginTypeId = 0,
+            int erpOrderTypeId = 0, int integrationStatusTypeId = 0, DateTime? searchOrderDateFrom = null, DateTime? searchOrderDateTo = null)
     {
         var erpOrderAdditionalData = await _erpOrderAdditionalDataRepository.GetAllPagedAsync(query =>
         {
@@ -149,7 +149,7 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
             }
             if (!string.IsNullOrEmpty(nopOrderNumber))
             {
-                query = query.Where(x => x.CustomerReference.Contains(nopOrderNumber.ToLower()));
+                query = query.Where(x => x.CustomerReference.Contains(nopOrderNumber.ToLower()) || x.NopOrderId.ToString().Contains(nopOrderNumber.ToLower()));
             }
             if (searchOrderDateFrom != null && searchOrderDateFrom.HasValue)
             {
@@ -178,6 +178,7 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
 
         return erpOrderAdditionalData;
     }
+
 
     public async Task<ErpOrderAdditionalData> GetErpOrderAdditionalDataByNopOrderIdAsync(int nopOrderId)
     {

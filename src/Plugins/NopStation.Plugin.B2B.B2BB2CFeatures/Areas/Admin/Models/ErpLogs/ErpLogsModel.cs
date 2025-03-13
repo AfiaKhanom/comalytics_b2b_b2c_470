@@ -16,7 +16,7 @@ public record ErpLogsModel : BaseNopEntityModel
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.ErpSyncLevel")]
     public string ErpSyncLevel { get; set; }
 
-    public int ErpSyncLavelId { get; set; }
+    public int ErpSyncLevelId { get; set; }
 
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpLogs.Field.CreatedOnUtc")]
     public DateTime CreatedOnUtc { get; set; }

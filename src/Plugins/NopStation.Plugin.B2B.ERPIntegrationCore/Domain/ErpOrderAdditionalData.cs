@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using DocumentFormat.OpenXml.Drawing.Charts;
 using Nop.Core;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 
@@ -73,8 +72,6 @@ public partial class ErpOrderAdditionalData : BaseEntity
     public int ChangedById { get; set; }
 
     #region Navigation Property
-
-    public  Order Order { get; set; }
 
     public virtual ErpAccount ErpAccount { get; set; }
 

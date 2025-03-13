@@ -7,8 +7,4 @@ public partial class ErpSalesRepErpAccountMap : BaseEntity
     public int ErpSalesRepId { get; set; }
 
     public int ErpAccountId { get; set; }
-
-    public virtual ErpSalesRep ErpSalesRep { get; set; }
-
-    public virtual ErpAccount ErpAccount { get; set; }
 }

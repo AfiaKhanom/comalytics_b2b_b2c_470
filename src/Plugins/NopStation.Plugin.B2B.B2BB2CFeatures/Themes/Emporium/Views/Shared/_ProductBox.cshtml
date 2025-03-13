@@ -41,11 +41,11 @@
                             @if (viewComponentSelector.SelectComponent("LazyLoadImage") != null)
                             {
                                 @await Component.InvokeAsync("LazyLoadImage", new (string Key, string Value)[]
-                                         {
-                    ("src", picture.ImageUrl),
-                    ("alt", picture.AlternateText),
-                    ("title", picture.Title)
-                                         })
+                                {
+                                    ("src", picture.ImageUrl),
+                                    ("alt", picture.AlternateText),
+                                    ("title", picture.Title)
+                                })
                             }
                             else
                             {
@@ -72,11 +72,11 @@
                 @if (viewComponentSelector.SelectComponent("LazyLoadImage") != null)
                 {
                     @await Component.InvokeAsync("LazyLoadImage", new (string Key, string Value)[]
-                             {
-            ("src", picture.ImageUrl),
-            ("alt", picture.AlternateText),
-            ("title", picture.Title)
-                             })
+                    {
+                        ("src", picture.ImageUrl),
+                        ("alt", picture.AlternateText),
+                        ("title", picture.Title)
+                    })
                 }
                 else
                 {

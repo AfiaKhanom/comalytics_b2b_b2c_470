@@ -6,7 +6,7 @@ using NopStation.Plugin.B2B.ErpDataScheduler.Domain;
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Data.Migration;
 
-[NopMigration("2024/11/16 09:27:23:6999999", "ErpDataScheduler synctask add isRunning schema", MigrationProcessType.Update)]
+[NopMigration("2024/11/16 09:27:23:6999999", "ErpDataScheduler synctask add isRunning schema", MigrationProcessType.NoMatter)]
 public class SyncTaskTableAddIsRunningColumnSchemaMigration : AutoReversingMigration
 {
     public static string TableName<T>() where T : BaseEntity

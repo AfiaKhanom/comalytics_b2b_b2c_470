@@ -184,7 +184,7 @@ public class ErpOrderController : NopStationAdminController
 
         (isPlaced, errorMsg) = await _overriddenOrderProcessingService.RetryPlaceErpOrderAtErpAsync(erpOrder, _b2BB2CFeaturesSettings);
 
-        if (!isPlaced)
+        if (!isPlaced || !string.IsNullOrWhiteSpace(errorMsg))
         {
             _notificationService.ErrorNotification(errorMsg);
 

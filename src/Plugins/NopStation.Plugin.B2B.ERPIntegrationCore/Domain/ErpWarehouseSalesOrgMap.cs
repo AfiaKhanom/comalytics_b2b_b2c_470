@@ -9,6 +9,4 @@ public partial class ErpWarehouseSalesOrgMap : BaseEntity
     public int ErpWarehouseId { get; set; }
 
     public int ErpSalesOrgId { get; set; }
-
-    public ErpWarehouseAdditionalData ErpWarehouseAdditionalData { get; set; }
 }

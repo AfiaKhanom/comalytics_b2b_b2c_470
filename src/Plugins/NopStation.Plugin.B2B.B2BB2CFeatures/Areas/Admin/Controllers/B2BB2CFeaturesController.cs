@@ -273,10 +273,6 @@ public class B2BB2CFeaturesController : NopStationAdminController
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.FtpUserName, model.FtpUserName_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.FtpPassword, model.FtpPassword_OverrideForStore, storeScope, false);
 
-            //Google Maps Setting
-            await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.GoogleMapsApiKey, model.GoogleMapsApiKey_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.Latitude, model.Latitude_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.Longitude, model.Longitude_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.EnableAccountStatementDownload, model.EnableAccountStatementDownload_OverrideForStore, storeScope, false);
 
             //Checkout Settings

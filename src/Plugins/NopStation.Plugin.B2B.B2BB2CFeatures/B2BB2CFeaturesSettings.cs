@@ -142,11 +142,5 @@ public partial class B2BB2CFeaturesSettings : ISettings
 
     public bool IsErpAccountCustomerRegisterAllowed { get; set; }
 
-    public string GoogleMapsApiKey { get; set; }
-
-    public double Latitude { get; set; }
-
-    public double Longitude { get; set; }
-
     public bool EnableAccountStatementDownload { get; internal set; }
 }

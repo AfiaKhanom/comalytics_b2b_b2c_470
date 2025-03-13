@@ -185,11 +185,11 @@
                                             @if (viewComponentSelector.SelectComponent("LazyLoadImage") != null)
                                             {
                                                 @await Component.InvokeAsync("LazyLoadImage", new (string Key, string Value)[]
-                                                         {
-                                ("src", item.Picture.ImageUrl),
-                                ("alt", item.Picture.AlternateText),
-                                ("title", item.Picture.Title)
-                                                         })
+                                                {
+                                                    ("src", item.Picture.ImageUrl),
+                                                    ("alt", item.Picture.AlternateText),
+                                                    ("title", item.Picture.Title)
+                                                })
                                             }
                                             else
                                             {
@@ -282,18 +282,12 @@
                                                     $('#quantity-up-@(item.Id)').on('click',
                                                         function (e) {
                                                             var input = $(document).find('#itemquantity@(item.Id)');
-                                                            @* var oldValue = parseInt(input.val());
-                                                            var newVal = oldValue + 1;
-                                                            input.val(newVal.toString()); *@
                                                             input.trigger("change");
                                                         });
 
                                                     $('#quantity-down-@(item.Id)').on('click',
                                                         function (e) {
                                                             var input = $(document).find('#itemquantity@(item.Id)');
-                                                            @* var oldValue = parseInt(input.val());
-                                                            var newVal = oldValue - 1;
-                                                            input.val(newVal.toString()); *@
                                                             input.trigger("change");
                                                         });
                                                 });

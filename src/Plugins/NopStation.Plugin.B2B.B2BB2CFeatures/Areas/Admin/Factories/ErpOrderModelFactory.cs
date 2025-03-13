@@ -209,6 +209,7 @@ public class ErpOrderModelFactory : IErpOrderModelFactory
             model.IntegrationStatusTypeId = erpOrderAdditional.IntegrationStatusTypeId;
             model.IntegrationStatusType = await _localizationService.GetLocalizedEnumAsync(erpOrderAdditional.IntegrationStatusType);
             model.IntegrationError = erpOrderAdditional.IntegrationError;
+            model.IntegrationRetries = erpOrderAdditional.IntegrationRetries ?? 0;
             model.IntegrationErrorDateTime = !erpOrderAdditional.IntegrationErrorDateTimeUtc.HasValue ? model.IntegrationErrorDateTime
                 : await _dateTimeHelper.ConvertToUserTimeAsync(erpOrderAdditional.IntegrationErrorDateTimeUtc.Value, DateTimeKind.Utc);
             model.LastERPUpdate = !erpOrderAdditional.LastERPUpdateUtc.HasValue ? model.LastERPUpdate

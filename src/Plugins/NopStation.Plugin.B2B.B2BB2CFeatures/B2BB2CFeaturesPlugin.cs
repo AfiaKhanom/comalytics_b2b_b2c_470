@@ -50,6 +50,8 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
 
     public int Order => throw new NotImplementedException();
 
+    private static string DEFAULT_ERP_SALES_ORG_CODE => "101";
+
     #endregion
 
     #region Ctor
@@ -83,7 +85,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
 
     private Language GetDefaultEnglishLanguage()
     {
-        return _languageService.GetAllLanguages().Where(x => x.UniqueSeoCode.Equals("en", StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+        return _languageService.GetAllLanguages().FirstOrDefault(x => x.UniqueSeoCode.Equals("en", StringComparison.InvariantCultureIgnoreCase));
     }
 
     public async Task InstalLocalResourseStringFromXmlFileAsync()
@@ -205,6 +207,8 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
             });
         }
 
+        #region Message Templates
+
         var emailAccount = (await _emailAccountService.GetAllEmailAccountsAsync()).FirstOrDefault();
 
         if (emailAccount is not null)
@@ -246,6 +250,8 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
             });
         }
 
+        #endregion
+
         await this.InstallPluginAsync();
 
         #region Default Sales Org and addres creation
@@ -263,19 +269,23 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
         };
         await _addressService.InsertAddressAsync(address);
 
+        var defaultSalesOrg = await _erpSalesOrgService.GetSalesOrgByCodeAsync(DEFAULT_ERP_SALES_ORG_CODE);
 
-        var defaultSalesOrg = new ErpSalesOrg
+        if (defaultSalesOrg is null)
         {
-            Name = "Default Sales Org",
-            Code = "101",
-            Email = "default@mail.com",
-            IntegrationClientId = "1",
-            AuthenticationKey = "authkey1212",
-            IsActive = true,
-            AddressId = address.Id,
-            CreatedOnUtc = DateTime.UtcNow,
-        };
-        await _erpSalesOrgService.InsertErpSalesOrgAsync(defaultSalesOrg);
+            defaultSalesOrg = new ErpSalesOrg
+            {
+                Name = "Default Sales Org",
+                Code = "101",
+                Email = "default@mail.com",
+                IntegrationClientId = "1",
+                AuthenticationKey = "authkey1212",
+                IsActive = true,
+                AddressId = address.Id,
+                CreatedOnUtc = DateTime.UtcNow,
+            };
+            await _erpSalesOrgService.InsertErpSalesOrgAsync(defaultSalesOrg);
+        }
 
         #endregion
 
@@ -502,9 +512,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
                 break;
             }
 
-        List<KeyValuePair<string, string>> list = result.Select(item => new KeyValuePair<string, string>(item.name, item.value)).ToList();
-
-        return list;
+        return result.Select(item => new KeyValuePair<string, string>(item.name, item.value)).ToList();
     }
 
     #endregion
