@@ -907,7 +907,7 @@
       $(".grouped-btn > span").text($('.product-variant-line').length);
 
       //Click on the button scrolls to the first variant
-            $(".grouped-btn").on('click', function(event) {
+      $(".grouped-btn").on('click', function (event) {
 
         event.preventDefault();
 
@@ -994,7 +994,7 @@
 
     function updateCartMobiile() {
 
-            $(document).on('removeItemFlyoutCart', function() {
+      $(document).on('removeItemFlyoutCart', function () {
 
         var windowWidth = $(window).width();
 
@@ -1134,7 +1134,7 @@
     function getHomePageCarouselResponsiveSettings() {
       var responsiveBreakpointsObj = {};
 
-            if ($('#home-page-carousel-breakpoints').length == 0|| !$('#home-page-carousel-breakpoints').val()) {
+      if ($('#home-page-carousel-breakpoints').length == 0 || !$('#home-page-carousel-breakpoints').val()) {
         return responsiveBreakpointsObj;
       }
 
