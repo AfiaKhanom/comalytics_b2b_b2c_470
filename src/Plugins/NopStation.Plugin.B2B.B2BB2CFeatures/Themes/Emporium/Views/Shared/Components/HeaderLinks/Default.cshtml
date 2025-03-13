@@ -205,45 +205,58 @@
 
             </li>
         }
-        @if (await customerService.IsInCustomerRoleAsync(customer, ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName) == false)
+        @if (!await customerService.IsInCustomerRoleAsync(customer, ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName))
         {
-            @if (compareProductsEnabled)
+            @if (Model.AllowPrivateMessages)
             {
-                <li><a href="@Url.RouteUrl("CompareProducts")" class="ico-compare">@T("Products.Compare.List")</a></li>
+                <li>
+                    <a href="@Url.RouteUrl("PrivateMessages", new { tab = "" })" class="ico-inbox">
+                        <span class="inbox-label">@T("PrivateMessages.Inbox")</span>
+                        <span class="inbox-unread">@Model.UnreadPrivateMessages</span>
+                    </a>
+                </li>
             }
-
-            @if (Model.IsAuthenticated && Model.WishlistEnabled)
+            @if (Model.WishlistEnabled)
             {
                 <li>
                     <a href="@Url.RouteUrl("Wishlist")" class="ico-wishlist">
                         <span class="wishlist-label">@T("Wishlist")</span>
-                        <span class="wishlist-qty">@T("Wishlist.HeaderQuantity", Model.WishlistItems)</span>
+                        <span class="qty wishlist-qty">@T("Wishlist.HeaderQuantity", Model.WishlistItems)</span>
+                    </a>
+                </li>
+            }
+            @if (Model.ShoppingCartEnabled)
+            {
+                <li id="topcartlink">
+                    <a href="@Url.RouteUrl("ShoppingCart")" class="ico-cart">
+                        <span class="cart-label">@T("ShoppingCart")</span>
+                        <span class="qty cart-qty">@T("ShoppingCart.HeaderQuantity", Model.ShoppingCartItems)</span>
                     </a>
                 </li>
             }
 
             @if (Model.IsAuthenticated && b2BB2CFeaturesSettings.DisplayAddToQuickListFavouriteButton && erpCustomer.ErpAccount != null)
             {
+
                 <li id="">
                     <a href="@Url.RouteUrl("QuickOrder")" class="ico-cart">@T("Plugin.Misc.NopStation.B2BB2CFeatures.QuickOrder.QuickOrder")</a>
                 </li>
             }
+
+            @if (Model.ShoppingCartEnabled)
+            {
+                <div class="mobile-flyout-wrapper">
+                    <div class="close-side-menu">
+                        <span class="close-side-menu-text">@T("SevenSpikes.Themes.Emporium.Common.ShoppingCart")</span>
+                        <span class="close-side-menu-btn">@T("SevenSpikes.Themes.Emporium.Common.Close")</span>
+                    </div>
+                    @await Component.InvokeAsync("FlyoutShoppingCart")
+                </div>
+            }
         }
         @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.HeaderLinksAfter, additionalData = Model })
     </ul>
-    @if (await customerService.IsInCustomerRoleAsync(customer, ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName) == false)
-    {
-        @if (Model.ShoppingCartEnabled)
-        {
-            <div class="mobile-flyout-wrapper">
-                <div class="close-side-menu">
-                    <span class="close-side-menu-text">@T("SevenSpikes.Themes.Emporium.Common.ShoppingCart")</span>
-                    <span class="close-side-menu-btn">@T("SevenSpikes.Themes.Emporium.Common.Close")</span>
-                </div>
-                @await Component.InvokeAsync("FlyoutShoppingCart")
-            </div>
-        }
-    }
+
     @if (Model.AllowPrivateMessages && !string.IsNullOrEmpty(Model.AlertMessage))
     {
         //new private message notification
