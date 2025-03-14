@@ -495,7 +495,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
             var oldNopOrder = await _orderService.GetOrderByCustomOrderNumberAsync(erpOrder.CustomOrderNumber);
 
             var oldErpOrder = await _erpOrderAdditionalDataService
-                .GetErpOrderAdditionalDataByErpAccountIdAndErpOrderNumberAsync(accountId: erpAccount.Id, erpOrderNumber: erpOrder.CustomOrderNumber);
+                .GetErpOrderAdditionalDataByErpAccountIdAndErpOrderNumberAsync(accountId: erpAccount.Id, erpOrderNumber: erpOrder.ErpOrderNumber);
 
             if (oldErpOrder != null && oldNopOrder == null)
             {
@@ -689,7 +689,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
                 oldErpOrder = new ErpOrderAdditionalData();
                 oldErpOrder.NopOrderId = oldNopOrder.Id;
-                oldErpOrder.ErpOrderNumber = erpOrder.CustomOrderNumber;
+                oldErpOrder.ErpOrderNumber = erpOrder.ErpOrderNumber;
                 oldErpOrder.ErpOrderOriginType = ErpOrderOriginType.ERPOrder;
                 oldErpOrder.ErpOrderType = (ErpOrderType)Enum.Parse(typeof(ErpOrderType), erpOrder.OrderType);
                 oldErpOrder.OrderPlacedByNopCustomerId = oldNopOrder.CustomerId;
@@ -721,7 +721,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
             else
             {
                 oldErpOrder.NopOrderId = oldNopOrder.Id;
-                oldErpOrder.ErpOrderNumber = erpOrder.CustomOrderNumber;
+                oldErpOrder.ErpOrderNumber = erpOrder.ErpOrderNumber;
                 oldErpOrder.ErpOrderType = (ErpOrderType)Enum.Parse(typeof(ErpOrderType), erpOrder.OrderType);
                 oldErpOrder.ChangedOnUtc = DateTime.UtcNow;
                 oldErpOrder.LastERPUpdateUtc = DateTime.UtcNow;
