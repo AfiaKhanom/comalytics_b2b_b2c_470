@@ -40,11 +40,13 @@ input[type="checkbox"]:checked + label:before,
 .theme-roller .open-button {
   background-color: #545f66;
 }
-.selected-options-list > li span:hover,
-.theme-roller .open-button:hover,
-.avatar-page .upload-image.valid + label:hover {
-  background-color: #31383c;
-}
+
+  .selected-options-list > li span:hover,
+  .theme-roller .open-button:hover,
+  .avatar-page .upload-image.valid + label:hover {
+    background-color: #31383c;
+  }
+
 .link-rss:hover:before,
 .field-validation-valid,
 .username-available-status,
@@ -201,30 +203,32 @@ input[type="checkbox"]:checked + label:before,
 .scroll-back-button:before {
   color: #545f66;
 }
-.product-name .manufacturers .value:hover,
-.product-tags-list a:hover:hover,
-.overview .additional-details div .value a:hover,
-.variant-overview .additional-details div .value a:hover,
-.terms-of-service .read:hover,
-.download-sample a:hover,
-.sitemap-page a:hover,
-.blog-page .tags a:hover,
-.blogpost-page .tags a:hover,
-.product-tags-list a:hover,
-.cart .edit-item a:hover,
-.news-list-homepage .view-all a:hover,
-.news-list-homepage .view-all a:hover:after,
-.manufacturers .value:hover,
-.block .view-all a:hover,
-.data-table a:hover,
-.forums-table-section a:hover,
-.category-navigation-list .dropdown .box .title a:hover,
-.rich-blog-homepage .view-all a:hover,
-.rich-blog-homepage .view-all a:hover:after,
-.post-relations li a:hover,
-.spc-categories .category-title a:hover {
-  color: #31383c;
-}
+
+  .product-name .manufacturers .value:hover,
+  .product-tags-list a:hover:hover,
+  .overview .additional-details div .value a:hover,
+  .variant-overview .additional-details div .value a:hover,
+  .terms-of-service .read:hover,
+  .download-sample a:hover,
+  .sitemap-page a:hover,
+  .blog-page .tags a:hover,
+  .blogpost-page .tags a:hover,
+  .product-tags-list a:hover,
+  .cart .edit-item a:hover,
+  .news-list-homepage .view-all a:hover,
+  .news-list-homepage .view-all a:hover:after,
+  .manufacturers .value:hover,
+  .block .view-all a:hover,
+  .data-table a:hover,
+  .forums-table-section a:hover,
+  .category-navigation-list .dropdown .box .title a:hover,
+  .rich-blog-homepage .view-all a:hover,
+  .rich-blog-homepage .view-all a:hover:after,
+  .post-relations li a:hover,
+  .spc-categories .category-title a:hover {
+    color: #31383c;
+  }
+
 .ajax-loading-block-window:before,
 .ajax-loading-block-window:after,
 .two-row-carousels .slick-arrow:hover,
@@ -259,10 +263,12 @@ input[type="checkbox"]:checked + label:before,
 .scroll-back-button {
   border-color: #545f66;
 }
+
 .pager li a:hover,
 .pager li span {
   border-color: #545f66 !important;
 }
+
 .button-1,
 .eu-cookie-bar-notification button,
 .login-form-in-header .login-button,
@@ -287,46 +293,50 @@ input[type="checkbox"]:checked + label:before,
 .sale-of-the-day-offer .owl-dot.active {
   background-color: #002169;
 }
-.button-1:hover,
-.eu-cookie-bar-notification button:hover,
-.mini-shopping-cart input[type="button"]:hover,
-.login-form-in-header .login-button:hover,
-.search-box .search-box-button:hover,
-.newsletter-email .newsletter-subscribe-button:hover,
-.poll .buttons input:hover,
-.contact-vendor-button:hover,
-.product-reviews-page .title .write-review-title:hover,
-.write-review .button-1:hover,
-.qq-uploader .qq-upload-button:hover,
-.blog-posts .read-more:hover,
-.news-items .read-more:hover,
-.open-comment-form:hover,
-.forums-table-section .view-all a:hover,
-.topic-post .post-actions .quote-post-button:hover,
-.ropc .complete-button button:hover {
-  background-color: #001440;
-}
+
+  .button-1:hover,
+  .eu-cookie-bar-notification button:hover,
+  .mini-shopping-cart input[type="button"]:hover,
+  .login-form-in-header .login-button:hover,
+  .search-box .search-box-button:hover,
+  .newsletter-email .newsletter-subscribe-button:hover,
+  .poll .buttons input:hover,
+  .contact-vendor-button:hover,
+  .product-reviews-page .title .write-review-title:hover,
+  .write-review .button-1:hover,
+  .qq-uploader .qq-upload-button:hover,
+  .blog-posts .read-more:hover,
+  .news-items .read-more:hover,
+  .open-comment-form:hover,
+  .forums-table-section .view-all a:hover,
+  .topic-post .post-actions .quote-post-button:hover,
+  .ropc .complete-button button:hover {
+    background-color: #001440;
+  }
+
 @media all and (min-width: 1025px) {
   .search-box .search-box-button,
   .center-2 .product-list .item-box .buttons .button-2 {
     background-color: #002169;
   }
-  .center-2 .product-list .item-box .buttons .button-2:hover {
-    background-color: #001440;
-  }
+
+    .center-2 .product-list .item-box .buttons .button-2:hover {
+      background-color: #001440;
+    }
 }
-.pac-container{
-pointer-events: auto !important;
+
+.pac-container {
+  pointer-events: auto !important;
 }
 
 /*** Macsteel Executives - This is styling for Demo page  ***/
 
 .macsteel-topics-wrapper {
-    position: relative;
-    padding-top: 360px;
+  position: relative;
+  padding-top: 360px;
 }
 
-.macsteel-topics-wrapper .banner {
+  .macsteel-topics-wrapper .banner {
     position: absolute;
     background: url("../img/hero-banner-macsteel-executives.jpg") no-repeat;
     background-size: cover;
@@ -335,51 +345,51 @@ pointer-events: auto !important;
     top: -48px;
     left: 50%;
     transform: translate(-50%, 0px);
-}
+  }
 
-.macsteel-topics-wrapper .banner .caption {
-    position: absolute;
-    padding: 15px 2.5%;
-    width: 100%;
-    top: 50%;
-    transform: translate(0, -50%);
-}
+    .macsteel-topics-wrapper .banner .caption {
+      position: absolute;
+      padding: 15px 2.5%;
+      width: 100%;
+      top: 50%;
+      transform: translate(0, -50%);
+    }
 
-.macsteel-topics-wrapper .banner .caption h1 {
-    color: #fff;
-    font-family: "Source Sans Pro", Sans-serif;
-    font-size: 45px;
-    font-weight: 400;
-    line-height: 56px;
-    margin: 1rem 0;
-}
+      .macsteel-topics-wrapper .banner .caption h1 {
+        color: #fff;
+        font-family: "Source Sans Pro", Sans-serif;
+        font-size: 45px;
+        font-weight: 400;
+        line-height: 56px;
+        margin: 1rem 0;
+      }
 
 .executives .intro {
-margin-bottom: 70px;
+  margin-bottom: 70px;
 }
 
-.executives .intro .title h2 {
+  .executives .intro .title h2 {
     color: #002169;
     font-family: "Source Sans Pro", Sans-serif;
     font-size: 40px;
     text-transform: uppercase;
     line-height: 1.1;
     margin-bottom: 0.3em;
-}
+  }
 
-.executives .intro .title h2 .cursive {
-    font-family: 'Sugeng-Rawuh', 'Source Sans Pro', sans-serif;
-    clear: both;
-    display: block;
-    font-size: 110px;
-    font-weight: normal;
-    text-transform: none;
-    padding: 0;
-    margin: 0;
-    line-height: 1;
-}
+    .executives .intro .title h2 .cursive {
+      font-family: 'Sugeng-Rawuh', 'Source Sans Pro', sans-serif;
+      clear: both;
+      display: block;
+      font-size: 110px;
+      font-weight: normal;
+      text-transform: none;
+      padding: 0;
+      margin: 0;
+      line-height: 1;
+    }
 
-.executives .intro  p {
+  .executives .intro p {
     font-family: "Source Sans Pro";
     font-size: 16px;
     font-style: normal;
@@ -387,31 +397,31 @@ margin-bottom: 70px;
     line-height: 25px;
     margin-bottom: 1.75em;
     color: #002169;
-}
+  }
 
 .l-row,
 .s-row {
-display: flex;
+  display: flex;
 }
 
-.l-row .card:first-child,
-.s-row .card:first-child {
-margin-left: 0;
-}
+  .l-row .card:first-child,
+  .s-row .card:first-child {
+    margin-left: 0;
+  }
 
-.l-row .card:last-child,
-.s-row .card:last-child  {
-margin-right: 0;
-}
+  .l-row .card:last-child,
+  .s-row .card:last-child {
+    margin-right: 0;
+  }
 
 .card {
-    width: 100%;
-    margin: 30px;
-    text-align: center;
-    position: relative;
+  width: 100%;
+  margin: 30px;
+  text-align: center;
+  position: relative;
 }
 
-.card .background {
+  .card .background {
     position: absolute;
     width: 100%;
     height: 60%;
@@ -419,94 +429,96 @@ margin-right: 0;
     background: #002169;
     z-index: -1;
     box-shadow: 5px 5px 20px 0px rgba(0, 0, 0, 0.5);
-}
+  }
 
-.card .picture {
-width: 100%;
-margin-bottom: 45px;
-}
+  .card .picture {
+    width: 100%;
+    margin-bottom: 45px;
+  }
 
-.card .picture img {
-width: 75%;
-}
+    .card .picture img {
+      width: 75%;
+    }
 
 .content h3 {
-    font-family: "Source Sans Pro", Sans-serif;
-    font-size: 30px;
-    font-weight: bold;
-    text-transform: none;
-    line-height: 38px;
-    letter-spacing: 0px;
-    text-decoration: none;
-    color: #fff;
+  font-family: "Source Sans Pro", Sans-serif;
+  font-size: 30px;
+  font-weight: bold;
+  text-transform: none;
+  line-height: 38px;
+  letter-spacing: 0px;
+  text-decoration: none;
+  color: #fff;
 }
 
 .content p {
-    font-family: "Source Sans Pro";
-    font-size: 15px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 25px;
-   margin-bottom: 3.75em;
-    color: #fff;
+  font-family: "Source Sans Pro";
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 25px;
+  margin-bottom: 3.75em;
+  color: #fff;
 }
 
 @media screen and (max-width: 1024px) {
-.l-row, .s-row {
+  .l-row, .s-row {
     flex-wrap: wrap;
-}
-.card {
-width: 100%;
-margin: 30px 0 !important;
-}
+  }
+
+  .card {
+    width: 100%;
+    margin: 30px 0 !important;
+  }
 }
 
 @media screen and (max-width: 768px) {
-.macsteel-topics-wrapper .banner {
+  .macsteel-topics-wrapper .banner {
     min-height: 220px;
-}
-.macsteel-topics-wrapper {
-    padding-top: 220px;
-}
+  }
 
-.macsteel-topics-wrapper .banner .caption h1 {
-    font-size: 32px;
-}
+  .macsteel-topics-wrapper {
+    padding-top: 220px;
+  }
+
+    .macsteel-topics-wrapper .banner .caption h1 {
+      font-size: 32px;
+    }
 }
 
 .angle-cropping-punching-page .intro .image {
-    min-width: 65% !important;
-    position: relative;
+  min-width: 65% !important;
+  position: relative;
 }
 
-.angle-cropping-punching-page .intro .image img {
-   position: absolute;
+  .angle-cropping-punching-page .intro .image img {
+    position: absolute;
     object-fit: cover;
     width: 100%;
     height: 100%;
-}
+  }
 
 form[action="/checkout/paymentinfo"] input[type="checkbox"],
 form[action="/checkout/paymentinfo"] input[type="radio"] {
-    position: revert !important;
+  position: revert !important;
 }
 
 .page.store-closed-page {
-min-height: 400px !important;
+  min-height: 400px !important;
 }
 
 /*** Whatsapp ***/
 
 .whatsapp-container.floating {
-    display: block;
-    overflow: hidden;
-    position: fixed;
-    bottom: 40px;
-    right: 20px;
-    z-index: 9999;
+  display: block;
+  overflow: hidden;
+  position: fixed;
+  bottom: 40px;
+  right: 20px;
+  z-index: 9999;
 }
 
-.whatsapp-container.floating a {
+  .whatsapp-container.floating a {
     font-size: 0;
     display: block;
     padding: 0;
@@ -514,38 +526,39 @@ min-height: 400px !important;
     width: 50px;
     background: #25d366 url("../img/whatsapp_floating.png") no-repeat;
     background-position: center;
-border-radius: 50px;
-background-size: 24px;
-}
+    border-radius: 50px;
+    background-size: 24px;
+  }
 
 /** CR6862**/
 
 .checkout-page.payment-info-page .info label {
-    clear: both;
-    display: block;
-    margin-bottom: 10px;
+  clear: both;
+  display: block;
+  margin-bottom: 10px;
 }
 
 input[value="Pay later"] {
-    display: none;
+  display: none;
 }
 
 .button-2.print-order-button {
-    padding: 10px 15px !important;
-    font-size: 14px !important;
-    background-color: #0270d3 !important;
-    margin-bottom: 10px !important;
-    color: #fff !important;
-    border: 2px solid #0270d3 !important;
-    width: 200px !important;
-    border-radius: 5px !important;
-    box-shadow: none !important;
+  padding: 10px 15px !important;
+  font-size: 14px !important;
+  background-color: #0270d3 !important;
+  margin-bottom: 10px !important;
+  color: #fff !important;
+  border: 2px solid #0270d3 !important;
+  width: 200px !important;
+  border-radius: 5px !important;
+  box-shadow: none !important;
 }
 
 .nivo-caption {
-display: none !important;
-opacity: 0;
+  display: none !important;
+  opacity: 0;
 }
+
 body > div.master-wrapper-page > div.master-wrapper-content > div.master-column-wrapper > div.center-2 > div > div.page-body > div.product-grid.nop7SpikesAjaxFiltersGrid.ajaxBusyPanelParent {
-    margin-top: 30px !important;
+  margin-top: 30px !important;
 }

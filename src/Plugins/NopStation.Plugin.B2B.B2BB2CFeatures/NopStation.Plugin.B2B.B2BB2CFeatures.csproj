@@ -142,7 +142,6 @@
     <None Remove="Themes\DefaultClean\Views\_OldInternetExplorerWarning.cshtml" />
     <None Remove="Themes\DefaultClean\Views\_ViewImports.cshtml" />
     <None Remove="Themes\Emporium\Content\css\styles.css" />
-    <None Remove="Themes\Emporium\Content\css\theme.custom.css" />
     <None Remove="Themes\Emporium\Views\Catalog\CategoryTemplate.ProductsInGridOrLines.cshtml" />
     <None Remove="Themes\Emporium\Views\Customer\Addresses.cshtml" />
     <None Remove="Themes\Emporium\Views\Order\Details.cshtml" />
@@ -705,7 +704,7 @@
     <Content Include="Themes\Emporium\Content\css\styles.css">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Themes\Emporium\Content\css\theme.custom.css">
+    <Content Include="Themes\Emporium\Content\css\theme-custom.css">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
