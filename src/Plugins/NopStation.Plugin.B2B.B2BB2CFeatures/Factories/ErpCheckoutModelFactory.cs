@@ -290,7 +290,14 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
         bool loadAvailableSuburbs = false, bool loadCountriesAndStates = false)
     {
         var erpAccount = await _erpAccountService.GetErpAccountByErpShipToAddressAsync(b2CShipToAddress);
-        var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+
+        if (erpAccount == null)
+        {
+            return;
+        }
+
+        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+
         b2BShipToAddressModel = b2BShipToAddressModel ?? new ErpShipToAddressModelForCheckout();
         b2BShipToAddressModel.Id = b2CShipToAddress.Id;
         b2BShipToAddressModel.ShipToCode = b2CShipToAddress.ShipToCode;
@@ -301,9 +308,9 @@ public class ErpCheckoutModelFactory : IErpCheckoutModelFactory
         b2BShipToAddressModel.Email = b2CShipToAddress.EmailAddresses;
         b2BShipToAddressModel.IsActive = b2CShipToAddress.IsActive;
         b2BShipToAddressModel.ErpAccountId = erpAccount.Id;
-        b2BShipToAddressModel.ErpAccountNumber = erpAccount?.AccountNumber;
-        b2BShipToAddressModel.ErpSalesOrganizationId = erpAccount?.ErpSalesOrgId ?? 0;
-        b2BShipToAddressModel.SalesOrganisationCode = (await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount?.ErpSalesOrgId ?? 0))?.Code;
+        b2BShipToAddressModel.ErpAccountNumber = erpAccount.AccountNumber;
+        b2BShipToAddressModel.ErpSalesOrganizationId = erpAccount.ErpSalesOrgId;
+        b2BShipToAddressModel.SalesOrganisationCode = (await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount.ErpSalesOrgId))?.Code;
 
         if (b2CShipToAddress.AddressId > 0)
         {

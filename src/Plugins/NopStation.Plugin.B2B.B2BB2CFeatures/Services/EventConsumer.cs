@@ -105,7 +105,7 @@ public class EventConsumer :
             }
 
             if (erpOrder.IntegrationStatusType == IntegrationStatusType.Queued)
-                await _overriddenOrderProcessingService.RetryPlaceErpOrderAtErpAsync(erpOrder, _b2BB2CFeaturesSettings);
+                await _overriddenOrderProcessingService.RetryPlaceErpOrderAtErpAsync(erpOrder);
         }
 
     }

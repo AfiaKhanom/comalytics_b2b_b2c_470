@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Services;
@@ -32,7 +30,6 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
 {
     #region Fields
 
-    private readonly IWorkContext _workContext;
     private readonly IDateTimeHelper _dateTimeHelper;
     private readonly IAddressService _addressService;
     private readonly ICustomerService _customerService;
@@ -53,8 +50,7 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
 
     #region Ctor
 
-    public ErpNopUserModelFactory(IWorkContext workContext,
-        ILocalizationService localizationService,
+    public ErpNopUserModelFactory(ILocalizationService localizationService,
         IDateTimeHelper dateTimeHelper,
         IAddressService addressService,
         ICustomerService customerService,
@@ -70,7 +66,6 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
         IErpShipToAddressService erpShipToAddressService,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings)
     {
-        _workContext = workContext;
         _localizationService = localizationService;
         _dateTimeHelper = dateTimeHelper;
         _addressService = addressService;
@@ -196,8 +191,7 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
             foreach (var shipToAddress in shipToAddresses)
             {
                 var address = await _addressService.GetAddressByIdAsync(shipToAddress.AddressId);
-
-                //fill in model values from the entity        
+    
                 var addressModel = address.ToModel<AddressModel>();
 
                 addressModel.CountryName = (await _countryService.GetCountryByAddressAsync(address))?.Name;
@@ -240,10 +234,8 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
 
     public async Task<ErpNopUserSearchModel> PrepareErpNopUserSearchModelAsync(ErpNopUserSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
-        // Prepare AvailableErpUserTypes dropdown options
         var availableErpUserTypes = await ErpUserType.B2BUser.ToSelectListAsync(false);
         foreach (var types in availableErpUserTypes)
         {
@@ -258,7 +250,6 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
             Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Select")
         });
 
-        // Prepare ErpSalesOrgs dropdown options
         searchModel.AvailableErpSalesOrgs = (await _erpSalesOrgService.GetAllErpSalesOrgAsync(showHidden: false))
             .Select(erpSalesOrg => new SelectListItem
             {
@@ -272,7 +263,6 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
             Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Select")
         });
 
-        // Prepare ErpAccounts dropdown options
         var erpAccounts = await _erpAccountService.GetAllErpAccountsAsync();
         searchModel.AvailableErpAccounts = new List<SelectListItem>();
 
@@ -293,7 +283,6 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
             Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Select")
         });
 
-        // Prepare ErpAccounts dropdown options for a nop user
         if (searchModel.NopUserId > 0)
         {
             var mappedAccounts = await _erpNopUserAccountMapService.GetAllErpNopUserAccountMapsByUserIdAsync(searchModel.NopUserId);
@@ -321,7 +310,6 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
             Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Select")
         });
 
-        //Todo Available ship to addresses
         searchModel.AvailableErpShipToAddresses = await PrepareShipToAddressDropdownAsync(searchModel.AccountId);
 
         //prepare "active" filter (0 - all; 1 - active only; 2 - inactive only)
@@ -361,7 +349,6 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
         if (searchModel == null)
             throw new ArgumentNullException(nameof(searchModel));
 
-        //get ERP Sales Orgs
         var erpNopUsers = await _erpNopUserService.GetAllErpNopUsersAsync(pageIndex: searchModel.Page - 1,
             pageSize: searchModel.PageSize,
             showHidden: searchModel.ShowInActive == 0 ? null : (searchModel.ShowInActive == 2),
@@ -372,37 +359,39 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
             userType: searchModel.ErpUserTypeId,
             salesOrgId: searchModel.SalesOrgId);
 
-        //prepare list model
         var model = await new ErpNopUserListModel().PrepareToGridAsync(searchModel, erpNopUsers, () =>
         {
-            //fill in model values from the entity
             return erpNopUsers.SelectAwait(async erpNopUser =>
             {
                 var erpNopUserModel = new ErpNopUserModel();
 
-                //Additional Infos
                 if (erpNopUser != null)
                 {
-                    //get customer
                     var nopCustomer = await _customerService.GetCustomerByIdAsync(erpNopUser.NopCustomerId);
 
-                    //get Account
                     var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpNopUser.ErpAccountId);
 
-                    //get SalesOrg
-                    var erpSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount?.ErpSalesOrgId ?? 0);
+                    if (erpAccount == null)
+                        return null;
 
-                    //prepare ErpShipToAddress model
-                    var addressOfShipToAddress = await _addressService.GetAddressByIdAsync((await _erpShipToAddressService.GetErpShipToAddressByIdAsync(erpNopUser.ErpShipToAddressId))?.AddressId ?? 0);
+                    var erpSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount.ErpSalesOrgId);
+
+                    if (erpSalesOrg == null)
+                        return null;
+
+                    var erpShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(erpNopUser.ErpShipToAddressId);
+
+                    if (erpShipToAddress == null)
+                        return null;
+
+                    var addressOfShipToAddress = await _addressService.GetAddressByIdAsync(erpShipToAddress.AddressId);
+
                     var addressModelOfShipToAddress = new AddressModel();
-
                     if (addressOfShipToAddress != null)
                         addressModelOfShipToAddress = addressOfShipToAddress.ToModel(addressModelOfShipToAddress);
                     await _addressModelFactory.PrepareAddressModelAsync(addressModelOfShipToAddress, addressOfShipToAddress);
                     addressModelOfShipToAddress.AddressHtml = await PrepareModelAddressHtmlAsync(addressModelOfShipToAddress, addressOfShipToAddress, false);
 
-
-                    //prepare BillingErpShipToAddress model
                     var billingErpShipToAddress = await _addressService.GetAddressByIdAsync(erpNopUser.BillingErpShipToAddressId);
                     var billingErpShipToAddressModel = new AddressModel();
 
@@ -411,7 +400,6 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
                     await _addressModelFactory.PrepareAddressModelAsync(billingErpShipToAddressModel, billingErpShipToAddress);
 
 
-                    //prepare ShippingErpShipToAddress model
                     var shippingErpShipToAddress = await _addressService.GetAddressByIdAsync(erpNopUser.ShippingErpShipToAddressId);
                     var shippingErpShipToAddressModel = new AddressModel();
 
@@ -425,12 +413,11 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
                     {
                         Id = erpNopUser.Id,
                         NopCustomerId = erpNopUser.NopCustomerId,
-                        NopCustomer = nopCustomer.FirstName + " " + nopCustomer.LastName,
+                        NopCustomer = $"{nopCustomer.FirstName} {nopCustomer.LastName}",
                         NopCustomerEmail = nopCustomer.Email,
                         ErpAccountId = erpNopUser.ErpAccountId,
-                        ErpAccountInfo = erpAccount?.AccountName + "(" + erpAccount?.AccountNumber + ")",
-                        ErpSalesOrg = erpSalesOrg != null ? erpSalesOrg.Name : "",
-                        ErpSalesOrgId = erpSalesOrg != null ? erpSalesOrg.Id : 0,
+                        ErpAccountInfo = $"{erpAccount.AccountName} ({erpAccount.AccountNumber})",
+                        ErpSalesOrg = erpSalesOrg.Name,
                         ErpShipToAddressId = erpNopUser.ErpShipToAddressId,
                         ErpShipToAddress = addressModelOfShipToAddress,
                         BillingErpShipToAddressId = erpNopUser.BillingErpShipToAddressId,
@@ -450,6 +437,116 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
                 }
 
                 return erpNopUserModel;
+            }).Where(x => x != null);
+        });
+
+        return model;
+    }
+    
+    public async Task<ErpNopUserAccountListModel> PrepareErpNopUserAccountListModelAsync(int nopUserId, ErpNopUserSearchModel searchModel)
+    {
+        if (nopUserId <= 0)
+            throw new ArgumentNullException();
+
+        var mappedAccounts = await _erpNopUserAccountMapService.GetAllErpNopUserAccountMapsByUserIdAsync(nopUserId);
+        var mappedErpAccountIds = mappedAccounts.Select(s => s.ErpAccountId);
+        var accountIds = new List<int>();
+
+        var defaultErpAccountId = (await _erpNopUserService.GetErpNopUserByIdAsync(nopUserId)).ErpAccountId;
+
+        if (searchModel.CustomerRoleIds.Any())
+        {
+            foreach (var r in searchModel.CustomerRoleIds)
+            {
+                foreach (var ma in mappedAccounts)
+                {
+                    var roles = ma.CustomerRolesIds.Split(',');
+                    if (roles.Any(a => a.Equals(r.ToString())))
+                        accountIds.Add(ma.ErpAccountId);
+                }
+            }
+        }
+
+        if (searchModel.AccountId > 0)
+        {
+            if (searchModel.CustomerRoleIds.Any() && accountIds.Contains(searchModel.AccountId))
+            {
+                accountIds = new List<int>
+                {
+                    searchModel.AccountId
+                };
+            }
+            else if (!searchModel.CustomerRoleIds.Any() && mappedErpAccountIds.Contains(searchModel.AccountId))
+                accountIds.Add(searchModel.AccountId);
+            else
+                accountIds = new List<int>();
+        }
+        else if (!searchModel.CustomerRoleIds.Any())
+            accountIds = mappedErpAccountIds.ToList();
+
+        var erpAccounts = await _erpAccountService.GetAllErpAccountsByIdsAsync(pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize, showHidden: true, getOnlyTotalCount: false, accountIds, email: searchModel.Email);
+
+        var model = await new ErpNopUserAccountListModel().PrepareToGridAsync(searchModel, erpAccounts, () =>
+        {
+            return erpAccounts.SelectAwait(async erpAccount =>
+            {
+                var address = await _addressService.GetAddressByIdAsync(erpAccount?.BillingAddressId ?? 0);
+                var addressModel = new AddressModel();
+                if (address != null)
+                    addressModel = address.ToModel(addressModel);
+                await _addressModelFactory.PrepareAddressModelAsync(addressModel, address);
+
+                var selectedCustomerRoles = mappedAccounts.Where(w => w.ErpAccountId == erpAccount.Id);
+                var selectedCustomerRoleIds = selectedCustomerRoles.Any() ? selectedCustomerRoles.FirstOrDefault()?.CustomerRolesIds : "";
+
+                var listOfErpNopUserRoleIds = new List<int>();
+                var erpNopUserRoleIds = selectedCustomerRoleIds?.Split(",");
+                foreach (var roleId in erpNopUserRoleIds)
+                {
+                    if (!string.IsNullOrEmpty(roleId))
+                        listOfErpNopUserRoleIds.Add(Convert.ToInt32(roleId));
+                }
+
+                var erpNopUserAccountModel = new ErpNopUserAccountModel
+                {
+                    Id = erpAccount.Id,
+                    AccountNumber = erpAccount.AccountNumber,
+                    AccountName = erpAccount.AccountName,
+                    VatNumber = erpAccount.VatNumber,
+                    CurrentBalance = erpAccount.CurrentBalance,
+                    ErpSalesOrgId = erpAccount.ErpSalesOrgId,
+                    BillingAddressId = erpAccount.BillingAddressId,
+                    BillingAddress = addressModel,
+                    BillingSuburb = erpAccount.BillingSuburb,
+                    CreditLimit = erpAccount.CreditLimit,
+                    CreditLimitAvailable = erpAccount.CreditLimitAvailable,
+                    LastPaymentAmount = erpAccount.LastPaymentAmount,
+                    LastPaymentDate = erpAccount.LastPaymentDate,
+                    AllowOverspend = erpAccount.AllowOverspend,
+                    PreFilterFacets = erpAccount.PreFilterFacets,
+                    PaymentTypeCode = erpAccount.PaymentTypeCode,
+                    OverrideAddressEditOnCheckoutConfigSetting = erpAccount.OverrideAddressEditOnCheckoutConfigSetting,
+                    OverrideBackOrderingConfigSetting = erpAccount.OverrideBackOrderingConfigSetting,
+                    AllowAccountsAddressEditOnCheckout = erpAccount.AllowAccountsAddressEditOnCheckout,
+                    AllowAccountsBackOrdering = erpAccount.AllowAccountsBackOrdering,
+                    OverrideStockDisplayFormatConfigSetting = erpAccount.OverrideStockDisplayFormatConfigSetting,
+                    ErpAccountStatusTypeId = erpAccount.ErpAccountStatusTypeId,
+                    ErpAccountStatusType = ((ErpAccountStatusType)erpAccount.ErpAccountStatusTypeId).ToString(),
+                    LastErpAccountSyncDate = erpAccount.LastErpAccountSyncDate,
+                    B2BPriceGroupCodeId = erpAccount.B2BPriceGroupCodeId,
+                    TotalSavingsForthisYear = erpAccount.TotalSavingsForthisYear ?? 0,
+                    TotalSavingsForAllTime = erpAccount.TotalSavingsForAllTime ?? 0,
+                    TotalSavingsForAllTimeUpdatedOnUtc = erpAccount.TotalSavingsForAllTimeUpdatedOnUtc,
+                    TotalSavingsForthisYearUpdatedOnUtc = erpAccount.TotalSavingsForthisYearUpdatedOnUtc,
+                    LastTimeOrderSyncOnUtc = erpAccount.LastTimeOrderSyncOnUtc,
+                    SelectedCustomerRoles = await PrepareSelectedRolesAsync(listOfErpNopUserRoleIds.ToList()),
+                    CreatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(erpAccount.CreatedOnUtc, DateTimeKind.Utc),
+                    UpdatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(erpAccount.UpdatedOnUtc, DateTimeKind.Utc),
+                    IsActive = erpAccount.IsActive,
+                    IsDefault = erpAccount.Id == defaultErpAccountId
+                };
+
+                return erpNopUserAccountModel;
             });
         });
 
@@ -460,13 +557,10 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
     {
         if (erpNopUser != null)
         {
-            //get customer
             var nopCustomer = await _customerService.GetCustomerByIdAsync(erpNopUser.NopCustomerId);
 
-            //get Account
             var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpNopUser.ErpAccountId);
 
-            //fill in model values from the entity
             model ??= new ErpNopUserModel();
 
             model.Id = erpNopUser.Id;
@@ -595,128 +689,10 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
         return model;
     }
 
-    public async Task<ErpNopUserAccountListModel> PrepareErpNopUserAccountListModelAsync(int nopUserId, ErpNopUserSearchModel searchModel)
-    {
-        if (nopUserId <= 0)
-            throw new ArgumentNullException();
-
-        var mappedAccounts = await _erpNopUserAccountMapService.GetAllErpNopUserAccountMapsByUserIdAsync(nopUserId);
-        var mappedErpAccountIds = mappedAccounts.Select(s => s.ErpAccountId);
-        var accountIds = new List<int>();
-
-        var defaultErpAccountId = (await _erpNopUserService.GetErpNopUserByIdAsync(nopUserId)).ErpAccountId;
-
-        if (searchModel.CustomerRoleIds.Any())
-        {
-            foreach (var r in searchModel.CustomerRoleIds)
-            {
-                foreach (var ma in mappedAccounts)
-                {
-                    var roles = ma.CustomerRolesIds.Split(',');
-                    if (roles.Any(a => a.Equals(r.ToString())))
-                        accountIds.Add(ma.ErpAccountId);
-                }
-            }
-        }
-
-        if (searchModel.AccountId > 0)
-        {
-            if (searchModel.CustomerRoleIds.Any() && accountIds.Contains(searchModel.AccountId))
-            {
-                accountIds = new List<int>
-                {
-                    searchModel.AccountId
-                };
-            }
-            else if (!searchModel.CustomerRoleIds.Any() && mappedErpAccountIds.Contains(searchModel.AccountId))
-                accountIds.Add(searchModel.AccountId);
-            else
-                accountIds = new List<int>();
-        }
-        else if (!searchModel.CustomerRoleIds.Any())
-            accountIds = mappedErpAccountIds.ToList();
-
-        var erpAccounts = await _erpAccountService.GetAllErpAccountsByIdsAsync(pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize, showHidden: true, getOnlyTotalCount: false, accountIds, email: searchModel.Email);
-
-        //prepare list model
-        var model = await new ErpNopUserAccountListModel().PrepareToGridAsync(searchModel, erpAccounts, () =>
-        {
-            //fill in model values from the entity
-            return erpAccounts.SelectAwait(async erpAccount =>
-            {
-                //prepare address model
-                var address = await _addressService.GetAddressByIdAsync(erpAccount?.BillingAddressId ?? 0);
-                var addressModel = new AddressModel();
-                if (address != null)
-                    addressModel = address.ToModel(addressModel);
-                await _addressModelFactory.PrepareAddressModelAsync(addressModel, address);
-
-                var selectedCustomerRoles = mappedAccounts.Where(w => w.ErpAccountId == erpAccount.Id);
-                var selectedCustomerRoleIds = selectedCustomerRoles.Any() ? selectedCustomerRoles.FirstOrDefault().CustomerRolesIds : "";
-
-                var listOfErpNopUserRoleIds = new List<int>();
-                var erpNopUserRoleIds = selectedCustomerRoleIds.Split(",");
-                foreach (var roleId in erpNopUserRoleIds)
-                {
-                    if (!string.IsNullOrEmpty(roleId))
-                        listOfErpNopUserRoleIds.Add(Convert.ToInt32(roleId));
-                }
-
-                //fill in model values from the entity
-                var erpNopUserAccountModel = new ErpNopUserAccountModel
-                {
-                    Id = erpAccount.Id,
-                    AccountNumber = erpAccount.AccountNumber,
-                    AccountName = erpAccount.AccountName,
-                    VatNumber = erpAccount.VatNumber,
-                    CurrentBalance = erpAccount.CurrentBalance,
-                    ErpSalesOrgId = erpAccount.ErpSalesOrgId,
-                    BillingAddressId = erpAccount.BillingAddressId,
-                    BillingAddress = addressModel,
-                    BillingSuburb = erpAccount.BillingSuburb,
-                    CreditLimit = erpAccount.CreditLimit,
-                    CreditLimitAvailable = erpAccount.CreditLimitAvailable,
-                    LastPaymentAmount = erpAccount.LastPaymentAmount,
-                    LastPaymentDate = erpAccount.LastPaymentDate,
-                    AllowOverspend = erpAccount.AllowOverspend,
-                    PreFilterFacets = erpAccount.PreFilterFacets,
-                    PaymentTypeCode = erpAccount.PaymentTypeCode,
-                    OverrideAddressEditOnCheckoutConfigSetting = erpAccount.OverrideAddressEditOnCheckoutConfigSetting,
-                    OverrideBackOrderingConfigSetting = erpAccount.OverrideBackOrderingConfigSetting,
-                    AllowAccountsAddressEditOnCheckout = erpAccount.AllowAccountsAddressEditOnCheckout,
-                    AllowAccountsBackOrdering = erpAccount.AllowAccountsBackOrdering,
-                    OverrideStockDisplayFormatConfigSetting = erpAccount.OverrideStockDisplayFormatConfigSetting,
-                    ErpAccountStatusTypeId = erpAccount.ErpAccountStatusTypeId,
-                    ErpAccountStatusType = ((ErpAccountStatusType)erpAccount.ErpAccountStatusTypeId).ToString(),
-                    LastErpAccountSyncDate = erpAccount.LastErpAccountSyncDate,
-                    B2BPriceGroupCodeId = erpAccount.B2BPriceGroupCodeId,
-                    TotalSavingsForthisYear = erpAccount.TotalSavingsForthisYear ?? 0,
-                    TotalSavingsForAllTime = erpAccount.TotalSavingsForAllTime ?? 0,
-                    TotalSavingsForAllTimeUpdatedOnUtc = erpAccount.TotalSavingsForAllTimeUpdatedOnUtc,
-                    TotalSavingsForthisYearUpdatedOnUtc = erpAccount.TotalSavingsForthisYearUpdatedOnUtc,
-                    LastTimeOrderSyncOnUtc = erpAccount.LastTimeOrderSyncOnUtc,
-                    SelectedCustomerRoles = await PrepareSelectedRolesAsync(listOfErpNopUserRoleIds.ToList()),
-                    CreatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(erpAccount.CreatedOnUtc, DateTimeKind.Utc),
-                    UpdatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(erpAccount.UpdatedOnUtc, DateTimeKind.Utc),
-                    IsActive = erpAccount.IsActive,
-                    IsDefault = erpAccount.Id == defaultErpAccountId
-                };
-
-                return erpNopUserAccountModel;
-            });
-        });
-
-        return model;
-    }
-
     public async Task<ErpNopUserAccountMapModel> PrepareErpNopUserModelAsync(ErpNopUserAccountMapModel model, ErpNopUserAccountMap erpNopUserAccountMap)
     {
         if (erpNopUserAccountMap != null)
         {
-            //get user
-            var erpNopUser = await _erpNopUserService.GetErpNopUserByIdAsync(erpNopUserAccountMap.ErpUserId);
-
-            //get Account
             var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpNopUserAccountMap.ErpAccountId);
 
             //fill in model values from the entity
@@ -737,6 +713,7 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
             Value = role.Id.ToString(),
             Selected = model.SelectedCustomerRoleIds.Contains(role.Id)
         }).ToList();
+
         return model;
     }
 

@@ -159,8 +159,8 @@ public class ErpGroupPriceService : IErpGroupPriceService
             query = query.Where(egp => !egp.IsDeleted);
 
             query = query.OrderBy(egp => egp.Id);
-            return query;
 
+            return query;
         }, pageIndex, pageSize, getOnlyTotalCount);
 
         return erpGroupPrices;
@@ -170,7 +170,6 @@ public class ErpGroupPriceService : IErpGroupPriceService
     {
         if (productId == 0)
             return null;
-
 
         var erpGroupPrices = await _erpGroupPriceRepository.GetAllAsync(query =>
         {

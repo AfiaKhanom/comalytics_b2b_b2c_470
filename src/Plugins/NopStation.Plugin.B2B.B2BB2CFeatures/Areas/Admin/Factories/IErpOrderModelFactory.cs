@@ -11,7 +11,7 @@ public interface IErpOrderModelFactory
 
     Task<ErpOrderAdditionalDataListModel> PrepareErpOrderPerAccountListModel(ErpOrderAdditionalDataSearchModel orderSearchModel);
 
-    Task<ErpOrderAdditionalDataModel> PrepareErpOrderPerAccountModel(ErpOrderAdditionalDataModel model, ErpOrderAdditionalData orderAdditionalData);
+    Task<ErpOrderAdditionalDataModel> PrepareErpOrderPerAccountModel(ErpOrderAdditionalDataModel model, ErpOrderAdditionalData erpOrderAdditionalData);
 
     Task<ErpOrderModel> PrepareErpOrderModel(ErpOrderModel erpOrderModel, OrderModel orderModel);
 }

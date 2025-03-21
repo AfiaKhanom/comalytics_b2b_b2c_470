@@ -22,7 +22,8 @@ public class ErpSpecialPriceModelFactory : IErpSpecialPriceModelFactory
 
     #region Ctor
 
-    public ErpSpecialPriceModelFactory(IErpAccountService erpAccountService,
+    public ErpSpecialPriceModelFactory(
+        IErpAccountService erpAccountService,
         IErpSalesOrgService erpSalesOrgService,
         IErpSpecialPriceService erpSpecialPriceService,
         IDateTimeHelper dateTimeHelper)
@@ -51,51 +52,46 @@ public class ErpSpecialPriceModelFactory : IErpSpecialPriceModelFactory
         ArgumentNullException.ThrowIfNull(searchModel);
 
         var erpProductPricings = await _erpSpecialPriceService.GetAllErpSpecialPricesAsync(
-            pageIndex: searchModel.Page - 1,
-            pageSize: searchModel.PageSize,
-            getOnlyTotalCount: false,
-            productId: searchModel.ProductId,
-            accountId: searchModel.SearchErpAccountId);
+            pageIndex: searchModel.Page - 1, 
+            pageSize: searchModel.PageSize, 
+            getOnlyTotalCount: false, 
+            productId: searchModel.ProductId, 
+            accountId: searchModel.SearchErpAccountId,
+            onlyIncludeActiveErpAccountsMappedPrices: true);
 
-        var erpAccounts = await _erpAccountService.GetAllErpAccountsAsync();
+        var erpAccounts = await _erpAccountService.GetErpAccountListAsync();
         var erpSalesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
         var model = new ErpSpecialPriceListModel().PrepareToGrid(searchModel, erpProductPricings, () =>
         {
             return erpProductPricings.Select(productPricing =>
             {
-                if (productPricing == null)
-                    return null;
-
-                var erpAccount = erpAccounts.FirstOrDefault(w => w.Id == productPricing.ErpAccountId);
-
-                if (erpAccount == null)
-                {
-                    return null;
-                }
-
-                var erpAccountSalesOrg = erpSalesOrgs.FirstOrDefault(w => w.Id == erpAccount.ErpSalesOrgId);
-
-                if (erpAccountSalesOrg == null)
-                {
-                    return null;
-                }
-
-                return new ErpSpecialPriceModel
+                var pricingModel = new ErpSpecialPriceModel
                 {
                     Id = productPricing.Id,
                     ProductId = productPricing.NopProductId,
                     Price = productPricing.Price,
                     PricingNote = productPricing.PricingNote,
                     DiscountPerc = productPricing.DiscountPerc,
-                    PercentageOfAllocatedStock = productPricing.PercentageOfAllocatedStock,
-                    ErpAccountId = productPricing.ErpAccountId,
-                    ErpAccountNumber = erpAccount.AccountNumber,
-                    ErpAccountSalesOrgId = erpAccount.ErpSalesOrgId,
-                    ErpAccountSalesOrgName = erpAccountSalesOrg.Name
+                    PercentageOfAllocatedStock = productPricing.PercentageOfAllocatedStock
                 };
-            }).Where(model => model != null);
-        });
 
+                var erpAccount = erpAccounts.FirstOrDefault(w => w.Id == productPricing.ErpAccountId);
+                if (erpAccount != null)
+                {
+                    var erpAccountSalesOrg = erpSalesOrgs.FirstOrDefault(w => w.Id == erpAccount.ErpSalesOrgId);
+
+                    if (erpAccountSalesOrg != null)
+                    {
+                        pricingModel.ErpAccountId = productPricing.ErpAccountId;
+                        pricingModel.ErpAccountNumber = erpAccount.AccountNumber;
+                        pricingModel.ErpAccountSalesOrgId = erpAccount.ErpSalesOrgId;
+                        pricingModel.ErpAccountSalesOrgName = erpAccountSalesOrg.Name;
+                    }
+                }
+
+                return pricingModel;
+            }).Where(x => x.ErpAccountId > 0 && x.ErpAccountSalesOrgId > 0);
+        });
         return model;
     }
 
@@ -112,7 +108,6 @@ public class ErpSpecialPriceModelFactory : IErpSpecialPriceModelFactory
             model.DiscountPerc = erpProductPricing.DiscountPerc;
             model.PricingNote = erpProductPricing.PricingNote;
             model.PercentageOfAllocatedStock = erpProductPricing.PercentageOfAllocatedStock;
-
             if (erpProductPricing.PercentageOfAllocatedStockResetTimeUtc.HasValue)
                 model.PercentageOfAllocatedStockResetTimeUtc = await _dateTimeHelper.ConvertToUserTimeAsync(erpProductPricing.PercentageOfAllocatedStockResetTimeUtc.Value, DateTimeKind.Utc);
 
@@ -120,10 +115,13 @@ public class ErpSpecialPriceModelFactory : IErpSpecialPriceModelFactory
             {
                 var erpAccountSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount.ErpSalesOrgId);
 
-                model.ErpAccountId = erpProductPricing.ErpAccountId;
-                model.ErpAccountNumber = erpAccount.AccountNumber;
-                model.ErpSalesOrgId = erpAccount.ErpSalesOrgId;
-                model.ErpAccountSalesOrgName = erpAccountSalesOrg?.Name;
+                if (erpAccountSalesOrg != null)
+                {
+                    model.ErpAccountId = erpProductPricing.ErpAccountId;
+                    model.ErpAccountNumber = erpAccount.AccountNumber;
+                    model.ErpAccountSalesOrgId = erpAccount.ErpSalesOrgId;
+                    model.ErpAccountSalesOrgName = erpAccountSalesOrg.Name;
+                }
             }
         }
 

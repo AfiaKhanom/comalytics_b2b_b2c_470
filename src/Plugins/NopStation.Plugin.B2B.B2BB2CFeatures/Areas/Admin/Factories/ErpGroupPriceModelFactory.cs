@@ -8,7 +8,7 @@ using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
 namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories;
 
-public class ErpPriceGroupProductPricingModelFactory : IErpPriceGroupProductPricingModelFactory
+public class ErpGroupPriceModelFactory : IErpGroupPriceModelFactory
 {
     #region Fields
 
@@ -20,7 +20,8 @@ public class ErpPriceGroupProductPricingModelFactory : IErpPriceGroupProductPric
 
     #region Ctor
 
-    public ErpPriceGroupProductPricingModelFactory(IErpGroupPriceService erpGroupPriceService,
+    public ErpGroupPriceModelFactory(
+        IErpGroupPriceService erpGroupPriceService,
         IErpGroupPriceCodeService erpPriceGroupCodeService,
         IErpGroupPriceCodeModelFactory erpPriceGroupCodeModelFactory)
     {
@@ -33,17 +34,17 @@ public class ErpPriceGroupProductPricingModelFactory : IErpPriceGroupProductPric
 
     #region Methods
 
-    public async Task<ErpPriceGroupProductPricingSearchModel> PrepareErpProductGroupPriceSearchModel(ErpPriceGroupProductPricingSearchModel searchModel, int productId)
+    public async Task<ErpPriceGroupProductPricingSearchModel> PrepareErpProductPricingSearchModel(ErpPriceGroupProductPricingSearchModel searchModel, int productId)
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
         searchModel.ProductId = productId;
         searchModel.SetGridPageSize();
-        await PrepareErpProductGroupPriceModel(searchModel.AddErpPriceGroupProductPricing, null);
+        await PrepareErpProductPricingModel(searchModel.AddErpPriceGroupProductPricing, null);
         return searchModel;
     }
 
-    public async Task<ErpPriceGroupProductPricingListModel> PrepareErpProductGroupPriceListModel(ErpPriceGroupProductPricingSearchModel searchModel)
+    public async Task<ErpPriceGroupProductPricingListModel> PrepareErpProductPricingListModel(ErpPriceGroupProductPricingSearchModel searchModel)
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
@@ -68,8 +69,7 @@ public class ErpPriceGroupProductPricingModelFactory : IErpPriceGroupProductPric
                 {
                     return null;
                 }
-
-                return new ErpPriceGroupProductPricingModel
+                var pricingModel = new ErpPriceGroupProductPricingModel
                 {
                     Id = productPricing.Id,
                     ProductId = productPricing.NopProductId,
@@ -78,13 +78,13 @@ public class ErpPriceGroupProductPricingModelFactory : IErpPriceGroupProductPric
                     Price = productPricing.Price
                 };
 
-            }).Where(model => model != null);
+                return pricingModel;
+            }).Where(x => x != null);
         });
-
         return model;
     }
 
-    public async Task<ErpPriceGroupProductPricingModel> PrepareErpProductGroupPriceModel(ErpPriceGroupProductPricingModel model, ErpGroupPrice erpProductPricing)
+    public async Task<ErpPriceGroupProductPricingModel> PrepareErpProductPricingModel(ErpPriceGroupProductPricingModel model, ErpGroupPrice erpProductPricing)
     {
         if (erpProductPricing != null)
         {
@@ -98,8 +98,7 @@ public class ErpPriceGroupProductPricingModelFactory : IErpPriceGroupProductPric
             model.Price = erpProductPricing.Price;
         }
 
-        await _erpPriceGroupCodeModelFactory.PrepareErpGroupPriceCodes(model.AvailableErpPriceGroupCodes, false);
-
+        _erpPriceGroupCodeModelFactory.PrepareErpGroupPriceCodes(model.AvailableErpPriceGroupCodes, false);
         return model;
     }
 

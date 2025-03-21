@@ -106,7 +106,10 @@ public class ErpOrderController : NopStationAdminController
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
             return await AccessDeniedDataTablesJson();
 
-        var erpOrder = await _erpOrderAdditionalDataService.GetErpOrderAdditionalDataByIdAsync(model?.Id ?? 0);
+        if (model == null)
+            return RedirectToAction("List");
+
+        var erpOrder = await _erpOrderAdditionalDataService.GetErpOrderAdditionalDataByIdAsync(model.Id);
         if (erpOrder == null)
             return RedirectToAction("List");
 
@@ -120,15 +123,14 @@ public class ErpOrderController : NopStationAdminController
 
             return RedirectToAction("Edit", new { id = model.Id });
         }
-        var isPlaced = false;
+        var isOrderPlaced = false;
         var errorMsg = "Type of order not found!";
 
-        if (erpOrder.ErpOrderType == ErpOrderType.B2BSalesOrder || erpOrder.ErpOrderType == ErpOrderType.B2BQuote)
-            (isPlaced, errorMsg) = await _overriddenOrderProcessingService.RetryPlaceErpOrderAtErpAsync(erpOrder, _b2BB2CFeaturesSettings);
-        else if (erpOrder.ErpOrderType == ErpOrderType.B2CSalesOrder || erpOrder.ErpOrderType == ErpOrderType.B2CQuote)
-            (isPlaced, errorMsg) = await _overriddenOrderProcessingService.RetryPlaceErpOrderAtErpAsync(erpOrder, _b2BB2CFeaturesSettings);
+        if (erpOrder.ErpOrderType == ErpOrderType.B2BSalesOrder || erpOrder.ErpOrderType == ErpOrderType.B2BQuote || 
+            erpOrder.ErpOrderType == ErpOrderType.B2CSalesOrder || erpOrder.ErpOrderType == ErpOrderType.B2CQuote)
+            (isOrderPlaced, errorMsg) = await _overriddenOrderProcessingService.RetryPlaceErpOrderAtErpAsync(erpOrder);
 
-        if (!isPlaced)
+        if (!isOrderPlaced)
         {
             _notificationService.ErrorNotification(errorMsg);
 
@@ -204,12 +206,12 @@ public class ErpOrderController : NopStationAdminController
             return RedirectToAction("List");
         }
 
-        var isPlaced = false;
+        var isOrderPlaced = false;
         var errorMsg = "Type of order not found!";
 
-        (isPlaced, errorMsg) = await _overriddenOrderProcessingService.RetryPlaceErpOrderAtErpAsync(erpOrder, _b2BB2CFeaturesSettings);
+        (isOrderPlaced, errorMsg) = await _overriddenOrderProcessingService.RetryPlaceErpOrderAtErpAsync(erpOrder);
 
-        if (!isPlaced || !string.IsNullOrWhiteSpace(errorMsg))
+        if (!isOrderPlaced || !string.IsNullOrWhiteSpace(errorMsg))
         {
             _notificationService.ErrorNotification(errorMsg);
 

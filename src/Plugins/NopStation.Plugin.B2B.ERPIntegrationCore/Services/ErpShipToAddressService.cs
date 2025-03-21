@@ -179,6 +179,22 @@ public class ErpShipToAddressService : IErpShipToAddressService
         return erpShipToAddresses;
     }
 
+    public async Task<IList<ErpShipToAddress>> GetAllErpShipToAddressesAsync(bool showHidden = false, bool isActiveOnly = false)
+    {
+        var query = _erpShipToAddressRepository.Table;
+
+        if (!showHidden)
+            query = query.Where(b => !b.IsDeleted);
+
+        if (isActiveOnly)
+            query = query.Where(b => b.IsActive);
+
+
+        query = query.OrderBy(b => b.ShipToCode);
+
+        return await query.ToListAsync();
+    }
+
     public async Task<IList<ErpShipToAddress>> GetErpShipToAddressesByErpAccountIdAsync(int erpAccountId, bool showHidden = false)
     {
         if (erpAccountId == 0)
@@ -269,6 +285,18 @@ public class ErpShipToAddressService : IErpShipToAddressService
             return null;
 
         return await _erpShipToAddressRepository.Table.FirstOrDefaultAsync(e => e.AddressId == shippingAddressId);
+    }
+
+    public async Task<IList<ErpShipToAddress>> GetAllErpShipToAddressByAddressIdAsync(List<int> addressId)
+    {
+        if (addressId == null || addressId.Count == 0)
+            return null;
+
+        var erpShipToAddresses = await _erpShipToAddressRepository.Table
+            .Where(erpAddress => addressId.Contains(erpAddress.AddressId))
+            .OrderByDescending(x => x.CreatedOnUtc).ToListAsync();
+
+        return erpShipToAddresses;
     }
 
     public async Task<List<ErpShipToAddress>> GetErpShipToAddressesByCustomerAddressesAsync(int customerId, int erpAccountId = 0, bool isActiveOnly = true)

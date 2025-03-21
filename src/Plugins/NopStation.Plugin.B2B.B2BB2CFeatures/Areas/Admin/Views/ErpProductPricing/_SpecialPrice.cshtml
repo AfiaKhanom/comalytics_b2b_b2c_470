@@ -5,8 +5,6 @@
     var customer = await workContext.GetCurrentCustomerAsync();
     const string hideErpSpecialPriceSearchBlockAttributeName = "ErpSpecialPriceList.HideSearchBlock";
     var hideErpSpecialPriceSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideErpSpecialPriceSearchBlockAttributeName);
-    const string hideErpSpecialPriceBlockAttributeName = "ErpSpecialPriceList.HideListBlock";
-    var hideErpSpecialPriceBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideErpSpecialPriceBlockAttributeName);
 }
 
 <div class="card card-default card-search">
@@ -91,44 +89,44 @@
         <div class="card-body">
             @{
                 var gridModel = new DataTablesModel
-            {
-                Name = "special-price-grid",
-                UrlRead = new DataUrl("ProductPricingList", "ErpProductPricing", new RouteValueDictionary { [nameof(ErpSpecialPriceSearchModel.ProductId)] = Model.ProductId }),
-                UrlDelete = new DataUrl("DeleteSpecialPrice", "ErpProductPricing", null),
-                SearchButtonId = "search-special-price",
-                Length = Model.PageSize,
-                LengthMenu = Model.AvailablePageSizes,
-                Filters = new List<FilterParameter>
-            {
-            new FilterParameter(nameof(Model.SearchErpAccountId))
-            }
-            };
+                {
+                    Name = "special-price-grid",
+                    UrlRead = new DataUrl("ProductPricingList", "ErpProductPricing", new RouteValueDictionary { [nameof(ErpSpecialPriceSearchModel.ProductId)] = Model.ProductId }),
+                    UrlDelete = new DataUrl("DeleteSpecialPrice", "ErpProductPricing", null),
+                    SearchButtonId = "search-special-price",
+                    Length = Model.PageSize,
+                    LengthMenu = Model.AvailablePageSizes,
+                    Filters = new List<FilterParameter>
+                    {
+                        new FilterParameter(nameof(Model.SearchErpAccountId))
+                    }
+                };
 
                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpSpecialPriceModel.ErpAccountNumber))
-            {
-                Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.ErpAccount").Text,
-                Width = "200",
-                Render = new RenderLink(new DataUrl("~/Admin/ErpAccount/ErpAccountEdit", nameof(ErpSpecialPriceModel.ErpAccountId)))
-            });
+                {
+                    Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.ErpAccount").Text,
+                    Width = "200",
+                    Render = new RenderLink(new DataUrl("~/Admin/ErpAccount/ErpAccountEdit", nameof(ErpSpecialPriceModel.ErpAccountId)))
+                });
 
                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpSpecialPriceModel.ErpAccountSalesOrgName))
-            {
-                Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.ErpAccountSalesOrg").Text,
-                Width = "200",
-                Render = new RenderLink(new DataUrl("~/Admin/ErpSalesOrg/ErpSalesOrgEdit", nameof(ErpSpecialPriceModel.ErpAccountSalesOrgId)))
-            });
+                {
+                    Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.ErpAccountSalesOrg").Text,
+                    Width = "200",
+                    Render = new RenderLink(new DataUrl("~/Admin/ErpSalesOrg/ErpSalesOrgEdit", nameof(ErpSpecialPriceModel.ErpAccountSalesOrgId)))
+                });
 
                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpSpecialPriceModel.Price))
-            {
-                Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.Price").Text,
-                Width = "200"
-            });
+                {
+                    Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.Price").Text,
+                    Width = "200"
+                });
 
                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpSpecialPriceModel.PricingNote))
-            {
-                Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.PricingNote").Text,
-                Width = "200"
-            });
+                {
+                    Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.PricingNote").Text,
+                    Width = "200"
+                });
 
                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpSpecialPriceModel.Id))
             {

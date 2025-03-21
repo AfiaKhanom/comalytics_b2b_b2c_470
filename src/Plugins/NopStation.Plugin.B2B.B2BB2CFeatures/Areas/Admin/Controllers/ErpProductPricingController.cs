@@ -31,9 +31,8 @@ public class ErpProductPricingController : NopStationAdminController
     private readonly IProductModelFactory _productModelFactory;
     private readonly ILocalizationService _localizationService;
     private readonly IWorkContext _workContext;
-    private readonly IErpPriceGroupProductPricingModelFactory _erpPriceGroupProductPricingModelFactory;
+    private readonly IErpGroupPriceModelFactory _erpGroupPriceModelFactory;
     private readonly IErpGroupPriceService _erpGroupPriceService;
-    private readonly IErpGroupPriceCodeService _erpGroupPriceCodeService;
     private readonly IErpSpecialPriceService _erpSpecialPriceService;
     private readonly IErpSpecialPriceModelFactory _erpSpecialPriceModelFactory;
     private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
@@ -52,9 +51,8 @@ public class ErpProductPricingController : NopStationAdminController
         IProductModelFactory productModelFactory,
         ILocalizationService localizationService,
         IWorkContext workContext,
-        IErpPriceGroupProductPricingModelFactory erpPriceGroupProductPricingModelFactory,
+        IErpGroupPriceModelFactory erpGroupPriceModelFactory,
         IErpGroupPriceService erpGroupPriceService,
-        IErpGroupPriceCodeService erpGroupPriceCodeService,
         IErpSpecialPriceService erpSpecialPriceService,
         IErpSpecialPriceModelFactory erpSpecialPriceModelFactory,
         IB2BB2CWorkContext b2BB2CWorkContext,
@@ -69,9 +67,8 @@ public class ErpProductPricingController : NopStationAdminController
         _productModelFactory = productModelFactory;
         _localizationService = localizationService;
         _workContext = workContext;
-        _erpPriceGroupProductPricingModelFactory = erpPriceGroupProductPricingModelFactory;
+        _erpGroupPriceModelFactory = erpGroupPriceModelFactory;
         _erpGroupPriceService = erpGroupPriceService;
-        _erpGroupPriceCodeService = erpGroupPriceCodeService;
         _erpSpecialPriceService = erpSpecialPriceService;
         _erpSpecialPriceModelFactory = erpSpecialPriceModelFactory;
         _b2BB2CWorkContext = b2BB2CWorkContext;
@@ -143,7 +140,7 @@ public class ErpProductPricingController : NopStationAdminController
         await _erpSpecialPriceModelFactory.PrepareErpProductSpecialPriceSearchModel(model.ErpSpecialPriceSearchModel, id);
 
         //Preparing Group Price search model
-        await _erpPriceGroupProductPricingModelFactory.PrepareErpProductGroupPriceSearchModel(model.ErpPriceGroupProductPricingSearchModel, id);
+        await _erpGroupPriceModelFactory.PrepareErpProductPricingSearchModel(model.ErpPriceGroupProductPricingSearchModel, id);
 
         return View("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Areas/Admin/Views/ErpProductPricing/ProductPricing.cshtml", model);
     }
@@ -313,7 +310,7 @@ public class ErpProductPricingController : NopStationAdminController
         if ((await _productService.GetProductByIdAsync(searchModel.ProductId) is null))
             throw new ArgumentException("No product found with the specified id");
 
-        var model = await _erpPriceGroupProductPricingModelFactory.PrepareErpProductGroupPriceListModel(searchModel);
+        var model = await _erpGroupPriceModelFactory.PrepareErpProductPricingListModel(searchModel);
 
         return Json(model);
     }
@@ -323,7 +320,7 @@ public class ErpProductPricingController : NopStationAdminController
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
             return AccessDeniedView();
 
-        var model = await _erpPriceGroupProductPricingModelFactory.PrepareErpProductGroupPriceModel(new ErpPriceGroupProductPricingModel(), null);
+        var model = await _erpGroupPriceModelFactory.PrepareErpProductPricingModel(new ErpPriceGroupProductPricingModel(), null);
         model.ProductId = productId;
 
         return View("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Areas/Admin/Views/ErpProductPricing/Create.cshtml", model);
@@ -380,7 +377,7 @@ public class ErpProductPricingController : NopStationAdminController
         if (erpProductPricing == null)
             return RedirectToAction("AllProductList");
 
-        var model = await _erpPriceGroupProductPricingModelFactory.PrepareErpProductGroupPriceModel(null, erpProductPricing);
+        var model = await _erpGroupPriceModelFactory.PrepareErpProductPricingModel(null, erpProductPricing);
         return View("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Areas/Admin/Views/ErpProductPricing/Edit.cshtml", model);
     }
 
@@ -432,7 +429,7 @@ public class ErpProductPricingController : NopStationAdminController
         if (erpProductPricing == null)
             return RedirectToAction("AllProductList");
 
-        var model = await _erpPriceGroupProductPricingModelFactory.PrepareErpProductGroupPriceModel(null, erpProductPricing);
+        var model = await _erpGroupPriceModelFactory.PrepareErpProductPricingModel(null, erpProductPricing);
         return View("_GroupPriceEditPopUp", model);
     }
 
@@ -516,7 +513,7 @@ public class ErpProductPricingController : NopStationAdminController
     //            .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
     //            .Select(x => Convert.ToInt32(x))
     //            .ToArray();
-    //        var bytes = await _erpPriceGroupProductPricingModelFactory.ExportErpPriceGroupProductPricingToXlsx(ids.ToList());
+    //        var bytes = await _erpGroupPriceModelFactory.ExportErpPriceGroupProductPricingToXlsx(ids.ToList());
     //        var currentDate = DateTime.Now.ToString("g");
     //        return File(bytes, MimeTypes.TextXlsx, $"B2B_Price_Group_Product_Pricing_{currentDate}.xlsx");
     //    }
@@ -534,7 +531,7 @@ public class ErpProductPricingController : NopStationAdminController
 
     //    try
     //    {
-    //        var bytes = await _erpPriceGroupProductPricingModelFactory.ExportErpPriceGroupProductPricingToXlsxAll(searchModel);
+    //        var bytes = await _erpGroupPriceModelFactory.ExportErpPriceGroupProductPricingToXlsxAll(searchModel);
     //        var currentDate = DateTime.Now.ToString("g");
     //        return File(bytes, MimeTypes.TextXlsx, $"B2B_Price_Group_Product_Pricing_{currentDate}.xlsx");
     //    }
@@ -555,7 +552,7 @@ public class ErpProductPricingController : NopStationAdminController
     //    {
     //        if (importexcelfile != null && importexcelfile.Length > 0)
     //        {
-    //            await _erpPriceGroupProductPricingModelFactory.ImportErpPriceGroupProductPricingFromXlsx(importexcelfile.OpenReadStream());
+    //            await _erpGroupPriceModelFactory.ImportErpPriceGroupProductPricingFromXlsx(importexcelfile.OpenReadStream());
     //        }
     //        else
     //        {

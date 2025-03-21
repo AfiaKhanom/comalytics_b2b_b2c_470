@@ -15,15 +15,19 @@ public class ErpSpecialPriceService : IErpSpecialPriceService
     #region Fields
 
     private readonly IRepository<ErpSpecialPrice> _erpSpecialPriceRepository;
+    private readonly IRepository<ErpAccount> _erpAccountRepository;
     protected readonly IStaticCacheManager _staticCacheManager;
 
     #endregion
 
     #region Ctor
 
-    public ErpSpecialPriceService(IRepository<ErpSpecialPrice> erpSpecialPriceRepository, IStaticCacheManager staticCacheManager)
+    public ErpSpecialPriceService(IRepository<ErpSpecialPrice> erpSpecialPriceRepository,
+        IRepository<ErpAccount> erpAccountRepository, 
+        IStaticCacheManager staticCacheManager)
     {
         _erpSpecialPriceRepository = erpSpecialPriceRepository;
+        _erpAccountRepository = erpAccountRepository;
         _staticCacheManager = staticCacheManager;
     }
 
@@ -83,7 +87,7 @@ public class ErpSpecialPriceService : IErpSpecialPriceService
         return await _erpSpecialPriceRepository.GetByIdAsync(id, cache => default);
     }
 
-    public async Task<IPagedList<ErpSpecialPrice>> GetAllErpSpecialPricesAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, bool? overridePublished = null, int productId = 0, int accountId = 0)
+    public async Task<IPagedList<ErpSpecialPrice>> GetAllErpSpecialPricesAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, bool? overridePublished = null, int productId = 0, int accountId = 0, bool onlyIncludeActiveErpAccountsMappedPrices = false)
     {
         var erpSpecialPrice = await _erpSpecialPriceRepository.GetAllPagedAsync(query =>
         {
@@ -93,9 +97,19 @@ public class ErpSpecialPriceService : IErpSpecialPriceService
             if (accountId > 0)
                 query = query.Where(ei => ei.ErpAccountId == accountId);
 
-            query = query.OrderBy(ei => ei.Id);
-            return query;
+            if (onlyIncludeActiveErpAccountsMappedPrices)
+            {
+                query = query.Join(_erpAccountRepository.Table,
+                    specialPrice => specialPrice.ErpAccountId,
+                    account => account.Id,
+                    (specialPrice, account) => new { SpecialPrice = specialPrice, Account = account })
+                .Where(joined => joined.Account.IsActive)
+                .Select(joined => joined.SpecialPrice);
+            }
 
+            query = query.OrderBy(ei => ei.Id);
+
+            return query;
         }, pageIndex, pageSize, getOnlyTotalCount);
 
         return erpSpecialPrice;

@@ -17,7 +17,7 @@ public interface IErpSpecialPriceService
 
     Task<ErpSpecialPrice> GetErpSpecialPriceByIdAsync(int id);
 
-    Task<IPagedList<ErpSpecialPrice>> GetAllErpSpecialPricesAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, bool? overridePublished = null, int productId = 0, int accountId = 0);
+    Task<IPagedList<ErpSpecialPrice>> GetAllErpSpecialPricesAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, bool? overridePublished = null, int productId = 0, int accountId = 0, bool onlyIncludeActiveErpAccountsMappedPrices = false);
 
     Task<IList<ErpSpecialPrice>> GetErpSpecialPricesByErpAccountIdAsync(int erpAcoountId);
 
