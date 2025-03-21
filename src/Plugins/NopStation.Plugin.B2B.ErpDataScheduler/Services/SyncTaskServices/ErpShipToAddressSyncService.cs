@@ -494,21 +494,6 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                 ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName,
                 ex.Message + "\n\n" + ex.StackTrace);
 
-            await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
-                DateTime.UtcNow,
-                ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName,
-                ex.Message + "\n\n" + ex.StackTrace);
-
-            await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
-                DateTime.UtcNow,
-                ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName,
-                ex.Message + "\n\n" + ex.StackTrace);
-
-            await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
-                DateTime.UtcNow,
-                ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName,
-                ex.Message + "\n\n" + ex.StackTrace);
-
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
                 ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName,
                 ErpSyncLevel.ShipToAddress,
