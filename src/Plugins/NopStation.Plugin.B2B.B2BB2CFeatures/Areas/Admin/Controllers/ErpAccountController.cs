@@ -412,7 +412,7 @@ public class ErpAccountController : NopStationAdminController
             return Content(string.Empty);
 
         //b2b accounts
-        var accounts = await _erpAccountService.GetAllErpAccountsAsync(erpAccontNo: term, pageSize: 15, showHidden: false);
+        var accounts = await _erpAccountService.GetAllErpAccountsAsync(erpAccountNo: term, pageSize: 15, showHidden: false);
 
         var result =
             (from acc in accounts

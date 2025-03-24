@@ -36,12 +36,6 @@ public class ErpAccountValidator : BaseNopValidator<ErpAccount>
         RuleFor(x => x.ErpSalesOrgId)
             .GreaterThan(0);
 
-        RuleFor(x => x.ErpAccountStatusTypeId)
-            .GreaterThan(0);
-
-        RuleFor(x => x.StockDisplayFormatTypeId)
-            .GreaterThan(0);
-
         // Optional integer fields
         RuleFor(x => x.B2BPriceGroupCodeId)
             .GreaterThanOrEqualTo(0)
@@ -50,13 +44,6 @@ public class ErpAccountValidator : BaseNopValidator<ErpAccount>
         RuleFor(x => x.BillingAddressId)
             .GreaterThan(0)
             .When(x => x.BillingAddressId.HasValue);
-
-        // Required decimal fields
-        RuleFor(x => x.CreditLimit)
-            .GreaterThanOrEqualTo(0);
-
-        RuleFor(x => x.CreditLimitAvailable)
-            .GreaterThanOrEqualTo(0);
 
         // Optional decimal fields
         RuleFor(x => x.LastPaymentAmount)

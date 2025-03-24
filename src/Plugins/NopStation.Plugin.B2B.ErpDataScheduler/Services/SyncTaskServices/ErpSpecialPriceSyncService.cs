@@ -112,13 +112,13 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                 return false;
             }
 
-            ErpAccount? specificErpAccount = null;
+            IList<ErpAccount> specificErpAccounts = null;
             var specificErpAccountSalesOrgFound = false;
             if (!string.IsNullOrWhiteSpace(erpAccountNumber))
             {
-                specificErpAccount = await _erpAccountService.GetErpAccountByErpAccountNumberAsync(erpAccountNumber);
+                specificErpAccounts = await _erpAccountService.GetErpAccountsOfOnlyActiveErpNopUsersAsync(accountNumber: erpAccountNumber);
 
-                if (specificErpAccount == null)
+                if (specificErpAccounts == null || specificErpAccounts != null && specificErpAccounts.Count == 0)
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpSpecialPriceSyncTaskName,
@@ -141,14 +141,14 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
 
             foreach (var salesOrg in salesOrgs)
             {
-                List<ErpAccount> oldErpAccounts;
+                IList<ErpAccount> oldErpAccounts;
 
-                if (specificErpAccount != null)
+                if (specificErpAccounts != null)
                 {
-                    if (specificErpAccount.ErpSalesOrgId == salesOrg.Id)
+                    if (specificErpAccounts.FirstOrDefault(x => x.ErpSalesOrgId == salesOrg.Id) != null)
                     {
                         specificErpAccountSalesOrgFound = true;
-                        oldErpAccounts = new List<ErpAccount> { specificErpAccount };
+                        oldErpAccounts = specificErpAccounts;
                     }
                     else
                     {
@@ -167,7 +167,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                         ErpSyncLevel.SpecialPrice,
                         $"No Erp Accounts found with Active Nop Users for Sales org : {salesOrg.Name}");
 
-                    if (specificErpAccount != null)
+                    if (specificErpAccounts != null)
                         return false;
 
                     continue;
@@ -227,6 +227,8 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                             .GroupBy(x => new { StockCode = x.Sku.Trim().ToLower(), AccountNumber = x.AccountNumber.Trim() })
                             .Select(g => g.Last());
 
+                        totalNotSyncedSoFar += response.Data.Count - responseData.Count();
+
                         products = (List<Product>?)await _erpProductService
                             .GetProductsBySkuAsync(
                                 responseData.Select(x => x.Sku.Trim().ToLower()).ToArray(), 
@@ -255,6 +257,16 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                                 oldSpecialPrice.PercentageOfAllocatedStockResetTimeUtc = DateTime.MinValue;
                                 oldSpecialPrice.VolumeDiscount = true;
                                 oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;                                
+                                oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
+
+                                if (await IsValidErpSpecialPriceAsync(oldSpecialPrice))
+                                {
+                                    erpSpecialPriceInsertList.Add(oldSpecialPrice);
+                                }
+                                else
+                                {
+                                    oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;
+                                }
                                 oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
 
                                 if (await IsValidErpSpecialPriceAsync(oldSpecialPrice))

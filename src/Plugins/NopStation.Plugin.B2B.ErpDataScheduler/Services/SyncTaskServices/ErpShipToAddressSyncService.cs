@@ -115,13 +115,13 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                 return false;
             }
 
-            ErpAccount? specificErpAccount = null;
+            IList<ErpAccount> specificErpAccounts = null;
             var specificErpAccountSalesOrgFound = false;
             if (!string.IsNullOrWhiteSpace(erpAccountNumber))
             {
-                specificErpAccount = await _erpAccountService.GetErpAccountByErpAccountNumberAsync(erpAccountNumber);
+                specificErpAccounts = await _erpAccountService.GetErpAccountListAsync(accountNumber: erpAccountNumber);
 
-                if (specificErpAccount == null)
+                if (specificErpAccounts == null || specificErpAccounts != null && specificErpAccounts.Count == 0)
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName,
@@ -138,7 +138,6 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
             var erpShipToAddressUpdateList = new Dictionary<int, List<ErpShipToAddress>>();
             var erpShipToAddressInsertList = new Dictionary<int, List<ErpShipToAddress>>();
             var erpShiptoAddressErpAccountMapInsertList = new List<ErpShiptoAddressErpAccountMap>();
-            var oldErpAccounts = new List<ErpAccount>();
 
             #endregion
 
@@ -149,12 +148,14 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
 
             foreach (var salesOrg in salesOrgs)
             {
-                if (specificErpAccount != null)
+                IList<ErpAccount> oldErpAccounts;
+
+                if (specificErpAccounts != null)
                 {
-                    if (specificErpAccount.ErpSalesOrgId == salesOrg.Id)
+                    if (specificErpAccounts.FirstOrDefault(x => x.ErpSalesOrgId == salesOrg.Id) != null)
                     {
                         specificErpAccountSalesOrgFound = true;
-                        oldErpAccounts.Add(specificErpAccount);
+                        oldErpAccounts = specificErpAccounts;
                     }
                     else
                     {
@@ -163,7 +164,7 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                 }
                 else
                 {
-                    oldErpAccounts = (await _erpAccountService.GetErpAccountListAsync(salesOrgId: salesOrg.Id, showHidden: false)).ToList();                    
+                    oldErpAccounts = await _erpAccountService.GetErpAccountListAsync(salesOrgId: salesOrg.Id, showHidden: false);               
                 }
 
                 if (oldErpAccounts.Count == 0)
@@ -172,6 +173,9 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                         ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName,
                         ErpSyncLevel.ShipToAddress,
                         $"No Erp Accounts found with the Sales org : {salesOrg.Name}");
+
+                    if (specificErpAccounts != null)
+                        return false;
 
                     continue;
                 }
@@ -227,12 +231,14 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                         .Select(g => g.Last())
                         .DistinctBy(x => new { ShipToCode = x.ShipToCode.Trim(), ErpAccountNumber = x.AccountNumber.Trim() });
 
+                    totalNotSyncedSoFar += response.Data.Count - responseData.Count();
+
                     foreach (var erpShipToAddress in responseData)
                     {
                         ErpShipToAddress? oldShipToAddressByThisAccount = null;
                         Address address = null;
 
-                        var erpAccount = oldErpAccounts.Find(x => x.AccountNumber == erpShipToAddress.AccountNumber.Trim());
+                        var erpAccount = oldErpAccounts.FirstOrDefault(x => x.AccountNumber == erpShipToAddress.AccountNumber.Trim());
 
                         if (erpAccount == null)
                         {
@@ -480,6 +486,11 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                 ErpSyncLevel.ShipToAddress,
                 ex.Message,
                 ex.StackTrace);
+
+            await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
+                DateTime.UtcNow,
+                ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName,
+                ex.Message + "\n\n" + ex.StackTrace);
 
             await _syncWorkflowMessageService.SendSyncFailNotificationAsync(
                 DateTime.UtcNow,

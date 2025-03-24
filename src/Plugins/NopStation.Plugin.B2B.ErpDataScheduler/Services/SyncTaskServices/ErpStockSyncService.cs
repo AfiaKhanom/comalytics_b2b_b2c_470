@@ -148,6 +148,8 @@ public class ErpStockSyncService : IErpStockSyncService
                             .GroupBy(x => new { Sku = x.Sku.Trim().ToLower(), WarehouseCode = x.WarehouseNameOrCode })
                             .Select(g => g.Last());
 
+                    totalNotSyncedSoFar += response.Data.Count - responseData.Count();
+
                     var products = await _erpProductService
                         .GetProductsBySkuAsync(
                             responseData

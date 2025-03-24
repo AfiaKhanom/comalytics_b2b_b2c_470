@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Services;
 using Nop.Services.Common;
@@ -23,7 +22,6 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
 {
     #region Fields
 
-    private readonly IWorkContext _workContext;
     private readonly IDateTimeHelper _dateTimeHelper;
     private readonly IAddressService _addressService;
     private readonly IAddressModelFactory _addressModelFactory;
@@ -42,8 +40,7 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
 
     #region Ctor
 
-    public ErpAccountModelFactory(IWorkContext workContext,
-        IDateTimeHelper dateTimeHelper,
+    public ErpAccountModelFactory(IDateTimeHelper dateTimeHelper,
         IAddressService addressService,
         IAddressModelFactory addressModelFactory,
         AddressSettings addressSettings,
@@ -57,7 +54,6 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
         IErpNopUserAccountMapService erpNopUserAccountMapService,
         IErpShipToAddressService erpShipToAddressService)
     {
-        _workContext = workContext;
         _localizationService = localizationService;
         _dateTimeHelper = dateTimeHelper;
         _addressService = addressService;
@@ -158,12 +154,11 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
-        //get ERP Accounts
         var erpAccounts = await _erpAccountService.GetAllErpAccountsAsync(
             pageIndex: searchModel.Page - 1,
             pageSize: searchModel.PageSize,
             showHidden: searchModel.ShowInActive == 0 ? null : (searchModel.ShowInActive == 2),
-            erpAccontNo: searchModel.AccountNumber,
+            erpAccountNo: searchModel.AccountNumber,
             salesOrgId: searchModel.ErpSalesOrgId,
             email: searchModel.Email,
             accountName: searchModel.AccountName,
