@@ -86,7 +86,11 @@ public partial class B2BB2CFeaturesSettings : ISettings
 
     public bool EnableLiveCreditChecks { get; set; }
 
-    public StockDisplayFormat StockDisplayFormat { get; set; }
+    public StockDisplayFormat StockDisplayFormat
+    {
+        get => (StockDisplayFormat)StockDisplayFormatId;
+        set => StockDisplayFormatId = (int)value;
+    }
 
     public int StockDisplayFormatId { get; set; }
 
