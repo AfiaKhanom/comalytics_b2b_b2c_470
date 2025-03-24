@@ -24,14 +24,13 @@ public interface IErpAccountService
         int pageSize = int.MaxValue,
         bool? showHidden = null,
         bool getOnlyTotalCount = false,
-        string erpAccontNo = null,
+        string erpAccountNo = null,
         int salesOrgId = 0,
         string email = null,
         string accountName = null,
         int erpAccountStatusTypeId = 0,
         bool filterDeleted = true);
-
-    Task<IList<ErpAccount>> GetErpAccountListAsync(string accontNumber = null,
+    Task<IList<ErpAccount>> GetErpAccountListAsync(string accountNumber = null,
         string accountName = null,
         string email = null,
         int salesOrgId = 0,
@@ -44,7 +43,7 @@ public interface IErpAccountService
     Task<ErpAccount> GetErpAccountByErpAccountNumberAsync(string accountNumber);
     Task<ErpAccount> GetActiveErpAccountByCustomerIdAsync(int customerId);
     Task<ErpAccount> GetErpAccountByErpShipToAddressAsync(ErpShipToAddress erpShipToAddress);
-    Task<IList<ErpAccount>> GetErpAccountsOfOnlyActiveErpNopUsersAsync(int salesOrgId = 0);
     Task InActiveAllOldAccount(DateTime syncStartTime);
+    Task<IList<ErpAccount>> GetErpAccountsOfOnlyActiveErpNopUsersAsync(int salesOrgId = 0, string accountNumber = "");
     Task<IList<ErpAccount>> GetAllErpAccountsBySaleOrgIdAsync(int salesOrgId);
 }

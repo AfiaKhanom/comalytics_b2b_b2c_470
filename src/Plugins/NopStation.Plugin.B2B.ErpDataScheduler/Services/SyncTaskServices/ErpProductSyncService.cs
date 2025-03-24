@@ -329,6 +329,8 @@ public class ErpProductSyncService : IErpProductSyncService
                         break;
                     }
 
+                    totalNotSyncedSoFar += response.Data.Count - responseData.Count();
+
                     products = (List<Product>?)await _erpProductService
                             .GetProductsBySkuAsync(
                                 responseData.Select(x => x.Sku.Trim().ToLower()).ToArray(),

@@ -23,14 +23,12 @@ public class ErpAccountService : IErpAccountService
     private readonly IRepository<ErpNopUserAccountMap> _erpNopUserAccountMapRepository;
     private readonly IRepository<Address> _addressRepository;
     private readonly IErpNopUserService _erpNopUserService;
-    private readonly IRepository<ErpOrderAdditionalData> _erpOrderAdditionalRepository;
 
     #endregion
 
     #region Ctor
 
     public ErpAccountService(IRepository<ErpAccount> erpAccountRepository,
-        IRepository<ErpOrderAdditionalData> erpOrderAdditionalRepository,
         IRepository<Address> addressRepository,
         IErpNopUserService erpNopUserService,
         IRepository<ErpSalesRepErpAccountMap> erpSalesRepErpAccountMapRepository,
@@ -47,7 +45,6 @@ public class ErpAccountService : IErpAccountService
         _nopDataProvider = nopDataProvider;
         _erpNopUserRepository = erpNopUserRepository;
         _erpNopUserAccountMapRepository = erpNopUserAccountMapRepository;
-        _erpOrderAdditionalRepository = erpOrderAdditionalRepository;
     }
 
     #endregion
@@ -139,12 +136,11 @@ public class ErpAccountService : IErpAccountService
 
     public async Task<ErpSalesRepErpAccountMap> GetErpSalesRepErpAccountMapByIdAsync(int salesRepId, int? erpAccountId)
     {
-        // Check if both ids are provided and valid
         if (salesRepId <= 0 || (erpAccountId.HasValue && erpAccountId <= 0))
         {
             return null;
         }
-        // Fetch the record based on salesRepId and erpAccountId
+
         var record = await _erpSalesRepErpAccountMapRepository.Table.FirstOrDefaultAsync(x => x.ErpSalesRepId == salesRepId && x.ErpAccountId == erpAccountId);
         return record;
     }
@@ -196,7 +192,7 @@ public class ErpAccountService : IErpAccountService
         int pageSize = int.MaxValue,
         bool? showHidden = null,
         bool getOnlyTotalCount = false,
-        string erpAccontNo = null,
+        string erpAccountNo = null,
         int salesOrgId = 0,
         string email = null,
         string accountName = null,
@@ -217,8 +213,8 @@ public class ErpAccountService : IErpAccountService
             if (erpAccountStatusTypeId > 0)
                 query = query.Where(c => c.ErpAccountStatusTypeId.Equals(erpAccountStatusTypeId));
 
-            if (!string.IsNullOrWhiteSpace(erpAccontNo))
-                query = query.Where(c => c.AccountNumber.Contains(erpAccontNo));
+            if (!string.IsNullOrWhiteSpace(erpAccountNo))
+                query = query.Where(c => c.AccountNumber.Contains(erpAccountNo));
 
             if (salesOrgId > 0)
                 query = query.Where(c => c.ErpSalesOrgId.Equals(salesOrgId));
@@ -246,13 +242,13 @@ public class ErpAccountService : IErpAccountService
         return erpAccounts;
     }
 
-    public async Task<IList<ErpAccount>> GetErpAccountListAsync(string accontNumber = null,
-    string accountName = null,
-    string email = null,
-    int salesOrgId = 0,
-    int erpAccountStatusTypeId = 0,
-    bool filterDeleted = true,
-    bool? showHidden = null)
+    public async Task<IList<ErpAccount>> GetErpAccountListAsync(string accountNumber = null,
+        string accountName = null,
+        string email = null,
+        int salesOrgId = 0,
+        int erpAccountStatusTypeId = 0,
+        bool filterDeleted = true,
+        bool? showHidden = null)
     {
         var erpAccounts = await _erpAccountRepository.GetAllAsync(query =>
         {
@@ -268,8 +264,8 @@ public class ErpAccountService : IErpAccountService
             if (erpAccountStatusTypeId > 0)
                 query = query.Where(c => c.ErpAccountStatusTypeId.Equals(erpAccountStatusTypeId));
 
-            if (!string.IsNullOrWhiteSpace(accontNumber))
-                query = query.Where(c => c.AccountNumber.Contains(accontNumber));
+            if (!string.IsNullOrWhiteSpace(accountNumber))
+                query = query.Where(c => c.AccountNumber.Contains(accountNumber));
 
             if (salesOrgId > 0)
                 query = query.Where(c => c.ErpSalesOrgId.Equals(salesOrgId));
@@ -349,13 +345,28 @@ public class ErpAccountService : IErpAccountService
         return erpAccounts;
     }
 
-    public async Task<IList<ErpAccount>> GetErpAccountsOfOnlyActiveErpNopUsersAsync(int salesOrgId = 0)
+    public async Task<IList<ErpAccount>> GetErpAccountsOfOnlyActiveErpNopUsersAsync(int salesOrgId = 0, string accountNumber = "")
     {
-        return await (from eaMap in _erpNopUserAccountMapRepository.Table
-                      join ea in _erpAccountRepository.Table on eaMap.ErpAccountId equals ea.Id
-                      join enu in _erpNopUserRepository.Table on eaMap.ErpUserId equals enu.Id
-                      where ea.ErpSalesOrgId == salesOrgId && ea.IsActive && !ea.IsDeleted && !enu.IsDeleted && enu.IsActive
-                      select ea).Distinct().ToListAsync();
+        var erpAccountQuery = _erpAccountRepository.Table
+                              .Where(ea => ea.IsActive && !ea.IsDeleted);
+
+        if (salesOrgId > 0)
+        {
+            erpAccountQuery = erpAccountQuery.Where(ea => ea.ErpSalesOrgId == salesOrgId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(accountNumber))
+        {
+            erpAccountQuery = erpAccountQuery.Where(ea => ea.AccountNumber.Contains(accountNumber));
+        }
+
+        var query = from ea in erpAccountQuery
+                    join eaMap in _erpNopUserAccountMapRepository.Table on ea.Id equals eaMap.ErpAccountId
+                    join enu in _erpNopUserRepository.Table on eaMap.ErpUserId equals enu.Id
+                    where !enu.IsDeleted && enu.IsActive
+                    select ea;
+
+        return await query.Distinct().ToListAsync();
     }
 
     public async Task<ErpAccount> GetErpAccountByErpAccountNumberAsync(string accountNumber)

@@ -138,7 +138,7 @@ public class ErpAccountSyncService : IErpAccountSyncService
 
             foreach (var salesOrg in salesOrgs)
             {
-                var oldErpAccounts = await _erpAccountService.GetAllErpAccountsAsync(salesOrgId: salesOrg.Id, filterDeleted: false);
+                var oldErpAccounts = await _erpAccountService.GetErpAccountListAsync(accountNumber: erpAccountNumber, salesOrgId: salesOrg.Id, filterDeleted: false);
                 var isError = false;
                 var start = "0";
                 var lastSyncedErpAccountNumber = string.Empty;
@@ -186,6 +186,8 @@ public class ErpAccountSyncService : IErpAccountSyncService
                         .Where(x => !string.IsNullOrWhiteSpace(x.AccountNumber.Trim()))
                         .GroupBy(x => x.AccountNumber.Trim())
                         .Select(g => g.Last());
+
+                    totalNotSyncedSoFar += response.Data.Count - responseData.Count();
 
                     foreach (var erpAccount in responseData)
                     {

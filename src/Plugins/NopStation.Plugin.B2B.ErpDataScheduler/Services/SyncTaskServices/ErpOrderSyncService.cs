@@ -155,18 +155,18 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 return false;
             }
 
-            ErpAccount? specificErpAccount = null;
+            IList<ErpAccount> specificErpAccounts = null;
             var specificErpAccountSalesOrgFound = false;
             if (!string.IsNullOrWhiteSpace(erpAccountNumber))
             {
-                specificErpAccount = await _erpAccountService.GetErpAccountByErpAccountNumberAsync(erpAccountNumber);
+                specificErpAccounts = await _erpAccountService.GetErpAccountsOfOnlyActiveErpNopUsersAsync(accountNumber: erpAccountNumber);
 
-                if (specificErpAccount == null)
+                if (specificErpAccounts == null || specificErpAccounts != null && specificErpAccounts.Count == 0)
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpOrderSyncTaskName,
                         ErpSyncLevel.Order,
-                        $"No Erp Account found with Account Number: {erpAccountNumber}");
+                        $"No Active Erp Account found with Active Erp Nop User with Account Number: {erpAccountNumber}");
 
                     return false;
                 }
@@ -185,14 +185,14 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
             foreach (var salesOrg in salesOrgs)
             {
-                List<ErpAccount> oldErpAccounts;
+                IList<ErpAccount> oldErpAccounts;
 
-                if (specificErpAccount != null)
+                if (specificErpAccounts != null)
                 {
-                    if (specificErpAccount.ErpSalesOrgId == salesOrg.Id)
+                    if (specificErpAccounts.FirstOrDefault(x => x.ErpSalesOrgId == salesOrg.Id) != null)
                     {
                         specificErpAccountSalesOrgFound = true;
-                        oldErpAccounts = new List<ErpAccount> { specificErpAccount };
+                        oldErpAccounts = specificErpAccounts;
                     }
                     else
                     {
@@ -211,14 +211,15 @@ public class ErpOrderSyncService : IErpOrderSyncService
                         ErpSyncLevel.Order,
                         $"No Erp Accounts found with Active Nop Users for Sales org : {salesOrg.Name}");
 
-                    if (specificErpAccount != null)
+                    if (specificErpAccounts != null)
                         return false;
 
                     continue;
-                }
+                }                
 
                 var isError = false;
                 var totalSyncedSoFar = 0;
+                var totalNotSyncedSoFar = 0;
                 var lastErrorMessage = "";
                 var lastErpOrderSynced = "";
                 var lastErpOrderSyncedOfErpAccount = "";
@@ -280,19 +281,22 @@ public class ErpOrderSyncService : IErpOrderSyncService
                             .Where(x => !string.IsNullOrWhiteSpace(x.OrderType) && !string.IsNullOrWhiteSpace(x.CustomOrderNumber.Trim()))
                             .GroupBy(x => x.CustomOrderNumber.Trim())
                             .Select(g => g.Last())
-                            .ToListAsync();
+                        .ToListAsync();
+
+                        totalNotSyncedSoFar += response.Data.Count - erpOrders.Count;
 
                         if (!string.IsNullOrWhiteSpace(orderNumber))
                         {
                             erpOrders = erpOrders.Where(x => x.CustomOrderNumber == orderNumber).ToList();
                         }
 
-                        (lastErpOrderSynced, lastErpOrderSyncedOfErpAccount, totalSyncedSoFar) = await MapOrderData(
+                        (lastErpOrderSynced, lastErpOrderSyncedOfErpAccount, totalSyncedSoFar, totalNotSyncedSoFar) = await MapOrderData(
                             erpOrders,
                             erpAccount,
                             lastErpOrderSynced,
                             lastErpOrderSyncedOfErpAccount,
                             totalSyncedSoFar,
+                            totalNotSyncedSoFar,
                             allStateProvinces,
                             allCountries,
                             currency);
@@ -311,7 +315,8 @@ public class ErpOrderSyncService : IErpOrderSyncService
                                 "The Erp Order Sync run is cancelled. " +
                                 (!string.IsNullOrWhiteSpace(lastErpOrderSynced) ?
                                 $"The last synced Erp Order: {lastErpOrderSynced}, of Erp Account: {lastErpOrderSyncedOfErpAccount} for Sales Org: ({salesOrg.Code}) {salesOrg.Name}. " : string.Empty) +
-                                $"Total orders synced in this session: {totalSyncedSoFar}");
+                                $"Total orders synced in this session: {totalSyncedSoFar} and " + 
+                                $"Total orders not synced due to invalid data in this session: {totalNotSyncedSoFar}");
 
                             return false;
                         }
@@ -350,12 +355,13 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
                             var erpOrders = await response.Data.Where(x => !string.IsNullOrWhiteSpace(x.OrderType)).ToListAsync();
 
-                            (lastErpOrderSynced, lastErpOrderSyncedOfErpAccount, totalSyncedSoFar) = await MapOrderData(
+                            (lastErpOrderSynced, lastErpOrderSyncedOfErpAccount, totalSyncedSoFar, totalNotSyncedSoFar) = await MapOrderData(
                                 erpOrders,
                                 erpAccount,
                                 lastErpOrderSynced,
                                 lastErpOrderSyncedOfErpAccount,
                                 totalSyncedSoFar,
+                                totalNotSyncedSoFar,
                                 allStateProvinces,
                                 allCountries,
                                 currency);
@@ -368,7 +374,8 @@ public class ErpOrderSyncService : IErpOrderSyncService
                                     "The Erp Order Sync run is cancelled. " +
                                     (!string.IsNullOrWhiteSpace(lastErpOrderSynced) ?
                                     $"The last synced Erp Order: {lastErpOrderSynced}, of Erp Account: {lastErpOrderSyncedOfErpAccount} for Sales Org: ({salesOrg.Code}) {salesOrg.Name}. " : string.Empty) +
-                                    $"Total orders synced in this session: {totalSyncedSoFar}");
+                                    $"Total orders synced in this session: {totalSyncedSoFar} and " +
+                                    $"Total orders not synced due to invalid data in this session: {totalNotSyncedSoFar}");
 
                                 return false;
                             }
@@ -400,7 +407,8 @@ public class ErpOrderSyncService : IErpOrderSyncService
                     ErpSyncLevel.Order,
                     (!string.IsNullOrWhiteSpace(lastErpOrderSynced) ?
                     $"The last synced Erp Order: {lastErpOrderSynced}, of Erp Account: {lastErpOrderSyncedOfErpAccount} for Sales Org: ({salesOrg.Code}) {salesOrg.Name}. " : string.Empty) +
-                    $"Total synced in this session: {totalSyncedSoFar}");
+                    $"Total synced in this session: {totalSyncedSoFar} and " +
+                    $"Total orders not synced due to invalid data in this session: {totalNotSyncedSoFar}");
             }
 
             if (!string.IsNullOrWhiteSpace(erpAccountNumber) && !specificErpAccountSalesOrgFound)
@@ -456,12 +464,13 @@ public class ErpOrderSyncService : IErpOrderSyncService
         }
     }
 
-    private async Task<(string lastErpOrderSynced, string lastErpOrderSyncedOfErpAccount, int totalSyncedSoFar)> MapOrderData(
+    private async Task<(string lastErpOrderSynced, string lastErpOrderSyncedOfErpAccount, int totalSyncedSoFar, int totalNotSyncedSoFar)> MapOrderData(
         IList<ErpPlaceOrderDataModel> erpOrders,
         ErpAccount erpAccount,
         string lastErpOrderSynced,
         string lastErpOrderSyncedOfErpAccount,
         int totalSyncedSoFar,
+        int totalNotSyncedSoFar,
         List<StateProvince> allStateProvinces,
         List<Country> allCountries,
         Currency currency)
@@ -474,6 +483,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
             if (!IsValidEmail(erpOrder.CustomerEmail))
             {
+                totalNotSyncedSoFar++;
                 continue;
             }
 
@@ -564,6 +574,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
                     if (isCustomerHasAdminRole)
                     {
+                        totalNotSyncedSoFar++;
                         continue;
                     }
 
@@ -732,6 +743,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
                 if (product == null)
                 {
+                    totalNotSyncedSoFar++;
                     continue;
                 }
 
@@ -817,7 +829,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
             totalSyncedSoFar++;
         }
 
-        return (lastErpOrderSynced, lastErpOrderSyncedOfErpAccount, totalSyncedSoFar);
+        return (lastErpOrderSynced, lastErpOrderSyncedOfErpAccount, totalSyncedSoFar, totalNotSyncedSoFar);
     }
 
     #endregion

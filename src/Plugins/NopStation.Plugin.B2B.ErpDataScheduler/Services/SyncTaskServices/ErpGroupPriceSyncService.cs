@@ -191,6 +191,8 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
                         .GroupBy(x => new { StockCode = x.Sku.Trim(), PriceCode = x.GroupPriceCode.Trim() })
                         .Select(g => g.Last());
 
+                    totalNotSyncedSoFar += response.Data.Count - responseData.Count();
+
                     var products = await _erpProductService.GetProductsBySkuAsync(
                         response.Data
                         .Where(x => !string.IsNullOrWhiteSpace(x.Sku.Trim().ToLower()))

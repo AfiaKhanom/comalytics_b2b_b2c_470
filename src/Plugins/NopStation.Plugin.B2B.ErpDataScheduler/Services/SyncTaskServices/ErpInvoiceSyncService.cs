@@ -110,13 +110,13 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                 return false;
             }
 
-            ErpAccount? specificErpAccount = null;
+            IList<ErpAccount> specificErpAccounts = null;
             var specificErpAccountSalesOrgFound = false;
             if (!string.IsNullOrWhiteSpace(erpAccountNumber))
             {
-                specificErpAccount = await _erpAccountService.GetErpAccountByErpAccountNumberAsync(erpAccountNumber);
+                specificErpAccounts = await _erpAccountService.GetErpAccountsOfOnlyActiveErpNopUsersAsync(accountNumber: erpAccountNumber);
 
-                if (specificErpAccount == null)
+                if (specificErpAccounts == null || specificErpAccounts != null && specificErpAccounts.Count == 0)
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpInvoiceSyncTaskName,
@@ -141,14 +141,14 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
 
             foreach (var salesOrg in salesOrgs)
             {
-                List<ErpAccount> oldErpAccounts;
+                IList<ErpAccount> oldErpAccounts;
 
-                if (specificErpAccount != null)
+                if (specificErpAccounts != null)
                 {
-                    if (specificErpAccount.ErpSalesOrgId == salesOrg.Id)
+                    if (specificErpAccounts.FirstOrDefault(x => x.ErpSalesOrgId == salesOrg.Id) != null)
                     {
                         specificErpAccountSalesOrgFound = true;
-                        oldErpAccounts = new List<ErpAccount> { specificErpAccount };
+                        oldErpAccounts = specificErpAccounts;
                     }
                     else
                     {
@@ -157,7 +157,7 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                 }
                 else
                 {
-                    oldErpAccounts = (await _erpAccountService.GetErpAccountsOfOnlyActiveErpNopUsersAsync(salesOrgId: salesOrg.Id)).ToList();
+                    oldErpAccounts = await _erpAccountService.GetErpAccountsOfOnlyActiveErpNopUsersAsync(salesOrgId: salesOrg.Id);
                 }
 
                 if (oldErpAccounts.Count == 0)
@@ -167,11 +167,12 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                         ErpSyncLevel.Invoice,
                         $"No Erp Accounts found with Active Nop Users for Sales org : {salesOrg.Name}");
 
-                    if (specificErpAccount != null)
+                    if (specificErpAccounts != null)
                         return false;
 
                     continue;
                 }
+                
 
                 var lastErpInvoiceSynced = string.Empty;
                 var lastErpInvoiceSyncedOfErpAccount = string.Empty;
@@ -222,6 +223,8 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                             .Where(x => !string.IsNullOrWhiteSpace(x.ErpDocumentNumber.Trim()))
                             .GroupBy(x => x.ErpDocumentNumber.Trim())
                             .Select(g => g.Last());
+
+                        totalNotSyncedSoFar += response.Data.Count - responseData.Count();
 
                         foreach (var erpInvoice in responseData)
                         {
