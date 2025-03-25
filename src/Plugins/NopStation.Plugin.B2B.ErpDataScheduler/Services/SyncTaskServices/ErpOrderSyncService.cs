@@ -122,7 +122,8 @@ public class ErpOrderSyncService : IErpOrderSyncService
         await _erpNopUserService.InsertErpNopUserAsync(erpNopUser);
 
         //add to 'Registered' role
-        var registeredRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BCustomerRole) ?? throw new NopException("'B2BUser' role could not be loaded");
+        var registeredRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BCustomerRole) 
+            ?? throw new NopException($"'{ERPIntegrationCoreDefaults.B2BCustomerRole}' role could not be loaded");
         await _customerService.AddCustomerRoleMappingAsync(new CustomerCustomerRoleMapping { CustomerId = customer.Id, CustomerRoleId = registeredRole.Id });
     }
 
@@ -487,7 +488,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpOrderSyncTaskName,
                     ErpSyncLevel.Order,
-                    $"Data mapping skipped for {nameof(Order.CustomOrderNumber)}: {erpOrder.CustomOrderNumber}. \nThe Customer email {erpOrder.CustomerEmail} is invalid");
+                    $"Data mapping skipped for {nameof(Order.CustomOrderNumber)}: {erpOrder.CustomOrderNumber}. \nThe Customer email '{erpOrder.CustomerEmail}' is empty or invalid.");
                 continue;
             }
 
