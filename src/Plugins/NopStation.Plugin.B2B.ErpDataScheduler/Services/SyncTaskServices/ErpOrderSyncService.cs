@@ -236,7 +236,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
                     {
                         if (erpAccount.LastTimeOrderSyncOnUtc.HasValue)
                         {
-                            dateFrom = isIncrementalSync ? erpAccount.LastTimeOrderSyncOnUtc.Value.AddHours(-2) : null;                            
+                            dateFrom = isIncrementalSync ? erpAccount.LastTimeOrderSyncOnUtc.Value.AddHours(-2) : null;
                         }
                         else
                         {
@@ -334,7 +334,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
                                 AccountNumber = erpAccount.AccountNumber,
                                 Location = salesOrg.Code,
                                 DateFrom = isIncrementalSync ? erpAccount.LastTimeOrderSyncOnUtc : null,
-                                
+
                             };
 
                             var response = await erpIntegrationPlugin.GetQuoteByAccountFromErpAsync(erpGetRequestModel);
@@ -484,6 +484,10 @@ public class ErpOrderSyncService : IErpOrderSyncService
             if (!IsValidEmail(erpOrder.CustomerEmail))
             {
                 totalNotSyncedSoFar++;
+                await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                    ErpDataSchedulerDefaults.ErpOrderSyncTaskName,
+                    ErpSyncLevel.Order,
+                    $"Data mapping skipped for {nameof(Order.CustomOrderNumber)}: {erpOrder.CustomOrderNumber}. \nThe Customer email {erpOrder.CustomerEmail} is invalid");
                 continue;
             }
 
@@ -575,6 +579,10 @@ public class ErpOrderSyncService : IErpOrderSyncService
                     if (isCustomerHasAdminRole)
                     {
                         totalNotSyncedSoFar++;
+                        await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                            ErpDataSchedulerDefaults.ErpOrderSyncTaskName,
+                            ErpSyncLevel.Order,
+                            $"Data mapping skipped for {nameof(Order.CustomOrderNumber)}: {erpOrder.CustomOrderNumber}. \nThe Customer  {erpOrder.CustomerEmail} has admin role.");
                         continue;
                     }
 
