@@ -81,7 +81,7 @@ public class ErpLogsService : IErpLogsService
 
     #region Insert/Update
 
-    public async Task<ErpLogs> InsertErpLogAsync(ErpLogLevel logLevel, ErpSyncLevel syncLavel, string shortMessage, string fullMessage = "", Customer customer = null)
+    public async Task<ErpLogs> InsertErpLogAsync(ErpLogLevel logLevel, ErpSyncLevel syncLevel, string shortMessage, string fullMessage = "", Customer customer = null)
     {
         if (IgnoreLog(shortMessage) || IgnoreLog(fullMessage))
             return null;
@@ -91,7 +91,7 @@ public class ErpLogsService : IErpLogsService
             ErpLogLevelId = (int)logLevel,
             ShortMessage = shortMessage,
             FullMessage = fullMessage,
-            ErpSyncLevelId = (int)syncLavel,
+            ErpSyncLevelId = (int)syncLevel,
             IpAddress = _webHelper.GetCurrentIpAddress(),
             CustomerId = customer?.Id,
             PageUrl = _webHelper.GetThisPageUrl(true),
@@ -104,7 +104,7 @@ public class ErpLogsService : IErpLogsService
         return log;
     }
 
-    public ErpLogs InsertErpLog(ErpLogLevel logLevel, ErpSyncLevel syncLavel, string shortMessage, string fullMessage = "", Customer customer = null)
+    public ErpLogs InsertErpLog(ErpLogLevel logLevel, ErpSyncLevel syncLevel, string shortMessage, string fullMessage = "", Customer customer = null)
     {
         if (IgnoreLog(shortMessage) || IgnoreLog(fullMessage))
             return null;
@@ -114,7 +114,7 @@ public class ErpLogsService : IErpLogsService
             ErpLogLevelId = (int)logLevel,
             ShortMessage = shortMessage,
             FullMessage = fullMessage,
-            ErpSyncLevelId = (int)syncLavel,
+            ErpSyncLevelId = (int)syncLevel,
             IpAddress = _webHelper.GetCurrentIpAddress(),
             CustomerId = customer?.Id,
             PageUrl = _webHelper.GetThisPageUrl(true),
@@ -167,7 +167,7 @@ public class ErpLogsService : IErpLogsService
         return await _erpLogsRepository.GetByIdAsync(id, cache => default);
     }
 
-    public async Task<IPagedList<ErpLogs>> GetAllErpLogsAsync(string ipAddress, string message, int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, int logLevelId = 0, int syncLavelId = 0, string nopCustomerEmail = null, DateTime? createdFrom = null, DateTime? createdTo = null)
+    public async Task<IPagedList<ErpLogs>> GetAllErpLogsAsync(string ipAddress, string message, int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, int logLevelId = 0, int syncLevelId = 0, string nopCustomerEmail = null, DateTime? createdFrom = null, DateTime? createdTo = null)
     {
         var erpLogs = await _erpLogsRepository.GetAllPagedAsync(query =>
         {
@@ -188,8 +188,8 @@ public class ErpLogsService : IErpLogsService
             if (logLevelId > 0)
                 query = query.Where(x => x.ErpLogLevelId.Equals(logLevelId));
 
-            if (syncLavelId > 0)
-                query = query.Where(x => x.ErpSyncLevelId.Equals(syncLavelId));
+            if (syncLevelId > 0)
+                query = query.Where(x => x.ErpSyncLevelId.Equals(syncLevelId));
 
             if (!string.IsNullOrEmpty(nopCustomerEmail))
             {
@@ -213,7 +213,7 @@ public class ErpLogsService : IErpLogsService
         return await _erpLogsRepository.GetByIdsAsync(erpLogIds);
     }
 
-    public async Task InformationAsync(string message, ErpSyncLevel syncLavel, Exception exception = null, Customer customer = null)
+    public async Task InformationAsync(string message, ErpSyncLevel syncLevel, Exception exception = null, Customer customer = null)
     {
 
         //don't log thread abort exception
@@ -221,10 +221,10 @@ public class ErpLogsService : IErpLogsService
             return;
 
         if (IsEnabled(LogLevel.Information))
-            await InsertErpLogAsync(ErpLogLevel.Information, syncLavel, message, exception?.ToString() ?? string.Empty, customer);
+            await InsertErpLogAsync(ErpLogLevel.Information, syncLevel, message, exception?.ToString() ?? string.Empty, customer);
     }
 
-    public void Information(string message, ErpSyncLevel syncLavel, Exception exception = null, Customer customer = null)
+    public void Information(string message, ErpSyncLevel syncLevel, Exception exception = null, Customer customer = null)
     {
 
         //don't log thread abort exception
@@ -232,10 +232,10 @@ public class ErpLogsService : IErpLogsService
             return;
 
         if (IsEnabled(LogLevel.Information))
-            InsertErpLog(ErpLogLevel.Information, syncLavel, message, exception?.ToString() ?? string.Empty, customer);
+            InsertErpLog(ErpLogLevel.Information, syncLevel, message, exception?.ToString() ?? string.Empty, customer);
     }
 
-    public async Task WarningAsync(string message, ErpSyncLevel syncLavel, Exception exception = null, Customer customer = null)
+    public async Task WarningAsync(string message, ErpSyncLevel syncLevel, Exception exception = null, Customer customer = null)
     {
 
         //don't log thread abort exception
@@ -243,10 +243,10 @@ public class ErpLogsService : IErpLogsService
             return;
 
         if (IsEnabled(LogLevel.Warning))
-            await InsertErpLogAsync(ErpLogLevel.Warning, syncLavel, message, exception?.ToString() ?? string.Empty, customer);
+            await InsertErpLogAsync(ErpLogLevel.Warning, syncLevel, message, exception?.ToString() ?? string.Empty, customer);
     }
 
-    public void Warning(string message, ErpSyncLevel syncLavel, Exception exception = null, Customer customer = null)
+    public void Warning(string message, ErpSyncLevel syncLevel, Exception exception = null, Customer customer = null)
     {
 
         //don't log thread abort exception
@@ -254,10 +254,10 @@ public class ErpLogsService : IErpLogsService
             return;
 
         if (IsEnabled(LogLevel.Warning))
-            InsertErpLog(ErpLogLevel.Warning, syncLavel, message, exception?.ToString() ?? string.Empty, customer);
+            InsertErpLog(ErpLogLevel.Warning, syncLevel, message, exception?.ToString() ?? string.Empty, customer);
     }
 
-    public async Task ErrorAsync(string message, ErpSyncLevel syncLavel, Exception exception = null, Customer customer = null)
+    public async Task ErrorAsync(string message, ErpSyncLevel syncLevel, Exception exception = null, Customer customer = null)
     {
 
         //don't log thread abort exception
@@ -265,17 +265,17 @@ public class ErpLogsService : IErpLogsService
             return;
 
         if (IsEnabled(LogLevel.Error))
-            await InsertErpLogAsync(ErpLogLevel.Error, syncLavel, message, exception?.ToString() ?? string.Empty, customer);
+            await InsertErpLogAsync(ErpLogLevel.Error, syncLevel, message, exception?.ToString() ?? string.Empty, customer);
     }
 
-    public void Error(string message, ErpSyncLevel syncLavel, Exception exception = null, Customer customer = null)
+    public void Error(string message, ErpSyncLevel syncLevel, Exception exception = null, Customer customer = null)
     {
         //don't log thread abort exception
         if (exception is System.Threading.ThreadAbortException)
             return;
 
         if (IsEnabled(LogLevel.Error))
-            InsertErpLog(ErpLogLevel.Error, syncLavel, message, exception?.ToString() ?? string.Empty, customer);
+            InsertErpLog(ErpLogLevel.Error, syncLevel, message, exception?.ToString() ?? string.Empty, customer);
     }
 
 

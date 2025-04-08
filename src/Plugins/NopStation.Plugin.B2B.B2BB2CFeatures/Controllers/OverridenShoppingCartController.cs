@@ -355,8 +355,6 @@ public class OverridenShoppingCartController : ShoppingCartController
         var store = await _storeContext.GetCurrentStoreAsync();
         var cart = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id);
 
-        await LiveErpAccountCreditCheckByCustomerAsync(customer);
-
         if (cart != null && cart.Any())
         {
             //Check whether payment workflow is required

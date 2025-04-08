@@ -143,26 +143,6 @@ public class NopStationScheduler : INopStationScheduler
         return await scheduler.GetJobDetail(jobKey, default);
     }
 
-    public async Task ExecuteSchedulerAsync(string quartzJobName, bool isIncremental = true, CancellationToken cancellationToken = default)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(quartzJobName, nameof(quartzJobName));
-
-        var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
-
-        var jobKey = new JobKey(quartzJobName);
-
-        _ = await scheduler.GetJobDetail(jobKey, cancellationToken) ??
-            throw new ArgumentException("Schedule job not found by the specified job identity key");
-
-        var jobDataMap = new JobDataMap
-        {
-            { ErpDataSchedulerDefaults.IsManualTrigger, "true" },
-            { ErpDataSchedulerDefaults.IsIncrementalSync, isIncremental ? "true" : "false" }
-        };
-
-        await scheduler.TriggerJob(jobKey, jobDataMap, default);
-    }
-
     public async Task ExecuteSchedulerAsync(string quartzJobName, JobDataMap jobDataMap, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(quartzJobName, nameof(quartzJobName));

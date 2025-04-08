@@ -27,7 +27,7 @@ public interface IErpOrderAdditionalDataService
 
     Task<IList<ErpOrderAdditionalData>> GetErpOrderAdditionalDatasByAccountIdAsync(int accountId);
 
-    Task<ErpOrderAdditionalData> GetErpOrderAdditionalDataByErpAccountIdAndNopOrderNumberAsync(int accountId, string nopOrderNumber);
+    Task<ErpOrderAdditionalData> GetErpOrderAdditionalDataByErpAccountIdAndErpOrderNumberAsync(int accountId, string erpOrderNumber);
 
     Task<Order> GetNopOrderByErpOrderNumberAsync(string erpOrderNumber);
 

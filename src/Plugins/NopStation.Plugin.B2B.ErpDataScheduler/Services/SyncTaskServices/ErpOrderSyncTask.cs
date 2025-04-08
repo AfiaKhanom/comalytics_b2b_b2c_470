@@ -28,9 +28,15 @@ public partial class ErpOrderSyncTask : IJob
         if (context.JobDetail.JobDataMap.TryGetBooleanValue(ErpDataSchedulerDefaults.JobShouldExecute, out var shouldExecute) && shouldExecute)
         {
             context.MergedJobDataMap.TryGetBoolean(ErpDataSchedulerDefaults.IsManualTrigger, out var isManualTrigger);
-            context.MergedJobDataMap.TryGetBoolean(ErpDataSchedulerDefaults.IsIncrementalSync, out var isIncrementalSync);
             context.MergedJobDataMap.TryGetString(nameof(ErpOrderPartialSyncModel.ErpAccountNumber), out var erpAccountNumber);
             context.MergedJobDataMap.TryGetString(nameof(ErpOrderPartialSyncModel.OrderNumber), out var orderNumber);
+
+            var isIncrementalSync = false;
+
+            if (string.IsNullOrWhiteSpace(erpAccountNumber) && string.IsNullOrWhiteSpace(orderNumber))
+            {
+                context.JobDetail.JobDataMap.TryGetBooleanValue(ErpDataSchedulerDefaults.IsIncrementalSync, out isIncrementalSync);
+            }
 
             await _erpOrderSyncService.IsErpOrderSyncSuccessfulAsync(erpAccountNumber, orderNumber, isManualTrigger, isIncrementalSync, context.CancellationToken);
         }

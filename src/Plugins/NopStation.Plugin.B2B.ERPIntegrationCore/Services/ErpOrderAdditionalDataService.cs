@@ -218,13 +218,14 @@ public class ErpOrderAdditionalDataService : IErpOrderAdditionalDataService
         return null;
     }
 
-    public async Task<ErpOrderAdditionalData> GetErpOrderAdditionalDataByErpAccountIdAndNopOrderNumberAsync(int accountId, string nopOrderNumber)
+    public async Task<ErpOrderAdditionalData> GetErpOrderAdditionalDataByErpAccountIdAndErpOrderNumberAsync(int accountId, string erpOrderNumber)
     {
-        if (accountId <= 0 || string.IsNullOrEmpty(nopOrderNumber))
+        if (accountId <= 0 || string.IsNullOrEmpty(erpOrderNumber))
             return null;
 
-        return await _erpOrderAdditionalDataRepository.Table.Where(
-            x => x.ErpAccountId == accountId && x.ErpOrderNumber.Trim() == nopOrderNumber.Trim()).FirstOrDefaultAsync();
+        return await _erpOrderAdditionalDataRepository.Table
+            .Where(x => x.ErpAccountId == accountId && x.ErpOrderNumber.Trim() == erpOrderNumber.Trim())
+            .FirstOrDefaultAsync();
     }
 
     #endregion

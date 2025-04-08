@@ -284,6 +284,16 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                                     erpSpecialPriceInsertList.Add(oldSpecialPrice);
                                 }
                                 else
+                                {
+                                    oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;
+                                }
+                                oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
+
+                                if (await IsValidErpSpecialPriceAsync(oldSpecialPrice))
+                                {
+                                    erpSpecialPriceInsertList.Add(oldSpecialPrice);
+                                }
+                                else
                                     totalNotSyncedSoFar++;
                             }
                             else

@@ -25,5 +25,6 @@ public class ErpLogsBuilder : NopEntityBuilder<ErpLogs>
             .WithColumn(nameof(ErpLogs.ReferrerUrl)).AsString()
             .WithColumn(nameof(ErpLogs.CreatedOnUtc)).AsDateTime2();
     }
+
     #endregion
 }

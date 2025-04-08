@@ -276,7 +276,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
             defaultSalesOrg = new ErpSalesOrg
             {
                 Name = "Default Sales Org",
-                Code = "101",
+                Code = DEFAULT_ERP_SALES_ORG_CODE,
                 Email = "default@mail.com",
                 IntegrationClientId = "1",
                 AuthenticationKey = "authkey1212",

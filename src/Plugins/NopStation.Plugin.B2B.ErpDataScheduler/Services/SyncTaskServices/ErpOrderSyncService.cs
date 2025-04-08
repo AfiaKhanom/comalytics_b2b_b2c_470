@@ -282,7 +282,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
                             .Where(x => !string.IsNullOrWhiteSpace(x.OrderType) && !string.IsNullOrWhiteSpace(x.CustomOrderNumber.Trim()))
                             .GroupBy(x => x.CustomOrderNumber.Trim())
                             .Select(g => g.Last())
-                        .ToListAsync();
+                            .ToListAsync();
 
                         totalNotSyncedSoFar += response.Data.Count - erpOrders.Count;
 
@@ -494,6 +494,14 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
             var oldNopOrder = await _orderService.GetOrderByCustomOrderNumberAsync(erpOrder.CustomOrderNumber);
 
+            var oldErpOrder = await _erpOrderAdditionalDataService
+                .GetErpOrderAdditionalDataByErpAccountIdAndErpOrderNumberAsync(accountId: erpAccount.Id, erpOrderNumber: erpOrder.CustomOrderNumber);
+
+            if (oldErpOrder != null && oldNopOrder == null)
+            {
+                oldNopOrder = await _orderService.GetOrderByIdAsync(oldErpOrder.NopOrderId);
+            }
+
             if (oldNopOrder == null)
             {
                 #region Address
@@ -634,8 +642,6 @@ public class ErpOrderSyncService : IErpOrderSyncService
             }
             else
             {
-                erpNopUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(oldNopOrder.CustomerId);
-                oldNopOrder.CustomOrderNumber = erpOrder.CustomOrderNumber ?? string.Empty;
                 oldNopOrder.ShippingStatusId = (int)ShippingStatus.NotYetShipped;
                 oldNopOrder.OrderTotal = erpOrder.OrderSubtotalInclTax ?? decimal.Zero;
                 oldNopOrder.OrderSubtotalExclTax = erpOrder.OrderSubtotalExclTax ?? decimal.Zero;
@@ -654,17 +660,12 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 oldNopOrder.CustomerCurrencyCode = currency.CurrencyCode;
                 oldNopOrder.CurrencyRate = currency.Rate;
                 oldNopOrder.CustomerTaxDisplayTypeId = (int)TaxDisplayType.ExcludingTax;
-                oldNopOrder.CustomerTaxDisplayType = TaxDisplayType.ExcludingTax;
-
                 await _orderService.UpdateOrderAsync(oldNopOrder);
             }
 
             #endregion
 
             #region Erp Order
-
-            var oldErpOrder = await _erpOrderAdditionalDataService
-                .GetErpOrderAdditionalDataByErpAccountIdAndNopOrderNumberAsync(accountId: erpAccount.Id, nopOrderNumber: erpOrder.CustomOrderNumber);
 
             if (oldErpOrder == null)
             {
@@ -704,8 +705,11 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 oldErpOrder.IntegrationErrorDateTimeUtc = null;
                 oldErpOrder.IsShippingAddressModified = false;
                 oldErpOrder.IsOrderPlaceNotificationSent = true;
-                oldErpOrder.ErpOrderPlaceByCustomerTypeId = erpNopUser == null ? 0 : erpNopUser.ErpUserTypeId;
-                oldErpOrder.ChangedById = erpNopUser == null ? 0 : erpNopUser.NopCustomerId;
+
+                erpNopUser = erpNopUser == null ? await _erpNopUserService.GetErpNopUserByCustomerIdAsync(oldNopOrder.CustomerId) : null;
+
+                oldErpOrder.ErpOrderPlaceByCustomerTypeId = erpNopUser?.ErpUserTypeId ?? 0;
+                oldErpOrder.ChangedById = erpNopUser?.NopCustomerId ?? 0;
 
                 await _erpOrderAdditionalDataService.InsertErpOrderAdditionalDataAsync(oldErpOrder);
             }
@@ -714,7 +718,6 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 oldErpOrder.NopOrderId = oldNopOrder.Id;
                 oldErpOrder.ErpOrderNumber = erpOrder.CustomOrderNumber;
                 oldErpOrder.ErpOrderType = (ErpOrderType)Enum.Parse(typeof(ErpOrderType), erpOrder.OrderType);
-                oldErpOrder.OrderPlacedByNopCustomerId = oldNopOrder.CustomerId;
                 oldErpOrder.ChangedOnUtc = DateTime.UtcNow;
                 oldErpOrder.LastERPUpdateUtc = DateTime.UtcNow;
                 oldErpOrder.QuoteExpiryDate = erpOrder.DeliveryDate;
@@ -725,9 +728,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 oldErpOrder.ERPOrderStatus = nameof(OrderStatus.Processing);
                 oldErpOrder.DeliveryDate = erpOrder.DeliveryDate;
                 oldErpOrder.IntegrationStatusType = IntegrationStatusType.Confirmed;
-                oldErpOrder.IntegrationError = string.Empty;
-                oldErpOrder.ErpOrderPlaceByCustomerTypeId = erpNopUser == null ? 0 : erpNopUser.ErpUserTypeId;
-                oldErpOrder.ChangedById = erpNopUser == null ? 0 : erpNopUser.NopCustomerId;
+                oldErpOrder.IntegrationError = !string.IsNullOrWhiteSpace(oldErpOrder.IntegrationError) ? oldErpOrder.IntegrationError : string.Empty;
 
                 await _erpOrderAdditionalDataService.UpdateErpOrderAdditionalDataAsync(oldErpOrder);
             }
@@ -752,7 +753,6 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
                 if (product == null)
                 {
-                    totalNotSyncedSoFar++;
                     continue;
                 }
 
@@ -810,12 +810,12 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 }
                 else
                 {
-                    erpOrderItem.ErpOrderLineNumber = string.Empty;
+                    erpOrderItem.ErpOrderLineNumber = !string.IsNullOrWhiteSpace(erpOrderItem.ErpOrderLineNumber) ? erpOrderItem.ErpOrderLineNumber : string.Empty;
                     erpOrderItem.ErpSalesUoM = item.UnitOfMeasure;
-                    erpOrderItem.ErpOrderLineStatus = string.Empty;
-                    erpOrderItem.ErpOrderLineNotes = string.Empty;
+                    erpOrderItem.ErpOrderLineStatus = !string.IsNullOrWhiteSpace(erpOrderItem.ErpOrderLineStatus) ? erpOrderItem.ErpOrderLineStatus : string.Empty;
+                    erpOrderItem.ErpOrderLineNotes = !string.IsNullOrWhiteSpace(erpOrderItem.ErpOrderLineNotes) ? erpOrderItem.ErpOrderLineNotes : string.Empty;
                     erpOrderItem.ErpDeliveryMethod = erpOrder.DeliveryMethod;
-                    erpOrderItem.ErpInvoiceNumber = string.Empty;
+                    erpOrderItem.ErpInvoiceNumber = !string.IsNullOrWhiteSpace(erpOrderItem.ErpInvoiceNumber) ? erpOrderItem.ErpInvoiceNumber : string.Empty;
                     erpOrderItem.ChangedBy = 1;
                     erpOrderItem.ErpDateRequired = erpOrder.DateRequired;
                     erpOrderItem.ErpDateExpected = erpOrder.DeliveryDate;

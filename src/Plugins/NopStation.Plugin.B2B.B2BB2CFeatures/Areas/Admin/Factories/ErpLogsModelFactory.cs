@@ -155,7 +155,7 @@ public class ErpLogsModelFactory : IErpLogsModelFactory
             pageIndex: searchModel.Page - 1,
             pageSize: searchModel.PageSize,
             logLevelId: searchModel.ErpLogLevelId,
-            syncLavelId: searchModel.ErpSyncLabelId,
+            syncLevelId: searchModel.ErpSyncLabelId,
             nopCustomerEmail: searchModel.NopCustomerEmail,
             createdFrom: createdFrom,
             createdTo: createdTo);

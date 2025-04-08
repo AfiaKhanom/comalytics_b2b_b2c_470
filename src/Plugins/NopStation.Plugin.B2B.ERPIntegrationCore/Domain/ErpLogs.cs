@@ -29,6 +29,7 @@ public partial class ErpLogs : BaseEntity
         get => (ErpLogLevel)ErpLogLevelId;
         set => ErpLogLevelId = (int)value;
     }
+
     public ErpSyncLevel ErpSyncLevel
     {
         get => (ErpSyncLevel)ErpSyncLevelId;

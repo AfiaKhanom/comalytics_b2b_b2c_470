@@ -62,14 +62,6 @@ public interface INopStationScheduler
     Task<IJobDetail?> GetScheduleJobAsync(string jobIdentity, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Execute a job immediately
-    /// </summary>
-    /// <param name="quartzJobName"></param>
-    /// <param name="isIncremental"></param>
-    /// <returns></returns>
-    Task ExecuteSchedulerAsync(string quartzJobName, bool isIncremental = true, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Execute a job immediately with additional data
     /// </summary>
     /// <param name="quartzJobName"></param>

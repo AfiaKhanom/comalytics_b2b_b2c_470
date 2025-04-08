@@ -159,7 +159,6 @@ public class B2BAccountPaymentProcessor : BasePlugin, IPaymentMethod, INopStatio
 
     public async Task<decimal> GetAdditionalHandlingFeeAsync(IList<ShoppingCartItem> cart)
     {
-        await LiveErpAccountCreditCheckAsync();
         return await _orderTotalCalculationService.CalculatePaymentAdditionalFeeAsync(cart, 0, false);
     }
 
@@ -174,7 +173,6 @@ public class B2BAccountPaymentProcessor : BasePlugin, IPaymentMethod, INopStatio
                 (await _storeContext.GetCurrentStoreAsync()).Id);
         }
 
-        await LiveErpAccountCreditCheckAsync();
         return new ProcessPaymentRequest();
     }
 
@@ -202,16 +200,12 @@ public class B2BAccountPaymentProcessor : BasePlugin, IPaymentMethod, INopStatio
         if (erpAccount == null)
             return true;
 
-        await LiveErpAccountCreditCheckAsync();
-
         return false;
     }
 
     public async Task PostProcessPaymentAsync(PostProcessPaymentRequest postProcessPaymentRequest)
     {
-        await LiveErpAccountCreditCheckAsync();
-        //nothing
-        return;
+
     }
 
     public async Task<ProcessPaymentResult> ProcessPaymentAsync(ProcessPaymentRequest processPaymentRequest)
@@ -327,8 +321,6 @@ public class B2BAccountPaymentProcessor : BasePlugin, IPaymentMethod, INopStatio
             warnings.AddRange(validationResult.Errors.Select(error => error.ErrorMessage));
             return warnings;
         }
-
-        await LiveErpAccountCreditCheckAsync();
 
         var sci = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, storeId: store.Id);
         var (shoppingCartTotalBase, _, _, _, _, _) = await _orderTotalCalculationService.GetShoppingCartTotalAsync(sci);

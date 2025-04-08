@@ -28,9 +28,15 @@ public partial class ErpSpecialPriceSyncTask : IJob
         if (context.JobDetail.JobDataMap.TryGetBooleanValue(ErpDataSchedulerDefaults.JobShouldExecute, out var shouldExecute) && shouldExecute)
         {
             context.MergedJobDataMap.TryGetBoolean(ErpDataSchedulerDefaults.IsManualTrigger, out var isManualTrigger);
-            context.MergedJobDataMap.TryGetBoolean(ErpDataSchedulerDefaults.IsIncrementalSync, out var isIncrementalSync);
             context.MergedJobDataMap.TryGetString(nameof(ErpSpecialPricePartialSyncModel.ErpAccountNumber), out var erpAccountNumber);
             context.MergedJobDataMap.TryGetString(nameof(ErpSpecialPricePartialSyncModel.StockCode), out var stockCode);
+
+            var isIncrementalSync = false;
+
+            if (string.IsNullOrWhiteSpace(erpAccountNumber) && string.IsNullOrWhiteSpace(stockCode))
+            {
+                context.JobDetail.JobDataMap.TryGetBooleanValue(ErpDataSchedulerDefaults.IsIncrementalSync, out isIncrementalSync);
+            }
 
             await _erpSpecialPriceSyncService.IsErpSpecialPriceSyncSuccessfulAsync(erpAccountNumber, stockCode, isManualTrigger, isIncrementalSync, context.CancellationToken);
         }

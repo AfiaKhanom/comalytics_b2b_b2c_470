@@ -108,8 +108,7 @@ public class ErpStockSyncService : IErpStockSyncService
                         Start = start,
                         DateFrom = isIncrementalSync ? salesOrg.LastErpStockSyncTimeOnUtc : null,
                         Location = salesOrg.Code,
-                        ProductSku = stockCode,
-                        
+                        ProductSku = stockCode
                     };
 
                     var response = await erpIntegrationPlugin.GetStocksFromErpAsync(erpGetRequestModel);

@@ -28,8 +28,14 @@ public partial class ErpStockSyncTask : IJob
         if (context.JobDetail.JobDataMap.TryGetBooleanValue(ErpDataSchedulerDefaults.JobShouldExecute, out var shouldExecute) && shouldExecute)
         {
             context.MergedJobDataMap.TryGetBoolean(ErpDataSchedulerDefaults.IsManualTrigger, out var isManualTrigger);
-            context.MergedJobDataMap.TryGetBoolean(ErpDataSchedulerDefaults.IsIncrementalSync, out var isIncrementalSync);
             context.MergedJobDataMap.TryGetString(nameof(ErpStockPartialSyncModel.StockCode), out var stockCode);
+
+            var isIncrementalSync = false;
+
+            if (string.IsNullOrWhiteSpace(stockCode))
+            {
+                context.JobDetail.JobDataMap.TryGetBooleanValue(ErpDataSchedulerDefaults.IsIncrementalSync, out isIncrementalSync);
+            }
 
             await _erpStockSyncService.IsErpStockSyncSuccessfulAsync(stockCode, isManualTrigger, isIncrementalSync, context.CancellationToken);
         }

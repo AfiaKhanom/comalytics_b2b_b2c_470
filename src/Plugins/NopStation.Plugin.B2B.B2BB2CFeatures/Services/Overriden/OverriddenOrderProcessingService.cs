@@ -873,7 +873,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
                 AccountNumber = erpAccount.AccountNumber,
                 AccountName = erpAccount.AccountName,
                 Location = accountSalesOrg.Code,
-                CustomOrderNumber = order.CustomOrderNumber ?? order.Id.ToString(),
+                CustomOrderNumber = string.IsNullOrWhiteSpace(order.CustomOrderNumber) ? $"{order.Id}" : order.CustomOrderNumber,
                 DateRequired =
                     order.PickupInStore || erpOrderAdditionalData.DeliveryDate == null
                         ? DateTime.Now

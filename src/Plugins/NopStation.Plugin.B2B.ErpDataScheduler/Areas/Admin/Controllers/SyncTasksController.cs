@@ -312,7 +312,8 @@ public class SyncTasksController : NopStationAdminController
             {
                 task.LastStartUtc = DateTime.UtcNow;
                 await _syncTaskService.UpdateTaskAsync(task);
-                await _nopStationScheduler.ExecuteSchedulerAsync(task.QuartzJobName, task.IsIncremental);
+                var jobDataMap = _nopStationScheduler.PrepareJobDataMap(new List<KeyValuePair<string, object>>());
+                await _nopStationScheduler.ExecuteSchedulerAsync(task.QuartzJobName, jobDataMap);
 
                 _notificationService.SuccessNotification(await _localizationService
                     .GetResourceAsync("Plugin.Misc.NopStation.ErpDataScheduler.Tasks.RunNow.Progress"));
