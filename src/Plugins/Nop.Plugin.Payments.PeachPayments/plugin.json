@@ -1,0 +1,11 @@
+﻿{
+  "Group": "Payment methods",
+  "FriendlyName": "Peach Payments",
+  "SystemName": "Payments.PeachPayments",
+  "Version": "4.70.1",
+  "SupportedVersions": [ "4.70" ],
+  "Author": "Peach Payments",
+  "DisplayOrder": 1,
+  "FileName": "Nop.Plugin.Payments.PeachPayments.dll",
+  "Description": "Peach Payments module allows you to accept payments from customers using credit cards such as Visa, Mastercard,ect and  Debit Orders, EFT payments"
+}

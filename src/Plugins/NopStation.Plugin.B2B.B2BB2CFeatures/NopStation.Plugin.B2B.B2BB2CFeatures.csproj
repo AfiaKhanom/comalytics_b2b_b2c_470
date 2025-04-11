@@ -18,6 +18,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Themes\Emporium\Content\img\**" />
+    <Compile Remove="Themes\Emporium\Home\**" />
+    <EmbeddedResource Remove="Themes\Emporium\Content\img\**" />
+    <EmbeddedResource Remove="Themes\Emporium\Home\**" />
+    <None Remove="Themes\Emporium\Content\img\**" />
+    <None Remove="Themes\Emporium\Home\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Factories\OverrideCheckoutModelFactory.cs" />
   </ItemGroup>
 
