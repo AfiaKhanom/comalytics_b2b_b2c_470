@@ -11,6 +11,7 @@ public record ConfigurationModel : BaseNopModel, IAclSupportedModel
     public ConfigurationModel()
     {
         PaymentTypes = new List<SelectListItem>();
+        SelectedCustomerRoleIds = new List<int>();
         OnboardingModel = new OnboardingModel();
     }
 

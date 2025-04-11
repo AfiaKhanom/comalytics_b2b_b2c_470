@@ -147,7 +147,7 @@ public class PeachPaymentsController : BasePluginController
             DisplayLogoInFooter = settings.DisplayLogoInFooter,
             DisplayPayLaterMessages = settings.DisplayPayLaterMessages,
             LogoInFooter = settings.LogoInFooter,
-            SelectedCustomerRoleIds = settings.ApplicableForRoleIds?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList(),
+            SelectedCustomerRoleIds = settings.ApplicableForRoleIds?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList() ?? new List<int>(),
             ActiveStoreScopeConfiguration = storeId,
             IsConfigured = ServiceManager.IsConfigured(settings)
         };
