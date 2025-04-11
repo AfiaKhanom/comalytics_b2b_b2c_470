@@ -47,9 +47,13 @@
             else
             {
                 <nop-select disabled="disabled" asp-for="ErpSalesOrgId" asp-items="Model.AvailableErpSalesOrgs" asp-required="true" />
-                @if (b2BB2CFeaturesSettings.DefaultB2COrganizationId > 0)
+                if (b2BB2CFeaturesSettings.DefaultB2COrganizationId > 0)
                 {
                     <input type="hidden" asp-for="ErpSalesOrgId" value="@b2BB2CFeaturesSettings.DefaultB2COrganizationId" />
+                }
+                else
+                {
+                    <input type="hidden" asp-for="ErpSalesOrgId" value="@Model.ErpSalesOrgId" />
                 }
             }
         </div>
