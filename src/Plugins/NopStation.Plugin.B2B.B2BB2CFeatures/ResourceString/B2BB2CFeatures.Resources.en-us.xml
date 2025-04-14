@@ -5899,188 +5899,141 @@
         <Value>Please Input County</Value>
     </LocaleResource>
 
-
     <!-- Card:124 - 18-April-2024 -->
-
     <LocaleResource Name="Plugin.Misc.NopStation.B2BB2CFeatures.ErpGroupPriceCode.NoActiveGroupPriceCodeAvailable">
         <Value>No active Group Price Code available to add a new record.</Value>
     </LocaleResource>
 
-
     <!-- Card:136 - 25-June-2024 -->
-
     <LocaleResource Name="B2B.BackOrderProducts.ProductHasBeenAddedToTheCart.Link">
         <Value><![CDATA[The product has been added to your <a href="{0}">shopping cart</a>]]></Value>
     </LocaleResource>
-
-
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.Picture">
         <Value>Picture</Value>
     </LocaleResource>
-
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.Picture.Hint">
         <Value>Erp Account Picture</Value>
     </LocaleResource>
-
     
-    <!-- Card:2804-Fix-checkout-steps-structure-on-top-of-standard-b2b-4.70  -  29-Aug-2024 -->
-    
+    <!-- Card:2804-Fix-checkout-steps-structure-on-top-of-standard-b2b-4.70  -  29-Aug-2024 -->    
     <LocaleResource Name="Checkout.ShippingAddress.SelectDeliverOrCollect">
         <Value>Select Deliver or Collect</Value>
     </LocaleResource>
-
     <LocaleResource Name="Checkout.ShippingAddress.SelectYourDeliveryAddress">
         <Value>Select your delivery address</Value>
     </LocaleResource>
-
     <LocaleResource Name="Checkout.ShippingAddress.CouldNotLoadShippingAddress">
         <Value>Could not load Shipping Address</Value>
     </LocaleResource>
-
     <LocaleResource Name="Checkout.ShippingAddress.SelectCollectionPoint">
         <Value>Select collection point</Value>
     </LocaleResource>
-
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.DeliveryDatesErpFailed.Notice">
         <Value>Notice</Value>
-    </LocaleResource>
-    
+    </LocaleResource>    
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.DeliveryDatesErpFailed.Notice.Text">
         <Value>We are unable to connect to the database at this moment in the time, by default the next available delivery date will be selected - please contact your macsteel sales clerk to select a new date once your order is placed.</Value>
-    </LocaleResource>
-    
+    </LocaleResource>    
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.DeliveryDatesErpFailedDialog.Close">
         <Value>Close</Value>
     </LocaleResource>
-
     <LocaleResource Name="NopStation.Plugin.B2B.ERPIntegrationCore.ErpGroupPrice.PageTitle.Edit">
         <Value>Edit Group Price</Value>
-    </LocaleResource>
-    
+    </LocaleResource>    
     <LocaleResource Name="NopStation.Plugin.B2B.ERPIntegrationCore.ErpGroupPrice.EditGroupPrice">
         <Value>Edit Group Price</Value>
     </LocaleResource>
-
     
-    <!-- Card:2802-jh-group-cr9168-develop-reward-points-functionality   -  10-Sep-2024 -->
-    
+    <!-- Card:2802-jh-group-cr9168-develop-reward-points-functionality   -  10-Sep-2024 -->    
     <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.EnableLiveCreditChecks">
         <Value>Enable Live Credit Check</Value>
-    </LocaleResource>
-    
+    </LocaleResource>    
     <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.EnableLiveCreditChecks.Hint">
         <Value>Check to enable live credit check</Value>
     </LocaleResource>
 
     <!-- Card:2834-b2b-plugin-theme-able-for-emporium  -  09-Sep-2024 -->
-
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Checkout.Start.OrderTotalIsZeroWarning">
         <Value>Your order total is 0 (Zero), cannot proceed to checkout.</Value>
     </LocaleResource>
-
     <LocaleResource Name="Plugin.Misc.NopStation.B2BB2CFeatures.OrderSummery.Product(s).PricingNote">
         <Value>Pricing Note</Value>
-    </LocaleResource>
-    
+    </LocaleResource>    
 
     <!-- Card:2804-clients/groceryexpress/bugfix/2804-bugs-on-nopstation-b2b-plugin-for-47  -  10-Sep-2024 -->
-
     <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.PreFilterFacetSpecificationAttribute">
         <Value>Pre filter facet specification attribute</Value>
-    </LocaleResource>
-    
+    </LocaleResource>    
     <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.PreFilterFacetSpecificationAttribute.Hint">
         <Value>Select which specification attribute should be considered for Pre filter facet</Value>
     </LocaleResource>
-
     <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.UnitOfMeasureSpecificationAttribute">
         <Value>Unit of measure specification attribute</Value>
-    </LocaleResource>
-    
+    </LocaleResource>    
     <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.UnitOfMeasureSpecificationAttribute.Hint">
         <Value>Select which specification attribute should be considered for Unit of measure</Value>
     </LocaleResource>
-
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.B2BUser">
         <Value>B2B User</Value>
     </LocaleResource>
-
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.B2CUser">
         <Value>B2C User</Value>
     </LocaleResource>
-
     <LocaleResource Name="Plugin.Misc.NopStation.B2BB2CFeatures.QuickOrderTemplate.SearchCreatedOn.Placeholder">
         <Value>Unit of measure specification attribute</Value>
     </LocaleResource>
-
     <LocaleResource Name="Plugin.Misc.NopStation.B2BB2CFeatures.Account.Register.Button.ApplyRegistration">
         <Value>Apply Registration</Value>
     </LocaleResource>
-
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.QuickOrderTemplate.AddToCartResult">
         <Value>Total items: {0}, {1} item(s) added to cart and {2} item(s) failed to add</Value>
     </LocaleResource>
-
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.QuickOrderTemplate.Warning.ShoppingCartIsDisabled">
         <Value>Shopping cart is disabled</Value>
     </LocaleResource>
-
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.QuickOrderTemplate.Warning.WishlistIsDisabled">
         <Value>Wishlist is disabled</Value>
     </LocaleResource>
-
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.QuickOrderTemplate.Warning.SearchEngineCannotAddToCart">
         <Value>Search engine cannot add to cart</Value>
-    </LocaleResource>
-    
+    </LocaleResource>    
     <LocaleResource Name="B2BB2CFeatures.DownloadInvoice.ErrorMessage.InvoiceData.IdIsNotValid">
         <Value>Invoice Id cannot be less than 1</Value>
-    </LocaleResource>
-    
+    </LocaleResource>    
     <LocaleResource Name="B2BB2CFeatures.DownloadInvoice.ErrorMessage.InvoiceData.NotFound">
         <Value>Invoice data doesn't exist in db</Value>
-    </LocaleResource>
-    
+    </LocaleResource>    
     <LocaleResource Name="B2BB2CFeatures.DownloadInvoice.ErrorMessage.InvoiceData.B2BAccountNotFound">
         <Value>Associated b2b account with invoice doesn't exist</Value>
-    </LocaleResource>
-    
+    </LocaleResource>    
     <LocaleResource Name="B2BB2CFeatures.DownloadInvoice.ErrorMessage.InvoiceData.SalesOrgNotFound">
         <Value>Associated sales org with b2b account doesn't exist</Value>
-    </LocaleResource>
-    
+    </LocaleResource>    
     <LocaleResource Name="B2BB2CFeatures.DownloadInvoice.ErrorMessage.InvoiceData.ExceptionOccured">
         <Value>Exception occured while trying to parse invoice data or get invoice</Value>
     </LocaleResource>
-    
     <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.IsShowYearlySavings">
         <Value>Display yearly savings</Value>
     </LocaleResource>
-    
-    <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.IsShowAllTimeSavings">
-        <Value>Display all time savings</Value>
-    </LocaleResource>
-    
     <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.IsShowYearlySavings.Hint">
         <Value>Display yearly savings</Value>
     </LocaleResource>
-    
+    <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.IsShowAllTimeSavings">
+        <Value>Display all time savings</Value>
+    </LocaleResource> 
     <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.IsShowAllTimeSavings.Hint">
         <Value>Display all time savings</Value>
-    </LocaleResource>
-    
+    </LocaleResource>    
     <LocaleResource Name="Plugin.Misc.NopStation.B2BB2CFeatures.ErpOrderList.PublicView.Title">
         <Value>Order list</Value>
     </LocaleResource>
 
     <!-- Card: 2804 - Bugs on Nopstation B2B plugin for 4.7  - 31-Oct-2024 -->
-
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Warning.AlreadyExist">
         <Value>The customer is already a user of this Erp Account</Value>
     </LocaleResource>
 
     <!-- Card: 2804 - Bugs on Nopstation B2B plugin for 4.7, 2866 - Support and all changes on top of standard b2b - 07-Nov-2024 -->
-
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Customer.ErpAccountInfo">
         <Value>Customer Erp Account Info</Value>
     </LocaleResource>
@@ -6123,19 +6076,16 @@
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Order.AlreadyCancelled">
         <Value>Order already cancelled!</Value>
     </LocaleResource>
-
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.CustomerLogin.ErpAccount.NotActive">
         <Value>The Erp Account is not activated.</Value>
     </LocaleResource>
 
     <!-- Card: 2804 - Bugs on Nopstation B2B plugin for 4.7  - 13-Nov-2024 -->
-
     <LocaleResource Name="Admin.Orders.OrderItem.DeleteAssociatedErpOrderItemAdditionalDataRecordError">
         <Value>This order item is also on the ERP order, please scroll down and delete it there first.</Value>
     </LocaleResource>
 
     <!-- Card: 2804 - Bugs on Nopstation B2B plugin for 4.7  - 14-Nov-2024 -->
-
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Configuration.Fields.MaintainUniqueCustomerReference">
         <Value>Maintain unique customer reference</Value>
     </LocaleResource>
@@ -6168,7 +6118,6 @@
     </LocaleResource>
 
     <!-- Card: 2804 - Bugs on Nopstation B2B plugin for 4.7  - 18-Nov-2024 -->
-
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.CustomerActivityLog.PublicStore.EmailValidation">
         <Value>Customer email ('{0}') validation successful.</Value>
     </LocaleResource>
@@ -6180,7 +6129,6 @@
     </LocaleResource>
 
     <!-- Card: 2804 - Bugs on Nopstation B2B plugin for 4.7  - 21-Nov-2024 -->
-
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Configuration.Fields.IsCustomerReferenceRequiredDuringPayment">
         <Value>Is Customer Reference required during payment</Value>
     </LocaleResource>
@@ -6198,7 +6146,6 @@
         <Value>Select your delivery date</Value>
     </LocaleResource>
 
-
     <!-- Card: 2963-2804-Bug-4.7-Basic-B2B-issues  - 23-Dec-2024 -->
     <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.EnableAccountStatementDownload">
         <Value>Enable account statement download</Value>
@@ -6208,12 +6155,12 @@
     </LocaleResource>
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.VendorAccessDenied">
         <Value>Vendors cannot access this functionality</Value>
+    </LocaleResource>
     <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.ShowDiscountPercentageOnCartItems.Hint">
         <Value>Check to Show Discount Percentage On Cart Items</Value>
     </LocaleResource>
 
-    <!-- Card: 2933-2804-bug-all-the-scheduler-sync-issues-and-changes - 10-Feb-2025 -->
-    
+    <!-- Card: 2933-2804-bug-all-the-scheduler-sync-issues-and-changes - 10-Feb-2025 -->    
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpAccountSyncTimeOnUtc">
         <Value>Last Erp Accounts Synced On Utc</Value>
     </LocaleResource>
@@ -6228,6 +6175,7 @@
     </LocaleResource>
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpGroupPriceSyncTimeOnUtc">
         <Value>Last Erp Group Prices Synced On Utc</Value>
+    </LocaleResource>
     <LocaleResource Name="Admin.ErpShipToAddress.BackToList">
         <Value>Back to Erp Ship To Address list</Value>
     </LocaleResource>
@@ -6248,18 +6196,19 @@
     </LocaleResource>    
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.NoOrderItemFound">
         <Value>No order item found with the specified id</Value>
+    </LocaleResource>
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpProductSyncTimeOnUtc.Hint">
         <Value>The last utc time products were synced</Value>
     </LocaleResource>
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpStockSyncTimeOnUtc">
         <Value>Last Erp Stocks Synced On Utc</Value>
+    </LocaleResource>
     <LocaleResource Name="Admin.ErpShipToAddress.EditErpShipToAddressDetails">
         <Value>Erp Ship To Address Details</Value>
     </LocaleResource>
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.IntegrationMethodFindResult.NoIntegrationMethodFound">
         <Value>No integration method was found</Value>
-    </LocaleResource>
-    
+    </LocaleResource>    
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.LastErpStockSyncTimeOnUtc.Hint">
         <Value>The last utc time product stocks were synced</Value>
     </LocaleResource>
@@ -6270,7 +6219,6 @@
     </LocaleResource>
 
     <!-- Card: 3112 - JH Group - 2804 - Not able to delete lines from an order  - 13-Feb-2025 -->
-
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.NoOrderFound">
         <Value>No order found with the specified Id</Value>
     </LocaleResource>
@@ -6282,6 +6230,5 @@
     </LocaleResource>    
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.NoOrderItemFound">
         <Value>No order item found with the specified id</Value>
-    </LocaleResource>
-    
+    </LocaleResource>    
 </Language>
