@@ -6,7 +6,7 @@ using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
 namespace NopStation.Plugin.B2B.ERPIntegrationCore.Data;
 
-[NopMigration("2025/01/26 08:31:00", "NopStation.Plugin.B2B.ERPIntegrationCore ErpShipToAddressErpAccountMap ErpShipToAddressCreatedByTypeId column addition", MigrationProcessType.Update)]
+[NopMigration("2025/02/20 08:31:00", "NopStation.Plugin.B2B.ERPIntegrationCore ErpShipToAddressErpAccountMap ErpShipToAddressCreatedByTypeId column addition", MigrationProcessType.NoMatter)]
 public class ErpShipToAddressErpAccountMapAddColumnCreatedByTypeId : AutoReversingMigration
 {
     public static string TableName<T>() where T : BaseEntity
