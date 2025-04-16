@@ -237,7 +237,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
 
                         foreach (var erpSpecialPrice in responseData)
                         {
-                            var product = products.FirstOrDefault(x => x.Sku.Trim().ToLower() == erpSpecialPrice.Sku.Trim().ToLower());
+                            var product = products?.FirstOrDefault(x => x.Sku.Trim().ToLower() == erpSpecialPrice.Sku.Trim().ToLower());
                             if (product is null)
                             {
                                 totalNotSyncedSoFar++;
@@ -256,48 +256,8 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                                 oldSpecialPrice.PercentageOfAllocatedStock = 0;
                                 oldSpecialPrice.PercentageOfAllocatedStockResetTimeUtc = DateTime.MinValue;
                                 oldSpecialPrice.VolumeDiscount = true;
+                                oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
                                 oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;                                
-                                oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
-
-                                if (await IsValidErpSpecialPriceAsync(oldSpecialPrice))
-                                {
-                                    erpSpecialPriceInsertList.Add(oldSpecialPrice);
-                                }
-                                else
-                                {
-                                    oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;
-                                }
-                                oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
-
-                                if (await IsValidErpSpecialPriceAsync(oldSpecialPrice))
-                                {
-                                    erpSpecialPriceInsertList.Add(oldSpecialPrice);
-                                }
-                                else
-                                {
-                                    oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;
-                                }
-                                oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
-
-                                if (await IsValidErpSpecialPriceAsync(oldSpecialPrice))
-                                {
-                                    erpSpecialPriceInsertList.Add(oldSpecialPrice);
-                                }
-                                else
-                                {
-                                    oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;
-                                }
-                                oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
-
-                                if (await IsValidErpSpecialPriceAsync(oldSpecialPrice))
-                                {
-                                    erpSpecialPriceInsertList.Add(oldSpecialPrice);
-                                }
-                                else
-                                {
-                                    oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;
-                                }
-                                oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
 
                                 if (await IsValidErpSpecialPriceAsync(oldSpecialPrice))
                                 {
@@ -310,10 +270,9 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                             {
                                 oldSpecialPrice.Price = erpSpecialPrice.SpecialPrice ?? 0;
                                 oldSpecialPrice.ListPrice = erpSpecialPrice.ListPrice ?? 0;
-                                oldSpecialPrice.PercentageOfAllocatedStock = 0;
-                                oldSpecialPrice.PercentageOfAllocatedStockResetTimeUtc = DateTime.MinValue;
                                 oldSpecialPrice.VolumeDiscount = true;
                                 oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
+                                oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;                                
 
                                 if (await IsValidErpSpecialPriceAsync(oldSpecialPrice))
                                 {
