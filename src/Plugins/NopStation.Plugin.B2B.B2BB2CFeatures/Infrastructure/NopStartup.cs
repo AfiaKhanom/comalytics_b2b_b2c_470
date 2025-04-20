@@ -29,6 +29,7 @@ using NopStation.Plugin.B2B.B2BB2CFeatures.Services.Overriden;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services.QuickOrderServices;
 using NopStation.Plugin.Misc.Core.Infrastructure;
 using Nop.Services.Common;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpAccountCreditSyncFunctionality;
 
 namespace NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure;
 
@@ -61,13 +62,10 @@ public class NopStartup : INopStartup
         services.AddScoped<ICustomerService, OverridenCustomerService>();
         services.AddScoped<IErpSpecificationAttributeService, ErpSpecificationAttributeService>();
 
-
-
         services.AddScoped<IOverriddenOrderProcessingService, OverriddenOrderProcessingService>();
         services.AddScoped<IOrderProcessingService, OverriddenOrderProcessingService>();
         services.AddScoped<IAddressService, OverridenAddressService>();
 
-        //register factories
         services.AddScoped<IB2BRegisterModelFactory, B2BRegisterModelFactory>();
         services.AddScoped<IErpShipToAddressModelFactory, ErpShipToAddressModelFactory>();
         services.AddScoped<IErpAccountModelFactory, ErpAccountModelFactory>();
@@ -94,7 +92,6 @@ public class NopStartup : INopStartup
 
         services.AddScoped<IErpRegistrationApplicationModelFactory, ErpRegistrationApplicationModelFactory>();
 
-        //register controllers
         services.AddScoped<OrderController, Controllers.OverridenOrderController>();
         services.AddScoped<ShoppingCartController, OverridenShoppingCartController>();
 
@@ -103,7 +100,6 @@ public class NopStartup : INopStartup
         services.AddScoped<Nop.Web.Areas.Admin.Controllers.CustomerController, OverridenCustomerController>();
         services.AddScoped<Nop.Web.Areas.Admin.Controllers.OrderController, Areas.Admin.Controllers.OverridenOrderController>();
 
-        // Quick Order 
         services.AddScoped<IQuickOrderTemplateService, QuickOrderTemplateService>();
         services.AddScoped<IQuickOrderItemService, QuickOrderItemService>();
         services.AddScoped<IQuickOrderTemplateModelFactory, QuickOrderTemplateModelFactory>();
@@ -111,10 +107,8 @@ public class NopStartup : INopStartup
 
         services.AddScoped<IErpOrderDetailsModelFactory, ErpOrderDetailsModelFactory>();
 
-        // Permission 
         services.AddScoped<IPermissionService, OverriddenPermissionService>();
 
-        //Export to excel
         services.AddScoped<ICategoryProductsExportManager, CategoryProductsExportManager>();
 
         // add custom action filter
@@ -123,12 +117,11 @@ public class NopStartup : INopStartup
             options.Filters.Add<ErpSalesRepActionFilterAttribute>();
             options.Filters.Add<ErpNopUserActionFilterAttribute>();
         });
-
-        // Erp workflow message
+        
         services.AddScoped<IErpWorkflowMessageService, ErpWorkflowMessageService>();
-
-            services.AddScoped<IErpActivityLogsModelFactory, ErpActivityLogsModelFactory>();
-        }
+        services.AddScoped<IErpActivityLogsModelFactory, ErpActivityLogsModelFactory>();
+        services.AddScoped<IErpAccountCreditSyncFunctionality, ErpAccountCreditSyncFunctionality>();
+    }
 
     /// <summary>
     /// Configure the using of added middleware

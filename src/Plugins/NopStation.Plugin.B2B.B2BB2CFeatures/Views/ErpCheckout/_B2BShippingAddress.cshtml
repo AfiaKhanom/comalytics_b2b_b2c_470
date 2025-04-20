@@ -348,9 +348,9 @@
             var cityData = $('input[name="ErpShipToAddressId"]:checked').attr("data-city");
             var shipToAddressId = $('input[name="ErpShipToAddressId"]:checked').attr("data-id");
 
-            console.log("suburb: " + suburbData);
-            console.log("city: " + cityData);
-            console.log("Ship-to-address Id: " + shipToAddressId);
+            //console.log("suburb: " + suburbData);
+            //console.log("city: " + cityData);
+            //console.log("Ship-to-address Id: " + shipToAddressId);
 
             var selectedData = { shipToAddressId: shipToAddressId };
             addAntiForgeryToken(selectedData);
@@ -366,14 +366,14 @@
                         $('#@Html.IdFor(model => model.ErpToDetermineDate)').val(true);
                         ddates.html('');
                         
-                        console.log("Delivery dates:", response);
+                        //console.log("Delivery dates:", response);
 
                         $.each(response.deliveyDates, function (id, option) {
-                            console.log('Date value: ' + option.Value + ' and text: ' + option.Text);
+                            //console.log('Date value: ' + option.Value + ' and text: ' + option.Text);
                             ddates.append($('<option></option>').val(option.Value).html(option.Text));
                         });
                         
-                        console.log(ddates);
+                        //console.log(ddates);
                         ddates.show();
                         $(".FullLoadRequired-div").hide();
                     }
@@ -471,18 +471,17 @@
     $(function () {
         $.validator.unobtrusive.parse("#ErpShiptoAddressForm");
         $('#ErpShiptoAddressForm').submit(function (e) {
-            var isErpToDetermineDate = true;
-            var isFullLoadRequired = false;
+            var isErpToDetermineDate = @Model.ErpToDetermineDate;
+            var isFullLoadRequired = @Model.IsFullLoadRequired;
             var isPISChecked = $('#PickupInStore').is(':checked');
             var showLoadingIndicator = true;
 
-            if (!(isPISChecked || isErpToDetermineDate == 'false' || isFullLoadRequired == 'true')
-                && !$('#DeliveryDateString').val()) {
+            if (!(isPISChecked || isErpToDetermineDate == 'false' || isFullLoadRequired == 'true') && !$('#DeliveryDateString').val()) {
                 showLoadingIndicator = false;
             }
 
             if (!isPISChecked) {
-                var addressSelections = $("input:radio[name='ErpShipToAddressId']");
+                var addressSelections = $("input:radio[name='SelectedShipToAddress.Id']");
                 if (addressSelections && addressSelections.filter(':checked').length === 0) {
                     showLoadingIndicator = false;
                     $(".shipping-address-body span.field-validation-error").remove();

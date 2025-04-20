@@ -173,9 +173,9 @@
                                         <span asp-validation-for="CustomDeliveryDateString"></span>
                                     </div>
                                     <script asp-location="Footer">
-                                        $('#DeliveryDateString').datepicker({
+                                        $('#CustomDeliveryDateString').datepicker({
                                             dateFormat: '@datePickerFormat',
-                                            minDate: new Date('@Model.MinDeliveryDate'),
+                                            minDate: new Date('@minDate'),
                                             maxDate: new Date('@Model.MaxDeliveryDate')
                                         });
                                     </script>
@@ -471,22 +471,19 @@
 </script>
 
 <script asp-location="Footer">
-
     $(function () {
         $.validator.unobtrusive.parse("#ErpShiptoAddressForm");
         $('#ErpShiptoAddressForm').submit(function (e) {
-            var isErpToDetermineDate = true;
-            var isFullLoadRequired = false;
+            var isErpToDetermineDate = @Model.ErpToDetermineDate;
+            var isFullLoadRequired = @Model.IsFullLoadRequired;
             var isPISChecked = $('#PickupInStore').is(':checked');
             var showLoadingIndicator = true;
-            var isCollectChecked = $('#collect').hasClass('ui-state-active');
-            if (!(isPISChecked || isErpToDetermineDate == 'false' || isFullLoadRequired == 'true')
-                && !$('#DeliveryDateString').val()) {
+            if (!(isPISChecked || isErpToDetermineDate == 'false' || isFullLoadRequired == 'true') && !$('#DeliveryDateString').val()) {
                 showLoadingIndicator = false;
             }
 
             if (!isPISChecked) {
-                var erpAddressSelections = $("input:radio[name='ErpShipToAddressId']");
+                var erpAddressSelections = $("input:radio[name='SelectedShipToAddress.Id']");
                 if (erpAddressSelections && erpAddressSelections.filter(':checked').length === 0) {
                     showLoadingIndicator = false;
                     $(".shipping-address-body span.field-validation-error").remove();
