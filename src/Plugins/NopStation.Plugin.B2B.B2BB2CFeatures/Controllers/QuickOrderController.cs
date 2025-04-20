@@ -17,6 +17,7 @@ using Nop.Web.Factories;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Factories.QuickOrder;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.QuickOrderModels.QuickOrderItems;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.QuickOrderModels.QuickOrderTemplates;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
