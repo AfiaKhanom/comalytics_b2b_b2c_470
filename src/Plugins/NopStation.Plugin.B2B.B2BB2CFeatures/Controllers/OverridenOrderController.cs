@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
-using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
@@ -131,7 +130,7 @@ public class OverridenOrderController : OrderController
     public async Task<IActionResult> QuoteDetails(int orderId)
     {
         var order = await _orderService.GetOrderByIdAsync(orderId);
-        if (order == null || order != null && order.Deleted)
+        if (order == null || order.Deleted)
             return Challenge();
 
         var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
@@ -156,7 +155,7 @@ public class OverridenOrderController : OrderController
     public override async Task<IActionResult> Details(int orderId)
     {
         var order = await _orderService.GetOrderByIdAsync(orderId);
-        if (order == null || order != null && order.Deleted)
+        if (order == null || order.Deleted)
             return Challenge();
 
         var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
@@ -182,7 +181,7 @@ public class OverridenOrderController : OrderController
     public override async Task<IActionResult> PrintOrderDetails(int orderId)
     {
         var order = await _orderService.GetOrderByIdAsync(orderId);
-        if (order == null || order != null && order.Deleted)
+        if (order == null || order.Deleted)
             return Challenge();
 
         var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
@@ -216,7 +215,7 @@ public class OverridenOrderController : OrderController
     public override async Task<IActionResult> RePostPayment(int orderId)
     {
         var order = await _orderService.GetOrderByIdAsync(orderId);
-        if (order == null || order != null && order.Deleted)
+        if (order == null || order.Deleted)
             return Challenge();
 
         var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
@@ -268,7 +267,7 @@ public class OverridenOrderController : OrderController
             return Challenge();
 
         var order = await _orderService.GetOrderByIdAsync(shipment.OrderId);
-        if (order == null || order != null && order.Deleted)
+        if (order == null || order.Deleted)
             return Challenge();
 
         #region Erp
@@ -295,24 +294,11 @@ public class OverridenOrderController : OrderController
 
     #endregion         
 
-    #region Utilities
-
-    // Customer have Quote Assistant role are allowed to see all orders and quotes,
-    // but they are not allowed to see the Accounts screen with the invoices and available credit.
-    private async Task<bool> HasB2BQuoteAssistantRole()
-    {
-        var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
-        var customerRoles = await _customerService.GetCustomerRolesAsync(customer);
-        return customerRoles.Any(x => x.SystemName.Equals(B2BB2CFeaturesDefaults.ErpQuoteAssistantRoleSystemName));
-    }
-
-    #endregion
-
     #region B2B Custom
 
     public virtual async Task<IActionResult> IsItemsInCart()
     {
-        var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var customer = await _workContext.GetCurrentCustomerAsync();
         var shoppingCartItem = await _shoppingCartService.GetShoppingCartAsync(customer);
         var hasItemOnCart = shoppingCartItem.Any(x => x.ShoppingCartType == ShoppingCartType.ShoppingCart);
 
@@ -321,7 +307,7 @@ public class OverridenOrderController : OrderController
 
     public override async Task<IActionResult> ReOrder(int orderId)
     {
-        var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var customer = await _workContext.GetCurrentCustomerAsync();
         var store = await _storeContext.GetCurrentStoreAsync();
 
         var order = await _orderService.GetOrderByIdAsync(orderId);

@@ -2003,7 +2003,7 @@ public class ErpCheckoutController : CheckoutController
 
     #endregion
 
-    #region Methods (one page checkout)
+    #region Methods (One page checkout)
 
     protected override async Task<JsonResult> OpcLoadStepAfterShippingAddress(IList<ShoppingCartItem> cart)
     {

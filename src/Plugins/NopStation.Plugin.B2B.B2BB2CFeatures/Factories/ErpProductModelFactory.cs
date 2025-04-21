@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
-using Nop.Core.Domain.Discounts;
 using Nop.Core.Domain.Orders;
 using Nop.Services.Catalog;
 using Nop.Services.Localization;
@@ -14,7 +13,6 @@ using Nop.Services.Security;
 using Nop.Services.Seo;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Framework.Models.Extensions;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.ErpProductList;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.OrderSummary;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpSpecificationAttributeService;
@@ -36,7 +34,7 @@ public class ErpProductModelFactory : IErpProductModelFactory
     private readonly IErpAccountService _erpAccountService;
     private readonly IPermissionService _permissionService;
     private readonly ILocalizationService _localizationService;
-    private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
+    private readonly IWorkContext _workContext;
     private readonly IUrlRecordService _urlRecordService;
     private readonly IErpSpecialPriceService _erpSpecialPriceService;
     private readonly IShoppingCartService _shoppingCartService;
@@ -57,7 +55,7 @@ public class ErpProductModelFactory : IErpProductModelFactory
         IErpAccountService erpAccountService,
         IPermissionService permissionService,
         ILocalizationService localizationService,
-        IB2BB2CWorkContext b2BB2CWorkContext,
+        IWorkContext workContext,
         IUrlRecordService urlRecordService,
         IErpSpecialPriceService erpSpecialPriceService,
         IShoppingCartService shoppingCartService,
@@ -74,7 +72,7 @@ public class ErpProductModelFactory : IErpProductModelFactory
         _erpAccountService = erpAccountService;
         _permissionService = permissionService;
         _localizationService = localizationService;
-        _b2BB2CWorkContext = b2BB2CWorkContext;
+        _workContext = workContext;
         _urlRecordService = urlRecordService;
         _erpSpecialPriceService = erpSpecialPriceService;
         _shoppingCartService = shoppingCartService;
@@ -90,8 +88,7 @@ public class ErpProductModelFactory : IErpProductModelFactory
 
     public async Task<ErpProductListSearchModel> PrepareErpProductListSearchModelAsync(ErpProductListSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
         await _baseAdminModelFactory.PrepareCategoriesAsync(searchModel.AvailableCategories);
         await _baseAdminModelFactory.PrepareManufacturersAsync(searchModel.AvailableManufacturers);
@@ -101,8 +98,7 @@ public class ErpProductModelFactory : IErpProductModelFactory
 
     public async Task<ErpProductListModel> PrepareErpProductListModelAsync(ErpProductListSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
         var products = await _productService.SearchProductsAsync(showHidden: true,
             categoryIds: new List<int> { searchModel.SearchCategoryId },
@@ -156,8 +152,10 @@ public class ErpProductModelFactory : IErpProductModelFactory
                         productPricing = await _erpSpecialPriceService.GetErpSpecialPricesByErpAccountIdAndNopProductIdAsync(erpAccount.Id, productId);
                     }
 
-                    var shoppingCartItemQuantity = (await _b2BB2CWorkContext.GetCurrentCustomerAsync()).HasShoppingCartItems ?
-                        (await _shoppingCartService.GetShoppingCartAsync(await _b2BB2CWorkContext.GetCurrentCustomerAsync(), ShoppingCartType.ShoppingCart, (await _storeContext.GetCurrentStoreAsync()).Id, productId))?.FirstOrDefault()?.Quantity ?? 0 : 0;
+                    var shoppingCartItemQuantity = 
+                        (await _workContext.GetCurrentCustomerAsync()).HasShoppingCartItems ?
+                        (await _shoppingCartService.GetShoppingCartAsync(await _workContext.GetCurrentCustomerAsync(), ShoppingCartType.ShoppingCart, 
+                        (await _storeContext.GetCurrentStoreAsync()).Id, productId))?.FirstOrDefault()?.Quantity ?? 0 : 0;
                     var displayBackInStockSubscription = false;
                     if (await _permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BStock) &&
                         product.ManageInventoryMethod == ManageInventoryMethod.ManageStock &&
@@ -178,14 +176,15 @@ public class ErpProductModelFactory : IErpProductModelFactory
                         ManufacturerPartNumber = product.ManufacturerPartNumber ?? string.Empty,
                         IsOutOfStock = isOutOfStock,
                         StockAvailability = await _productService.FormatStockMessageAsync(product, ""),
-                        UOM = string.Empty, //ToDo
+                        UOM = string.Empty,
                         Quantity = shoppingCartItemQuantity,
                         DisplayBackInStockSubscription = displayBackInStockSubscription
                     };
 
                     if (await _permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BPrices))
                     {
-                        b2bProductData.PricingNotes = b2BB2CFeaturesSettings.UseProductGroupPrice || productPricing == null ? string.Empty : productPricing.Price == 0 ? await _localizationService.GetResourceAsync("Products.CallForPrice") : (await _erpSpecialPriceService.GetErpSpecialPriceByIdAsync(productPricing.Id))?.PricingNote ?? string.Empty;
+                        b2bProductData.PricingNotes = b2BB2CFeaturesSettings.UseProductGroupPrice || productPricing == null ? string.Empty : productPricing.Price == 0 ? await _localizationService.GetResourceAsync("Products.CallForPrice") : 
+                            (await _erpSpecialPriceService.GetErpSpecialPriceByIdAsync(productPricing.Id))?.PricingNote ?? string.Empty;
                     }
                     else
                     {
@@ -200,24 +199,6 @@ public class ErpProductModelFactory : IErpProductModelFactory
         return productDataModels;
     }
 
-    public async Task<ProductInCartQuantityModel> PrepareProductInCartQuantityModelAsync(int productId)
-    {
-        var product = await _productService.GetProductByIdAsync(productId);
-
-        if (product == null)
-            return new ProductInCartQuantityModel();
-
-        var currCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
-
-        var shoppingCartItemQuantity = currCustomer.HasShoppingCartItems ?
-                        (await _shoppingCartService.GetShoppingCartAsync(currCustomer, ShoppingCartType.ShoppingCart, (await _storeContext.GetCurrentStoreAsync()).Id, product.Id))?.FirstOrDefault()?.Quantity ?? 0 : 0;
-        return new ProductInCartQuantityModel
-        {
-            Id = product.Id,
-            Quantity = shoppingCartItemQuantity
-        };
-    }
-
     public async Task<decimal> GetErpProductPriceAsync(int productId)
     {
         var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(B2BB2CFeaturesDefaults.ErpProductModelProductPriceCacheKey, productId);
@@ -227,9 +208,29 @@ public class ErpProductModelFactory : IErpProductModelFactory
             if (product == null)
                 return decimal.Zero;
 
-            (decimal priceWithoutDiscounts, decimal finalPrice, decimal appliedDiscountAmount, List<Discount> appliedDiscounts) = await _priceCalculationService.GetFinalPriceAsync(product, await _b2BB2CWorkContext.GetCurrentCustomerAsync(), await _storeContext.GetCurrentStoreAsync(), includeDiscounts: true);
+            (_, var finalPrice, _, _) = await _priceCalculationService.GetFinalPriceAsync
+            (product, await _workContext.GetCurrentCustomerAsync(), await _storeContext.GetCurrentStoreAsync(), includeDiscounts: true);
             return finalPrice;
         });
+    }
+
+    public async Task<ProductInCartQuantityModel> PrepareProductInCartQuantityModelAsync(int productId)
+    {
+        var product = await _productService.GetProductByIdAsync(productId);
+
+        if (product == null)
+            return new ProductInCartQuantityModel();
+
+        var currCustomer = await _workContext.GetCurrentCustomerAsync();
+
+        var shoppingCartItemQuantity = currCustomer.HasShoppingCartItems ?
+                        (await _shoppingCartService.GetShoppingCartAsync(currCustomer, ShoppingCartType.ShoppingCart, (await _storeContext.GetCurrentStoreAsync()).Id, product.Id))?.FirstOrDefault()?.Quantity ?? 0 : 0;
+
+        return new ProductInCartQuantityModel
+        {
+            Id = product.Id,
+            Quantity = shoppingCartItemQuantity
+        };
     }
 
     public async Task<IList<ProductInCartQuantityModel>> PrepareProductInCartQuantityModelAsync(List<string> productIds)
@@ -248,7 +249,7 @@ public class ErpProductModelFactory : IErpProductModelFactory
                     {
                         continue;
                     }
-                    var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+                    var currentCustomer = await _workContext.GetCurrentCustomerAsync();
                     var shoppingCartItemQuantity = currentCustomer.HasShoppingCartItems ?
                         (await _shoppingCartService.GetShoppingCartAsync(currentCustomer, ShoppingCartType.ShoppingCart, (await _storeContext.GetCurrentStoreAsync()).Id, productId))?.FirstOrDefault()?.Quantity ?? 0 : 0;
                     productInCartQuantityModels.Add(new ProductInCartQuantityModel
@@ -268,19 +269,6 @@ public class ErpProductModelFactory : IErpProductModelFactory
 
         if (product == null)
             return null;
-        //var b2BB2CFeaturesSettings = _settingService.LoadSetting<B2BB2CFeaturesSettings>((await _storeContext.GetCurrentStoreAsync()).Id);
-        //var categoryIds = b2BB2CFeaturesSettings.SkipLiveStockCheckCategoryIds.Split(',').Select(int.Parse).ToList();
-        //var productCategories = _catalogService.Cat product.ProductCategories;
-        //foreach (var cat in productCategories)
-        //{
-        //    if (categoryIds.Any(a => a == cat.CategoryId))
-        //        return await _productService.FormatStockMessageAsync(product, "");
-        //}
-
-        //if (b2BB2CFeaturesSettings.EnableLiveStockChecks)
-        //{
-        //    product = await _erpIntegrationProductService.GetProductsFromErpAsync();
-        //}
 
         var stockAvailability = await _productService.FormatStockMessageAsync(product, "");
         return stockAvailability;
@@ -291,7 +279,7 @@ public class ErpProductModelFactory : IErpProductModelFactory
         var orderSummeryModel = new ErpOrderSummaryModel();
         var totalPriceWithOutSavings = decimal.Zero;
         var b2bOnlineOrderDiscount = decimal.Zero;
-        var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
         if (currentCustomer.HasShoppingCartItems)
         {
             var shoppingCartItems = (await _shoppingCartService.GetShoppingCartAsync(currentCustomer))?.Where(x => x.ShoppingCartType == ShoppingCartType.ShoppingCart).ToList();
@@ -315,7 +303,7 @@ public class ErpProductModelFactory : IErpProductModelFactory
                 if (isBackorderAllowed)
                     productQuantity = await _productService.GetTotalStockQuantityAsync(product);
 
-                (decimal unitPrice, decimal discountAmount, List<Discount> appliedDiscounts) = await _shoppingCartService.GetUnitPriceAsync(cartItemProduct, false);
+                (var unitPrice, var discountAmount, _) = await _shoppingCartService.GetUnitPriceAsync(cartItemProduct, false);
                 var b2bProductPrice = unitPrice + discountAmount;
                 totalPriceWithOutSavings += b2bProductPrice * cartItemProduct.Quantity;
                 b2bOnlineOrderDiscount += discountAmount * cartItemProduct.Quantity;
@@ -353,5 +341,4 @@ public class ErpProductModelFactory : IErpProductModelFactory
     }
 
     #endregion
-
 }

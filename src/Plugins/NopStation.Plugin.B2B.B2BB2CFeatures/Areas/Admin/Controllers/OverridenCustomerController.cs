@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -157,10 +156,9 @@ public partial class OverridenCustomerController : CustomerController
 
         //validate customer roles
         var allCustomerRoles = await _customerService.GetAllCustomerRolesAsync(true);
-        var newCustomerRoles = new List<CustomerRole>();
-        foreach (var customerRole in allCustomerRoles)
-            if (model.SelectedCustomerRoleIds.Contains(customerRole.Id))
-                newCustomerRoles.Add(customerRole);
+        var newCustomerRoles = (from customerRole in allCustomerRoles
+                                where model.SelectedCustomerRoleIds.Contains(customerRole.Id)
+                                select customerRole).ToList();
 
         var customerRolesError = await ValidateCustomerRolesAsync(newCustomerRoles, await _customerService.GetCustomerRolesAsync(customer));
 
@@ -185,17 +183,17 @@ public partial class OverridenCustomerController : CustomerController
 
         var customerAttributesXml = await ParseCustomCustomerAttributesAsync(form);
 
-        if (isErpAccount)
+        if (isErpAccount &&
+            erpUser != null &&
+            erpUser.ErpUserType == ErpUserType.B2CUser && 
+            newCustomerRoles.Count != 0 && 
+            newCustomerRoles.Find(c => c.SystemName == NopCustomerDefaults.RegisteredRoleName) != null)
         {
-            //custom customer attributes
-            if (erpUser.ErpUserType == ErpUserType.B2CUser && newCustomerRoles.Any() && newCustomerRoles.Find(c => c.SystemName == NopCustomerDefaults.RegisteredRoleName) != null)
+            var customerAttributeWarnings = await _customerAttributeParser.GetAttributeWarningsAsync(customerAttributesXml);
+            foreach (var error in customerAttributeWarnings)
             {
-                var customerAttributeWarnings = await _customerAttributeParser.GetAttributeWarningsAsync(customerAttributesXml);
-                foreach (var error in customerAttributeWarnings)
-                {
-                    ModelState.AddModelError(string.Empty, error);
-                }
-            }
+                ModelState.AddModelError(string.Empty, error);
+            }            
         }
 
         #endregion            
@@ -354,7 +352,7 @@ public partial class OverridenCustomerController : CustomerController
 
                 await _customerService.UpdateCustomerAsync(customer);
 
-                if (isErpAccount && erpUser.ErpUserType == ErpUserType.B2BUser && !wasCustomerActive && model.Active)
+                if (isErpAccount && erpUser != null && erpUser.ErpUserType == ErpUserType.B2BUser && !wasCustomerActive && model.Active)
                 {
                     var isThisANewB2BCustomerNeedsApproval = await _genericAttributeService.GetAttributeAsync<bool?>(customer,
                         ERPIntegrationCoreDefaults.NewB2BCustomerNeedsApproval);

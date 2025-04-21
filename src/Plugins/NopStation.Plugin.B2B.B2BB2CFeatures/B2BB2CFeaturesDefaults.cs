@@ -14,7 +14,10 @@ public static class B2BB2CFeaturesDefaults
     public static string ErpDateFormatForDataTable => "DD/MM/YYYY";
     public static string ErpDateFormatForPublicInputField => "mm/dd/yy";
     public static string IsCartActivityOn => "IsCartActivityOn";
-    public static string ErpQuoteAssistantRoleSystemName => "ErpQuoteAssistant";
+    public static string B2BQuoteAssistantRoleName => "B2B Quote Assistant";
+    public static string B2BQuoteAssistantRoleSystemName => "B2BQuoteAssistant";
+    public static string B2BOrderAssistantRoleName => "B2B Order Assistant";
+    public static string B2BOrderAssistantRoleSystemName => "B2BORderAssistant";
 
     # region Erp Customer Navigation
 
@@ -59,8 +62,6 @@ public static class B2BB2CFeaturesDefaults
 
     public static string B2BQouteOrderAttribute => "QouteOrderSelected";
     public static string B2CQouteOrderAttribute => "B2CQouteOrderSelected";
-    public static string B2BQuoteAssistantRoleName => "B2B Quote Assistant";
-    public static string B2BQuoteAssistantRoleSystemName => "B2BQuoteAssistant";
 
     public static CacheKey ErpProductInfoSpecificationAttributeOptionIdsByNamesCacheKey => new("ErpProductInfoSpecificationAttributeOptionIdsByNamesErpAccountId-{0}-{1}-{2}", ErpProductInfoSpecificationAttributeOptionIdsByNamesErpAccountId);
     public static string ErpProductInfoSpecificationAttributeOptionIdsByNamesErpAccountId => "ErpProductInfoSpecificationAttributeOptionIdsByNamesErpAccountId.{0}";

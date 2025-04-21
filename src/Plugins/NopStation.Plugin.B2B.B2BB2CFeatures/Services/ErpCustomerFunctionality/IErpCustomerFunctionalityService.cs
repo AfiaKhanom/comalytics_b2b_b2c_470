@@ -19,6 +19,7 @@ public interface IErpCustomerFunctionalityService
     Task<ErpNopUser> GetActiveErpNopUserByCustomerAsync(Customer customer);
     Task<bool> IsCurrentCustomerInB2BQuoteAssistantRole();
     Task<bool> IsCustomerInB2BQuoteAssistantRole(Customer customer);
+    Task<bool> IsCustomerInB2BOrderAssistantRole(Customer customer);
     Task<bool> IsConsideredAsB2BOrderByB2BUserInformation(ErpNopUser b2BUser);
     Task<bool> IsConsideredAsB2COrderByB2CUser(ErpNopUser b2CUser);
 

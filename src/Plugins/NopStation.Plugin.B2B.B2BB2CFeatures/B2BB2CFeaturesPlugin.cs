@@ -8,11 +8,13 @@ using System.Threading.Tasks;
 using System.Xml;
 using Nop.Core;
 using Nop.Core.Domain.Common;
+using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Infrastructure;
 using Nop.Services.Cms;
 using Nop.Services.Common;
+using Nop.Services.Customers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
@@ -46,6 +48,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
     private readonly ILocalizationService _localizationService;
     private readonly IEmailAccountService _emailAccountService;
     private readonly IMessageTemplateService _messageTemplateService;
+    private readonly ICustomerService _customerService;
 
     public bool HideInWidgetList => false;
 
@@ -66,7 +69,8 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
         IScheduleTaskService scheduleTaskService,
         IEmailAccountService emailAccountService,
         ILocalizationService localizationService,
-        IMessageTemplateService messageTemplateService)
+        IMessageTemplateService messageTemplateService,
+        ICustomerService customerService)
     {
         _logger = logger;
         _webHelper = webHelper;
@@ -78,6 +82,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
         _emailAccountService = emailAccountService;
         _localizationService = localizationService;
         _messageTemplateService = messageTemplateService;
+        _customerService = customerService;
     }
 
     #endregion
@@ -108,7 +113,7 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
         }
         catch (Exception ex)
         {
-            _logger.Error("B2BCustomerAccount: Can't Add Resource string!", ex);
+            _logger.Error("B2B Features Plugin: Can't Add Resource string!", ex);
         }
     }
 
@@ -136,7 +141,49 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
         }
         catch (Exception ex)
         {
-            _logger.Error("B2BCustomerAccount: Can't Remove Resource string!", ex);
+            _logger.Error("B2B Features Plugin: Can't Remove Resource string!", ex);
+        }
+    }
+
+    private async Task AddB2BQuoteAssistantRole()
+    {
+        var quoteAssistantRole = await _customerService.GetCustomerRoleBySystemNameAsync(B2BB2CFeaturesDefaults.B2BQuoteAssistantRoleSystemName);
+        if (quoteAssistantRole == null)
+        {
+            quoteAssistantRole = new CustomerRole
+            {
+                Name = B2BB2CFeaturesDefaults.B2BQuoteAssistantRoleName,
+                FreeShipping = false,
+                TaxExempt = false,
+                Active = true,
+                IsSystemRole = false,
+                SystemName = B2BB2CFeaturesDefaults.B2BQuoteAssistantRoleSystemName,
+                EnablePasswordLifetime = false,
+                OverrideTaxDisplayType = false
+            };
+
+            await _customerService.InsertCustomerRoleAsync(quoteAssistantRole);
+        }
+    }
+
+    private async Task AddB2BOrderAssistantRole()
+    {
+        var orderAssistantRole = await _customerService.GetCustomerRoleBySystemNameAsync(B2BB2CFeaturesDefaults.B2BOrderAssistantRoleSystemName);
+        if (orderAssistantRole == null)
+        {
+            orderAssistantRole = new CustomerRole
+            {
+                Name = B2BB2CFeaturesDefaults.B2BOrderAssistantRoleName,
+                FreeShipping = false,
+                TaxExempt = false,
+                Active = true,
+                IsSystemRole = false,
+                SystemName = B2BB2CFeaturesDefaults.B2BOrderAssistantRoleSystemName,
+                EnablePasswordLifetime = false,
+                OverrideTaxDisplayType = false
+            };
+
+            await _customerService.InsertCustomerRoleAsync(orderAssistantRole);
         }
     }
 
@@ -252,6 +299,9 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
         }
 
         #endregion
+
+        await AddB2BQuoteAssistantRole();
+        await AddB2BOrderAssistantRole();
 
         await this.InstallPluginAsync();
 
@@ -484,6 +534,9 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
     public override async Task UninstallAsync()
     {
         await UnInstalLocalResourseStringFromXmlFileAsync();
+
+        await _permissionService.UninstallPermissionsAsync(new B2BB2CPermissionProvider());
+        await _permissionService.UninstallPermissionsAsync(new ErpPermissionProvider());
 
         await base.UninstallAsync();
     }

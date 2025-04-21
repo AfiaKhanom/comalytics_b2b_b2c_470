@@ -32,6 +32,7 @@ public class ErpCustomerFunctionalityService : IErpCustomerFunctionalityService
     private readonly IErpNopUserService _erpNopUserService;
     private readonly IStaticCacheManager _staticCacheManager;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
+    private readonly IErpSalesRepService _erpSalesRepService;
 
     #endregion
 
@@ -47,7 +48,8 @@ public class ErpCustomerFunctionalityService : IErpCustomerFunctionalityService
         IOrderService orderService,
         IErpNopUserService erpNopUserService,
         IStaticCacheManager staticCacheManager,
-        B2BB2CFeaturesSettings b2BB2CFeaturesSettings)
+        B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
+        IErpSalesRepService erpSalesRepService)
     {
         _customerService = customerService;
         _b2BB2CWorkContext = b2BB2CWorkContext;
@@ -60,11 +62,19 @@ public class ErpCustomerFunctionalityService : IErpCustomerFunctionalityService
         _erpNopUserService = erpNopUserService;
         _staticCacheManager = staticCacheManager;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
+        _erpSalesRepService = erpSalesRepService;
     }
 
     #endregion
 
     #region Methods
+
+    public async Task<bool> IsHideAddToCartAsync()
+    {
+        var isHideAddToCart = _b2BB2CFeaturesSettings.IsShowLoginForPrice
+            && !await _customerService.IsRegisteredAsync(await _workContext.GetCurrentCustomerAsync());
+        return isHideAddToCart;
+    }
 
     public async void ClearGenericAttributeOfB2BQuoteOrder()
     {
@@ -117,7 +127,6 @@ public class ErpCustomerFunctionalityService : IErpCustomerFunctionalityService
             return false;
         }
 
-        var currCustomer = await _workContext.GetCurrentCustomerAsync();
         if (shoppingCartItems == null || !shoppingCartItems.Any())
         {
             return false;
@@ -140,12 +149,12 @@ public class ErpCustomerFunctionalityService : IErpCustomerFunctionalityService
 
     public async Task<bool> IsCustomerInB2BCustomerRole(Customer customer)
     {
-        return await _customerService.IsInCustomerRoleAsync(customer, B2BB2CFeaturesDefaults.B2BCustomerRoleSystemName);
+        return await _customerService.IsInCustomerRoleAsync(customer, ERPIntegrationCoreDefaults.B2BCustomerRole);
     }
 
     public async Task<bool> IsCurrentCustomerInB2BQuoteAssistantRole()
     {
-        return await _customerService.IsInCustomerRoleAsync(await _workContext.GetCurrentCustomerAsync(), B2BB2CFeaturesDefaults.B2BQuoteAssistantRoleSystemName);
+        return await IsCustomerInB2BQuoteAssistantRole(await _workContext.GetCurrentCustomerAsync());
     }
 
     public async Task<bool> IsCustomerInB2BQuoteAssistantRole(Customer customer)
@@ -153,18 +162,9 @@ public class ErpCustomerFunctionalityService : IErpCustomerFunctionalityService
         return await _customerService.IsInCustomerRoleAsync(customer, B2BB2CFeaturesDefaults.B2BQuoteAssistantRoleSystemName);
     }
 
-    public async Task<ErpAccount> GetActiveErpAccountOfCurrentCustomer()
+    public async Task<bool> IsCustomerInB2BOrderAssistantRole(Customer customer)
     {
-        return await GetActiveErpAccountByCustomerAsync(await _workContext.GetCurrentCustomerAsync());
-    }
-
-    public async Task<ErpAccount> GetActiveErpAccountByCustomerIdAsync(int customerId)
-    {
-        var customer = await _customerService.GetCustomerByIdAsync(customerId);
-        if (customer == null)
-            return null;
-
-        return await GetActiveErpAccountByCustomerAsync(customer);
+        return await _customerService.IsInCustomerRoleAsync(customer,  B2BB2CFeaturesDefaults.B2BOrderAssistantRoleSystemName);
     }
 
     public async Task<ErpAccount> GetActiveErpAccountByCustomerAsync(Customer customer)

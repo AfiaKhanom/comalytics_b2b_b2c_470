@@ -16,6 +16,8 @@ public interface IErpProductModelFactory
 
     Task<ProductInCartQuantityModel> PrepareProductInCartQuantityModelAsync(int productId);
 
+    Task<IList<ProductInCartQuantityModel>> PrepareProductInCartQuantityModelAsync(List<string> productIds);
+
     Task<string> UpdateLiveStockAndGetProductAvailabilityAsync(int productId, ErpAccount erpAccount);
 
     Task<ErpOrderSummaryModel> PrepareErpOrderSummaryModelAsync();

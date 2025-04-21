@@ -366,8 +366,8 @@ public class QuickOrderController : BasePublicController
     }
 
     [HttpPost]
-    public virtual async Task<IActionResult> ProductDetails_AttributeChange(int templateId, int productId, int quantity, bool validateAttributeConditions,
-     bool loadPicture, IFormCollection form)
+    public virtual async Task<IActionResult> ProductDetails_AttributeChange(int templateId, int productId, int quantity, bool validateAttributeConditions, 
+        bool loadPicture, IFormCollection form)
     {
         var product = await _productService.GetProductByIdAsync(productId);
         if (product == null)
@@ -526,14 +526,13 @@ public class QuickOrderController : BasePublicController
 
         var item = await _quickOrderItemService.GetQuickOrderItemByIdAsync(model.Id);
 
-        //update
-        item.ProductSku = model.ProductSku;
-        item.Quantity = model.Quantity;
-
         if (item != null)
+        {
+            item.ProductSku = model.ProductSku;
+            item.Quantity = model.Quantity;
             item.QuickOrderTemplate = await _quickOrderTemplateService.GetQuickOrderTemplateByIdAsync(item.QuickOrderTemplateId);
-
-        await _quickOrderItemService.UpdateQuickOrderItemAsync(item);
+            await _quickOrderItemService.UpdateQuickOrderItemAsync(item);
+        }
 
         return new NullJsonResult();
     }
@@ -586,10 +585,8 @@ public class QuickOrderController : BasePublicController
             item.Quantity = quantity;
         }
 
-        if (item != null)
-            item.QuickOrderTemplate = await _quickOrderTemplateService.GetQuickOrderTemplateByIdAsync(item.QuickOrderTemplateId);
-
-        await _quickOrderItemService.UpdateQuickOrderItemAsync(item);
+        item.QuickOrderTemplate = await _quickOrderTemplateService.GetQuickOrderTemplateByIdAsync(item.QuickOrderTemplateId);
+        await _quickOrderItemService.UpdateQuickOrderItemAsync(item);       
 
         return Json(new { Result = true, Msg = await _localizationService.GetResourceAsync("NopStation.B2BB2CFeatures.QuickOrderItem.QuantityUpdated") });
     }
@@ -645,8 +642,7 @@ public class QuickOrderController : BasePublicController
         {
             Name = templateName?.Trim() ?? "Capture List Name",
             CustomerId = customer.Id,
-            CreatedOnUtc = DateTime.UtcNow,
-            //EditedOnUtc = DateTime.UtcNow
+            CreatedOnUtc = DateTime.UtcNow
         };
 
         await _quickOrderTemplateService.InsertQuickOrderTemplateAsync(quickOrderTemplate);
@@ -696,13 +692,15 @@ public class QuickOrderController : BasePublicController
             pageSize: productNumber,
             showHidden: true);
 
-        var result = (from p in products
-                      select new
-                      {
-                          label = p.Name + " (" + p.Sku + ")",
-                          productid = p.Id,
-                          productsku = p.Sku
-                      }).ToList();
+        var result = 
+            (from p in products
+                select new
+                {
+                    label = p.Name + " (" + p.Sku + ")",
+                    productid = p.Id,
+                    productsku = p.Sku
+                }
+            ).ToList();
         return Json(result);
     }
 

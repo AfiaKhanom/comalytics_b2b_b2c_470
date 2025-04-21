@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
@@ -29,6 +30,7 @@ using Nop.Services.Vendors;
 using Nop.Web.Factories;
 using Nop.Web.Models.Catalog;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Infrastructure;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
 namespace NopStation.Plugin.B2B.B2BB2CFeatures.Factories;
@@ -79,6 +81,7 @@ public class OverridenProductModelFactory : ProductModelFactory
     private readonly VendorSettings _vendorSettings;
     private readonly IErpSpecialPriceService _erpSpecialPriceService;
     private readonly IErpCustomerFunctionalityService _erpCustomerFunctionality;
+    private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
 
     #endregion
 
@@ -125,8 +128,8 @@ public class OverridenProductModelFactory : ProductModelFactory
         ShippingSettings shippingSettings,
         VendorSettings vendorSettings,
         IErpSpecialPriceService erpSpecialPriceService,
-        IErpCustomerFunctionalityService erpCustomerFunctionality)
-        : base(captchaSettings,
+        IErpCustomerFunctionalityService erpCustomerFunctionality,
+        B2BB2CFeaturesSettings b2BB2CFeaturesSettings) : base(captchaSettings,
             catalogSettings,
             customerSettings,
             categoryService,
@@ -209,11 +212,92 @@ public class OverridenProductModelFactory : ProductModelFactory
         _vendorSettings = vendorSettings;
         _erpSpecialPriceService = erpSpecialPriceService;
         _erpCustomerFunctionality = erpCustomerFunctionality;
+        _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
     }
 
     #endregion
 
-    #region methods
+    #region Utilities
+
+    protected override async Task<ProductDetailsModel.AddToCartModel> PrepareProductAddToCartModelAsync(Product product, ShoppingCartItem updatecartitem)
+    {
+        ArgumentNullException.ThrowIfNull(product);
+
+        var model = new ProductDetailsModel.AddToCartModel
+        {
+            ProductId = product.Id
+        };
+
+        if (updatecartitem != null)
+        {
+            model.UpdatedShoppingCartItemId = updatecartitem.Id;
+            model.UpdateShoppingCartItemType = updatecartitem.ShoppingCartType;
+        }
+
+        //quantity
+        model.EnteredQuantity = updatecartitem != null ? updatecartitem.Quantity : product.OrderMinimumQuantity;
+        //allowed quantities
+        var allowedQuantities = _productService.ParseAllowedQuantities(product);
+        foreach (var qty in allowedQuantities)
+        {
+            model.AllowedQuantities.Add(new SelectListItem
+            {
+                Text = qty.ToString(),
+                Value = qty.ToString(),
+                Selected = updatecartitem != null && updatecartitem.Quantity == qty
+            });
+        }
+        //minimum quantity notification
+        if (product.OrderMinimumQuantity > 1)
+        {
+            model.MinimumQuantityNotification = string.Format(await _localizationService.GetResourceAsync("Products.MinimumQuantityNotification"), product.OrderMinimumQuantity);
+        }
+
+        //'add to cart', 'add to wishlist' buttons
+        model.DisableBuyButton = product.DisableBuyButton || !await _permissionService.AuthorizeAsync(StandardPermissionProvider.EnableShoppingCart);
+        model.DisableWishlistButton = product.DisableWishlistButton || !await _permissionService.AuthorizeAsync(StandardPermissionProvider.EnableWishlist);
+
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.DisplayPrices) ||
+            !await _permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BPrices))
+        {
+            model.DisableBuyButton = true;
+            model.DisableWishlistButton = true;
+        }
+
+        //pre-order
+        if (product.AvailableForPreOrder)
+        {
+            model.AvailableForPreOrder = !product.PreOrderAvailabilityStartDateTimeUtc.HasValue ||
+                                         product.PreOrderAvailabilityStartDateTimeUtc.Value >= DateTime.UtcNow;
+            model.PreOrderAvailabilityStartDateTimeUtc = product.PreOrderAvailabilityStartDateTimeUtc;
+
+            if (model.AvailableForPreOrder &&
+                model.PreOrderAvailabilityStartDateTimeUtc.HasValue &&
+                _catalogSettings.DisplayDatePreOrderAvailability)
+            {
+                model.PreOrderAvailabilityStartDateTimeUserTime =
+                    (await _dateTimeHelper.ConvertToUserTimeAsync(model.PreOrderAvailabilityStartDateTimeUtc.Value)).ToString("D");
+            }
+        }
+        //rental
+        model.IsRental = product.IsRental;
+
+        //customer entered price
+        model.CustomerEntersPrice = product.CustomerEntersPrice;
+        if (!model.CustomerEntersPrice)
+            return model;
+
+        var currentCurrency = await _workContext.GetWorkingCurrencyAsync();
+        var minimumCustomerEnteredPrice = await _currencyService.ConvertFromPrimaryStoreCurrencyAsync(product.MinimumCustomerEnteredPrice, currentCurrency);
+        var maximumCustomerEnteredPrice = await _currencyService.ConvertFromPrimaryStoreCurrencyAsync(product.MaximumCustomerEnteredPrice, currentCurrency);
+
+        model.CustomerEnteredPrice = updatecartitem != null ? updatecartitem.CustomerEnteredPrice : minimumCustomerEnteredPrice;
+        model.CustomerEnteredPriceRange = string.Format(await _localizationService.GetResourceAsync("Products.EnterProductPrice.Range"),
+            await _priceFormatter.FormatPriceAsync(minimumCustomerEnteredPrice, false, false),
+            await _priceFormatter.FormatPriceAsync(maximumCustomerEnteredPrice, false, false));
+
+        return model;
+    }
 
     /// <summary>
     /// Prepare the simple product overview price model

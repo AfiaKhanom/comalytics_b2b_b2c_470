@@ -43,9 +43,7 @@ public class OverridenProductService : ProductService
     private readonly IPermissionService _permissionService;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
     private readonly IErpSpecificationAttributeService _erpSpecificationAttributeService;
-    private readonly IStoreContext _storeContext;
     private readonly ISpecificationAttributeService _specificationAttributeService;
-    private readonly ISettingService _settingService;
     private readonly ICategoryService _categoryService;
     private readonly IErpNopUserService _erpNopUserService;
     private readonly IErpWarehouseSalesOrgMapService _erpWarehouseSalesOrgMapService;
@@ -147,9 +145,7 @@ public class OverridenProductService : ProductService
         _permissionService = permissionService;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
         _erpSpecificationAttributeService = erpSpecificationAttributeService;
-        _storeContext = storeContext;
         _specificationAttributeService = specificationAttributeService;
-        _settingService = settingService;
         _categoryService = categoryService;
         _erpNopUserService = erpNopUserService;
         _erpWarehouseSalesOrgMapService = erpWarehouseSalesOrgMapService;

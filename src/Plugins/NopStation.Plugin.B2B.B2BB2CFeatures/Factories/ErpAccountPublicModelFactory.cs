@@ -10,6 +10,7 @@ using Nop.Services.Directory;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Orders;
+using Nop.Services.Security;
 using Nop.Services.Shipping;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Models.Common;
@@ -19,6 +20,7 @@ using NopStation.Plugin.B2B.B2BB2CFeatures.Model.ErpAccountPublic;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Infrastructure;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
 namespace NopStation.Plugin.B2B.B2BB2CFeatures.Factories;
@@ -130,6 +132,26 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
 
         var totalSavings = decimal.Zero;
         return totalSavings;
+    }
+
+    // Customer have Quote Assistant role are allowed to see all orders and quotes,
+    // but they are not allowed to see the Accounts screen with the invoices and available credit.
+    private async Task<bool> HasB2BQuoteAssistantRole()
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var customerRoles = await _customerService.GetCustomerRolesAsync(customer);
+        return customerRoles.Any(x =>
+            x.SystemName.Equals(B2BB2CFeaturesDefaults.B2BQuoteAssistantRoleSystemName)
+        );
+    }
+
+    private async Task<bool> HasB2BOrderAssistantRole()
+    {
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var customerRoles = await _customerService.GetCustomerRolesAsync(customer);
+        return customerRoles.Any(x =>
+            x.SystemName.Equals(B2BB2CFeaturesDefaults.B2BOrderAssistantRoleSystemName)
+        );
     }
 
     #endregion
