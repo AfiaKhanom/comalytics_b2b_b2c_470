@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Nop.Core.Infrastructure;
 using NopStation.Plugin.Misc.Core.Infrastructure;
 
-namespace NopStation.Plugin.Payments.B2B.Account.Infrastructure;
+namespace NopStation.Plugin.Payments.B2BAccount.Infrastructure;
 
 public class PluginNopStartup : INopStartup
 {

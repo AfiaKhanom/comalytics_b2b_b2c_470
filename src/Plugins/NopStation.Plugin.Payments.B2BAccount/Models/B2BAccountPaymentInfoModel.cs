@@ -1,6 +1,6 @@
 ﻿using Nop.Web.Framework.Models;
 
-namespace NopStation.Plugin.Payments.B2B.Account.Models;
+namespace NopStation.Plugin.Payments.B2BAccount.Models;
 
 public record B2BAccountPaymentInfoModel : BaseNopModel
 {

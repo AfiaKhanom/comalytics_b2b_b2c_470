@@ -3,9 +3,9 @@ using Nop.Services.Localization;
 using Nop.Web.Framework.Validators;
 using NopStation.Plugin.B2B.B2BB2CFeatures;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
-using NopStation.Plugin.Payments.B2B.Account.Models;
+using NopStation.Plugin.Payments.B2BAccount.Models;
 
-namespace NopStation.Plugin.Payments.B2B.Account.Validators;
+namespace NopStation.Plugin.Payments.B2BAccount.Validators;
 
 public partial class PaymentInfoValidator : BaseNopValidator<B2BAccountPaymentInfoModel>
 {

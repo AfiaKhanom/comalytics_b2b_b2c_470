@@ -17,11 +17,11 @@ using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 using NopStation.Plugin.Misc.Core.Services;
-using NopStation.Plugin.Payments.B2B.Account.Components;
-using NopStation.Plugin.Payments.B2B.Account.Models;
-using NopStation.Plugin.Payments.B2B.Account.Validators;
+using NopStation.Plugin.Payments.B2BAccount.Components;
+using NopStation.Plugin.Payments.B2BAccount.Models;
+using NopStation.Plugin.Payments.B2BAccount.Validators;
 
-namespace NopStation.Plugin.Payments.B2B.Account;
+namespace NopStation.Plugin.Payments.B2BAccount;
 
 public class B2BAccountPaymentProcessor : BasePlugin, IPaymentMethod, INopStationPlugin
 {
@@ -145,8 +145,7 @@ public class B2BAccountPaymentProcessor : BasePlugin, IPaymentMethod, INopStatio
 
     public Task<bool> CanRePostProcessPaymentAsync(Order order)
     {
-        if (order == null)
-            throw new ArgumentNullException(nameof(order));
+        ArgumentNullException.ThrowIfNull(order);
 
         //it's not a redirection payment method. So we always return false
         return Task.FromResult(false);

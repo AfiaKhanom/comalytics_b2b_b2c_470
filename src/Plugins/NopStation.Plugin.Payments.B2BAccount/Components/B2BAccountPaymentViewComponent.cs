@@ -9,9 +9,9 @@ using NopStation.Plugin.B2B.B2BB2CFeatures;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
-using NopStation.Plugin.Payments.B2B.Account.Models;
+using NopStation.Plugin.Payments.B2BAccount.Models;
 
-namespace NopStation.Plugin.Payments.B2B.Account.Components;
+namespace NopStation.Plugin.Payments.B2BAccount.Components;
 
 public class B2BAccountPaymentViewComponent : NopViewComponent
 {
