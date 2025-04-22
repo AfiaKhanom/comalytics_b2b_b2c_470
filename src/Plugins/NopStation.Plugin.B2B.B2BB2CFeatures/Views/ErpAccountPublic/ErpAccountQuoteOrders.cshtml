@@ -157,7 +157,7 @@
                 Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.Fields.QuoteNumber").Text,
                 Width = "200",
                 Render = new RenderCustom("renderColumnViewOrder"),
-                ClassName = NopColumnClassDefaults.Button
+                ClassName = NopColumnClassDefaults.Button + " NopOrderId"
             });
 
                 if (isB2BUser)
@@ -165,12 +165,14 @@
                     gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpQuoteOrderModel.PlacedByCustomerEmail))
                 {
                     Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.Fields.PlacedByCustomerEmail").Text,
-                    Width = "200"
+                    Width = "200",
+                    ClassName = "PlacedByCustomerEmail"
                 });
                     gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpQuoteOrderModel.ErpOrderOriginType))
                 {
                     Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.Fields.B2BOrderOriginType").Text,
-                    Width = "200"
+                    Width = "200",
+                    ClassName = "ErpOrderOriginType"
                 });
                 }
 
@@ -179,7 +181,8 @@
                     gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpQuoteOrderModel.CustomerOrder))
                 {
                     Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.Fields.CustomerOrder").Text,
-                    Width = "200"
+                    Width = "200",
+                    ClassName = "CustomerOrder"
                 });
                 }
 
@@ -187,6 +190,7 @@
             {
                 Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.Fields.ERPOrderStatus").Text,
                 Width = "200",
+                ClassName = "ERPOrderStatus"
             });
 
                 var formatedRenderDate = new RenderDate();
@@ -195,25 +199,29 @@
             {
                 Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.Fields.QuoteDate").Text,
                 Width = "200",
-                Render = formatedRenderDate
+                Render = formatedRenderDate,
+                ClassName = "QuoteDate"
             });
                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpQuoteOrderModel.ExpiryDate))
             {
                 Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.Fields.ExpiryDate").Text,
                 Width = "200",
-                Render = formatedRenderDate
+                Render = formatedRenderDate,
+                ClassName = "ExpiryDate"
             });
                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpQuoteOrderModel.TotalAmount))
             {
                 Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.Fields.Amount").Text,
-                Width = "200"
+                Width = "200",
+                ClassName = "TotalAmount"
             });
 
                 gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpQuoteOrderModel.NopOrderId))
             {
                 Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.Fields.Action").Text,
                 Width = "200",
-                Render = new RenderCustom("renderQouteOrderLink")
+                Render = new RenderCustom("renderQouteOrderLink"),
+                ClassName = "QouteOrderLink-NopOrderId"
             });
             }
             @await Html.PartialAsync("Table", gridModel)

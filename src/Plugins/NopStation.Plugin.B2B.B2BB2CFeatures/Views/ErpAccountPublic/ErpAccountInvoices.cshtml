@@ -146,45 +146,45 @@
                                 Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpInvoices.FinancialTransaction.Fields.PostingDate").Text,
                                 Width = "200",
                                 Render = new RenderDate(),
-                                ClassName = NopColumnClassDefaults.CenterAll,
+                                ClassName = NopColumnClassDefaults.CenterAll + " PostingDate",
                             },
                             new ColumnProperty(nameof(RecentTransactionModel.CustomerOrder))
                             {
                                 Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpInvoices.FinancialTransaction.Fields.CustomerOrder").Text,
                                 //Render = new RenderLink(new DataUrl("~/OrderDetails", nameof(RecentTransactionModel.NopOrderId))),
                                 Width = "200",
-                                ClassName = NopColumnClassDefaults.CenterAll,
+                                ClassName = NopColumnClassDefaults.CenterAll + " CustomerOrder",
                             },
                             new ColumnProperty(nameof(RecentTransactionModel.DocumentDisplayName))
                             {
                                 Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpInvoices.FinancialTransaction.Fields.DocumentType").Text,
                                 Width = "200",
-                                ClassName = NopColumnClassDefaults.CenterAll,
+                                ClassName = NopColumnClassDefaults.CenterAll + " DocumentDisplayName",
                             },
                             new ColumnProperty(nameof(RecentTransactionModel.DocumentNo))
                             {
                                 Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpInvoices.FinancialTransaction.Fields.DocumentNo").Text,
                                 Width = "200",
-                                ClassName = "download-invoices",
+                                ClassName = "download-invoices DocumentNo",
                                 Render = new RenderLink(new DataUrl("/ErpAccountPublic/DownloadInvoice/", nameof(RecentTransactionModel.Id))),
                             },
                             new ColumnProperty(nameof(RecentTransactionModel.Remaining))
                             {
                                 Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpInvoices.FinancialTransaction.Fields.Remaining").Text,
                                 Width = "200",
-                                ClassName = NopColumnClassDefaults.CenterAll,
+                                ClassName = NopColumnClassDefaults.CenterAll + " Remaining",
                             },
                             new ColumnProperty(nameof(RecentTransactionModel.AmountExVat))
                             {
                                 Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpInvoices.FinancialTransaction.Fields.AmountExVat").Text,
                                 Width = "200",
-                                ClassName = NopColumnClassDefaults.CenterAll,
+                                ClassName = NopColumnClassDefaults.CenterAll + " AmountExVat",
                             },
                             new ColumnProperty(nameof(RecentTransactionModel.DocumentNo))
                             {
                                 Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpInvoices.FinancialTransaction.Fields.PoDDownload").Text,
                                 Width = "100",
-                                ClassName = NopColumnClassDefaults.Button,
+                                ClassName = NopColumnClassDefaults.Button + " Download-DocumentNo",
                                 Render = new RenderButtonCustom("download-pod", "Download")
                                 {
                                     Url = Url.Content("~/ErpAccountPublic/DownloadInvoiceFromFtp/")

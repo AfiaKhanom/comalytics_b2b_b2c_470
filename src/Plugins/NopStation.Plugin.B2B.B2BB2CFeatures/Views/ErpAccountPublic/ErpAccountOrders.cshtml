@@ -123,7 +123,7 @@
                         Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.ERPOrderNumber").Text,
                         Width = "200",
                         Render = new RenderCustom("renderColumnViewOrder"),
-                        ClassName = NopColumnClassDefaults.Button
+                        ClassName = NopColumnClassDefaults.Button + " NopOrderId"
                     });
 
                     if (isB2BCustomer)
@@ -131,12 +131,14 @@
                         gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.PlacedByCustomer))
                         {
                             Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.PlacedByCustomer").Text,
-                            Width = "200"
+                            Width = "200",
+                            ClassName = "PlacedByCustomer"
                         });
                         gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.ErpOrderOriginType))
                         {
                             Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.B2BOrderOriginType").Text,
-                            Width = "200"
+                            Width = "200",
+                            ClassName = "ErpOrderOriginType"
                         });
                     }
 
@@ -144,27 +146,28 @@
                     {
                         Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.ERPOrderStatus").Text,
                         Width = "200",
+                        ClassName = "ERPOrderStatus"
                     });
 
                     gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.Invoices))
                     {
                         Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.Invoices").Text,
                         Width = "200",
-                        ClassName = NopColumnClassDefaults.CenterAll
+                        ClassName = NopColumnClassDefaults.CenterAll + " Invoices"
                     });
 
                     gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.TotalOrderItems))
                     {
                         Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.TotalOrderItems").Text,
                         Width = "200",
-                        ClassName = NopColumnClassDefaults.CenterAll
+                        ClassName = NopColumnClassDefaults.CenterAll + " TotalOrderItems"
                     });
 
                     gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.Unshipped))
                     {
                         Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.Unshipped").Text,
                         Width = "200",
-                        ClassName = NopColumnClassDefaults.CenterAll
+                        ClassName = NopColumnClassDefaults.CenterAll + " Unshipped"
                     });
 
                     var orderPlacedOnRender = new RenderDate();
@@ -174,7 +177,8 @@
                     {
                         Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.OrderPlacedOn").Text,
                         Width = "200",
-                        Render = orderPlacedOnRender
+                        Render = orderPlacedOnRender,
+                        ClassName = "OrderPlacedOn"
                     });
 
                     if (isB2CUser)
@@ -182,13 +186,15 @@
                         gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.PaygateReferenceNumber))
                         {
                             Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.PaygateReferenceNumber").Text,
-                            Width = "200"
+                            Width = "200",
+                            ClassName = "PaygateReferenceNumber"
                         });
 
                         gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.WarehouseName))
                         {
                             Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.Warehouse").Text,
-                            Width = "200"
+                            Width = "200",
+                            ClassName = "WarehouseName"
                         });
                     }
 
@@ -199,7 +205,8 @@
                     {
                         Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.ExpectedDelivery").Text,
                         Width = "200",
-                        Render = expectedDeliveryRender
+                        Render = expectedDeliveryRender,
+                ClassName = "ExpectedDelivery"
                     });
 
                     if (isB2BCustomer)
@@ -207,13 +214,15 @@
                         gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.SpecialInstructions))
                         {
                             Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.SpecialInstructions").Text,
-                            Width = "200"
+                            Width = "200",
+                            ClassName = "SpecialInstructions"
                         });
 
                         gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.CustomerReference))
                         {
                             Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.CustomerReference").Text,
-                            Width = "200"
+                            Width = "200",
+                            ClassName = "CustomerReference"
                         });
                     }
 
@@ -221,7 +230,7 @@
                     {
                         Title = T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpAccountOrderDetails.Fields.OrderTotalAmount").Text,
                         Width = "200",
-                        ClassName = NopColumnClassDefaults.CenterAll
+                        ClassName = NopColumnClassDefaults.CenterAll + " OrderTotalAmount"
                     });
 
                     /*gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.NopOrderId))
