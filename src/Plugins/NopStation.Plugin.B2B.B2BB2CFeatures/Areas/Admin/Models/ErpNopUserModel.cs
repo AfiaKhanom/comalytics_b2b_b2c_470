@@ -43,7 +43,6 @@ public record ErpNopUserModel : BaseNopEntityModel
 
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Field.ErpSalesOrg")]
     public string ErpSalesOrg { get; set; }
-
     public int ErpSalesOrgId { get; set; }
 
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Field.ErpShipToAddressId")]
@@ -51,7 +50,6 @@ public record ErpNopUserModel : BaseNopEntityModel
 
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Field.ErpShipToAddress")]
     public AddressModel ErpShipToAddress { get; set; }
-
     public string Email { get; set; }
 
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Field.BillingErpShipToAddressId")]
@@ -88,11 +86,10 @@ public record ErpNopUserModel : BaseNopEntityModel
     public bool IsActive { get; set; }
 
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Field.SelectedCustomerRoles")]
-    public IList<int> SelectedCustomerRoleIds { get; set; }
+    public IList<int>? SelectedCustomerRoleIds { get; set; }
 
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Field.SelectedCustomerRoles")]
-    public string SelectedCustomerRoles { get; set; }
-
+    public string? SelectedCustomerRoles { get; set; }
 
     public IList<SelectListItem> AvailableErpAccounts { get; set; }
 
@@ -104,9 +101,7 @@ public record ErpNopUserModel : BaseNopEntityModel
 
     public IList<SelectListItem> AvailableCustomerRoles { get; set; }
 
-    // search
     public ErpNopUserSearchModel ErpNopUserSearchModel { get; set; }
-
 
     #endregion
 }

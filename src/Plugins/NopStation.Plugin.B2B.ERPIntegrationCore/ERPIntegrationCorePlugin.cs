@@ -34,41 +34,65 @@ public class ERPIntegrationCorePlugin : BasePlugin, IMiscPlugin, IAdminMenuPlugi
 
     public override string GetConfigurationPageUrl()
     {
-        return _webHelper.GetStoreLocation() + "Admin/ERPIntegrationCore/Configure";
+        return $"{_webHelper.GetStoreLocation()}Admin/ERPIntegrationCore/Configure";
     }
 
     public override async Task InstallAsync()
     {
         await this.InstallPluginAsync();
 
-        var b2BCustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BCustomerRole);
+        #region Insert B2B Customer Roles
+
+        var b2BCustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BCustomerRoleSystemName);
         if (b2BCustomerRole == null)
         {
             b2BCustomerRole = new CustomerRole
             {
                 Name = ERPIntegrationCoreDefaults.B2BCustomerRole,
                 Active = true,
-                SystemName = ERPIntegrationCoreDefaults.B2BCustomerRole
+                SystemName = ERPIntegrationCoreDefaults.B2BCustomerRoleSystemName
             };
             await _customerService.InsertCustomerRoleAsync(b2BCustomerRole);
         }
-        var b2CCustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2CCustomerRole);
+        var b2CCustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2CCustomerRoleSystemName);
         if (b2CCustomerRole == null)
         {
             b2CCustomerRole = new CustomerRole
             {
                 Name = ERPIntegrationCoreDefaults.B2CCustomerRole,
                 Active = true,
-                SystemName = ERPIntegrationCoreDefaults.B2CCustomerRole
+                SystemName = ERPIntegrationCoreDefaults.B2CCustomerRoleSystemName
             };
             await _customerService.InsertCustomerRoleAsync(b2CCustomerRole);
+        }
+        var quoteAssistantRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BQuoteAssistantRoleSystemName);
+        if (quoteAssistantRole == null)
+        {
+            quoteAssistantRole = new CustomerRole
+            {
+                Name = ERPIntegrationCoreDefaults.B2BQuoteAssistantRole,
+                Active = true,
+                SystemName = ERPIntegrationCoreDefaults.B2BQuoteAssistantRoleSystemName
+            };
+            await _customerService.InsertCustomerRoleAsync(quoteAssistantRole);
+        }
+        var orderAssistantRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BOrderAssistantRoleSystemName);
+        if (orderAssistantRole == null)
+        {
+            orderAssistantRole = new CustomerRole
+            {
+                Name = ERPIntegrationCoreDefaults.B2BOrderAssistantRole,
+                Active = true,
+                SystemName = ERPIntegrationCoreDefaults.B2BOrderAssistantRoleSystemName
+            };
+            await _customerService.InsertCustomerRoleAsync(orderAssistantRole);
         }
         var b2BSalesRepRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName);
         if (b2BSalesRepRole == null)
         {
             b2BSalesRepRole = new CustomerRole
             {
-                Name = ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName,
+                Name = ERPIntegrationCoreDefaults.B2BSalesRepRole,
                 Active = true,
                 SystemName = ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName
             };
@@ -79,13 +103,12 @@ public class ERPIntegrationCorePlugin : BasePlugin, IMiscPlugin, IAdminMenuPlugi
         {
             quickOrderUserRole = new CustomerRole
             {
-                Name = ERPIntegrationCoreDefaults.QuickOrderUserRoleSystemName,
+                Name = ERPIntegrationCoreDefaults.QuickOrderUserRole,
                 Active = true,
                 SystemName = ERPIntegrationCoreDefaults.QuickOrderUserRoleSystemName
             };
             await _customerService.InsertCustomerRoleAsync(quickOrderUserRole);
         }
-
         var b2BB2CAdminRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BB2CAdminRoleSystemName);
         if (b2BB2CAdminRole == null)
         {
@@ -97,6 +120,19 @@ public class ERPIntegrationCorePlugin : BasePlugin, IMiscPlugin, IAdminMenuPlugi
             };
             await _customerService.InsertCustomerRoleAsync(b2BB2CAdminRole);
         }
+        var b2bCustomerAccountingPersonnelRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BCustomerAccountingPersonnelRoleSystemName);
+        if (b2bCustomerAccountingPersonnelRole == null)
+        {
+            b2bCustomerAccountingPersonnelRole = new CustomerRole
+            {
+                Name = ERPIntegrationCoreDefaults.B2BCustomerAccountingPersonnelRole,
+                Active = true,
+                SystemName = ERPIntegrationCoreDefaults.B2BCustomerAccountingPersonnelRoleSystemName
+            };
+            await _customerService.InsertCustomerRoleAsync(b2bCustomerAccountingPersonnelRole);
+        }
+
+        #endregion
 
         await _erpActivityLogsService.InsertOrUpdateErpActivityTypesAsync(ErpActivityLogTypes());
 

@@ -1,7 +1,7 @@
 ﻿using Nop.Web.Framework.Mvc.ModelBinding;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 
-namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpNopUser;
+namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.SalesRepUser;
 
 public record SalesRepUserModel : ErpBaseEntityModel
 {

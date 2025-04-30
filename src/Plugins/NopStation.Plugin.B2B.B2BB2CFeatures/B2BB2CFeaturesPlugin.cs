@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using System.Xml;
 using Nop.Core;
 using Nop.Core.Domain.Common;
-using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Infrastructure;
@@ -145,48 +144,6 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
         }
     }
 
-    private async Task AddB2BQuoteAssistantRole()
-    {
-        var quoteAssistantRole = await _customerService.GetCustomerRoleBySystemNameAsync(B2BB2CFeaturesDefaults.B2BQuoteAssistantRoleSystemName);
-        if (quoteAssistantRole == null)
-        {
-            quoteAssistantRole = new CustomerRole
-            {
-                Name = B2BB2CFeaturesDefaults.B2BQuoteAssistantRoleName,
-                FreeShipping = false,
-                TaxExempt = false,
-                Active = true,
-                IsSystemRole = false,
-                SystemName = B2BB2CFeaturesDefaults.B2BQuoteAssistantRoleSystemName,
-                EnablePasswordLifetime = false,
-                OverrideTaxDisplayType = false
-            };
-
-            await _customerService.InsertCustomerRoleAsync(quoteAssistantRole);
-        }
-    }
-
-    private async Task AddB2BOrderAssistantRole()
-    {
-        var orderAssistantRole = await _customerService.GetCustomerRoleBySystemNameAsync(B2BB2CFeaturesDefaults.B2BOrderAssistantRoleSystemName);
-        if (orderAssistantRole == null)
-        {
-            orderAssistantRole = new CustomerRole
-            {
-                Name = B2BB2CFeaturesDefaults.B2BOrderAssistantRoleName,
-                FreeShipping = false,
-                TaxExempt = false,
-                Active = true,
-                IsSystemRole = false,
-                SystemName = B2BB2CFeaturesDefaults.B2BOrderAssistantRoleSystemName,
-                EnablePasswordLifetime = false,
-                OverrideTaxDisplayType = false
-            };
-
-            await _customerService.InsertCustomerRoleAsync(orderAssistantRole);
-        }
-    }
-
     #endregion
 
     #region Method
@@ -299,9 +256,6 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
         }
 
         #endregion
-
-        await AddB2BQuoteAssistantRole();
-        await AddB2BOrderAssistantRole();
 
         await this.InstallPluginAsync();
 

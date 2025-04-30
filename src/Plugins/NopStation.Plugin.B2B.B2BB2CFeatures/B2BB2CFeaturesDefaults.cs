@@ -4,9 +4,6 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures;
 
 public static class B2BB2CFeaturesDefaults
 {
-    /// <summary>
-    /// Gets a path to the file that contains Resource string xml File
-    /// </summary>
     public static string XmlResourceStringFilePath => "~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/ResourceString/B2BB2CFeatures.Resources.en-us.xml";
     public static string ErpPriceGroupProductPricingInsert => "ErpPriceGroupProductPricingInsert";
     public static string ErpPriceGroupProductPricingUpdate => "ErpPriceGroupProductPricingUpdate";
@@ -14,10 +11,6 @@ public static class B2BB2CFeaturesDefaults
     public static string ErpDateFormatForDataTable => "DD/MM/YYYY";
     public static string ErpDateFormatForPublicInputField => "mm/dd/yy";
     public static string IsCartActivityOn => "IsCartActivityOn";
-    public static string B2BQuoteAssistantRoleName => "B2B Quote Assistant";
-    public static string B2BQuoteAssistantRoleSystemName => "B2BQuoteAssistant";
-    public static string B2BOrderAssistantRoleName => "B2B Order Assistant";
-    public static string B2BOrderAssistantRoleSystemName => "B2BORderAssistant";
 
     # region Erp Customer Navigation
 
@@ -48,7 +41,6 @@ public static class B2BB2CFeaturesDefaults
 
     public static string CartItemsLivePriceSyncProcessing => "CartItemsLivePriceSyncProcessing";
 
-    public static string B2BCustomerRoleSystemName => "B2BCustomer";
     public static string CustomerLastDateOfDisplayB2BPriceSyncInfo => "LastDateOfDisplayB2BPriceSyncInfo";
     public static string CustomerLastDateOfDisplayB2BPriceGroupPriceSyncInfo => "LastDateOfDisplayB2BPriceGroupPriceSyncInfo";
 

@@ -10,7 +10,6 @@ using Nop.Services.Directory;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Orders;
-using Nop.Services.Security;
 using Nop.Services.Shipping;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Models.Common;
@@ -18,9 +17,9 @@ using Nop.Web.Framework.Models.Extensions;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.ErpAccountPublic;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
+using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
-using NopStation.Plugin.B2B.ERPIntegrationCore.Infrastructure;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
 namespace NopStation.Plugin.B2B.B2BB2CFeatures.Factories;
@@ -141,7 +140,7 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
         var customer = await _workContext.GetCurrentCustomerAsync();
         var customerRoles = await _customerService.GetCustomerRolesAsync(customer);
         return customerRoles.Any(x =>
-            x.SystemName.Equals(B2BB2CFeaturesDefaults.B2BQuoteAssistantRoleSystemName)
+            x.SystemName.Equals(ERPIntegrationCoreDefaults.B2BQuoteAssistantRoleSystemName)
         );
     }
 
@@ -150,7 +149,7 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
         var customer = await _workContext.GetCurrentCustomerAsync();
         var customerRoles = await _customerService.GetCustomerRolesAsync(customer);
         return customerRoles.Any(x =>
-            x.SystemName.Equals(B2BB2CFeaturesDefaults.B2BOrderAssistantRoleSystemName)
+            x.SystemName.Equals(ERPIntegrationCoreDefaults.B2BOrderAssistantRoleSystemName)
         );
     }
 

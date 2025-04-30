@@ -12,22 +12,20 @@
 
 @inject IErpAccountService erpAccountService
 @inject IErpNopUserService erpNopUserService
-@inject B2BB2CFeaturesSettings b2BB2CFeaturesSettings
 @inject IErpOrderAdditionalDataService erpOrderService
 
 @{
     var currCustomer = await workContext.GetCurrentCustomerAsync();
-    var erpAccountOfCurrCustomer = await erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
-    var erpNopUserOfCurrCustomer = await erpNopUserService.GetErpNopUserByCustomerIdAsync(currCustomer.Id);
-    var isB2BUser = erpAccountOfCurrCustomer != null && erpNopUserOfCurrCustomer != null && erpNopUserOfCurrCustomer.ErpUserType == ErpUserType.B2BUser;
-    var isB2CUser = erpNopUserOfCurrCustomer != null && erpNopUserOfCurrCustomer.ErpUserType == ErpUserType.B2CUser;
+    var erpAccount = await erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
+    var erpNopUser = await erpNopUserService.GetErpNopUserByCustomerIdAsync(currCustomer.Id);
+    var isB2BUser = erpAccount != null && erpNopUser != null && erpNopUser.ErpUserType == ErpUserType.B2BUser;
+    var isB2CUser = erpAccount != null && erpNopUser != null && erpNopUser.ErpUserType == ErpUserType.B2CUser;
     var erpOrderAdditionalData = new ErpOrderAdditionalData();
     var isERPOrder = false;
     var isQuoteOrder = false;
     var checkQuoteOrderStatus = false;
     var isQuoteExpired = true;
     var isQuoteAlreadyConverted = true;
-    var hasQuoteExpireDate = false;
     var isQuoteRejectedorFailed = true;
 
     if (isB2BUser)
@@ -36,15 +34,14 @@
         erpOrderAdditionalData = b2bOrder;
         if (b2bOrder != null && (b2bOrder.ErpOrderType == ErpOrderType.B2BSalesOrder || b2bOrder.ErpOrderType == ErpOrderType.B2BQuote))
         {
-            isERPOrder = b2bOrder.ErpOrderOriginType == ErpOrderOriginType.ERPOrder ? true : false;
-            isQuoteOrder = b2bOrder.ErpOrderType == ErpOrderType.B2BSalesOrder ? false : true;
+            isERPOrder = b2bOrder.ErpOrderOriginType == ErpOrderOriginType.ERPOrder;
+            isQuoteOrder = b2bOrder.ErpOrderType == ErpOrderType.B2BSalesOrder;
             if (isQuoteOrder)
             {
                 checkQuoteOrderStatus = await erpOrderService.CheckQuoteOrderStatusAsync(b2bOrder);
                 if (b2bOrder.QuoteExpiryDate != null)
                 {
-                    isQuoteExpired = DateTime.UtcNow.Date >= b2bOrder.QuoteExpiryDate.Value.Date ? true : false;
-                    hasQuoteExpireDate = true;
+                    isQuoteExpired = DateTime.UtcNow.Date >= b2bOrder.QuoteExpiryDate.Value.Date;
                 }
                 isQuoteRejectedorFailed = b2bOrder.ERPOrderStatus == "Failed" || b2bOrder.ERPOrderStatus == "Rejected";
                 isQuoteAlreadyConverted = b2bOrder.QuoteSalesOrderId.HasValue && b2bOrder.QuoteSalesOrderId.Value > 0;
@@ -66,7 +63,6 @@
                 if (b2COrder.QuoteExpiryDate != null)
                 {
                     isQuoteExpired = DateTime.UtcNow.Date >= b2COrder.QuoteExpiryDate.Value.Date ? true : false;
-                    hasQuoteExpireDate = true;
                 }
                 isQuoteRejectedorFailed = b2COrder.ERPOrderStatus == "Failed" || b2COrder.ERPOrderStatus == "Rejected";
                 isQuoteAlreadyConverted = b2COrder.QuoteSalesOrderId.HasValue && b2COrder.QuoteSalesOrderId.Value > 0;
@@ -74,7 +70,6 @@
         }
     }
 }
-
 
 @{
     if (!Model.PrintMode)
@@ -88,7 +83,8 @@
     //title
     NopHtml.AddTitleParts(T("PageTitle.OrderDetails").Text);
     //page class
-    NopHtml.AppendPageCssClassParts("html-order-details-page");
+    NopHtml.AppendPageCssClassParts("html-order-details-page"); 
+    NopHtml.AppendScriptParts(ResourceLocation.Footer, "~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Content/scripts/b2bajaxcart.js");
 }
 
 @if (Model.PrintMode)
@@ -99,6 +95,7 @@
         });
     </script>
 }
+
 <div class="page order-details-page">
     @if (!Model.PrintMode)
     {
@@ -317,159 +314,7 @@
                 </ul>
             }
         </div>
-
-        @if (Model.Items.Count > 0)
-        {
-            @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.OrderDetailsPageBeforeproducts, additionalData = Model })
-            <div class="section products">
-                <div class="title">
-                    <strong>@T("Order.Product(s)")</strong>
-                </div>
-                <div class="table-wrapper">
-                    <table class="data-table">
-                        <colgroup>
-                            <col />
-                            @if (Model.ShowSku)
-                            {
-                                <col width="1" />
-                            }
-                            @if (Model.ShowProductThumbnail)
-                            {
-                                <col width="1" />
-                            }
-                            <col />
-                            @if (Model.ShowVendorName)
-                            {
-                                <col />
-                            }
-                            <col />
-                            <col />
-                            <col />
-                        </colgroup>
-                        <thead>
-                            <tr>
-                                <th><span class="item-count">#</span></th>
-                                @if (Model.ShowSku)
-                                {
-                                    <th class="sku" data-hide="w410, w480, w580, w768">
-                                        @T("Order.Product(s).SKU")
-                                    </th>
-                                }
-                                @if (Model.ShowProductThumbnail)
-                                {
-                                    <th class="picture">
-                                        @T("Order.Product(s).Image")
-                                    </th>
-                                }
-                                <th class="name">
-                                    @T("Order.Product(s).Name")
-                                </th>
-                                @if (Model.ShowVendorName)
-                                {
-                                    <th class="vendor" data-hide="w410, w480, w580, w768, w980">
-                                        @T("Order.Product(s).VendorName")
-                                    </th>
-                                }
-                                <th class="price" data-hide="w410, w480, w580">
-                                    @T("Order.Product(s).Price")
-                                </th>
-                                <th class="quantity" data-hide="w410, w480">
-                                    @T("Order.Product(s).Quantity")
-                                </th>
-                                <th class="total">
-                                    @T("Order.Product(s).Total")
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @{
-                                var counter = 0;
-                            }
-                            @foreach (var item in Model.Items)
-                            {
-                                counter++;
-                                <tr>
-                                    <td><span class="item-count">@counter</span></td>
-                                    @if (Model.ShowSku)
-                                    {
-                                        <td class="sku">
-                                            <label class="td-title">@T("Order.Product(s).SKU"):</label>
-                                            <span class="sku-number">@item.Sku</span>
-                                        </td>
-                                    }
-                                    @if (Model.ShowProductThumbnail)
-                                    {
-                                        <td class="picture">
-                                            <a href="@(Url.RouteUrl<Product>(new {SeName = item.ProductSeName}))">
-                                                <img alt="@item.Picture.AlternateText" src="@item.Picture.ImageUrl" title="@item.Picture.Title" width="@mediaSettings.DefaultImageQuality" />
-                                            </a>
-                                        </td>
-                                    }
-                                    <td class="a-left name">
-                                        @if (!Model.PrintMode)
-                                        {
-                                            <em><a href="@(Url.RouteUrl<Product>(new { SeName = item.ProductSeName }))">@item.ProductName</a></em>
-                                        }
-                                        else
-                                        {
-                                            @item.ProductName
-                                        }
-                                        @if (!string.IsNullOrEmpty(item.AttributeInfo))
-                                        {
-                                            <div class="attributes">
-                                                @Html.Raw(item.AttributeInfo)
-                                            </div>
-                                        }
-                                        @if (!string.IsNullOrEmpty(item.RentalInfo))
-                                        {
-                                            <div class="rental-info">
-                                                @Html.Raw(item.RentalInfo)
-                                            </div>
-                                        }
-                                        @if (item.DownloadId > 0)
-                                        {
-                                            <div class="download">
-                                                <a href="@Url.RouteUrl("GetDownload", new { orderItemId = item.OrderItemGuid })">@T("DownloadableProducts.Fields.Download")</a>
-                                            </div>
-                                        }
-                                        @if (item.LicenseId > 0)
-                                        {
-                                            <div class="download license">
-                                                <a href="@Url.RouteUrl("GetLicense", new {orderItemId = item.OrderItemGuid})">@T("DownloadableProducts.Fields.DownloadLicense")</a>
-                                            </div>
-                                        }
-                                        @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.OrderDetailsProductLine, additionalData = item })
-                                    </td>
-                                    @if (Model.ShowVendorName)
-                                    {
-                                        <td class="vendor">
-                                            <label class="td-title">@T("Order.Product(s).VendorName"):</label>
-                                            <span class="vendor-name">@item.VendorName</span>
-                                        </td>
-                                    }
-                                    <td class="unit-price">
-                                        <label class="td-title">@T("Order.Product(s).Price"):</label>
-                                        <span class="product-unit-price">@item.UnitPrice</span>
-                                    </td>
-                                    <td class="quantity">
-                                        <label class="td-title">@T("Order.Product(s).Quantity"):</label>
-                                        <span class="product-quantity">@item.Quantity</span>
-                                    </td>
-                                    <td class="total">
-                                        <label class="td-title">@T("Order.Product(s).Total"):</label>
-                                        <span class="product-subtotal">@item.SubTotal</span>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.OrderDetailsPageAfterproducts, additionalData = Model })
-        }
-        @if (!Model.PrintMode)
-        {
-            if (Model.Shipments.Count > 0)
+        @if (!Model.PrintMode && Model.Shipments.Count > 0)
             {
                 <div class="section shipments">
                     <div class="title">
@@ -577,11 +422,10 @@
                         </tbody>
                     </table>
                 </div>
-            }
-        }
-        @if (!Model.PrintMode)
+            }        
+        @if (Model.Items.Count > 0)
         {
-            if (Model.OrderNotes.Count > 0)
+            if (!Model.PrintMode && Model.OrderNotes.Count > 0)
             {
                 <div class="section order-notes">
                     <div class="title">
@@ -950,15 +794,67 @@
     </div>
 </div>
 
-@await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.OrderDetailsPageBottom, additionalData = Model })
-    </div>
+<div id="qouteOrderListConvertConfirmAcceptDialog" title="@T("Plugin.Misc.NopStation.B2BB2CFeatures.ErpQuoteOrder.ConvertConfirm")" style="display: none;">
+    <form asp-controller="OverridenOrder" asp-action="ReOrder" class="order-confirm-accept-form" method="post" enctype="multipart/form-data">
+        <div>
+            <h4>
+                @T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.ConfirmRemoveFromCart")
+            </h4>
+        </div>
+        <br />
+        <div class="order-confirm-buttons">
+            <button id="quoteOrderDetailsPopupClearCartButton" type="button" value="@T("Plugin.Misc.NopStation.B2BB2CFeatures.Orders.ConfirmAcceptDialog.ClearCart")"
+                    class="button-1 bg-green popup-clearcart-btn qoute-order-details-popup-clear-cart-button" onclick="quoteOrderListpopUpPlaceOrder(this)">
+                <span>@T("Plugin.Misc.NopStation.B2BB2CFeatures.Orders.ConfirmAcceptDialog.ClearCart")</span>
+            </button>
+            <button type="button" name="addtocartbutton" value="@T("Plugin.Misc.NopStation.B2BB2CFeatures.ShoppingCart.KeepItemInCart")"
+                    class="button-1 bg-green qoute-order-details-popup-add-to-cart-button" onclick="quoteOrderListpopUpPlaceOrder(this)">
+                <span>@T("Plugin.Misc.NopStation.B2BB2CFeatures.ShoppingCart.KeepItemInCart")</span>
+            </button>
+        </div>
+        <div class="order-confirm-buttons">
+            <button type="button" name="cancel" onclick="closePopup()" value="@T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.TermsAndConditionAccept.Cancel")" class="button-1  bg-red"><span>@T("Plugin.Misc.NopStation.B2BB2CFeatures.Order.TermsAndConditionAccept.Cancel")</span></button>
+        </div>
+        <input id="orderId" name="orderId" style="display:none;" />
+
+        <script asp-location="Footer">
+            function closePopup() {
+                $("#qouteOrderListConvertConfirmAcceptDialog").dialog("destroy");
+                $("#orderId").val("")
+            }
+
+            function clearCartAndReoder() {
+                var orderId = $("#orderId").val();
+                B2BAjaxCart.disableAddToCartButton(orderId);
+                B2BAjaxCart.disablePopUpAddToCartButton();
+                displayAjaxLoading(true);
+                B2BAjaxCart.b2BClearCart();
+                var reorderActionUrl = "/ReOrder/" + orderId + "";
+                setLocation(reorderActionUrl);
+            }
+
+            function quoteOrderListpopUpPlaceOrder(popUpData) {
+                var orderId = $('#orderId').val();
+                B2BAjaxCart.disableReorderButton(orderId);
+                B2BAjaxCart.disablePopUpAddToCartButton();
+                displayAjaxLoading(true);
+
+                if ($(popUpData).attr('id') == 'quoteOrderDetailsPopupClearCartButton') {
+                    B2BAjaxCart.b2BClearCart(false);
+                }
+
+                var reorderActionUrl = "/ReOrder/" + orderId + "";
+                setLocation(reorderActionUrl);
+            }
+        </script>
+    </form>
 </div>
 
 <script asp-location="Footer">
-
+    
     $(document).ready(function () {
         var orderId = @Model.Id;
-        console.log('Order ID: ' + orderId);
+        //console.log('Order ID: ' + orderId);
         $.ajax({
             cache: true,
             url: "/OverridenOrder/LoadOrderItemsUOMData/" + orderId + "",

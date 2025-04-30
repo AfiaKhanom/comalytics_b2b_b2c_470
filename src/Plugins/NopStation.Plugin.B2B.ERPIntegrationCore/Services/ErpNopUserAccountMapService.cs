@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
-using DocumentFormat.OpenXml.Spreadsheet;
 using LinqToDB;
-using Microsoft.Identity.Client;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Data;
@@ -139,27 +136,6 @@ public class ErpNopUserAccountMapService : IErpNopUserAccountMapService
         }, cache => cache.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpNopUserAccountMapByErpAccountCacheKey, accountId));
 
         return erpNopUserAccountMaps;
-    }
-
-    public async Task<IList<int>> GetErpNopUserRolesByErpNopUserAsync(ErpNopUser user)
-    {
-        ArgumentNullException.ThrowIfNull(user);
-
-        var listOferpNopUserRoleIds = new List<int>();
-
-        var erpNopUserAccountMap = await GetErpNopUserAccountMapByAccountAndUserIdAsync(user.ErpAccountId, user.Id);
-        if (erpNopUserAccountMap == null)
-            return listOferpNopUserRoleIds;
-
-        var erpNopUserRoleIds = erpNopUserAccountMap.CustomerRolesIds.Split(",");
-
-        foreach (var roleId in erpNopUserRoleIds)
-        {
-            if (!string.IsNullOrEmpty(roleId))
-                listOferpNopUserRoleIds.Add(Convert.ToInt32(roleId));
-        }
-
-        return listOferpNopUserRoleIds;
     }
 
     public async Task<bool> CheckAnyErpNopUserAccountMapExistWithAccountIdAndUserIdAsync(int erpAccountId, int erpUserId)

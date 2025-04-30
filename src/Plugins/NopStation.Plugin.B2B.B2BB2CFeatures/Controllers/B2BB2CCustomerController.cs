@@ -75,6 +75,7 @@ public class B2BB2CCustomerController : CustomerController
     private readonly ISettingService _settingService;
     private readonly IErpLogsService _erpLogsService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
+    private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
     private readonly IStaticCacheManager _staticCacheManager;
     private readonly IErpActivityLogsService _erpActivityLogsService;
     private readonly IErpAccountCustomerRegistrationFormService _erpAccountCustomerRegistrationFormService;
@@ -214,6 +215,7 @@ public class B2BB2CCustomerController : CustomerController
         _settingService = settingService;
         _erpLogsService = erpLogsService;
         _erpIntegrationPluginManager = erpIntegrationPluginManager;
+        _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
         _staticCacheManager = staticCacheManager;
         _erpActivityLogsService = erpActivityLogsService;
         _erpAccountCustomerRegistrationFormService = erpAccountCustomerRegistrationFormService;
@@ -429,7 +431,6 @@ public class B2BB2CCustomerController : CustomerController
             }
 
             var store = await _storeContext.GetCurrentStoreAsync();
-            var b2BB2CFeaturesSettings = await _settingService.LoadSettingAsync<B2BB2CFeaturesSettings>(store.Id);
             customer.RegisteredInStoreId = store.Id;
 
             var customerAttributesXml = await ParseCustomCustomerAttributesAsync(form);
@@ -486,7 +487,7 @@ public class B2BB2CCustomerController : CustomerController
                     else
                     {
                         existingShipToAddressList = (await _erpShipToAddressService.GetErpShipToAddressesByErpAccountIdAsync(erpAccountId: erpAccount.Id))?.ToList();
-                        if (existingShipToAddressList is null || !existingShipToAddressList.Any())
+                        if (existingShipToAddressList is null || existingShipToAddressList.Count == 0)
                         {
                             ModelState.AddModelError("", await _localizationService.GetResourceAsync("B2BB2C.Account.Registration.ShipToAddressNotFound"));
                             await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Error, ErpSyncLevel.Account, await _localizationService.GetResourceAsync("B2BB2C.Account.Registration.ShipToAddressNotFound"));
@@ -508,7 +509,8 @@ public class B2BB2CCustomerController : CustomerController
                     {
                         ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Register.Errors.EmailAlreadyExists"));
                     }
-                    else if (!b2BB2CFeaturesSettings.UseDefaultAccountForB2CUser && (await _erpAccountService.GetErpAccountByErpAccountNumberAsync(model.B2CIdentificationNumber) != null))
+                    else if (!_b2BB2CFeaturesSettings.UseDefaultAccountForB2CUser && 
+                        (await _erpAccountService.GetErpAccountByErpAccountNumberAsync(model.B2CIdentificationNumber) != null))
                     {
                         ModelState.AddModelError("", await _localizationService.GetResourceAsync("B2BB2C.Account.Registration.NIDAlreadyExists"));
                     }
@@ -520,14 +522,13 @@ public class B2BB2CCustomerController : CustomerController
                             ModelState.AddModelError("", await _localizationService.GetResourceAsync("B2BB2C.Account.Registration.AccountNotCreated"));
                             await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Error, ErpSyncLevel.Account, "Integration method not found.");
                         }
-                        else if (!b2BB2CFeaturesSettings.UseDefaultAccountForB2CUser)
+                        else if (!_b2BB2CFeaturesSettings.UseDefaultAccountForB2CUser)
                         {
                             //create erpAccount for b2c user at ERP
                             var stateProvidence = await _stateProvinceService.GetStateProvinceByIdAsync(model.StateProvinceId);
                             var country = await _countryService.GetCountryByIdAsync(model.CountryId);
 
-                            //If UseERPIntegration is not true, then ERPIntegrations will not be called
-                            if (b2BB2CFeaturesSettings.UseERPIntegration)
+                            if (_b2BB2CFeaturesSettings.UseERPIntegration)
                             {
                                 var erpAccountInfo = await erpIntegrationPlugin.CreateAccountNoErpAsync(new ErpCreateAccountModel
                                 {
@@ -749,7 +750,7 @@ public class B2BB2CCustomerController : CustomerController
 
                         if (model.CountryId == 0)
                         {
-                            model.CountryId = b2BB2CFeaturesSettings.DefaultCountryId;
+                            model.CountryId = _b2BB2CFeaturesSettings.DefaultCountryId;
                         }
                         if (model.StateProvinceId == 0)
                         {
@@ -804,7 +805,7 @@ public class B2BB2CCustomerController : CustomerController
 
                         if (!model.IsB2BUser)
                         {
-                            if (!b2BB2CFeaturesSettings.UseDefaultAccountForB2CUser)
+                            if (!_b2BB2CFeaturesSettings.UseDefaultAccountForB2CUser)
                             {
                                 #region Prepare and save ErpAccount 
 
@@ -815,14 +816,14 @@ public class B2BB2CCustomerController : CustomerController
                                     BillingAddressId = defaultAddress.Id,
                                     BillingSuburb = "",
                                     AllowOverspend = true,
-                                    PercentageOfStockAllowed = b2BB2CFeaturesSettings.PercentageOfStockAllowed,
+                                    PercentageOfStockAllowed = _b2BB2CFeaturesSettings.PercentageOfStockAllowed,
                                     AllowAccountsAddressEditOnCheckout = true,
                                     IsDefaultPaymentAccount = isDefaultPaymentAccount,
                                     ErpAccountStatusTypeId = (int)ErpAccountStatusType.Normal,
                                     IsActive = true,
                                     CreatedOnUtc = DateTime.UtcNow,
                                     CreatedById = customer.Id,
-                                    ErpSalesOrgId = b2BB2CFeaturesSettings.DefaultB2COrganizationId
+                                    ErpSalesOrgId = _b2BB2CFeaturesSettings.DefaultB2COrganizationId
                                 };
 
                                 await _erpAccountService.InsertErpAccountAsync(erpAccount);
@@ -879,7 +880,7 @@ public class B2BB2CCustomerController : CustomerController
                             }
                             else
                             {
-                                erpAccount = await _erpAccountService.GetErpAccountByIdAsync(b2BB2CFeaturesSettings.DefaultB2CErpAccountId);
+                                erpAccount = await _erpAccountService.GetErpAccountByIdAsync(_b2BB2CFeaturesSettings.DefaultB2CErpAccountId);
 
                                 if (defaultAddressValidation)
                                 {
@@ -924,7 +925,7 @@ public class B2BB2CCustomerController : CustomerController
                         {
                             if (!defaultAddressValidation)
                             {
-                                shipToAddressIdForB2BB2CUserId = existingShipToAddressList.Any() ? existingShipToAddressList[0].Id : 0;
+                                shipToAddressIdForB2BB2CUserId = existingShipToAddressList.Count != 0 ? existingShipToAddressList[0].Id : 0;
                             }
                         }
 
@@ -959,14 +960,11 @@ public class B2BB2CCustomerController : CustomerController
                             erpNopUser.Id),
                             erpNopUser);
 
-                        var b2BB2CustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(model.IsB2BUser ? ERPIntegrationCoreDefaults.B2BCustomerRole : ERPIntegrationCoreDefaults.B2CCustomerRole);
-
                         //prepare and save erpNopUser 
                         var erpNopUserAccountMap = new ErpNopUserAccountMap
                         {
                             ErpAccountId = erpAccount.Id,
-                            ErpUserId = erpNopUser.Id,
-                            CustomerRolesIds = b2BB2CustomerRole == null ? string.Empty : $"{b2BB2CustomerRole.Id}",
+                            ErpUserId = erpNopUser.Id
                         };
                         await _erpNopUserAccountMapService.InsertErpNopUserAccountMapAsync(erpNopUserAccountMap);
 
@@ -1279,8 +1277,6 @@ public class B2BB2CCustomerController : CustomerController
                     ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.Deleted"));
                     break;
                 case CustomerLoginResults.NotActive:
-                    #region ERP
-
                     if (erpAccount != null && (erpAccount.ErpAccountStatusType == ErpAccountStatusType.BlockLogin || !erpAccount.IsActive))
                     {
                         if (!erpAccount.IsActive)
@@ -1293,8 +1289,6 @@ public class B2BB2CCustomerController : CustomerController
                     {
                         ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.NotActive"));
                     }
-
-                    #endregion
                     break;
                 case CustomerLoginResults.NotRegistered:
                     ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.NotRegistered"));
@@ -1412,7 +1406,7 @@ public class B2BB2CCustomerController : CustomerController
     [HttpPost]
     public async Task<IActionResult> SetErpAccount(AccountSwitchModel model)
     {
-        var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
         try
         {
@@ -1563,7 +1557,7 @@ public class B2BB2CCustomerController : CustomerController
             };
 
             applicationForm.CreatedOnUtc = DateTime.UtcNow;
-            applicationForm.CreatedById = (await _b2BB2CWorkContext.GetCurrentCustomerAsync()).Id;
+            applicationForm.CreatedById = (await _workContext.GetCurrentCustomerAsync()).Id;
 
             await _erpAccountCustomerRegistrationFormService.InsertErpAccountCustomerRegistrationFormAsync(applicationForm);
 
@@ -1652,10 +1646,10 @@ public class B2BB2CCustomerController : CustomerController
             var successMsg = await _localizationService.GetResourceAsync("B2BB2CFeatures.ErpAccountCustomerRegistrationForm.Added");
             _notificationService.SuccessNotification(successMsg);
 
-            await _erpLogsService.InformationAsync(successMsg + " Erp Account Customer Registration Form Id: " + applicationForm.Id, ErpSyncLevel.Account, customer: await _b2BB2CWorkContext.GetCurrentCustomerAsync());
+            await _erpLogsService.InformationAsync($"{successMsg}. Erp Account Customer Registration Form Id: {applicationForm.Id}", ErpSyncLevel.Account, customer: await _workContext.GetCurrentCustomerAsync());
 
             //Send Email to Admin and Customer
-            await _erpWorkflowMessageService.SendERPCustomerRegistrationApplicationCreatedNotificationAsync(applicationForm, (await _b2BB2CWorkContext.GetWorkingLanguageAsync()).Id);
+            await _erpWorkflowMessageService.SendERPCustomerRegistrationApplicationCreatedNotificationAsync(applicationForm, (await _workContext.GetWorkingLanguageAsync()).Id);
 
             return RedirectToRoute("RegisterResult", new { resultId = (int)UserRegistrationType.Standard, returnUrl });
         }

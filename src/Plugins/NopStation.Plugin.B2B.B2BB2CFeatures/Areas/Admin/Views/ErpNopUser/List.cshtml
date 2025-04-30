@@ -1,5 +1,8 @@
-﻿@using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
-@model NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpNopUserSearchModel
+﻿@using NopStation.Plugin.B2B.B2BB2CFeatures
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
+@model ErpNopUserSearchModel
+
+@inject B2BB2CFeaturesSettings b2BB2CFeaturesSettings
 
 @{
     Layout = "_AdminLayout";
@@ -22,7 +25,6 @@
     var hideErpNopUsersBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideErpNopUsersBlockAttributeName);
 
     var storeScope = await storeContext.GetActiveStoreScopeConfigurationAsync();
-    var b2BB2CFeaturesSettings = await settingService.LoadSettingAsync<B2BB2CFeaturesSettings>(storeScope);
 }
 
 <div class="content-header clearfix">

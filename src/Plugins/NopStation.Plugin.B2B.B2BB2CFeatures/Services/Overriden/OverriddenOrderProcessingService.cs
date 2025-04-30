@@ -275,7 +275,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
         if (b2BUser != null)
         {
-            if (!await _erpCustomerFunctionalityService.IsConsideredAsB2BOrderByB2BUserInformation(b2BUser))
+            if (!await _erpCustomerFunctionalityService.IsConsideredAsB2BOrderByB2BUser(b2BUser))
                 return await base.PlaceOrderAsync(processPaymentRequest);
         }
         else if (b2CUser != null)
@@ -358,12 +358,15 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
             return;
         }
 
-        if (erpPlaceOrderDataModel.OrderType == ERPIntegrationCoreDefaults.ErpB2BOrderFromQuoteType || erpPlaceOrderDataModel.OrderType == ERPIntegrationCoreDefaults.ErpB2COrderFromQuoteType ||
-            erpPlaceOrderDataModel.OrderType == ERPIntegrationCoreDefaults.ErpB2BOrderType || erpPlaceOrderDataModel.OrderType == ERPIntegrationCoreDefaults.ErpB2COrderType)
+        if (erpPlaceOrderDataModel.OrderType == ERPIntegrationCoreDefaults.ErpB2BOrderFromQuoteType || 
+            erpPlaceOrderDataModel.OrderType == ERPIntegrationCoreDefaults.ErpB2COrderFromQuoteType ||
+            erpPlaceOrderDataModel.OrderType == ERPIntegrationCoreDefaults.ErpB2BOrderType || 
+            erpPlaceOrderDataModel.OrderType == ERPIntegrationCoreDefaults.ErpB2COrderType)
         {
             erpPlaceOrderDataModel.OrderType = ERPIntegrationCoreDefaults.ErpB2BOrderType;
         }
-        else if (erpPlaceOrderDataModel.OrderType == ERPIntegrationCoreDefaults.ErpB2BQuoteType || erpPlaceOrderDataModel.OrderType == ERPIntegrationCoreDefaults.ErpB2CQuoteType)
+        else if (erpPlaceOrderDataModel.OrderType == ERPIntegrationCoreDefaults.ErpB2BQuoteType || 
+            erpPlaceOrderDataModel.OrderType == ERPIntegrationCoreDefaults.ErpB2CQuoteType)
         {
             erpPlaceOrderDataModel.OrderType = ERPIntegrationCoreDefaults.ErpB2BQuoteType;
         }
@@ -371,8 +374,6 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
         var response = await erpIntegrationPlugin.CreateOrderOnErpAsync(erpPlaceOrderDataModel);
 
         var message = "";
-
-        var erpNopUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(order.CustomerId);
 
         if (!response.IsError && !string.IsNullOrWhiteSpace(response.OrderNumber))
         {
@@ -523,6 +524,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
             deliveryDate = await _genericAttributeService.GetAttributeAsync<DateTime>(currentCustomer, B2BB2CFeaturesDefaults.SelectedB2BDeliveryDateAttribute, currentStore.Id);
 
         }
+
         var isShippingAddressModifiedInCheckout = await _genericAttributeService.GetAttributeAsync<bool>(currentCustomer, B2BB2CFeaturesDefaults.IsShippingAddressModifiedInCheckoutAttribute, currentStore.Id);
         var modifiedShipToAddressIdOnCheckout = await _genericAttributeService.GetAttributeAsync<int>(currentCustomer, B2BB2CFeaturesDefaults.ShippingAddressModifiedIdInCheckoutAttribute, currentStore.Id);
         var specialInstructions = "";
@@ -602,7 +604,9 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
         await _orderService.UpdateOrderAsync(order);
 
 
-        if (erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2BQuote || erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2CQuote || order.PaymentStatus == PaymentStatus.Paid)
+        if (erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2BQuote || 
+            erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2CQuote || 
+            order.PaymentStatus == PaymentStatus.Paid)
         {
             erpOrderAdditionalData.IntegrationStatusTypeId = (int)IntegrationStatusType.Queued;
         }
@@ -678,7 +682,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
             }
             catch (Exception ex)
             {
-                await _logger.ErrorAsync($"B2B Order Place Detail Line Prepare error for Account Number: {erpAccount.AccountNumber}", ex);
+                await _logger.ErrorAsync($"B2B Order Additional Item data prepare error for Account Number: {erpAccount.AccountNumber}", ex);
             }
         }
 
@@ -714,12 +718,10 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
         if (erpOrderAdditionalData.IntegrationStatusType == IntegrationStatusType.Confirmed)
             return (false, "Order already placed at Erp");
 
-        if (
-            erpOrderAdditionalData.ErpOrderType != ErpOrderType.B2BQuote
+        if (erpOrderAdditionalData.ErpOrderType != ErpOrderType.B2BQuote
             && erpOrderAdditionalData.ErpOrderType != ErpOrderType.B2CQuote
             && erpOrderAdditionalData.IntegrationStatusType
-                == IntegrationStatusType.WaitingForPayment
-        )
+                == IntegrationStatusType.WaitingForPayment)
             return (false, "This Order can't be placed at Erp since this order is not paid");
 
         var nopOrder = await _orderService.GetOrderByIdAsync(erpOrderAdditionalData.NopOrderId);
@@ -784,10 +786,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
         if (erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2BSalesOrder || erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2CSalesOrder)
         {
-            if (
-                erpOrderAdditionalData.IntegrationStatusType
-                != IntegrationStatusType.WaitingForPayment
-            )
+            if (erpOrderAdditionalData.IntegrationStatusType != IntegrationStatusType.WaitingForPayment)
             {
                 erpOrderAdditionalData.IntegrationRetries ??= 0;
                 erpOrderAdditionalData.IntegrationRetries++;
@@ -1003,8 +1002,9 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
             #region Email Notification
 
-            if (erpOrderAdditionalData.IntegrationRetries != null && erpOrderAdditionalData.IntegrationRetries >= maxRetries
-                && erpOrderAdditionalData.IntegrationStatusType != IntegrationStatusType.Confirmed)
+            if (erpOrderAdditionalData.IntegrationRetries != null && 
+                erpOrderAdditionalData.IntegrationRetries >= maxRetries && 
+                erpOrderAdditionalData.IntegrationStatusType != IntegrationStatusType.Confirmed)
             {
                 erpOrderAdditionalData.ERPOrderStatus = await _localizationService.GetLocalizedEnumAsync(IntegrationStatusType.Failed);
                 erpOrderAdditionalData.IntegrationStatusType = IntegrationStatusType.Failed;
@@ -1050,8 +1050,9 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
             await _orderService.UpdateOrderAsync(order);
 
-            if (erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2BSalesOrder || erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2CSalesOrder
-                && erpOrderAdditionalData.IntegrationStatusType == IntegrationStatusType.Confirmed)
+            if (erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2BSalesOrder || 
+                erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2CSalesOrder && 
+                erpOrderAdditionalData.IntegrationStatusType == IntegrationStatusType.Confirmed)
             {
                 await _genericAttributeService.SaveAttributeAsync<int?>(currentCustomer, B2BB2CFeaturesDefaults.B2BOriginalB2BQuoteOrderIdReference, null, currentStore.Id);
                 await _genericAttributeService.SaveAttributeAsync<int?>(currentCustomer, B2BB2CFeaturesDefaults.ProvidedB2BSpecialInstructions, null, currentStore.Id);
@@ -1171,10 +1172,9 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
         var orderCustomer = await _customerService.GetCustomerByIdAsync(order.CustomerId);
         var erpNopUser = await _erpCustomerFunctionalityService.GetActiveErpNopUserByCustomerAsync(orderCustomer);
-        var b2BUser = erpNopUser?.ErpUserType == ErpUserType.B2BUser;
-        var b2CUser = erpNopUser?.ErpUserType == ErpUserType.B2CUser;
+        (var _, var b2BUser, var b2CUser) = await GetB2BAccountAndUserOfCurrentCustomerAsync();
 
-        if (b2BUser && erpNopUser.ShippingErpShipToAddressId > 0)
+        if (b2BUser != null && erpNopUser.ShippingErpShipToAddressId > 0)
         {
             var checkoutShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(erpNopUser.ErpShipToAddressId);
 
@@ -1189,9 +1189,8 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
         //Quote reference Id
         var isQuoteOrder = false;
-        var b2BAccountUser = await _erpCustomerFunctionalityService.GetActiveErpNopUserByCustomerAsync(orderCustomer);
 
-        if (b2BAccountUser != null && b2BUser)
+        if (erpNopUser != null && b2BUser != null)
         {
             // Update allocated stock at B2BPerAccountProductPricing for each item only for sales order
             isQuoteOrder = await _genericAttributeService.GetAttributeAsync<bool>(currCustomer, B2BB2CFeaturesDefaults.B2BQouteOrderAttribute, currStore.Id);
@@ -1209,8 +1208,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
                 }
             }
         }
-
-        else if (b2BAccountUser != null && b2CUser)
+        else if (erpNopUser != null && b2CUser != null)
         {
             // Update allocated stock at B2BPerAccountProductPricing for each item only for sales order
             isQuoteOrder = await _genericAttributeService.GetAttributeAsync<bool>(currCustomer, B2BB2CFeaturesDefaults.B2CQouteOrderAttribute, currStore.Id);
@@ -1300,8 +1298,8 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
     private async Task<(ErpAccount b2BAccount, ErpNopUser b2BUser, ErpNopUser b2CUser)> GetB2BAccountAndUserOfCurrentCustomerAsync()
     {
         var currCustomer = await _workContext.GetCurrentCustomerAsync();
+        var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
         var erpUser = await _erpCustomerFunctionalityService.GetActiveErpNopUserByCustomerAsync(currCustomer);
-        var b2BAccount = await _erpAccountService.GetErpAccountByIdAsync(erpUser?.ErpAccountId ?? 0);
 
         var b2BUser = erpUser?.ErpUserType == ErpUserType.B2BUser ? erpUser : null;
         var b2CUser = erpUser?.ErpUserType == ErpUserType.B2CUser ? erpUser : null;

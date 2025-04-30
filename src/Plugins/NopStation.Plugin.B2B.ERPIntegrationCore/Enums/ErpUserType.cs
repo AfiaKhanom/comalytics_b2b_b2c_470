@@ -3,5 +3,5 @@
 public enum ErpUserType
 {
     B2BUser = 5,
-    B2CUser = 10,
+    B2CUser = 10
 }

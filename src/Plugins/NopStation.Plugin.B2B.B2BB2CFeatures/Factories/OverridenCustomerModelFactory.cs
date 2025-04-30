@@ -17,7 +17,6 @@ using Nop.Services.Authentication.External;
 using Nop.Services.Authentication.MultiFactor;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
-using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.Gdpr;
@@ -32,6 +31,7 @@ using Nop.Services.Stores;
 using Nop.Web.Factories;
 using Nop.Web.Models.Common;
 using Nop.Web.Models.Customer;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
@@ -42,12 +42,12 @@ public class OverridenCustomerModelFactory : CustomerModelFactory
 {
     #region Fields
 
-    private readonly ISettingService _settingService;
     private readonly IErpAccountService _erpAccountService;
     private readonly IErpNopUserService _erpNopUserService;
     private readonly IErpShipToAddressService _erpShipToAddressService;
     private readonly IAddressService _addressService;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
+    private readonly IErpCustomerFunctionalityService _erpCustomerFunctionalityService;
 
     #endregion
 
@@ -92,12 +92,12 @@ public class OverridenCustomerModelFactory : CustomerModelFactory
         SecuritySettings securitySettings,
         TaxSettings taxSettings,
         VendorSettings vendorSettings,
-        ISettingService settingService,
         IErpAccountService erpAccountService,
         IErpNopUserService erpNopUserService,
         IErpShipToAddressService erpShipToAddressService,
         IAddressService addressService,
-        B2BB2CFeaturesSettings b2BB2CFeaturesSettings) : base(addressSettings,
+        B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
+        IErpCustomerFunctionalityService erpCustomerFunctionalityService) : base(addressSettings,
             captchaSettings,
             catalogSettings,
             commonSettings,
@@ -136,12 +136,12 @@ public class OverridenCustomerModelFactory : CustomerModelFactory
             taxSettings,
             vendorSettings)
     {
-        _settingService = settingService;
         _erpAccountService = erpAccountService;
         _erpNopUserService = erpNopUserService;
         _erpShipToAddressService = erpShipToAddressService;
         _addressService = addressService;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
+        _erpCustomerFunctionalityService = erpCustomerFunctionalityService;
     }
 
     #endregion
@@ -176,7 +176,6 @@ public class OverridenCustomerModelFactory : CustomerModelFactory
         var erpUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(currCustomer.Id);
         var isErpAccount = erpAccount is not null;
         var store = await _storeContext.GetCurrentStoreAsync();
-        var b2BB2CFeaturesSettings = await _settingService.LoadSettingAsync<B2BB2CFeaturesSettings>(store.Id);
 
         if (isErpAccount)
         {
@@ -207,7 +206,8 @@ public class OverridenCustomerModelFactory : CustomerModelFactory
                 ItemClass = "erpaccount-invoices",
             });
 
-            if (erpUser.ErpUserType == ErpUserType.B2BUser || (erpUser.ErpUserType == ErpUserType.B2CUser && !b2BB2CFeaturesSettings.UseDefaultAccountForB2CUser))
+            if (erpUser.ErpUserType == ErpUserType.B2BUser || 
+                (erpUser.ErpUserType == ErpUserType.B2CUser && !_b2BB2CFeaturesSettings.UseDefaultAccountForB2CUser))
             {
                 model.CustomerNavigationItems.Add(new CustomerNavigationItemModel
                 {
@@ -239,7 +239,8 @@ public class OverridenCustomerModelFactory : CustomerModelFactory
 
         var customer = await _workContext.GetCurrentCustomerAsync();
 
-        if (_orderSettings.ReturnRequestsEnabled && (await _returnRequestService.SearchReturnRequestsAsync(store.Id, customer.Id, pageIndex: 0, pageSize: 1)).Any())
+        if (_orderSettings.ReturnRequestsEnabled && 
+            (await _returnRequestService.SearchReturnRequestsAsync(store.Id, customer.Id, pageIndex: 0, pageSize: 1)).Any())
         {
             model.CustomerNavigationItems.Add(new CustomerNavigationItemModel
             {

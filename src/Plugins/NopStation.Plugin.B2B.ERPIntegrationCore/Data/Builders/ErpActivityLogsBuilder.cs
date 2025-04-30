@@ -23,5 +23,6 @@ public class ErpActivityLogsBuilder : NopEntityBuilder<ErpActivityLogs>
             .WithColumn(nameof(ErpActivityLogs.CustomerId)).AsInt32().Nullable()
             .WithColumn(nameof(ErpActivityLogs.CreatedOnUtc)).AsDateTime2();
     }
+
     #endregion
 }

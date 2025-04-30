@@ -25,7 +25,8 @@
 
 @section left
 {
-    @await Component.InvokeAsync(typeof(CustomerNavigationViewComponent), new { selectedTabId = B2BB2CFeaturesDefaults.ErpCustomerNavigationEnum_ErpAccountTransactionsInfo })
+    @await Component.InvokeAsync(typeof(CustomerNavigationViewComponent), 
+    new { selectedTabId = B2BB2CFeaturesDefaults.ErpCustomerNavigationEnum_ErpAccountTransactionsInfo })
 }
 
 <style>

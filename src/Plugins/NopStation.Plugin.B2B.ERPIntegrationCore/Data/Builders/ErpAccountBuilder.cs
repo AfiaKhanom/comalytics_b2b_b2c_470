@@ -2,7 +2,6 @@
 using FluentMigrator.Builders.Create.Table;
 using Nop.Core.Domain.Common;
 using Nop.Data.Extensions;
-using Nop.Data.Mapping;
 using Nop.Data.Mapping.Builders;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
@@ -21,8 +20,8 @@ public class ErpAccountBuilder : NopEntityBuilder<ErpAccount>
         table
             .WithColumn(nameof(ErpAccount.AccountNumber)).AsString(50)
             .WithColumn(nameof(ErpAccount.AccountName)).AsString(100)
-            .WithColumn(NameCompatibilityManager.GetColumnName(typeof(ErpAccount), nameof(ErpAccount.ErpSalesOrgId))).AsInt32().ForeignKey<ErpSalesOrg>(onDelete: Rule.None)
-            .WithColumn(NameCompatibilityManager.GetColumnName(typeof(ErpAccount), nameof(ErpAccount.BillingAddressId))).AsInt32().Nullable().ForeignKey<Address>(onDelete: Rule.None)
+            .WithColumn(nameof(ErpAccount.ErpSalesOrgId)).AsInt32().ForeignKey<ErpSalesOrg>(onDelete: Rule.None)
+            .WithColumn(nameof(ErpAccount.BillingAddressId)).AsInt32().Nullable().ForeignKey<Address>(onDelete: Rule.None)
             .WithColumn(nameof(ErpAccount.BillingSuburb)).AsString(200).Nullable()
             .WithColumn(nameof(ErpAccount.VatNumber)).AsString(50).Nullable()
             .WithColumn(nameof(ErpAccount.CreditLimit)).AsDecimal(18,4)
@@ -39,7 +38,7 @@ public class ErpAccountBuilder : NopEntityBuilder<ErpAccount>
             .WithColumn(nameof(ErpAccount.AllowAccountsAddressEditOnCheckout)).AsBoolean()
             .WithColumn(nameof(ErpAccount.OverrideStockDisplayFormatConfigSetting)).AsBoolean()
             .WithColumn(nameof(ErpAccount.ErpAccountStatusTypeId)).AsInt32()
-            .WithColumn(NameCompatibilityManager.GetColumnName(typeof(ErpAccount), nameof(ErpAccount.LastErpAccountSyncDate))).AsDateTime2().Nullable()
+            .WithColumn(nameof(ErpAccount.LastErpAccountSyncDate)).AsDateTime2().Nullable()
             .WithColumn(nameof(ErpAccount.LastPriceRefresh)).AsDateTime2().Nullable()
             .WithColumn(nameof(ErpAccount.B2BPriceGroupCodeId)).AsInt32().Nullable()
             .WithColumn(nameof(ErpAccount.TotalSavingsForthisYear)).AsDecimal(18,4).Nullable()

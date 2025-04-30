@@ -14,10 +14,6 @@ public partial class ErpNopUserAccountMapValidator : BaseNopValidator<ErpNopUser
             .GreaterThan(0)
             .WithMessageAwait(localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.RequiredErrMsg.ErpAccountId"));
 
-        RuleFor(x => x.SelectedCustomerRoleIds)
-            .NotEmpty()
-            .WithMessageAwait(localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.RequiredErrMsg.ErpUserRoleId"));
-
         SetDatabaseValidationRules<ErpNopUserAccountMap>();
     }
 }

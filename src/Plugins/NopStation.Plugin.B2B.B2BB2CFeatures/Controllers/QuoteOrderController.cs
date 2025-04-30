@@ -30,7 +30,7 @@ public class QuoteOrderController : BasePublicController
     private readonly IWorkContext _workContext;
     private readonly OrderSettings _orderSettings;
     private readonly IPermissionService _permissionService;
-    private readonly IErpCustomerFunctionalityService _b2BCustomerFunctionality;
+    private readonly IErpCustomerFunctionalityService _erpCustomerFunctionalityService;
     private readonly IProductService _productService;
 
     #endregion
@@ -46,7 +46,7 @@ public class QuoteOrderController : BasePublicController
         IWorkContext workContext,
         OrderSettings orderSettings,
         IPermissionService permissionService,
-        IErpCustomerFunctionalityService b2BCustomerFunctionality,
+        IErpCustomerFunctionalityService erpCustomerFunctionalityService,
         IProductService productService)
     {
         _customerSettings = customerSettings;
@@ -58,7 +58,7 @@ public class QuoteOrderController : BasePublicController
         _workContext = workContext;
         _orderSettings = orderSettings;
         _permissionService = permissionService;
-        _b2BCustomerFunctionality = b2BCustomerFunctionality;
+        _erpCustomerFunctionalityService = erpCustomerFunctionalityService;
         _productService = productService;
     }
 
@@ -139,14 +139,14 @@ public class QuoteOrderController : BasePublicController
                 return RedirectToRoute("ShoppingCart");
         }
 
-        var erpNopUser = await _b2BCustomerFunctionality.GetActiveErpNopUserByCustomerAsync(currCustomer);
+        var erpNopUser = await _erpCustomerFunctionalityService.GetActiveErpNopUserByCustomerAsync(currCustomer);
         var b2BUser = erpNopUser.ErpUserType == ErpUserType.B2BUser ? erpNopUser : null;
         var b2CUser = erpNopUser.ErpUserType == ErpUserType.B2CUser ? erpNopUser : null;
 
         if (b2BUser != null)
         {
             // if b2b user is active, only then place qoute order otherwise go for normal order
-            if (await _b2BCustomerFunctionality.IsConsideredAsB2BOrderByB2BUserInformation(b2BUser))
+            if (await _erpCustomerFunctionalityService.IsConsideredAsB2BOrderByB2BUser(b2BUser))
             {
                 if (!await _permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BQuote))
                     return RedirectToRoute("ShoppingCart");
@@ -155,11 +155,10 @@ public class QuoteOrderController : BasePublicController
                 await _genericAttributeService.SaveAttributeAsync(currCustomer, B2BB2CFeaturesDefaults.B2BQouteOrderAttribute, true, store.Id);
             }
         }
-
         else if (b2CUser != null)
         {
             // if b2c user is active, only then place qoute order otherwise go for normal order
-            if (await _b2BCustomerFunctionality.IsConsideredAsB2COrderByB2CUser(b2CUser))
+            if (await _erpCustomerFunctionalityService.IsConsideredAsB2COrderByB2CUser(b2CUser))
             {
                 if (!await _permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BQuote))
                     return RedirectToRoute("ShoppingCart");
@@ -182,12 +181,12 @@ public class QuoteOrderController : BasePublicController
         var b2bOrderId = await _genericAttributeService.GetAttributeAsync<int>(currCustomer, B2BB2CFeaturesDefaults.B2BConvertedQuoteB2BOrderId, store.Id);
         if (b2bOrderId > 0)
         {
-            _b2BCustomerFunctionality.ClearGenericAttributeOfB2BQuoteOrder();
+            _erpCustomerFunctionalityService.ClearGenericAttributeOfB2BQuoteOrder();
         }
         var b2COrderId = await _genericAttributeService.GetAttributeAsync<int>(currCustomer, B2BB2CFeaturesDefaults.B2CConvertedQuoteB2COrderId, store.Id);
         if (b2COrderId > 0)
         {
-            _b2BCustomerFunctionality.ClearGenericAttributeOfB2CQuoteOrder();
+            _erpCustomerFunctionalityService.ClearGenericAttributeOfB2CQuoteOrder();
         }
         return Json("success");
     }

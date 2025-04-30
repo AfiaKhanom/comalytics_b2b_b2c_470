@@ -7,7 +7,6 @@ using Nop.Core.Infrastructure;
 using Nop.Services.Catalog;
 using Nop.Services.Customers;
 using Nop.Services.Orders;
-using Nop.Services.Security;
 using Nop.Web.Controllers;
 using Nop.Web.Factories;
 using NopStation.Plugin.B2B.B2BB2CFeatures.ActionFilters;
@@ -59,7 +58,6 @@ public class NopStartup : INopStartup
         services.AddScoped<IErpPriceSyncFunctionalityService, ErpPriceSyncFunctionalityService>();
         services.AddScoped<IPriceCalculationService, OverridenPriceCalculationService>();
         services.AddScoped<IProductService, OverridenProductService>();
-        services.AddScoped<ICustomerService, OverridenCustomerService>();
         services.AddScoped<IErpSpecificationAttributeService, ErpSpecificationAttributeService>();
 
         services.AddScoped<IOverriddenOrderProcessingService, OverriddenOrderProcessingService>();
@@ -106,8 +104,6 @@ public class NopStartup : INopStartup
         services.AddScoped<IQuickOrderItemModelFactory, QuickOrderItemModelFactory>();
 
         services.AddScoped<IErpOrderDetailsModelFactory, ErpOrderDetailsModelFactory>();
-
-        services.AddScoped<IPermissionService, OverriddenPermissionService>();
 
         services.AddScoped<ICategoryProductsExportManager, CategoryProductsExportManager>();
 

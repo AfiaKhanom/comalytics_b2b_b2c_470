@@ -3,5 +3,5 @@
 public enum ErpOrderOriginType
 {
     OnlineOrder = 10,
-    ERPOrder = 20,
+    ERPOrder = 20
 }

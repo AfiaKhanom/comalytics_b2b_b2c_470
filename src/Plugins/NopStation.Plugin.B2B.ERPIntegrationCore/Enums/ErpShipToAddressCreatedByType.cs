@@ -3,5 +3,5 @@
 public enum ErpShipToAddressCreatedByType
 {
     Admin = 10,
-    User = 20,
+    User = 20
 }
