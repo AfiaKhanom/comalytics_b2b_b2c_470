@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +18,6 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.Customers;
 using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
@@ -39,7 +40,6 @@ public class ErpNopUserController : NopStationAdminController
     private readonly IErpNopUserService _erpNopUserService;
     private readonly ICustomerService _customerService;
     private readonly IErpNopUserAccountMapService _erpNopUserAccountMapService;
-    private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
     private readonly IErpLogsService _erpLogsService;
     private readonly IWebHelper _webHelper;
     private readonly IErpActivityLogsService _erpActivityLogsService;
@@ -61,7 +61,6 @@ public class ErpNopUserController : NopStationAdminController
         IGenericAttributeService genericAttributeService,
         ICustomerService customerService,
         IErpNopUserAccountMapService erpNopUserAccountMapService,
-        IB2BB2CWorkContext b2BB2CWorkContext,
         IErpLogsService erpLogsService,
         IWebHelper webHelper,
         IErpActivityLogsService erpActivityLogsService,
@@ -79,7 +78,6 @@ public class ErpNopUserController : NopStationAdminController
         _erpNopUserService = erpNopUserService;
         _customerService = customerService;
         _erpNopUserAccountMapService = erpNopUserAccountMapService;
-        _b2BB2CWorkContext = b2BB2CWorkContext;
         _erpLogsService = erpLogsService;
         _webHelper = webHelper;
         _erpActivityLogsService = erpActivityLogsService;
@@ -87,6 +85,45 @@ public class ErpNopUserController : NopStationAdminController
         _commonHelperService = commonHelperService;
         _erpAccountService = erpAccountService;
         _customerActivityService = customerActivityService;
+    }
+
+    #endregion
+
+    #region Utilities
+
+    protected virtual async Task<bool> SecondAdminAccountExistsAsync(Customer customer)
+    {
+        var customers = await _customerService.GetAllCustomersAsync(customerRoleIds: [(await _customerService.GetCustomerRoleBySystemNameAsync(NopCustomerDefaults.AdministratorsRoleName)).Id]);
+
+        return customers.Any(c => c.Active && c.Id != customer.Id);
+    }
+
+    protected virtual async Task<string> ValidateCustomerRolesAsync(IList<CustomerRole> customerRoles, IList<CustomerRole> existingCustomerRoles)
+    {
+        ArgumentNullException.ThrowIfNull(customerRoles);
+
+        ArgumentNullException.ThrowIfNull(existingCustomerRoles);
+
+        //check ACL permission to manage customer roles
+        var rolesToAdd = customerRoles.Except(existingCustomerRoles, new CustomerRoleComparerByName());
+        var rolesToDelete = existingCustomerRoles.Except(customerRoles, new CustomerRoleComparerByName());
+        if (rolesToAdd.Any(role => role.SystemName != NopCustomerDefaults.RegisteredRoleName) || rolesToDelete.Any())
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageAcl))
+                return await _localizationService.GetResourceAsync("Admin.Customers.Customers.CustomerRolesManagingError");
+        }
+
+        //ensure a customer is not added to both 'Guests' and 'Registered' customer roles
+        //ensure that a customer is in at least one required role ('Guests' and 'Registered')
+        var isInGuestsRole = customerRoles.FirstOrDefault(cr => cr.SystemName == NopCustomerDefaults.GuestsRoleName) != null;
+        var isInRegisteredRole = customerRoles.FirstOrDefault(cr => cr.SystemName == NopCustomerDefaults.RegisteredRoleName) != null;
+        if (isInGuestsRole && isInRegisteredRole)
+            return await _localizationService.GetResourceAsync("Admin.Customers.Customers.GuestsAndRegisteredRolesError");
+        if (!isInGuestsRole && !isInRegisteredRole)
+            return await _localizationService.GetResourceAsync("Admin.Customers.Customers.AddCustomerToGuestsOrRegisteredRoleError");
+
+        //no errors
+        return string.Empty;
     }
 
     #endregion
@@ -156,39 +193,102 @@ public class ErpNopUserController : NopStationAdminController
 
         if (ModelState.IsValid)
         {
-            //fill entity from model
-            var erpNopUser = model.ToEntity<ErpNopUser>();
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
-            erpNopUser.CreatedOnUtc = DateTime.UtcNow;
-            erpNopUser.CreatedById = (await _workContext.GetCurrentCustomerAsync()).Id;
-            erpNopUser.ErpUserTypeId = model.ErpUserTypeId;
+            #region Nop Customer Role validity check
 
-            await _erpNopUserService.InsertErpNopUserAsync(erpNopUser);
+            var customer = await _customerService.GetCustomerByIdAsync(model.NopCustomerId);
+            //validate customer roles
+            var allCustomerRoles = await _customerService.GetAllCustomerRolesAsync(true);
+            var newCustomerRoles = (from customerRole in allCustomerRoles
+                                    where model.SelectedCustomerRoleIds.Contains(customerRole.Id)
+                                    select customerRole).ToList();
 
-            var erpNopUserMap = new ErpNopUserAccountMap
+            var customerRolesError = await ValidateCustomerRolesAsync(newCustomerRoles, await _customerService.GetCustomerRolesAsync(customer));
+
+            if (!string.IsNullOrEmpty(customerRolesError))
             {
-                ErpUserId = erpNopUser.Id,
-                ErpAccountId = erpNopUser.ErpAccountId,
-                CustomerRolesIds = string.Join(",", model.SelectedCustomerRoleIds)
-            };
+                ModelState.AddModelError(string.Empty, customerRolesError);
+                _notificationService.ErrorNotification(customerRolesError);
+            }
 
-            await _erpNopUserAccountMapService.InsertErpNopUserAccountMapAsync(erpNopUserMap);
+            #endregion
 
-            var successMsg = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Added");
-            _notificationService.SuccessNotification(successMsg);
+            if (ModelState.ErrorCount == 0)
+            {
+                //fill entity from model
+                var erpNopUser = model.ToEntity<ErpNopUser>();
 
-            await _erpLogsService.InformationAsync($"{successMsg}. Erp Nop User Id: {erpNopUser.Id}", ErpSyncLevel.ErpNopUser, customer: await _b2BB2CWorkContext.GetCurrentCustomerAsync());
+                erpNopUser.CreatedOnUtc = DateTime.UtcNow;
+                erpNopUser.CreatedById = currentCustomer.Id;
+                erpNopUser.ErpUserTypeId = model.ErpUserTypeId;
 
-            //erp activity log
-            await _erpActivityLogsService.InsertErpActivityAsync("Erp_AddNewErpNopUser",
-                string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.AddNewErpNopUser"),
-                erpNopUser.Id),
-                erpNopUser);
+                await _erpNopUserService.InsertErpNopUserAsync(erpNopUser);
 
-            if (!continueEditing)
-                return RedirectToAction("List");
+                #region Nop Customer Role update
 
-            return RedirectToAction("ErpNopUserEdit", new { id = erpNopUser.Id });
+                var currentCustomerRoleIds = await _customerService.GetCustomerRoleIdsAsync(customer, true);
+
+                //customer roles
+                foreach (var customerRole in allCustomerRoles)
+                {
+                    //ensure that the current customer cannot add/remove to/from "Administrators" system role
+                    //if he's not an admin himself
+                    if (customerRole.SystemName == NopCustomerDefaults.AdministratorsRoleName &&
+                        !await _customerService.IsAdminAsync(customer))
+                        continue;
+
+                    if (model.SelectedCustomerRoleIds.Contains(customerRole.Id))
+                    {
+                        //new role
+                        if (currentCustomerRoleIds.All(roleId => roleId != customerRole.Id))
+                            await _customerService.AddCustomerRoleMappingAsync(
+                                new CustomerCustomerRoleMapping { CustomerId = customer.Id, CustomerRoleId = customerRole.Id });
+                    }
+                    else
+                    {
+                        //prevent attempts to delete the administrator role from the user, if the user is the last active administrator
+                        if (customerRole.SystemName == NopCustomerDefaults.AdministratorsRoleName &&
+                            !await SecondAdminAccountExistsAsync(customer))
+                        {
+                            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Admin.Customers.Customers.AdminAccountShouldExists.DeleteRole"));
+                            continue;
+                        }
+
+                        //remove role
+                        if (currentCustomerRoleIds.Any(roleId => roleId == customerRole.Id))
+                            await _customerService.RemoveCustomerRoleMappingAsync(customer, customerRole);
+                    }
+                }
+
+                await _customerService.UpdateCustomerAsync(customer);
+
+                #endregion
+
+                var erpNopUserMap = new ErpNopUserAccountMap
+                {
+                    ErpUserId = erpNopUser.Id,
+                    ErpAccountId = erpNopUser.ErpAccountId
+                };
+
+                await _erpNopUserAccountMapService.InsertErpNopUserAccountMapAsync(erpNopUserMap);
+
+                var successMsg = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Added");
+                _notificationService.SuccessNotification(successMsg);
+
+                await _erpLogsService.InformationAsync($"{successMsg}. Erp Nop User Id: {erpNopUser.Id}", ErpSyncLevel.ErpNopUser, customer: currentCustomer);
+
+                //erp activity log
+                await _erpActivityLogsService.InsertErpActivityAsync("Erp_AddNewErpNopUser",
+                    string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.AddNewErpNopUser"),
+                    erpNopUser.Id),
+                    erpNopUser);
+
+                if (!continueEditing)
+                    return RedirectToAction("List");
+
+                return RedirectToAction("ErpNopUserEdit", new { id = erpNopUser.Id });
+            }
         }
 
         //prepare model
@@ -226,58 +326,118 @@ public class ErpNopUserController : NopStationAdminController
         if (erpNopUser == null)
             return RedirectToAction("List");
 
-        var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
-
         if (ModelState.IsValid)
         {
-            try
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+
+            #region Nop Customer Role validity check
+
+            var customer = await _customerService.GetCustomerByIdAsync(erpNopUser.NopCustomerId);
+            //validate customer roles
+            var allCustomerRoles = await _customerService.GetAllCustomerRolesAsync(true);
+            var newCustomerRoles = (from customerRole in allCustomerRoles
+                                    where model.SelectedCustomerRoleIds.Contains(customerRole.Id)
+                                    select customerRole).ToList();
+
+            var customerRolesError = await ValidateCustomerRolesAsync(newCustomerRoles, await _customerService.GetCustomerRolesAsync(customer));
+
+            if (!string.IsNullOrEmpty(customerRolesError))
             {
-                var currCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
-                erpNopUser.ErpShipToAddressId = model.ErpShipToAddressId;
-                erpNopUser.BillingErpShipToAddressId = model.BillingErpShipToAddressId;
-                erpNopUser.ShippingErpShipToAddressId = model.ShippingErpShipToAddressId;
-                erpNopUser.ErpUserTypeId = model.ErpUserTypeId;
-                erpNopUser.IsActive = model.IsActive;
-                erpNopUser.UpdatedOnUtc = DateTime.UtcNow;
-                erpNopUser.UpdatedById = currCustomer.Id;
-
-                await _erpNopUserService.UpdateErpNopUserAsync(erpNopUser);
-
-                var map = await _erpNopUserAccountMapService.GetErpNopUserAccountMapByAccountAndUserIdAsync(accountId: model.ErpAccountId, userId: model.Id);
-
-                var erpNopUserMap = new ErpNopUserAccountMap();
-                erpNopUserMap.ErpUserId = model.Id;
-                erpNopUserMap.ErpAccountId = model.ErpAccountId;
-                erpNopUserMap.CustomerRolesIds = string.Join(",", model.SelectedCustomerRoleIds);
-
-                if (map != null)
-                {
-                    erpNopUserMap.Id = map.Id;
-                    await _erpNopUserAccountMapService.UpdateErpNopUserAccountMapAsync(erpNopUserMap);
-                }
-                else
-                    await _erpNopUserAccountMapService.InsertErpNopUserAccountMapAsync(erpNopUserMap);
-
-                var successMsg = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Updated");
-                _notificationService.SuccessNotification(successMsg);
-
-                await _erpLogsService.InformationAsync($"{successMsg}. Erp Nop User Id: {erpNopUser.Id}", ErpSyncLevel.Account, customer: currentCustomer);
-
-                //erp activity log
-                await _erpActivityLogsService.InsertErpActivityAsync("Erp_EditErpNopUser",
-                    string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.EditErpNopUser"),
-                    erpNopUser.Id),
-                    erpNopUser);
-
-                if (!continueEditing)
-                    return RedirectToAction("List");
-
-                return RedirectToAction("ErpNopUserEdit", new { id = erpNopUser.Id });
+                ModelState.AddModelError(string.Empty, customerRolesError);
+                _notificationService.ErrorNotification(customerRolesError);
             }
-            catch (Exception exc)
+
+            #endregion
+
+            if (ModelState.ErrorCount == 0)
             {
-                _notificationService.ErrorNotification(exc.Message);
-                await _erpLogsService.InformationAsync($"{exc.Message}. Erp Nop User Id: {erpNopUser.Id}", ErpSyncLevel.Account, exc, customer: currentCustomer);
+                try
+                {
+                    erpNopUser.ErpShipToAddressId = model.ErpShipToAddressId;
+                    erpNopUser.BillingErpShipToAddressId = model.BillingErpShipToAddressId;
+                    erpNopUser.ShippingErpShipToAddressId = model.ShippingErpShipToAddressId;
+                    erpNopUser.ErpUserTypeId = model.ErpUserTypeId;
+                    erpNopUser.IsActive = model.IsActive;
+                    erpNopUser.UpdatedOnUtc = DateTime.UtcNow;
+                    erpNopUser.UpdatedById = currentCustomer.Id;
+
+                    await _erpNopUserService.UpdateErpNopUserAsync(erpNopUser);
+
+                    #region Nop Customer Role update
+
+                    var currentCustomerRoleIds = await _customerService.GetCustomerRoleIdsAsync(customer, true);
+
+                    //customer roles
+                    foreach (var customerRole in allCustomerRoles)
+                    {
+                        //ensure that the current customer cannot add/remove to/from "Administrators" system role
+                        //if he's not an admin himself
+                        if (customerRole.SystemName == NopCustomerDefaults.AdministratorsRoleName &&
+                            !await _customerService.IsAdminAsync(customer))
+                            continue;
+
+                        if (model.SelectedCustomerRoleIds.Contains(customerRole.Id))
+                        {
+                            //new role
+                            if (currentCustomerRoleIds.All(roleId => roleId != customerRole.Id))
+                                await _customerService.AddCustomerRoleMappingAsync(
+                                    new CustomerCustomerRoleMapping { CustomerId = customer.Id, CustomerRoleId = customerRole.Id });
+                        }
+                        else
+                        {
+                            //prevent attempts to delete the administrator role from the user, if the user is the last active administrator
+                            if (customerRole.SystemName == NopCustomerDefaults.AdministratorsRoleName && 
+                                !await SecondAdminAccountExistsAsync(customer))
+                            {
+                                _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Admin.Customers.Customers.AdminAccountShouldExists.DeleteRole"));
+                                continue;
+                            }
+
+                            //remove role
+                            if (currentCustomerRoleIds.Any(roleId => roleId == customerRole.Id))
+                                await _customerService.RemoveCustomerRoleMappingAsync(customer, customerRole);
+                        }
+                    }
+
+                    await _customerService.UpdateCustomerAsync(customer);
+
+                    #endregion
+
+                    var map = await _erpNopUserAccountMapService.GetErpNopUserAccountMapByAccountAndUserIdAsync(accountId: model.ErpAccountId, userId: model.Id);
+
+                    var erpNopUserMap = new ErpNopUserAccountMap();
+                    erpNopUserMap.ErpUserId = model.Id;
+                    erpNopUserMap.ErpAccountId = model.ErpAccountId;
+
+                    if (map != null)
+                    {
+                        erpNopUserMap.Id = map.Id;
+                        await _erpNopUserAccountMapService.UpdateErpNopUserAccountMapAsync(erpNopUserMap);
+                    }
+                    else
+                        await _erpNopUserAccountMapService.InsertErpNopUserAccountMapAsync(erpNopUserMap);
+
+                    var successMsg = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Updated");
+                    _notificationService.SuccessNotification(successMsg);
+
+                    await _erpLogsService.InformationAsync($"{successMsg}. Erp Nop User Id: {erpNopUser.Id}", ErpSyncLevel.Account, customer: currentCustomer);
+
+                    //erp activity log
+                    await _erpActivityLogsService.InsertErpActivityAsync("Erp_EditErpNopUser",
+                        string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.EditErpNopUser"),
+                        erpNopUser.Id),
+                        erpNopUser);
+
+                    if (!continueEditing)
+                        return RedirectToAction("List");
+
+                    return RedirectToAction("ErpNopUserEdit", new { id = erpNopUser.Id });
+                }
+                catch (Exception exc)
+                {
+                    _notificationService.ErrorNotification(exc.Message);
+                    await _erpLogsService.InformationAsync($"{exc.Message}. Erp Nop User Id: {erpNopUser.Id}", ErpSyncLevel.Account, exc, customer: currentCustomer);
+                }
             }
         }
 
@@ -337,7 +497,7 @@ public class ErpNopUserController : NopStationAdminController
         await _commonHelperService.ClearUnavailableShoppingCartAndWishlistItemsBeforeImpersonation(customer: customer);
 
         var successMsg = await _localizationService.GetResourceAsync("ActivityLog.Impersonation.Started.Customer");
-        await _erpLogsService.InformationAsync($"{successMsg}. Impersonated Customer Id: {customer.Id}. Original Customer Id: {currentCustomer.Id}", ErpSyncLevel.SalesOrg, customer: await _b2BB2CWorkContext.GetCurrentCustomerAsync());
+        await _erpLogsService.InformationAsync($"{successMsg}. Impersonated Customer Id: {customer.Id}. Original Customer Id: {currentCustomer.Id}", ErpSyncLevel.SalesOrg, customer: customer);
 
         //activity log
         await _customerActivityService.InsertActivityAsync("Impersonation.Started",
@@ -429,13 +589,12 @@ public class ErpNopUserController : NopStationAdminController
             var erpNopUserAccountMap = new ErpNopUserAccountMap
             {
                 ErpUserId = model.ErpUserId,
-                ErpAccountId = model.ErpAccountId,
-                CustomerRolesIds = string.Join(",", model.SelectedCustomerRoleIds),
+                ErpAccountId = model.ErpAccountId
             };
             await _erpNopUserAccountMapService.InsertErpNopUserAccountMapAsync(erpNopUserAccountMap);
 
             var successMsg = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Account.Added");
-            await _erpLogsService.InformationAsync($"{successMsg}. Erp Account Id: {model.ErpAccountId}. Erp Nop User Id: {model.ErpUserId}", ErpSyncLevel.Account, customer: await _b2BB2CWorkContext.GetCurrentCustomerAsync());
+            await _erpLogsService.InformationAsync($"{successMsg}. Erp Account Id: {model.ErpAccountId}. Erp Nop User Id: {model.ErpUserId}", ErpSyncLevel.Account, customer: await _workContext.GetCurrentCustomerAsync());
 
             //erp activity log
             await _erpActivityLogsService.InsertErpActivityAsync("Erp_AddNewErpNopUserAccountMap",

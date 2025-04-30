@@ -3,10 +3,12 @@
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Model.ErpAccountPublic
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality
 @using NopStation.Plugin.B2B.ERPIntegrationCore.Enums
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Services
 
 @model ErpAccountOrderSearchModel
 @inject IErpCustomerFunctionalityService erpCustomerFunctionality
-@inject IB2BB2CWorkContext _b2BB2CWorkContext
+@inject IWorkContext _workContext
+@inject IErpAccountService erpAccountService
 
 @{
     Layout = "_ColumnsTwo";
@@ -27,9 +29,9 @@
 }
 
 @{
-    var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+    var currentCustomer = await _workContext.GetCurrentCustomerAsync();
     var nopUser = await erpCustomerFunctionality.GetActiveErpNopUserByCustomerAsync(currentCustomer);
-    var isB2BCustomer = nopUser != null && nopUser.ErpUserType == ErpUserType.B2BUser;
+    var isB2BUser = nopUser != null && nopUser.ErpUserType == ErpUserType.B2BUser;
     var isB2CUser = nopUser != null && nopUser.ErpUserType == ErpUserType.B2CUser;
 }
 
@@ -126,7 +128,7 @@
                         ClassName = NopColumnClassDefaults.Button + " NopOrderId"
                     });
 
-                    if (isB2BCustomer)
+                    if (isB2BUser)
                     {
                         gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.PlacedByCustomer))
                         {
@@ -209,7 +211,7 @@
                 ClassName = "ExpectedDelivery"
                     });
 
-                    if (isB2BCustomer)
+                    if (isB2BUser)
                     {
                         gridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpAccountOrderDetailsModel.SpecialInstructions))
                         {

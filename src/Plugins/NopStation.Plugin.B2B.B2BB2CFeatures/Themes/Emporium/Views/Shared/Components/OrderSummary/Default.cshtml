@@ -12,7 +12,7 @@
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Services.Customers
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpPriceSyncFunctionality
-@using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Services
 @using NopStation.Plugin.B2B.ERPIntegrationCore.Infrastructure
 @using Nop.Services.Common
 @using Nop.Services.Orders
@@ -55,7 +55,7 @@
     var erpNopUser = await erpCustomerFunctionalityService.GetActiveErpNopUserByCustomerAsync(currCustomer);
     var isB2BCustomer = erpNopUser != null ? erpNopUser.ErpUserType == NopStation.Plugin.B2B.ERPIntegrationCore.Enums.ErpUserType.B2BUser : false;
 
-    var isAllowedToPlaceQuote = await permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BOrder);
+    var isAllowedToPlaceQuote = await permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BQuote);
     var isAllowedToPlaceOrder = await permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BOrder);
     var isAllowedToAddQuickOrder = await permissionService.AuthorizeAsync(B2BB2CPermissionProvider.EnableQuickOrder);
 

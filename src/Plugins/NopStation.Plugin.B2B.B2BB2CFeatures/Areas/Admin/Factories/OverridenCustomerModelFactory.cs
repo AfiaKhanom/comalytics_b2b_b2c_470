@@ -28,6 +28,7 @@ using Nop.Services.Tax;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Models.Customers;
 using Nop.Web.Framework.Factories;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
@@ -36,8 +37,11 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories;
 public partial class OverridenCustomerModelFactory : CustomerModelFactory
 {
     #region Fields
+
     private readonly IErpAccountService _erpAccountService;
+    private readonly IErpCustomerFunctionalityService _erpCustomerFunctionalityService;
     private readonly IErpNopUserService _erpNopUserService;
+
     #endregion
 
     #region Ctor
@@ -83,7 +87,8 @@ public partial class OverridenCustomerModelFactory : CustomerModelFactory
         IErpNopUserService erpNopUserService,
         IErpAccountService erpAccountService,
         IAddressService addressService,
-        IWorkContext workContext) : base(
+        IWorkContext workContext,
+        IErpCustomerFunctionalityService erpCustomerFunctionalityService) : base(
             addressSettings,
             customerSettings,
             dateTimeSettings,
@@ -127,6 +132,7 @@ public partial class OverridenCustomerModelFactory : CustomerModelFactory
     {
         _erpNopUserService = erpNopUserService;
         _erpAccountService = erpAccountService;
+        _erpCustomerFunctionalityService = erpCustomerFunctionalityService;
     }
 
     #endregion

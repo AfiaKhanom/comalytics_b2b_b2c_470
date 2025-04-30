@@ -9,7 +9,7 @@ using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Web.Framework.Models.Extensions;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpNopUser;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.SalesRepUser;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
@@ -58,26 +58,27 @@ public class SalesRepUserModelFactory : ISalesRepUserModelFactory
 
     public async Task<SalesRepUserSearchModel> PrepareSalesRepUserSearchModelAsync(SalesRepUserSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
         //prepare page parameters
         searchModel.SetGridPageSize();
 
         return searchModel;
     }
+
     public async Task<SalesRepUserListModel> PrepareSalesRepUserListModelForSalesRep(SalesRepUserSearchModel searchModel, ErpSalesRep erpSalesRep)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
-        var erpNopUsers = await _erpSalesRepService.GetAllSalesRepUsersAsync(salesRepId: (erpSalesRep.SalesRepTypeId == (int)SalesRepType.AllUsers) ? 0 : erpSalesRep.Id,
+        var erpNopUsers = await _erpSalesRepService.GetAllSalesRepUsersAsync(
+            salesRepId: (erpSalesRep.SalesRepTypeId == (int)SalesRepType.AllUsers) ? 0 : erpSalesRep.Id,
             erpAccontNo: searchModel.SearchERPAccountNumber,
-            accountName: searchModel.SearchERPAccountName, email: searchModel.SearchCustomerEmail, fullName: searchModel.SearchCustomerFullName,
-            pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
+            accountName: searchModel.SearchERPAccountName, 
+            email: searchModel.SearchCustomerEmail, 
+            fullName: searchModel.SearchCustomerFullName,
+            pageIndex: searchModel.Page - 1, 
+            pageSize: searchModel.PageSize);
 
-        // get ErpNopUsers
-        //var erpNopUsers = await _erpNopUserService.GetAllErpNopUsersAsync(accountId: 1, pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
 
         //prepare list model
         var model = await new SalesRepUserListModel().PrepareToGridAsync(searchModel, erpNopUsers, () =>
@@ -86,8 +87,7 @@ public class SalesRepUserModelFactory : ISalesRepUserModelFactory
             {
                 var customer = await _customerService.GetCustomerByIdAsync(user.NopCustomerId);
                 var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(user.ErpAccountId);
-                //var erpShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(user.ErpAccountId);
-                //fill in model values from the entity
+
                 var userModel = new SalesRepUserModel
                 {
                     Id = user.Id,
@@ -95,7 +95,6 @@ public class SalesRepUserModelFactory : ISalesRepUserModelFactory
                     CustomerFullName = await _customerService.GetCustomerFullNameAsync(customer),
                     CustomerEmail = customer.Email,
                     ErpShipToAddressId = user.ErpShipToAddressId,
-                    //convert dates to the user time
                     CreatedOnUtc = user.CreatedOnUtc,
                     IsActive = user.IsActive,
                     ErpUserType = ((ErpUserType)user.ErpUserTypeId).ToString()
@@ -117,14 +116,17 @@ public class SalesRepUserModelFactory : ISalesRepUserModelFactory
 
     public async Task<SalesRepUserListModel> PreparePublicSalesRepUserListModelForSalesRep(SalesRepUserSearchModel searchModel, ErpSalesRep erpSalesRep)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
 
-        var erpNopUsers = await _erpSalesRepService.GetAllSalesRepUsersBySalesRepIdAsync(salesRepId: (erpSalesRep.SalesRepTypeId == (int)SalesRepType.MultiBuyers) ? erpSalesRep.Id : 0,
+        var erpNopUsers = await _erpSalesRepService.GetAllSalesRepUsersBySalesRepIdAsync(
+            salesRepId: (erpSalesRep.SalesRepTypeId == (int)SalesRepType.MultiBuyers) ? erpSalesRep.Id : 0,
             erpAccontNo: searchModel.SearchERPAccountNumber,
-            accountName: searchModel.SearchERPAccountName, email: searchModel.SearchCustomerEmail, fullName: searchModel.SearchCustomerFullName,
-            pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
+            accountName: searchModel.SearchERPAccountName, 
+            email: searchModel.SearchCustomerEmail, 
+            fullName: searchModel.SearchCustomerFullName,
+            pageIndex: searchModel.Page - 1, 
+            pageSize: searchModel.PageSize);
 
 
         //prepare list model
@@ -142,7 +144,6 @@ public class SalesRepUserModelFactory : ISalesRepUserModelFactory
                     CustomerFullName = await _customerService.GetCustomerFullNameAsync(customer),
                     CustomerEmail = customer.Email,
                     ErpShipToAddressId = user.ErpShipToAddressId,
-                    //convert dates to the user time
                     CreatedOnUtc = user.CreatedOnUtc,
                     IsActive = user.IsActive,
                     ErpUserType = ((ErpUserType)user.ErpUserTypeId).ToString()
@@ -164,8 +165,7 @@ public class SalesRepUserModelFactory : ISalesRepUserModelFactory
 
     public async Task<ErpAccountListModel> PrepareSalesRepErpUserListModelForSalesRep(ErpAccountSearchModel searchModel, ErpSalesRep erpSalesRep)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
         var erpAccountIdMaps = (await _erpAccountService.GetAllErpAccountsBySalesRepIdAsync(erpSalesRepId: searchModel.ErpAccountId)).ToPagedList(searchModel);
 
@@ -177,7 +177,7 @@ public class SalesRepUserModelFactory : ISalesRepUserModelFactory
                 var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpIdMap.ErpAccountId);
 
                 //prepare address model
-                var address = await _addressService.GetAddressByIdAsync(erpAccount?.BillingAddressId ?? 0);
+                var address = await _addressService.GetAddressByIdAsync(erpAccount.BillingAddressId ?? 0);
                 var addressModel = new AddressModel();
                 if (address != null)
                     addressModel = address.ToModel(addressModel);
@@ -233,5 +233,6 @@ public class SalesRepUserModelFactory : ISalesRepUserModelFactory
 
         return model;
     }
+
     #endregion
 }

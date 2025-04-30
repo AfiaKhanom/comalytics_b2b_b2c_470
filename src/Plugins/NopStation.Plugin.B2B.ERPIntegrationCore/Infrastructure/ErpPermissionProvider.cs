@@ -10,13 +10,13 @@ public class ErpPermissionProvider : IPermissionProvider
     #region Fields
 
     public static readonly PermissionRecord DisplayB2BStock = new () { Name = "B2B. Display B2B Stock", SystemName = "DisplayB2BStock", Category = "B2B" };
-    public static readonly PermissionRecord DisplayB2BPrices = new() { Name = "B2B. Display B2B Prices", SystemName = "DisplayB2BPrices", Category = "B2B" };
-    public static readonly PermissionRecord DisplayB2BOrders = new() { Name = "B2B. Display B2B Orders", SystemName = "DisplayB2BOrders", Category = "B2B" };
-    public static readonly PermissionRecord DisplayB2BQuotes = new() { Name = "B2B. Display B2B Quotes", SystemName = "DisplayB2BQuotes", Category = "B2B" };
-    public static readonly PermissionRecord PlaceB2BOrder = new() { Name = "B2B. Place B2B Order", SystemName = "PlaceB2BOrder", Category = "B2B" };
-    public static readonly PermissionRecord PlaceB2BQuote = new() { Name = "B2B. Place B2B Quote", SystemName = "PlaceB2BQuote", Category = "B2B" };
-    public static readonly PermissionRecord DisplayB2BAccountCreditInfo = new() { Name = "B2B. Display B2B Account Credit Info", SystemName = "DisplayB2BAccountCreditInfo", Category = "B2B" };
-    public static readonly PermissionRecord DisplayB2BAccountStatements = new() { Name = "B2B. Display B2B Account Statements", SystemName = "DisplayB2BAccountStatements", Category = "B2B" };
+    public static readonly PermissionRecord DisplayB2BPrices = new () { Name = "B2B. Display B2B Prices", SystemName = "DisplayB2BPrices", Category = "B2B" };
+    public static readonly PermissionRecord DisplayB2BOrders = new () { Name = "B2B. Display B2B Orders", SystemName = "DisplayB2BOrders", Category = "B2B" };
+    public static readonly PermissionRecord DisplayB2BQuotes = new () { Name = "B2B. Display B2B Quotes", SystemName = "DisplayB2BQuotes", Category = "B2B" };
+    public static readonly PermissionRecord PlaceB2BOrder = new () { Name = "B2B. Place B2B Order", SystemName = "PlaceB2BOrder", Category = "B2B" };
+    public static readonly PermissionRecord PlaceB2BQuote = new () { Name = "B2B. Place B2B Quote", SystemName = "PlaceB2BQuote", Category = "B2B" };
+    public static readonly PermissionRecord DisplayB2BAccountCreditInfo = new () { Name = "B2B. Display B2B Account Credit Info", SystemName = "DisplayB2BAccountCreditInfo", Category = "B2B" };
+    public static readonly PermissionRecord DisplayB2BAccountStatements = new () { Name = "B2B. Display B2B Account Statements", SystemName = "DisplayB2BAccountStatements", Category = "B2B" };
     public static readonly PermissionRecord DisplayB2BFinancialTransactions = new() { Name = "B2B. Display B2B Financial Transactions", SystemName = "DisplayB2BFinancialTransactions", Category = "B2B" };
 
     #endregion

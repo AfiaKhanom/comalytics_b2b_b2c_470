@@ -1,7 +1,6 @@
 ﻿using System.Data;
 using FluentMigrator.Builders.Create.Table;
 using Nop.Data.Extensions;
-using Nop.Data.Mapping;
 using Nop.Data.Mapping.Builders;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
@@ -26,8 +25,7 @@ public class ErpSpecialPriceBuilder : NopEntityBuilder<ErpSpecialPrice>
             .WithColumn(nameof(ErpSpecialPrice.VolumeDiscount)).AsBoolean().Nullable()
             .WithColumn(nameof(ErpSpecialPrice.DiscountPerc)).AsDecimal(18, 4).Nullable()
             .WithColumn(nameof(ErpSpecialPrice.PricingNote)).AsString().Nullable()
-            .WithColumn(NameCompatibilityManager.GetColumnName(typeof(ErpSpecialPrice), nameof(ErpSpecialPrice.ErpAccountId))).AsInt32()
-                .ForeignKey<ErpAccount>(onDelete: Rule.None);
+            .WithColumn(nameof(ErpSpecialPrice.ErpAccountId)).AsInt32().ForeignKey<ErpAccount>(onDelete: Rule.None);
     }
 
     #endregion

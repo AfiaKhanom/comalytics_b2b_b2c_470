@@ -7,14 +7,13 @@ using Nop.Core.Domain.Customers;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
-using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Security;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpNopUser;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.SalesRepUser;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure;
 using NopStation.Plugin.B2B.ERPIntegrationCore;
@@ -36,7 +35,6 @@ public class SalesRepUsersController : NopStationAdminController
     private readonly INotificationService _notificationService;
     private readonly ILocalizationService _localizationService;
     private readonly ICustomerService _customerService;
-    private readonly ICustomerActivityService _customerActivityService;
     private readonly IGenericAttributeService _genericAttributeService;
     private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
     private readonly IPermissionService _permissionService;
@@ -57,7 +55,6 @@ public class SalesRepUsersController : NopStationAdminController
         INotificationService notificationService,
         ILocalizationService localizationService,
         ICustomerService customerService,
-        ICustomerActivityService customerActivityService,
         IGenericAttributeService genericAttributeService,
         IB2BB2CWorkContext b2BB2CWorkContext,
         IPermissionService permissionService,
@@ -73,7 +70,6 @@ public class SalesRepUsersController : NopStationAdminController
         _notificationService = notificationService;
         _localizationService = localizationService;
         _customerService = customerService;
-        _customerActivityService = customerActivityService;
         _genericAttributeService = genericAttributeService;
         _b2BB2CWorkContext = b2BB2CWorkContext;
         _permissionService = permissionService;
@@ -96,11 +92,8 @@ public class SalesRepUsersController : NopStationAdminController
         }
         var salesRepRole = salesRepRoles.FirstOrDefault(r => r.SystemName == ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName);
 
-        if (salesRepRole == null)
-        {
-            if (!salesRepRoles.Any(r => r.SystemName == ADMINISTRATOR_SYSTEM_NAME))
-                return false;
-        }
+        if (salesRepRole == null && !salesRepRoles.Any(r => r.SystemName == ADMINISTRATOR_SYSTEM_NAME))
+            return false;        
 
         return true;
     }

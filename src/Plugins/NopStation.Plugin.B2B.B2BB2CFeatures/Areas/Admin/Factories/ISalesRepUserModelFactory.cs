@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpNopUser;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.SalesRepUser;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
 namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories;

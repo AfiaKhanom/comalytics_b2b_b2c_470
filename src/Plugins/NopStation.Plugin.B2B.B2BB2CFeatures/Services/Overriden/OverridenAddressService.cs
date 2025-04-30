@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Data;
 using Nop.Services.Attributes;
 using Nop.Services.Common;
 using Nop.Services.Directory;
 using Nop.Services.Localization;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 
 namespace NopStation.Plugin.B2B.B2BB2CFeatures.Services.Overriden;
@@ -19,8 +19,8 @@ public partial class OverridenAddressService : AddressService
 {
     #region Fields
 
+    private readonly IWorkContext _workContext;
     private readonly IGenericAttributeService _genericAttributeService;
-    private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
 
     #endregion
 
@@ -32,9 +32,9 @@ public partial class OverridenAddressService : AddressService
         ICountryService countryService,
         IRepository<Address> addressRepository,
         IStateProvinceService stateProvinceService,
-        IGenericAttributeService genericAttributeService,
-        IB2BB2CWorkContext b2BB2CWorkContext,
-        ILocalizationService localizationService) : base(addressSettings,
+        IWorkContext workContext,
+        ILocalizationService localizationService,
+        IGenericAttributeService genericAttributeService) : base(addressSettings,
             addressAttributeParser,
             addressAttributeService,
             countryService,
@@ -42,8 +42,8 @@ public partial class OverridenAddressService : AddressService
             addressRepository,
             stateProvinceService)
     {
+        _workContext = workContext;
         _genericAttributeService = genericAttributeService;
-        _b2BB2CWorkContext = b2BB2CWorkContext;
     }
 
     #endregion
@@ -60,8 +60,7 @@ public partial class OverridenAddressService : AddressService
     /// </returns>
     public override async Task<bool> IsAddressValidAsync(Address address)
     {
-        if (address == null)
-            throw new ArgumentNullException(nameof(address));
+        ArgumentNullException.ThrowIfNull(address);
 
         if (string.IsNullOrWhiteSpace(address.FirstName))
             return false;
@@ -133,9 +132,9 @@ public partial class OverridenAddressService : AddressService
             string.IsNullOrWhiteSpace(address.FaxNumber))
             return false;
 
-        var erpCustomer = await _b2BB2CWorkContext.GetCurrentERPCustomerAsync();
+        var customer = await _workContext.GetCurrentCustomerAsync();
 
-        var registeringCustomerErpType = await _genericAttributeService.GetAttributeAsync<string?>(erpCustomer.Customer, nameof(ErpUserType));
+        var registeringCustomerErpType = await _genericAttributeService.GetAttributeAsync<string?>(customer, nameof(ErpUserType));
 
         if (registeringCustomerErpType == ErpUserType.B2CUser.ToString())
         {

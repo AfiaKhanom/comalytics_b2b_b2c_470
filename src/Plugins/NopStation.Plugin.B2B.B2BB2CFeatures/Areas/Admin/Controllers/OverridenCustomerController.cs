@@ -129,17 +129,6 @@ public partial class OverridenCustomerController : CustomerController
 
     #endregion
 
-    #region Utilities
-
-    protected override async Task<bool> SecondAdminAccountExistsAsync(Customer customer)
-    {
-        var customers = await _customerService.GetAllCustomersAsync(customerRoleIds: new[] { (await _customerService.GetCustomerRoleBySystemNameAsync(NopCustomerDefaults.AdministratorsRoleName)).Id });
-
-        return customers.Any(c => c.Active && c.Id != customer.Id);
-    }
-
-    #endregion
-
     #region Customers
 
     [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
@@ -169,7 +158,7 @@ public partial class OverridenCustomerController : CustomerController
         }
 
         // Ensure that valid email address is entered if Registered role is checked to avoid registered customers with empty email address
-        if (newCustomerRoles.Any() && newCustomerRoles.Find(c => c.SystemName == NopCustomerDefaults.RegisteredRoleName) != null &&
+        if (newCustomerRoles.Count != 0 && newCustomerRoles.Find(c => c.SystemName == NopCustomerDefaults.RegisteredRoleName) != null &&
             !CommonHelper.IsValidEmail(model.Email))
         {
             ModelState.AddModelError(string.Empty, await _localizationService.GetResourceAsync("Admin.Customers.Customers.ValidEmailRequiredRegisteredRole"));
@@ -180,7 +169,6 @@ public partial class OverridenCustomerController : CustomerController
 
         var isErpAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(customer.Id) != null;
         var erpUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(customer.Id);
-
         var customerAttributesXml = await ParseCustomCustomerAttributesAsync(form);
 
         if (isErpAccount &&

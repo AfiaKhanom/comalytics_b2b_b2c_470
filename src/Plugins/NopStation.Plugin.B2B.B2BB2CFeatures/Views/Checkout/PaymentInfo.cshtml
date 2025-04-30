@@ -5,6 +5,7 @@
 
 @inject B2BB2CFeaturesSettings b2BB2CFeaturesSettings
 @inject ILocalizationService localizationService
+
 @{
     Layout = "_ColumnsOne";
 
@@ -13,10 +14,6 @@
     //page class
     NopHtml.AppendPageCssClassParts("html-checkout-page");
     NopHtml.AppendPageCssClassParts("html-payment-info-page");
-
-    var currentCustomer = await workContext.GetCurrentCustomerAsync();
-    var hasErpAccount = await erpAccountService.GetActiveErpAccountByCustomerIdAsync(currentCustomer.Id) != null;
-    var erpNopUser = await erpNopUserService.GetErpNopUserByCustomerIdAsync(currentCustomer.Id);
 }
 
 <div class="page checkout-page payment-info-page">
@@ -78,47 +75,6 @@
         }
     </script>
 </div>
-
-@if (hasErpAccount && erpNopUser is not null)
-{
-    <div class="page checkout-page payment-info-page">
-        @await Component.InvokeAsync(typeof(CheckoutProgressViewComponent), new { step = CheckoutProgressStep.Payment })
-        <div class="page-body checkout-data">
-            @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.CheckoutPaymentInfoTop, additionalData = Model })
-            <div class="section payment-info">
-                <form asp-route="CheckoutPaymentInfo" method="post" id="b2bCheckoutPaymentInfo">
-                    <div class="checkout-left-section">
-                        <div class="title">
-                            <strong>
-                                @if (erpNopUser.ErpUserType == ErpUserType.B2CUser)
-                                {
-                                    @T("Checkout.PaymentInfo.B2C.account")
-                                }
-                                else
-                                {
-                                    @T("Checkout.PaymentInfo.B2B.account")
-                                }
-                            </strong>
-                            <div asp-validation-summary="ModelOnly" class="message-error"></div>
-                        </div>
-                        <div class="info">
-                            @await Component.InvokeAsync(Model.PaymentViewComponent)
-                        </div>
-                    </div>
-                    <div class="section order-summary checkout-right-section">
-                        <div class="title">
-                            <strong>@T("Checkout.OrderSummary")</strong>
-                        </div>
-                        @await Component.InvokeAsync(typeof(OrderTotalsViewComponent), new { isEditable = false })
-                        <div class="buttons">
-                            <button type="submit" name="nextstep" class="button-1 payment-info-next-step-button">@T("Checkout.NextButton")</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.CheckoutPaymentInfoBottom, additionalData = Model })
-        </div>
-    </div>
 
 @if (b2BB2CFeaturesSettings.IsCustomerReferenceRequiredDuringPayment)
 {

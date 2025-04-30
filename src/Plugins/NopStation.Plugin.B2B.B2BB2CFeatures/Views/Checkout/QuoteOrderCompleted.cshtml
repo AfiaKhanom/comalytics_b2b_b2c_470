@@ -171,18 +171,25 @@
                                         @Model.ErpBillingAddressModel.Address2
                                     </li>
                                 }
-                                @if (Model.ErpBillingAddressModel.CityEnabled && !string.IsNullOrEmpty(Model.ErpBillingAddressModel.City) ||
-                                Model.ErpBillingAddressModel.CountyEnabled && !string.IsNullOrEmpty(Model.ErpBillingAddressModel.County) ||
-                                Model.ErpBillingAddressModel.StateProvinceEnabled && !string.IsNullOrEmpty(Model.ErpBillingAddressModel.StateProvinceName) ||
-                                Model.ErpBillingAddressModel.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ErpBillingAddressModel.ZipPostalCode))
+                                @if (Model.ErpBillingAddressModel.CityEnabled && 
+                                    !string.IsNullOrEmpty(Model.ErpBillingAddressModel.City) ||
+                                    Model.ErpBillingAddressModel.CountyEnabled && 
+                                    !string.IsNullOrEmpty(Model.ErpBillingAddressModel.County) ||
+                                    Model.ErpBillingAddressModel.StateProvinceEnabled && 
+                                    !string.IsNullOrEmpty(Model.ErpBillingAddressModel.StateProvinceName) ||
+                                    Model.ErpBillingAddressModel.ZipPostalCodeEnabled && 
+                                    !string.IsNullOrEmpty(Model.ErpBillingAddressModel.ZipPostalCode))
                                 {
                                     <li class="city-state-zip">
                                         @if (Model.ErpBillingAddressModel.CityEnabled && !string.IsNullOrEmpty(Model.ErpBillingAddressModel.City))
                                         {
                                             @Model.ErpBillingAddressModel.City
-                                            @if (Model.ErpBillingAddressModel.CountyEnabled && !string.IsNullOrEmpty(Model.ErpBillingAddressModel.County) ||
-                                           Model.ErpBillingAddressModel.StateProvinceEnabled && !string.IsNullOrEmpty(Model.ErpBillingAddressModel.StateProvinceName) ||
-                                           Model.ErpBillingAddressModel.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ErpBillingAddressModel.ZipPostalCode))
+                                            @if (Model.ErpBillingAddressModel.CountyEnabled && 
+                                                !string.IsNullOrEmpty(Model.ErpBillingAddressModel.County) || 
+                                                Model.ErpBillingAddressModel.StateProvinceEnabled && 
+                                                !string.IsNullOrEmpty(Model.ErpBillingAddressModel.StateProvinceName) ||
+                                                Model.ErpBillingAddressModel.ZipPostalCodeEnabled && 
+                                                !string.IsNullOrEmpty(Model.ErpBillingAddressModel.ZipPostalCode))
                                             {
                                                 <text>,</text>
                                             }
@@ -190,21 +197,26 @@
                                         @if (Model.ErpBillingAddressModel.CountyEnabled && !string.IsNullOrEmpty(Model.ErpBillingAddressModel.County))
                                         {
                                             @Model.ErpBillingAddressModel.County
-                                            @if (Model.ErpBillingAddressModel.StateProvinceEnabled && !string.IsNullOrEmpty(Model.ErpBillingAddressModel.StateProvinceName) ||
-                                           Model.ErpBillingAddressModel.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ErpBillingAddressModel.ZipPostalCode))
+                                            @if (Model.ErpBillingAddressModel.StateProvinceEnabled && 
+                                                !string.IsNullOrEmpty(Model.ErpBillingAddressModel.StateProvinceName) || 
+                                                Model.ErpBillingAddressModel.ZipPostalCodeEnabled && 
+                                                !string.IsNullOrEmpty(Model.ErpBillingAddressModel.ZipPostalCode))
                                             {
                                                 <text>,</text>
                                             }
                                         }
-                                        @if (Model.ErpBillingAddressModel.StateProvinceEnabled && !string.IsNullOrEmpty(Model.ErpBillingAddressModel.StateProvinceName))
+                                        @if (Model.ErpBillingAddressModel.StateProvinceEnabled && 
+                                            !string.IsNullOrEmpty(Model.ErpBillingAddressModel.StateProvinceName))
                                         {
                                             @Model.ErpBillingAddressModel.StateProvinceName
-                                            @if (Model.ErpBillingAddressModel.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ErpBillingAddressModel.ZipPostalCode))
+                                            @if (Model.ErpBillingAddressModel.ZipPostalCodeEnabled && 
+                                                !string.IsNullOrEmpty(Model.ErpBillingAddressModel.ZipPostalCode))
                                             {
                                                 <text>,</text>
                                             }
                                         }
-                                        @if (Model.ErpBillingAddressModel.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ErpBillingAddressModel.ZipPostalCode))
+                                        @if (Model.ErpBillingAddressModel.ZipPostalCodeEnabled && 
+                                            !string.IsNullOrEmpty(Model.ErpBillingAddressModel.ZipPostalCode))
                                         {
                                             @Model.ErpBillingAddressModel.ZipPostalCode
                                         }
@@ -362,9 +374,12 @@
                                             @Model.ErpShippingAddressModel.Address2
                                         </li>
                                     }
-                                    @if (AddressSettings.CityEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.City) ||
-                                    AddressSettings.CountyEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.County) ||
-                                    AddressSettings.ZipPostalCodeEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.ZipPostalCode))
+                                    @if (AddressSettings.CityEnabled && 
+                                        !string.IsNullOrEmpty(Model.ErpShippingAddressModel.City) ||
+                                        AddressSettings.CountyEnabled && 
+                                        !string.IsNullOrEmpty(Model.ErpShippingAddressModel.County) ||
+                                        AddressSettings.ZipPostalCodeEnabled && 
+                                        !string.IsNullOrEmpty(Model.ErpShippingAddressModel.ZipPostalCode))
                                     {
                                         <li class="city-state-zip">
                                             @if (AddressSettings.CityEnabled && !string.IsNullOrEmpty(Model.ErpShippingAddressModel.City))
@@ -400,17 +415,17 @@
                                         </li>
                                     }
                                     if (!string.IsNullOrEmpty(Model.ErpPickUpAddressModel.City) ||
-                                    !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.County) ||
-                                    !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.StateProvinceName) ||
-                                    !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.ZipPostalCode))
+                                        !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.County) ||
+                                        !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.StateProvinceName) ||
+                                        !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.ZipPostalCode))
                                     {
                                         <li class="city-state-zip">
                                             @if (!string.IsNullOrEmpty(Model.ErpPickUpAddressModel.City))
                                             {
                                                 @Model.ErpPickUpAddressModel.City
                                                 @if (!string.IsNullOrEmpty(Model.ErpPickUpAddressModel.County) ||
-                                                !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.StateProvinceName) ||
-                                                !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.ZipPostalCode))
+                                                    !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.StateProvinceName) ||
+                                                    !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.ZipPostalCode))
                                                 {
                                                     <text>,</text>
                                                 }
@@ -419,7 +434,7 @@
                                             {
                                                 @Model.ErpPickUpAddressModel.County
                                                 @if (!string.IsNullOrEmpty(Model.ErpPickUpAddressModel.StateProvinceName) ||
-                                                !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.ZipPostalCode))
+                                                    !string.IsNullOrEmpty(Model.ErpPickUpAddressModel.ZipPostalCode))
                                                 {
                                                     <text>,</text>
                                                 }
@@ -697,7 +712,8 @@
                                                         @Html.Raw(item.RentalInfo)
                                                     </div>
                                                 }
-                                                @await Component.InvokeAsync(typeof(WidgetViewComponent), new { widgetZone = PublicWidgetZones.OrderDetailsProductLine, additionalData = item })
+                                                @await Component.InvokeAsync(typeof(WidgetViewComponent), 
+                                                new { widgetZone = PublicWidgetZones.OrderDetailsProductLine, additionalData = item })
                                             </td>
                                             <td class="unit-price">
                                                 <span class="product-unit-price">@item.UnitPriceWithOutDiscountExcTax</span>

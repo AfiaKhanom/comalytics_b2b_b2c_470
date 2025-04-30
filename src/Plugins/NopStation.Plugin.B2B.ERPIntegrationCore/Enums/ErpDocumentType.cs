@@ -6,5 +6,5 @@ public enum ErpDocumentType
     Payment = 20,
     AccountingDoc = 30,
     Document = 40,
-    CreditMemo = 50,
+    CreditMemo = 50
 }

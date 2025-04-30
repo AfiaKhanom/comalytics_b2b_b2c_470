@@ -20,9 +20,8 @@ public interface IErpNopUserAccountMapService
     Task<IList<ErpNopUserAccountMap>> GetAllErpNopUserAccountMapsByAccountIdAsync(int accountId);
 
     Task<IPagedList<ErpNopUserAccountMap>> GetAllErpNopUserAccountMapsAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false);
-    Task<ErpNopUserAccountMap> GetErpNopUserAccountMapByAccountAndUserIdAsync(int accountId, int userId);
 
-    Task<IList<int>> GetErpNopUserRolesByErpNopUserAsync(ErpNopUser user);
+    Task<ErpNopUserAccountMap> GetErpNopUserAccountMapByAccountAndUserIdAsync(int accountId, int userId);
 
     Task<bool> CheckAnyErpNopUserAccountMapExistWithAccountIdAndUserIdAsync(int erpAccountId, int erpUserId);
 }

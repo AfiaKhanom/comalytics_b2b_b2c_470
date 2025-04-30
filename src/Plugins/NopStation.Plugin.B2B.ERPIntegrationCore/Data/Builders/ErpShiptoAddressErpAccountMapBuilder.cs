@@ -1,6 +1,5 @@
 ﻿using FluentMigrator.Builders.Create.Table;
 using Nop.Data.Extensions;
-using Nop.Data.Mapping;
 using Nop.Data.Mapping.Builders;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using System.Data;
@@ -18,9 +17,9 @@ public class ErpShiptoAddressErpAccountMapBuilder : NopEntityBuilder<ErpShiptoAd
     public override void MapEntity(CreateTableExpressionBuilder table)
     {
         table
-            .WithColumn(NameCompatibilityManager.GetColumnName(typeof(ErpShiptoAddressErpAccountMap), nameof(ErpShiptoAddressErpAccountMap.ErpAccountId))).AsInt32().NotNullable().ForeignKey<ErpAccount>(onDelete: Rule.None)
-            .WithColumn(NameCompatibilityManager.GetColumnName(typeof(ErpShiptoAddressErpAccountMap), nameof(ErpShiptoAddressErpAccountMap.ErpShiptoAddressId))).AsInt32().NotNullable().ForeignKey<ErpShipToAddress>(onDelete: Rule.None)
-            .WithColumn(NameCompatibilityManager.GetColumnName(typeof(ErpShiptoAddressErpAccountMap), nameof(ErpShiptoAddressErpAccountMap.ErpShipToAddressCreatedByTypeId))).AsInt32().Nullable();
+            .WithColumn(nameof(ErpShiptoAddressErpAccountMap.ErpAccountId)).AsInt32().NotNullable().ForeignKey<ErpAccount>(onDelete: Rule.None)
+            .WithColumn(nameof(ErpShiptoAddressErpAccountMap.ErpShiptoAddressId)).AsInt32().NotNullable().ForeignKey<ErpShipToAddress>(onDelete: Rule.None)
+            .WithColumn(nameof(ErpShiptoAddressErpAccountMap.ErpShipToAddressCreatedByTypeId)).AsInt32().Nullable();
     }
 
     #endregion

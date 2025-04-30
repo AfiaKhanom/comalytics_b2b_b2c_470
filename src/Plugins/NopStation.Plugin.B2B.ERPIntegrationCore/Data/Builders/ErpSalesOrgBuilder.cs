@@ -1,5 +1,4 @@
 ﻿using FluentMigrator.Builders.Create.Table;
-using Nop.Data.Mapping;
 using Nop.Data.Mapping.Builders;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
@@ -15,7 +14,7 @@ public class ErpSalesOrgBuilder : NopEntityBuilder<ErpSalesOrg>
             .WithColumn(nameof(ErpSalesOrg.Code)).AsString()
             .WithColumn(nameof(ErpSalesOrg.Name)).AsString()
             .WithColumn(nameof(ErpSalesOrg.Email)).AsString()
-            .WithColumn(NameCompatibilityManager.GetColumnName(typeof(ErpSalesOrg), nameof(ErpSalesOrg.AddressId))).AsInt32()
+            .WithColumn(nameof(ErpSalesOrg.AddressId)).AsInt32()
             .WithColumn(nameof(ErpSalesOrg.IntegrationClientId)).AsString().Nullable()
             .WithColumn(nameof(ErpSalesOrg.AuthenticationKey)).AsString().Nullable()
             .WithColumn(nameof(ErpSalesOrg.LastErpAccountSyncTimeOnUtc)).AsDateTime2().Nullable()

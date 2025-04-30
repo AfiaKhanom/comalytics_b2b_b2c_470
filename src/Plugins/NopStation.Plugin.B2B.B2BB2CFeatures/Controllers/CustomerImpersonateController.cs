@@ -15,7 +15,7 @@ using Nop.Services.Messages;
 using Nop.Web.Controllers;
 using Nop.Web.Framework;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpNopUser;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.SalesRepUser;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.Customers;
 using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;

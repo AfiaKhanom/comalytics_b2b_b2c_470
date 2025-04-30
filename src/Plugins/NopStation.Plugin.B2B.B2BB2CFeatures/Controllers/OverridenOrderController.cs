@@ -19,7 +19,6 @@ using Nop.Web.Controllers;
 using Nop.Web.Factories;
 using Nop.Web.Framework.Controllers;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Factories;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Factories.ErpOrderDetails;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
@@ -43,7 +42,6 @@ public class OverridenOrderController : OrderController
     private readonly IErpAccountService _erpAccountService;
     private readonly IErpNopUserService _erpNopUserService;
     private readonly IErpCustomerFunctionalityService _erpCustomerFunctionalityService;
-    private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
     private readonly IErpLogsService _erpLogsService;
     private readonly IErpOrderDetailsModelFactory _erpOrderDetailsModelFactory;
     private readonly IErpActivityLogsService _erpActivityLogsService;
@@ -77,7 +75,6 @@ public class OverridenOrderController : OrderController
         IErpNopUserService erpNopUserService,
         IErpOrderModelFactory erpOrderModelFactory,
         IErpCustomerFunctionalityService erpCustomerFunctionalityService,
-        IB2BB2CWorkContext b2BB2CWorkContext,
         IErpLogsService erpLogsService,
         IErpOrderDetailsModelFactory erpOrderDetailsModelFactory,
         IErpActivityLogsService erpActivityLogsService,
@@ -103,7 +100,6 @@ public class OverridenOrderController : OrderController
         _erpAccountService = erpAccountService;
         _erpNopUserService = erpNopUserService;
         _erpCustomerFunctionalityService = erpCustomerFunctionalityService;
-        _b2BB2CWorkContext = b2BB2CWorkContext;
         _erpLogsService = erpLogsService;
         _erpOrderDetailsModelFactory = erpOrderDetailsModelFactory;
         _erpActivityLogsService = erpActivityLogsService;
@@ -133,7 +129,7 @@ public class OverridenOrderController : OrderController
         if (order == null || order.Deleted)
             return Challenge();
 
-        var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var customer = await _workContext.GetCurrentCustomerAsync();
 
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(customer.Id);
 
@@ -158,9 +154,9 @@ public class OverridenOrderController : OrderController
         if (order == null || order.Deleted)
             return Challenge();
 
-        var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var customer = await _workContext.GetCurrentCustomerAsync();
 
-        #region Erp
+        #region B2B
 
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(customer.Id);
 
@@ -184,9 +180,9 @@ public class OverridenOrderController : OrderController
         if (order == null || order.Deleted)
             return Challenge();
 
-        var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var customer = await _workContext.GetCurrentCustomerAsync();
 
-        #region Erp
+        #region B2B
 
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(customer.Id);
 
@@ -218,9 +214,9 @@ public class OverridenOrderController : OrderController
         if (order == null || order.Deleted)
             return Challenge();
 
-        var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var customer = await _workContext.GetCurrentCustomerAsync();
 
-        #region Erp
+        #region B2B
 
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(customer.Id);
 
@@ -261,7 +257,7 @@ public class OverridenOrderController : OrderController
     //My account / Order details page / Shipment details page
     public override async Task<IActionResult> ShipmentDetails(int shipmentId)
     {
-        var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var customer = await _workContext.GetCurrentCustomerAsync();
         var shipment = await _shipmentService.GetShipmentByIdAsync(shipmentId);
         if (shipment == null)
             return Challenge();
@@ -270,7 +266,7 @@ public class OverridenOrderController : OrderController
         if (order == null || order.Deleted)
             return Challenge();
 
-        #region Erp
+        #region B2B
 
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(customer.Id);
 
@@ -319,8 +315,8 @@ public class OverridenOrderController : OrderController
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(customer.Id);
         if (erpAccount != null)
         {
-            //-->ToDo: After completing custom permission service for b2b b2c feature this permission check will be reopen
-            if (!await _permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BOrder) && !await _permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BQuote))
+            if (!await _permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BOrder) && 
+                !await _permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BQuote))
                 return RedirectToRoute("ShoppingCart");
 
             if (erpNopUser != null && erpNopUser.ErpUserType == ErpUserType.B2BUser)

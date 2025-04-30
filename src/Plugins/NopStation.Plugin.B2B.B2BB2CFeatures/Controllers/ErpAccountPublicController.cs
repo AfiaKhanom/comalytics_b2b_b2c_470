@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Nop.Core;
-using Nop.Services.Catalog;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
@@ -50,8 +49,6 @@ public class ErpAccountPublicController : BasePluginController
     private readonly IErpInvoiceService _erpInvoiceService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
     private readonly IErpPriceSyncFunctionalityService _erpPriceSyncFunctionalityService;
-    private readonly IPriceCalculationService _priceCalculationService;
-    private readonly IProductService _productService;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
 
     #endregion
@@ -78,8 +75,6 @@ public class ErpAccountPublicController : BasePluginController
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
         IErpIntegrationPluginManager erpIntegrationPluginManager,
         IErpPriceSyncFunctionalityService erpPriceSyncFunctionalityService,
-        IPriceCalculationService priceCalculationService,
-        IProductService productService,
         IErpInvoiceService erpInvoiceService)
     {
         _customerService = customerService;
@@ -101,8 +96,6 @@ public class ErpAccountPublicController : BasePluginController
         _erpIntegrationPluginManager = erpIntegrationPluginManager;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
         _erpPriceSyncFunctionalityService = erpPriceSyncFunctionalityService;
-        _priceCalculationService = priceCalculationService;
-        _productService = productService;
     }
 
     #endregion
@@ -175,10 +168,9 @@ public class ErpAccountPublicController : BasePluginController
         var currCustomer = await _workContext.GetCurrentCustomerAsync();
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(currCustomer.Id);
 
-        if (erpAccount == null || await _erpCustomerFunctionalityService.IsCurrentCustomerInB2BQuoteAssistantRole())
-            return await AccessDeniedDataTablesJson();
-
-        if (!await _permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BFinancialTransactions))
+        if (erpAccount == null || 
+            await _erpCustomerFunctionalityService.IsCustomerInB2BQuoteAssistantRoleAsync(currCustomer) ||
+            !await _permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BFinancialTransactions))
             return await AccessDeniedDataTablesJson();
 
         if (erpAccount.Id > 0)
@@ -466,7 +458,7 @@ public class ErpAccountPublicController : BasePluginController
 
     public async Task<IActionResult> ErpAccountQuoteOrders()
     {
-        var customer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var customer = await _workContext.GetCurrentCustomerAsync();
         if (!await _customerService.IsRegisteredAsync(customer))
             return Challenge();
 
@@ -485,7 +477,7 @@ public class ErpAccountPublicController : BasePluginController
     [HttpPost]
     public async Task<IActionResult> LoadErpQuoteOrderList(ErpAccountQuoteOrderSearchModel searchModel)
     {
-        var currCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var currCustomer = await _workContext.GetCurrentCustomerAsync();
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(currCustomer.Id);
 
         if (erpAccount == null)

@@ -120,11 +120,11 @@ public class ErpOrderSyncService : IErpOrderSyncService
         erpNopUser.UpdatedOnUtc = DateTime.UtcNow;
 
         await _erpNopUserService.InsertErpNopUserAsync(erpNopUser);
-
-        //add to 'Registered' role
-        var registeredRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BCustomerRole) 
+        
+        //add to 'B2B Customer' role
+        var b2bCustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BCustomerRole)
             ?? throw new NopException($"'{ERPIntegrationCoreDefaults.B2BCustomerRole}' role could not be loaded");
-        await _customerService.AddCustomerRoleMappingAsync(new CustomerCustomerRoleMapping { CustomerId = customer.Id, CustomerRoleId = registeredRole.Id });
+        await _customerService.AddCustomerRoleMappingAsync(new CustomerCustomerRoleMapping { CustomerId = customer.Id, CustomerRoleId = b2bCustomerRole.Id });
     }
 
     public virtual async Task<bool> IsErpOrderSyncSuccessfulAsync(string? erpAccountNumber = null, string? orderNumber = null, bool isManualTrigger = false, bool isIncrementalSync = true, CancellationToken cancellationToken = default)
@@ -713,7 +713,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
 
                 erpNopUser = erpNopUser == null ? await _erpNopUserService.GetErpNopUserByCustomerIdAsync(oldNopOrder.CustomerId) : null;
 
-                oldErpOrder.ErpOrderPlaceByCustomerTypeId = erpNopUser?.ErpUserTypeId ?? 0;
+                oldErpOrder.ErpOrderPlaceByCustomerTypeId = 0;
                 oldErpOrder.ChangedById = erpNopUser?.NopCustomerId ?? 0;
 
                 await _erpOrderAdditionalDataService.InsertErpOrderAdditionalDataAsync(oldErpOrder);

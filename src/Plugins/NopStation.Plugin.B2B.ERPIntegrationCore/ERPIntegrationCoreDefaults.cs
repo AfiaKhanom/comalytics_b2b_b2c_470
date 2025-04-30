@@ -5,16 +5,29 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore;
 
 public static class ERPIntegrationCoreDefaults
 {
-    public static string B2BCustomerRole => "B2BUser";
-    public static string B2CCustomerRole => "B2CUser";
+    #region B2B-B2C Customer Roles
+
+    public static string B2BCustomerRole => "B2B Customer";
+    public static string B2BCustomerRoleSystemName => "B2BCustomer";
+    public static string B2CCustomerRole => "B2C Customer";
+    public static string B2CCustomerRoleSystemName => "B2CCustomer";
+    public static string B2BQuoteAssistantRole => "B2B Quote Assistant";
+    public static string B2BQuoteAssistantRoleSystemName => "B2BQuoteAssistant";
+    public static string B2BOrderAssistantRole => "B2B Order Assistant";
+    public static string B2BOrderAssistantRoleSystemName => "B2BOrderAssistant";
     public static string B2BB2CAdminRole => "B2B-B2C Admin";
     public static string B2BB2CAdminRoleSystemName => "B2BB2CAdmin";
-    public static string B2BOrderAssistantRoleSystemName => "B2BOrderAssistant";
-    public static string B2BQuoteAssistantRoleSystemName => "B2BQuoteAssistant";
+    public static string B2BCustomerAccountingPersonnelRole => "B2B Customer Accounting Personnel";
     public static string B2BCustomerAccountingPersonnelRoleSystemName => "B2BCustomerAccountingPersonnel";
-    public static string B2BSalesRepRoleSystemName => "ERPSalesRep";
+    public static string B2BSalesRepRole => "B2B Sales Rep";
+    public static string B2BSalesRepRoleSystemName => "B2BSalesRep";
+    public static string QuickOrderUserRole => "Quick Order User";
     public static string QuickOrderUserRoleSystemName => "QuickOrderUser";
-    public static string ERPIntegrationPluginGroupName => "Nopstation_ErpIntegration";
+
+    #endregion
+
+    #region Cache keys and Prefixes
+
     public static CacheKey ErpProductSpecificationAttributeList => new("NopB2bB2cFeaturesAdminProductSpecificationAttributeForB2b");
     public static string ErpAccountPrefix => "B2B.ErpAccount.";
     public static string ShiptoAddressesByAccountrPrefix => "Nop.account.shiptoaddresses.{0}";
@@ -136,9 +149,6 @@ public static class ERPIntegrationCoreDefaults
 
     #endregion
 
-    /// <summary>
-    /// Gets a key pattern to clear cache
-    /// </summary>
     public static string SalesRepOrgPrefix => "Nop.salesrep.salesreporgs.";
 
     /// <summary>
@@ -148,7 +158,11 @@ public static class ERPIntegrationCoreDefaults
     /// {0} : customer identifier
     /// </remarks>
     public static string SalesRepOrgBySalesRepPrefix => "Nop.salesrep.salesreporgs.{0}";
-    public static CacheKey SalesRepOrgCacheKey => new("Nop.salesrep.salesreporgs.{0}-{1}", SalesRepOrgBySalesRepPrefix, SalesRepOrgPrefix);
+    public static CacheKey SalesRepOrgCacheKey => new("Nop.salesrep.salesreporgs.{0}-{1}", SalesRepOrgBySalesRepPrefix, SalesRepOrgPrefix);  
+    public static CacheKey ErpWarehouseSalesOrgMapByCodeCacheKey => new("ERPIntegration.warehouse.salesOrgMap.byWarehouseCode-{0}", ErpWarehouseSalesOrgMapByCodePrefix);
+    public static string ErpWarehouseSalesOrgMapByCodePrefix => "ERPwarehouse.salesOrgMap.ByWarehouseCode";
+
+    #endregion
 
     #region ERP Order Type
 
@@ -162,13 +176,13 @@ public static class ERPIntegrationCoreDefaults
     #endregion
 
     #region ERP Order Status
+
     public static string ERPOrderStatusApproved => "Approved";
     public static string ERPOrderStatusPendingApproval => "Pending Approval";
     public static string ERPOrderStatusProcessing => "Processing";
 
     #endregion
 
-    public static CacheKey ErpWarehouseSalesOrgMapByCodeCacheKey => new("ERPIntegration.warehouse.salesOrgMap.byWarehouseCode-{0}", ErpWarehouseSalesOrgMapByCodePrefix);
-    public static string ErpWarehouseSalesOrgMapByCodePrefix => "ERPwarehouse.salesOrgMap.ByWarehouseCode";
     public static string NewB2BCustomerNeedsApproval => "NewB2BCustomerNeedsApproval";
+    public static string ERPIntegrationPluginGroupName => "Nopstation_ErpIntegration";
 }

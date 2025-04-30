@@ -16,6 +16,7 @@ using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Web.Areas.Admin.Models.Customers;
 using Nop.Web.Framework.Components;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
@@ -39,6 +40,7 @@ public class NopCustomerErpAccountInfoComponent : NopViewComponent
     private readonly ICountryService _countryService;
     private readonly IStateProvinceService _stateProvinceService;
     private readonly ILocalizationService _localizationService;
+    private readonly IErpCustomerFunctionalityService _erpCustomerFunctionalityService;
 
     #endregion
 
@@ -56,7 +58,8 @@ public class NopCustomerErpAccountInfoComponent : NopViewComponent
         IAddressService addressService,
         ICountryService countryService,
         IStateProvinceService stateProvinceService,
-        ILocalizationService localizationService)
+        ILocalizationService localizationService,
+        IErpCustomerFunctionalityService erpCustomerFunctionalityService)
     {
         _erpNopUserService = erpNopUserService;
         _erpAccountService = erpAccountService;
@@ -71,6 +74,7 @@ public class NopCustomerErpAccountInfoComponent : NopViewComponent
         _countryService = countryService;
         _stateProvinceService = stateProvinceService;
         _localizationService = localizationService;
+        _erpCustomerFunctionalityService = erpCustomerFunctionalityService;
     }
 
     #endregion
@@ -79,8 +83,7 @@ public class NopCustomerErpAccountInfoComponent : NopViewComponent
 
     protected async Task<string> PrepareModelAddressHtmlAsync(AddressModel model, Address address, bool singleLine = true)
     {
-        if (model == null)
-            throw new ArgumentNullException(nameof(model));
+        ArgumentNullException.ThrowIfNull(model);
 
         var addressHtmlSb = new StringBuilder();
 
@@ -199,17 +202,17 @@ public class NopCustomerErpAccountInfoComponent : NopViewComponent
                         .FirstOrDefault();
                 }
 
-                var address = await _addressService.GetAddressByIdAsync(erpShipToAddress?.AddressId ?? 0);
+                if (erpShipToAddress != null)
+                { 
+                    var address = await _addressService.GetAddressByIdAsync(erpShipToAddress.AddressId);
 
-                if (address != null)
-                {
-                    //fill in model values from the entity        
-                    var addressModel = address.ToModel<AddressModel>();
-
-                    addressModel.CountryName = (await _countryService.GetCountryByAddressAsync(address))?.Name;
-                    addressModel.StateProvinceName = (await _stateProvinceService.GetStateProvinceByAddressAsync(address))?.Name;
-
-                    model.ErpShipToAddressInfo = erpShipToAddress?.ShipToName + " - " + await PrepareModelAddressHtmlAsync(addressModel, address);
+                    if (address != null)
+                    {      
+                        var addressModel = address.ToModel<AddressModel>();
+                        addressModel.CountryName = (await _countryService.GetCountryByAddressAsync(address))?.Name;
+                        addressModel.StateProvinceName = (await _stateProvinceService.GetStateProvinceByAddressAsync(address))?.Name;
+                        model.ErpShipToAddressInfo = $"{erpShipToAddress.ShipToName} - {await PrepareModelAddressHtmlAsync(addressModel, address)}";
+                    }
                 }
             }
 

@@ -1,7 +1,6 @@
 ﻿using FluentMigrator.Builders.Create.Table;
 using Nop.Core.Domain.Orders;
 using Nop.Data.Extensions;
-using Nop.Data.Mapping;
 using Nop.Data.Mapping.Builders;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using System.Data;
@@ -19,8 +18,8 @@ public class ErpOrderItemAdditionalDataBuilder : NopEntityBuilder<ErpOrderItemAd
     public override void MapEntity(CreateTableExpressionBuilder table)
     {
         table
-            .WithColumn(NameCompatibilityManager.GetColumnName(typeof(ErpOrderItemAdditionalData), nameof(ErpOrderItemAdditionalData.NopOrderItemId))).AsInt32().ForeignKey<OrderItem>(onDelete: Rule.None)
-            .WithColumn(NameCompatibilityManager.GetColumnName(typeof(ErpOrderItemAdditionalData), nameof(ErpOrderItemAdditionalData.ErpOrderId))).AsInt32().ForeignKey<ErpOrderAdditionalData>(onDelete: Rule.None)
+            .WithColumn(nameof(ErpOrderItemAdditionalData.NopOrderItemId)).AsInt32().ForeignKey<OrderItem>(onDelete: Rule.None)
+            .WithColumn(nameof(ErpOrderItemAdditionalData.ErpOrderId)).AsInt32().ForeignKey<ErpOrderAdditionalData>(onDelete: Rule.None)
             .WithColumn(nameof(ErpOrderItemAdditionalData.ErpOrderLineNumber)).AsString()
             .WithColumn(nameof(ErpOrderItemAdditionalData.ErpSalesUoM)).AsString()
             .WithColumn(nameof(ErpOrderItemAdditionalData.ErpOrderLineStatus)).AsString()
@@ -32,8 +31,8 @@ public class ErpOrderItemAdditionalDataBuilder : NopEntityBuilder<ErpOrderItemAd
             .WithColumn(nameof(ErpOrderItemAdditionalData.LastErpUpdateUtc)).AsDateTime2().Nullable()
             .WithColumn(nameof(ErpOrderItemAdditionalData.ChangedOnUtc)).AsDateTime2().Nullable()
             .WithColumn(nameof(ErpOrderItemAdditionalData.ChangedBy)).AsInt32()
-            .WithColumn(NameCompatibilityManager.GetColumnName(typeof(ErpOrderItemAdditionalData), nameof(ErpOrderItemAdditionalData.WareHouse))).AsString().Nullable();
-
+            .WithColumn(nameof(ErpOrderItemAdditionalData.WareHouse)).AsString().Nullable();
     }
+
     #endregion
 }
