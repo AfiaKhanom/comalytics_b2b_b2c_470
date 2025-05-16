@@ -53,7 +53,14 @@
                 }
                 else
                 {
-                    <input type="hidden" asp-for="ErpSalesOrgId" value="@Model.ErpSalesOrgId" />
+                    if (Model.ErpSalesOrgId > 0)
+                    {
+                        <input type="hidden" asp-for="ErpSalesOrgId" value="@Model.ErpSalesOrgId" />
+                    }
+                    else
+                    {
+                        <input type="hidden" asp-for="ErpSalesOrgId" value="@(Model.AvailableErpSalesOrgs.FirstOrDefault()?.Value ?? "0")" />
+                    }
                 }
             }
         </div>
@@ -99,7 +106,7 @@
             <span asp-validation-for="CurrentBalance"></span>
         </div>
     </div>
-    
+
     <div class="form-group row">
         <div class="col-md-3">
             <nop-label asp-for="AllowOverspend" />
