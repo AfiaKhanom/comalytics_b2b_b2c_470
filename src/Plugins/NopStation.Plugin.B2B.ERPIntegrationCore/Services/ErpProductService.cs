@@ -86,17 +86,12 @@ public class ErpProductService : IErpProductService
         await _nopDataProvider.ExecuteNonQueryAsync(sqlCommand);
     }
 
-    public async Task<IList<ProductWarehouseInventory>> GetProductWarehouseInventoryByProductIdsAndNopWarehouseIdsAsync(int[] productIds, int[] nopWarehouseIds)
+    public async Task<List<ProductWarehouseInventory>> GetProductWarehouseInventoryByProductIdsAndNopWarehouseIdsAsync(int[] productIds, int nopWarehouseId)
     {
         if (productIds == null || productIds.Length == 0)
             return null;
 
-        var query = _productWarehouseInventoryRepository.Table.Where(x => productIds.Contains(x.ProductId));
-
-        if (nopWarehouseIds != null && nopWarehouseIds.Length > 0)
-            query = query.Where(x => nopWarehouseIds.Contains(x.WarehouseId));
-
-        return await query.ToListAsync();
+        return await _productWarehouseInventoryRepository.Table.Where(x => productIds.Contains(x.ProductId) && x.WarehouseId == nopWarehouseId).ToListAsync();
     }
 
     public async Task UpdateProductsAsync(IList<Product> products)

@@ -224,6 +224,14 @@ public class ErpWarehouseAdditionalDataService : IErpWarehouseAdditionalDataServ
         return await _erpWarehouseSalesOrgMapRepository.Table.Where(x => x.ErpSalesOrgId == salesOrgId).ToListAsync();
     }
 
+    public async Task<List<ErpWarehouseAdditionalData>> GetErpWarehouseAdditionalDataByIdsAsync(List<int> ids)
+    {
+        if (ids == null || ids.Count < 1)
+            return new List<ErpWarehouseAdditionalData>();
+
+        return (await _erpErpWarehouseAdditionalDataRepository.GetByIdsAsync(ids, cache => default, false)).ToList();
+    }
+
     #endregion
 
     #endregion
