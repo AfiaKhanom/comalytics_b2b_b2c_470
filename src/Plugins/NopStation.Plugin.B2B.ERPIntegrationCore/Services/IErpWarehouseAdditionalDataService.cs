@@ -27,4 +27,6 @@ public interface IErpWarehouseAdditionalDataService
     Task<ErpWarehouseSalesOrgMap> GetErpSalesOrgWarehouseForProductAsync(Product product, int erpSalesOrgId, int quantity);
 
     Task<List<ErpWarehouseSalesOrgMap>> GetSaleOrgWarehousebySalesOrgIdAsync(int salesOrgId);
+
+    Task<List<ErpWarehouseAdditionalData>> GetErpWarehouseAdditionalDataByIdsAsync(List<int> ids);
 }
