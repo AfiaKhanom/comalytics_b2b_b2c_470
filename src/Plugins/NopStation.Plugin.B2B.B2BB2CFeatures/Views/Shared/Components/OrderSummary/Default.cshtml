@@ -1,20 +1,21 @@
 @model ShoppingCartModel
 
-@using Nop.Core
-@using Nop.Core.Domain.Catalog
-@using Nop.Core.Domain.Orders
-@using Nop.Core.Domain.Tax
 @using Microsoft.AspNetCore.Mvc.ViewComponents
+@using Nop.Core
+@using Nop.Core.Domain.Tax
+@using Nop.Core.Domain.Media
+@using Nop.Core.Domain.Orders
+@using Nop.Core.Domain.Catalog
+@using Nop.Services.Orders
+@using Nop.Services.Security
 @using NopStation.Plugin.B2B.B2BB2CFeatures
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Services.Customers
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality
 @using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpPriceSyncFunctionality
 @using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
-@using Nop.Services.Security
 @using NopStation.Plugin.B2B.ERPIntegrationCore.Infrastructure
-@using Nop.Core.Domain.Media
-@using Nop.Services.Orders
+@using NopStation.Plugin.B2B.ERPIntegrationCore.Enums
 
 @inject IWebHelper webHelper
 @inject IWorkContext workContext
@@ -50,7 +51,7 @@
         isConvertedQuoteToOrder = await erpCustomerFunctionalityService.CheckAndUpdateGenericAttributeOfB2CQuoteOrder(b2COrderId, shoppingCartItems);
     }
     var erpNopUser = await erpCustomerFunctionalityService.GetActiveErpNopUserByCustomerAsync(currCustomer);
-    var isB2BCustomer = erpNopUser != null ? erpNopUser.ErpUserType == NopStation.Plugin.B2B.ERPIntegrationCore.Enums.ErpUserType.B2BUser : false;
+    var isB2BCustomer = erpNopUser != null && erpNopUser.ErpUserType == ErpUserType.B2BUser;
 
     var isAllowedToPlaceQuote = await permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BQuote);
     var isAllowedToPlaceOrder = await permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BOrder);

@@ -6236,4 +6236,8 @@
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.ErpCheckout.ErpUser.NotFound">
         <Value>Erp User not found</Value>
     </LocaleResource>
+
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.ErpAccount.ErpAccountNotAvailable">
+        <Value>The account is not available.</Value>
+    </LocaleResource>
 </Language>

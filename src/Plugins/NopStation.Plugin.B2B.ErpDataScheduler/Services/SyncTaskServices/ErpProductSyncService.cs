@@ -286,8 +286,7 @@ public class ErpProductSyncService : IErpProductSyncService
                         Start = start,
                         Location = salesOrg.Code,
                         ProductSku = stockCode,
-                        DateFrom = isIncrementalSync ? salesOrg.LastErpProductSyncTimeOnUtc : null,
-                        
+                        DateFrom = isIncrementalSync ? salesOrg.LastErpProductSyncTimeOnUtc : null                        
                     };
 
                     var response = await erpIntegrationPlugin.GetProductsFromErpAsync(erpGetRequestModel);

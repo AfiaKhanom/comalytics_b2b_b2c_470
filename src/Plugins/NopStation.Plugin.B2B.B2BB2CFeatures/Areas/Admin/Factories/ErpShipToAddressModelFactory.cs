@@ -11,7 +11,6 @@ using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Web.Framework.Models.Extensions;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpShipToAddress;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Helpers;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
@@ -22,7 +21,6 @@ public class ErpShipToAddressModelFactory : IErpShipToAddressModelFactory
     #region Fields
 
     private readonly IErpShipToAddressService _erpShipToAddressService;
-    private readonly ICommonHelper _commonHelper;
     private readonly IAddressService _addressService;
     private readonly IErpAccountService _erpAccountService;
     private readonly IAddressModelFactory _addressModelFactory;
@@ -36,7 +34,6 @@ public class ErpShipToAddressModelFactory : IErpShipToAddressModelFactory
     #region Ctor
 
     public ErpShipToAddressModelFactory(IErpShipToAddressService erpShipToAddressService,
-        ICommonHelper commonHelper,
         IAddressService addressService,
         IErpAccountService erpAccountService,
         IAddressModelFactory addressModelFactory,
@@ -46,7 +43,6 @@ public class ErpShipToAddressModelFactory : IErpShipToAddressModelFactory
         ILocalizationService localizationService)
     {
         _erpShipToAddressService = erpShipToAddressService;
-        _commonHelper = commonHelper;
         _addressService = addressService;
         _erpAccountService = erpAccountService;
         _addressModelFactory = addressModelFactory;
@@ -57,7 +53,6 @@ public class ErpShipToAddressModelFactory : IErpShipToAddressModelFactory
     }
 
     #endregion
-
 
     #region Methods
 
@@ -71,8 +66,7 @@ public class ErpShipToAddressModelFactory : IErpShipToAddressModelFactory
     /// </returns>
     public virtual async Task<ErpShipToAddressSearchModel> PrepareErpShipToAddressSearchModelAsync(ErpShipToAddressSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
         //prepare "active" filter (0 - all; 1 - active only; 2 - inactive only)
         searchModel.ShowInActiveOption.Add(new SelectListItem
@@ -107,8 +101,7 @@ public class ErpShipToAddressModelFactory : IErpShipToAddressModelFactory
     /// </returns>
     public virtual async Task<ErpShipToAddressListModel> PrepareErpShipToAddressListModelAsync(ErpShipToAddressSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
         //get erpShipToAddresses
         var erpShipToAddresses = await _erpShipToAddressService.GetAllErpShipToAddressesAsync(shipToCode: searchModel.SearchShipToCode,
@@ -119,7 +112,7 @@ public class ErpShipToAddressModelFactory : IErpShipToAddressModelFactory
             repEmail: searchModel.SearchRepEmail,
             pageIndex: searchModel.Page - 1,
             pageSize: searchModel.PageSize,
-            showHidden: searchModel.ShowInActive == 0 ? null : (bool?)(searchModel.ShowInActive == 2),
+            showHidden: searchModel.ShowInActive == 0 ? null : searchModel.ShowInActive == 2,
             emailAddresses: searchModel.SearchEmailAddresses);
 
         //prepare list model
@@ -134,13 +127,13 @@ public class ErpShipToAddressModelFactory : IErpShipToAddressModelFactory
 
                 if (erpAccount != null)
                 {
-                    data.ErpAccount = string.Concat(erpAccount.AccountName, "(", erpAccount.AccountNumber, ")");
+                    data.ErpAccount = $"{erpAccount.AccountName} ({erpAccount.AccountNumber})";
                     var erpAccountSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount.ErpSalesOrgId);
                     if (erpAccountSalesOrg != null)
                     {
                         data.ErpAccountSalesOrgId = erpAccountSalesOrg.Id;
                         if (!string.IsNullOrEmpty(erpAccountSalesOrg.Code))
-                            data.ErpAccountSalesOrgName = string.Concat(erpAccountSalesOrg.Name, "(", erpAccountSalesOrg.Code, ")");
+                            data.ErpAccountSalesOrgName = $"{erpAccountSalesOrg.Name} ({erpAccountSalesOrg.Code})";
                         else
                             data.ErpAccountSalesOrgName = erpAccountSalesOrg.Name;
                     }
@@ -215,8 +208,7 @@ public class ErpShipToAddressModelFactory : IErpShipToAddressModelFactory
         addressModel.FaxRequired = _addressSettings.FaxRequired;
 
         model.AddressModel = addressModel;
-        model.IsActive = erpShipToAddress is null ? true : erpShipToAddress.IsActive;
-
+        model.IsActive = erpShipToAddress is null || erpShipToAddress.IsActive;
 
         return model;
     }

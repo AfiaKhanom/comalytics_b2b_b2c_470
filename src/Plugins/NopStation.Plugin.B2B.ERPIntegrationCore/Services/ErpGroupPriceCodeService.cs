@@ -130,9 +130,9 @@ public class ErpGroupPriceCodeService : IErpGroupPriceCodeService
             if (showHidden.HasValue)
             {
                 if (!showHidden.Value)
-                    query = query.Where(v => v.IsActive == true);
+                    query = query.Where(v => v.IsActive);
                 else
-                    query = query.Where(v => v.IsActive == false);
+                    query = query.Where(v => !v.IsActive);
             }
 
             if (!string.IsNullOrEmpty(groupPriceCode))
@@ -145,8 +145,6 @@ public class ErpGroupPriceCodeService : IErpGroupPriceCodeService
 
         return groupPriceCodes;
     }
-
-    #endregion
 
     public async Task<bool> CheckAnyErpGroupPriceCodeExistByCode(string groupPriceCode)
     {
@@ -162,15 +160,16 @@ public class ErpGroupPriceCodeService : IErpGroupPriceCodeService
         return erpGroupPriceCodeExists.Any();
     }
 
-    public async Task<ErpGroupPriceCode> GetErpGroupPriceCodeByCodedAsync(string code)
+    public async Task<ErpGroupPriceCode> GetErpGroupPriceCodeByCodeAsync(string groupPriceCode)
     {
-        if (string.IsNullOrEmpty(code))
+        if (string.IsNullOrEmpty(groupPriceCode))
             return new ErpGroupPriceCode();
 
-        var erpGroupPriceCode =  _erpGroupPriceCodeRepository.GetAll().FirstOrDefault(egpc => egpc.Code.Equals(code) && !egpc.IsDeleted);
-
-        return erpGroupPriceCode;
+        return await _erpGroupPriceCodeRepository.Table
+            .FirstOrDefaultAsync(egpc => egpc.Code.Equals(groupPriceCode) && !egpc.IsDeleted);
     }
+
+    #endregion
 
     #endregion
 }

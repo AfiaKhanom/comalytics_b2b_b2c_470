@@ -3,6 +3,7 @@ using Nop.Services.Caching;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
 namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services.Caching;
+
 public class ErpGroupPriceCacheEventConsumer : CacheEventConsumer<ErpGroupPrice>
 {
     protected override async Task ClearCacheAsync(ErpGroupPrice entity, EntityEventType entityEventType)

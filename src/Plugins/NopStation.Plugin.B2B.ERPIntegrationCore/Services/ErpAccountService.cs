@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Nop.Core;
+using Nop.Core.Caching;
 using Nop.Core.Domain.Common;
 using Nop.Data;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
@@ -21,6 +22,7 @@ public class ErpAccountService : IErpAccountService
     private readonly INopDataProvider _nopDataProvider;
     private readonly IRepository<ErpNopUser> _erpNopUserRepository;
     private readonly IRepository<ErpNopUserAccountMap> _erpNopUserAccountMapRepository;
+    private readonly IStaticCacheManager _staticCacheManager;
     private readonly IRepository<Address> _addressRepository;
     private readonly IErpNopUserService _erpNopUserService;
 
@@ -35,7 +37,8 @@ public class ErpAccountService : IErpAccountService
         IRepository<ErpShiptoAddressErpAccountMap> erpShiptoAddressErpAccountMapRepository,
         INopDataProvider nopDataProvider,
         IRepository<ErpNopUser> erpNopUserRepository,
-        IRepository<ErpNopUserAccountMap> erpNopUserAccountMapRepository)
+        IRepository<ErpNopUserAccountMap> erpNopUserAccountMapRepository,
+        IStaticCacheManager staticCacheManager)
     {
         _erpAccountRepository = erpAccountRepository;
         _addressRepository = addressRepository;
@@ -45,6 +48,7 @@ public class ErpAccountService : IErpAccountService
         _nopDataProvider = nopDataProvider;
         _erpNopUserRepository = erpNopUserRepository;
         _erpNopUserAccountMapRepository = erpNopUserAccountMapRepository;
+        _staticCacheManager = staticCacheManager;
     }
 
     #endregion
@@ -114,24 +118,36 @@ public class ErpAccountService : IErpAccountService
     /// A task that represents the asynchronous operation
     /// The task result contains the ErpAccount
     /// </returns>
-    public async Task<ErpAccount> GetErpAccountByIdAsync(int id)
+    public async Task<ErpAccount> GetErpAccountByIdAsync(int id, bool filterOutDeleted = true)
     {
         if (id == 0)
             return null;
 
-        return await _erpAccountRepository.GetByIdAsync(id, cache => default);
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpAccountByIdCacheKey, id, filterOutDeleted);
+
+        var query = _erpAccountRepository.Table.Where(x => x.Id == id);
+
+        if (filterOutDeleted)
+        {
+            query = query.Where(x => !x.IsDeleted);
+        }
+
+        return await _staticCacheManager.GetAsync(key, async () => await query.FirstOrDefaultAsync());
     }
 
     public async Task<ErpAccount> GetErpAccountByErpShipToAddressAsync(ErpShipToAddress erpShipToAddress)
     {
         if (erpShipToAddress == null)
             return null;
+
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpAccountByErpShipToAddressCacheKey, erpShipToAddress.Id);
+
         var query = from erpAccount in _erpAccountRepository.Table
                     join cam in _erpShiptoAddressErpAccountMapRepository.Table on erpAccount.Id equals cam.ErpAccountId
-                    where cam.ErpShiptoAddressId == erpShipToAddress.Id
+                    where cam.ErpShiptoAddressId == erpShipToAddress.Id && !erpAccount.IsDeleted
                     select erpAccount;
 
-        return await query.FirstOrDefaultAsync();
+        return await _staticCacheManager.GetAsync(key, async () => await query.FirstOrDefaultAsync());
     }
 
     public async Task<ErpSalesRepErpAccountMap> GetErpSalesRepErpAccountMapByIdAsync(int salesRepId, int? erpAccountId)
@@ -141,8 +157,16 @@ public class ErpAccountService : IErpAccountService
             return null;
         }
 
-        var record = await _erpSalesRepErpAccountMapRepository.Table.FirstOrDefaultAsync(x => x.ErpSalesRepId == salesRepId && x.ErpAccountId == erpAccountId);
-        return record;
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(
+            ERPIntegrationCoreDefaults.ErpSalesRepErpAccountMapByIdsCacheKey,
+            salesRepId,
+            erpAccountId ?? 0
+        );
+
+        return await _staticCacheManager.GetAsync(key, async () =>
+            await _erpSalesRepErpAccountMapRepository.Table
+                .FirstOrDefaultAsync(x => x.ErpSalesRepId == salesRepId && x.ErpAccountId == erpAccountId)
+        );
     }
 
     /// <summary>
@@ -153,41 +177,28 @@ public class ErpAccountService : IErpAccountService
     /// A task that represents the asynchronous operation
     /// The task result contains the ErpAccount if it is activ
     /// </returns>
+
     public async Task<ErpAccount> GetErpAccountByIdWithActiveAsync(int id)
     {
         if (id == 0)
             return null;
 
-        var erpAccount = await _erpAccountRepository.GetByIdAsync(id, cache => default);
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpAccountByIdWithActiveCacheKey, id);
 
-        if (erpAccount == null || !erpAccount.IsActive)
-            return null;
+        var query = _erpAccountRepository.Table.FirstOrDefaultAsync(x => x.Id == id && x.IsActive && !x.IsDeleted);
 
-        return erpAccount;
+        return await _staticCacheManager.GetAsync(key, async () => await query);
     }
 
     public async Task<IList<ErpAccount>> GetAllErpAccountsAsync()
     {
-        var erpAccounts = await _erpAccountRepository.GetAllAsync(query =>
-        {
-            query = query.Where(v => v.IsActive && !v.IsDeleted);
-            query = query.OrderBy(ea => ea.Id);
-            return query;
-        });
+        var key = ERPIntegrationCoreDefaults.ErpAccountAllActiveCacheKey;
 
-        return erpAccounts;
+        var query = _erpAccountRepository.Table.Where(v => v.IsActive && !v.IsDeleted).OrderBy(ea => ea.Id);
+
+        return await _staticCacheManager.GetAsync(key, async () => await query.ToListAsync());
     }
 
-    /// <summary>
-    /// Gets all ErpAccounts
-    /// </summary>
-    /// <param name="pageIndex">Page number</param>
-    /// <param name="pageSize">Page size</param>
-    /// <param name="getOnlyTotalCount">If only total no of account needed or not</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains all the ErpAccounts
-    /// </returns>
     public async Task<IPagedList<ErpAccount>> GetAllErpAccountsAsync(int pageIndex = 0,
         int pageSize = int.MaxValue,
         bool? showHidden = null,
@@ -199,47 +210,51 @@ public class ErpAccountService : IErpAccountService
         int erpAccountStatusTypeId = 0,
         bool filterDeleted = true)
     {
-        var erpAccounts = await _erpAccountRepository.GetAllPagedAsync(query =>
-        {
-            // showHidden is null for getting all, true for only actives and false for only inactives
-            if (showHidden.HasValue)
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(
+            ERPIntegrationCoreDefaults.ErpAccountPagedCacheKey,
+            pageIndex, pageSize, showHidden, getOnlyTotalCount, erpAccountNo ?? "", salesOrgId, email ?? "", accountName ?? "", erpAccountStatusTypeId, filterDeleted
+        );
+
+        return await _staticCacheManager.GetAsync(key, async () =>
+            await _erpAccountRepository.GetAllPagedAsync(query =>
             {
-                if (!showHidden.Value)
-                    query = query.Where(v => v.IsActive);
-                else
-                    query = query.Where(v => !v.IsActive);
-            }
+                if (filterDeleted)
+                    query = query.Where(v => !v.IsDeleted);
 
-            if (erpAccountStatusTypeId > 0)
-                query = query.Where(c => c.ErpAccountStatusTypeId.Equals(erpAccountStatusTypeId));
+                if (showHidden.HasValue)
+                {
+                    if (!showHidden.Value)
+                        query = query.Where(v => v.IsActive);
+                    else
+                        query = query.Where(v => !v.IsActive);
+                }
 
-            if (!string.IsNullOrWhiteSpace(erpAccountNo))
-                query = query.Where(c => c.AccountNumber.Contains(erpAccountNo));
+                if (erpAccountStatusTypeId > 0)
+                    query = query.Where(c => c.ErpAccountStatusTypeId.Equals(erpAccountStatusTypeId));
 
-            if (salesOrgId > 0)
-                query = query.Where(c => c.ErpSalesOrgId.Equals(salesOrgId));
+                if (!string.IsNullOrWhiteSpace(erpAccountNo))
+                    query = query.Where(c => c.AccountNumber.Contains(erpAccountNo));
 
-            if (!string.IsNullOrWhiteSpace(accountName))
-                query = query.Where(c => c.AccountName.Contains(accountName));
+                if (salesOrgId > 0)
+                    query = query.Where(c => c.ErpSalesOrgId.Equals(salesOrgId));
 
-            if (filterDeleted)
-                query = query.Where(v => !v.IsDeleted);
+                if (!string.IsNullOrWhiteSpace(accountName))
+                    query = query.Where(c => c.AccountName.Contains(accountName));
 
-            if (!string.IsNullOrWhiteSpace(email))
-            {
-                query = query.Join(_addressRepository.Table, x => x.BillingAddressId, y => y.Id,
-                        (x, y) => new { ErpAccount = x, Address = y })
-                    .Where(z => z.Address.Email.Contains(email))
-                    .Select(z => z.ErpAccount)
-                    .Distinct();
-            }
+                if (!string.IsNullOrWhiteSpace(email))
+                {
+                    query = query.Join(_addressRepository.Table, x => x.BillingAddressId, y => y.Id,
+                            (x, y) => new { ErpAccount = x, Address = y })
+                        .Where(z => z.Address.Email.Contains(email))
+                        .Select(z => z.ErpAccount)
+                        .Distinct();
+                }
 
-            query = query.OrderBy(ea => ea.Id);
-            return query;
+                query = query.OrderBy(ea => ea.Id);
+                return query;
 
-        }, pageIndex, pageSize, getOnlyTotalCount);
-
-        return erpAccounts;
+            }, pageIndex, pageSize, getOnlyTotalCount)
+        );
     }
 
     public async Task<IList<ErpAccount>> GetErpAccountListAsync(string accountNumber = null,
@@ -250,123 +265,136 @@ public class ErpAccountService : IErpAccountService
         bool filterDeleted = true,
         bool? showHidden = null)
     {
-        var erpAccounts = await _erpAccountRepository.GetAllAsync(query =>
-        {
-            // showHidden is null for getting all, true for only inactives and false for only actives
-            if (showHidden.HasValue)
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(
+            ERPIntegrationCoreDefaults.ErpAccountListCacheKey,
+            accountNumber ?? "", accountName ?? "", email ?? "", salesOrgId, erpAccountStatusTypeId, filterDeleted, showHidden
+        );
+
+        return await _staticCacheManager.GetAsync(key, async () =>
+            await _erpAccountRepository.GetAllAsync(query =>
             {
-                if (!showHidden.Value)
-                    query = query.Where(v => v.IsActive);
-                else
-                    query = query.Where(v => !v.IsActive);
-            }
+                if (filterDeleted)
+                    query = query.Where(v => !v.IsDeleted);
 
-            if (erpAccountStatusTypeId > 0)
-                query = query.Where(c => c.ErpAccountStatusTypeId.Equals(erpAccountStatusTypeId));
+                if (showHidden.HasValue)
+                {
+                    if (!showHidden.Value)
+                        query = query.Where(v => v.IsActive);
+                    else
+                        query = query.Where(v => !v.IsActive);
+                }
 
-            if (!string.IsNullOrWhiteSpace(accountNumber))
-                query = query.Where(c => c.AccountNumber.Contains(accountNumber));
+                if (erpAccountStatusTypeId > 0)
+                    query = query.Where(c => c.ErpAccountStatusTypeId.Equals(erpAccountStatusTypeId));
 
-            if (salesOrgId > 0)
-                query = query.Where(c => c.ErpSalesOrgId.Equals(salesOrgId));
+                if (!string.IsNullOrWhiteSpace(accountNumber))
+                    query = query.Where(c => c.AccountNumber.Contains(accountNumber));
 
-            if (!string.IsNullOrWhiteSpace(accountName))
-                query = query.Where(c => c.AccountName.Contains(accountName));
+                if (salesOrgId > 0)
+                    query = query.Where(c => c.ErpSalesOrgId.Equals(salesOrgId));
 
-            if (filterDeleted)
-                query = query.Where(v => !v.IsDeleted);
+                if (!string.IsNullOrWhiteSpace(accountName))
+                    query = query.Where(c => c.AccountName.Contains(accountName));
 
-            if (!string.IsNullOrWhiteSpace(email))
-            {
-                query = query.Join(_addressRepository.Table, x => x.BillingAddressId, y => y.Id,
-                        (x, y) => new { ErpAccount = x, Address = y })
-                    .Where(z => z.Address.Email.Contains(email))
-                    .Select(z => z.ErpAccount)
-                    .Distinct();
-            }
+                if (!string.IsNullOrWhiteSpace(email))
+                {
+                    query = query.Join(_addressRepository.Table, x => x.BillingAddressId, y => y.Id,
+                            (x, y) => new { ErpAccount = x, Address = y })
+                        .Where(z => z.Address.Email.Contains(email))
+                        .Select(z => z.ErpAccount)
+                        .Distinct();
+                }
 
-            query = query.OrderBy(ea => ea.Id);
+                query = query.OrderBy(ea => ea.Id);
 
-            return query;
-        });
-
-        return erpAccounts;
+                return query;
+            })
+        );
     }
 
     public async Task<IList<ErpSalesRepErpAccountMap>> GetAllErpAccountsBySalesRepIdAsync(string erpSalesRepId = null)
     {
-        var erpAccounts = await _erpSalesRepErpAccountMapRepository.GetAllAsync(query =>
-        {
-            if (!string.IsNullOrWhiteSpace(erpSalesRepId))
-                query = query.Where(c => c.ErpSalesRepId.Equals(Convert.ToInt32(erpSalesRepId)));
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(
+            ERPIntegrationCoreDefaults.ErpSalesRepErpAccountMapBySalesRepIdCacheKey,
+            erpSalesRepId ?? ""
+        );
 
-            query = query.OrderBy(ea => ea.Id);
-            return query;
+        return await _staticCacheManager.GetAsync(key, async () =>
+            await _erpSalesRepErpAccountMapRepository.GetAllAsync(query =>
+            {
+                if (!string.IsNullOrWhiteSpace(erpSalesRepId))
+                    query = query.Where(c => c.ErpSalesRepId.Equals(Convert.ToInt32(erpSalesRepId)));
 
-        });
-
-        return erpAccounts;
+                query = query.OrderBy(ea => ea.Id);
+                return query;
+            })
+        );
     }
 
-    /// <summary>
-    /// Gets all ErpAccounts
-    /// </summary>
-    /// <param name="pageIndex">Page number</param>
-    /// <param name="pageSize">Page size</param>
-    /// <param name="getOnlyTotalCount">If only total no of account needed or not</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains all the ErpAccounts
-    /// </returns>
     public async Task<IPagedList<ErpAccount>> GetAllErpAccountsByIdsAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false,
         bool getOnlyTotalCount = false, List<int> accountIds = null, string email = "")
     {
-        var erpAccounts = await _erpAccountRepository.GetAllPagedAsync(query =>
-        {
-            if (!showHidden)
-                query = query.Where(v => v.IsActive);
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(
+            ERPIntegrationCoreDefaults.ErpAccountPagedByIdsCacheKey,
+            pageIndex, pageSize, showHidden, getOnlyTotalCount, accountIds != null ? string.Join(",", accountIds) : "", email ?? ""
+        );
 
-            query = query.Where(c => accountIds.Contains(c.Id));
-
-            if (!string.IsNullOrWhiteSpace(email))
+        return await _staticCacheManager.GetAsync(key, async () =>
+            await _erpAccountRepository.GetAllPagedAsync(query =>
             {
-                query = query.Join(_addressRepository.Table, x => x.BillingAddressId, y => y.Id,
-                        (x, y) => new { ErpAccount = x, Address = y })
-                    .Where(z => z.Address.Email.Contains(email))
-                    .Select(z => z.ErpAccount)
-                    .Distinct();
-            }
+                query = query.Where(c => !c.IsDeleted);
 
-            query = query.OrderBy(ea => ea.Id);
-            return query;
+                if (!showHidden)
+                    query = query.Where(v => v.IsActive);
 
-        }, pageIndex, pageSize, getOnlyTotalCount);
+                if (accountIds != null && accountIds.Any())
+                    query = query.Where(c => accountIds.Contains(c.Id));
 
-        return erpAccounts;
+                if (!string.IsNullOrWhiteSpace(email))
+                {
+                    query = query.Join(_addressRepository.Table, x => x.BillingAddressId, y => y.Id,
+                            (x, y) => new { ErpAccount = x, Address = y })
+                        .Where(z => z.Address.Email.Contains(email))
+                        .Select(z => z.ErpAccount)
+                        .Distinct();
+                }
+
+                query = query.OrderBy(ea => ea.Id);
+                return query;
+
+            }, pageIndex, pageSize, getOnlyTotalCount)
+        );
     }
 
     public async Task<IList<ErpAccount>> GetErpAccountsOfOnlyActiveErpNopUsersAsync(int salesOrgId = 0, string accountNumber = "")
     {
-        var erpAccountQuery = _erpAccountRepository.Table
-                              .Where(ea => ea.IsActive && !ea.IsDeleted);
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(
+            ERPIntegrationCoreDefaults.ErpAccountOfActiveNopUsersCacheKey,
+            salesOrgId, accountNumber ?? ""
+        );
 
-        if (salesOrgId > 0)
+        return await _staticCacheManager.GetAsync(key, async () =>
         {
-            erpAccountQuery = erpAccountQuery.Where(ea => ea.ErpSalesOrgId == salesOrgId);
-        }
+            var erpAccountQuery = _erpAccountRepository.Table.Where(ea => ea.IsActive && !ea.IsDeleted);
 
-        if (!string.IsNullOrWhiteSpace(accountNumber))
-        {
-            erpAccountQuery = erpAccountQuery.Where(ea => ea.AccountNumber.Contains(accountNumber));
-        }
+            if (salesOrgId > 0)
+            {
+                erpAccountQuery = erpAccountQuery.Where(ea => ea.ErpSalesOrgId == salesOrgId);
+            }
 
-        var query = from ea in erpAccountQuery
-                    join eaMap in _erpNopUserAccountMapRepository.Table on ea.Id equals eaMap.ErpAccountId
-                    join enu in _erpNopUserRepository.Table on eaMap.ErpUserId equals enu.Id
-                    where !enu.IsDeleted && enu.IsActive
-                    select ea;
+            if (!string.IsNullOrWhiteSpace(accountNumber))
+            {
+                erpAccountQuery = erpAccountQuery.Where(ea => ea.AccountNumber.Contains(accountNumber));
+            }
 
-        return await query.Distinct().ToListAsync();
+            var query = from ea in erpAccountQuery
+                        join eaMap in _erpNopUserAccountMapRepository.Table on ea.Id equals eaMap.ErpAccountId
+                        join enu in _erpNopUserRepository.Table on eaMap.ErpUserId equals enu.Id
+                        where !enu.IsDeleted && enu.IsActive
+                        select ea;
+
+            return await query.Distinct().ToListAsync();
+        });
     }
 
     public async Task<ErpAccount> GetErpAccountByErpAccountNumberAsync(string accountNumber)
@@ -374,25 +402,37 @@ public class ErpAccountService : IErpAccountService
         if (string.IsNullOrEmpty(accountNumber))
             return null;
 
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(
+            ERPIntegrationCoreDefaults.ErpAccountByAccountNumberCacheKey,
+            accountNumber
+        );
 
         var query = from c in _erpAccountRepository.Table
-                    where c.AccountNumber == accountNumber
+                    where c.AccountNumber == accountNumber && !c.IsDeleted
                     orderby c.Id
                     select c;
-        return await query.FirstOrDefaultAsync();
+
+        return await _staticCacheManager.GetAsync(key, async () => await query.FirstOrDefaultAsync());
     }
 
     public async Task<ErpAccount> GetActiveErpAccountByCustomerIdAsync(int customerId)
     {
-        var erpNopUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(customerId);
-        if (erpNopUser != null && !erpNopUser.IsDeleted && erpNopUser.IsActive)
-        {
-            var erpAccount = await GetErpAccountByIdWithActiveAsync(erpNopUser.ErpAccountId);
-            if (erpAccount != null)
-                return erpAccount;
-        }
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(
+            ERPIntegrationCoreDefaults.ErpAccountByCustomerIdCacheKey,
+            customerId
+        );
 
-        return null;
+        return await _staticCacheManager.GetAsync(key, async () =>
+        {
+            var erpNopUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(customerId);
+            if (erpNopUser != null && !erpNopUser.IsDeleted && erpNopUser.IsActive)
+            {
+                var erpAccount = await GetErpAccountByIdWithActiveAsync(erpNopUser.ErpAccountId);
+                if (erpAccount != null)
+                    return erpAccount;
+            }
+            return null;
+        });
     }
 
     public async Task InActiveAllOldAccount(DateTime syncStartTime)
@@ -409,10 +449,17 @@ public class ErpAccountService : IErpAccountService
 
     public async Task<IList<ErpAccount>> GetAllErpAccountsBySaleOrgIdAsync(int salesOrgId)
     {
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(
+            ERPIntegrationCoreDefaults.ErpAccountBySalesOrgIdCacheKey,
+            salesOrgId
+        );
+
         if (salesOrgId < 1)
             return new List<ErpAccount>();
 
-        return await _erpAccountRepository.Table.Where(x => x.ErpSalesOrgId == salesOrgId && x.IsActive && !x.IsDeleted).ToListAsync();
+        return await _staticCacheManager.GetAsync(key, async () =>
+            await _erpAccountRepository.Table.Where(x => x.ErpSalesOrgId == salesOrgId && x.IsActive && !x.IsDeleted).ToListAsync()
+        );
     }
 
     #endregion

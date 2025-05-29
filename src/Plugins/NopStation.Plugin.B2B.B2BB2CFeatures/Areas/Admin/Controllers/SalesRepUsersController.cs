@@ -142,7 +142,7 @@ public class SalesRepUsersController : NopStationAdminController
 
         var salesRepId = Convert.ToInt32(searchModel.ErpAccountId);
 
-        var salesRep = (await _erpSalesRepService.GetErpSalesRepByIdAsync(salesRepId));
+        var salesRep = await _erpSalesRepService.GetErpSalesRepByIdAsync(salesRepId);
         if (salesRep == null || !salesRep.IsActive || salesRep.IsDeleted)
             return await AccessDeniedDataTablesJson();
 

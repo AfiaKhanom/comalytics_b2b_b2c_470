@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -19,7 +18,6 @@ using Nop.Web.Framework.Mvc.Filters;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpShipToAddress;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
@@ -48,8 +46,8 @@ public class ErpAccountController : NopStationAdminController
     private readonly IErpActivityLogsService _erpActivityLogsService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
     private readonly IErpShipToAddressModelFactory _erpShipToAddressModelFactory;
-    private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
     private readonly IPictureService _pictureService;
+    private readonly IWorkContext _workContext;
 
     #endregion
 
@@ -71,8 +69,8 @@ public class ErpAccountController : NopStationAdminController
         IErpActivityLogsService erpActivityLogsService,
         IErpIntegrationPluginManager erpIntegrationPluginManager,
         IErpShipToAddressModelFactory erpShipToAddressModelFactory,
-        IB2BB2CWorkContext b2BB2CWorkContext,
-        IPictureService pictureService)
+        IPictureService pictureService,
+        IWorkContext workContext)
     {
         _storeContext = storeContext;
         _addressService = addressService;
@@ -90,8 +88,8 @@ public class ErpAccountController : NopStationAdminController
         _erpActivityLogsService = erpActivityLogsService;
         _erpIntegrationPluginManager = erpIntegrationPluginManager;
         _erpShipToAddressModelFactory = erpShipToAddressModelFactory;
-        _b2BB2CWorkContext = b2BB2CWorkContext;
         _pictureService = pictureService;
+        _workContext = workContext;
     }
 
     #endregion
@@ -105,6 +103,7 @@ public class ErpAccountController : NopStationAdminController
         var tmp = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(salesOrgId);
         return tmp.Name + '-' + tmp.Code;
     }
+
     protected virtual async Task UpdatePictureSeoNamesAsync(int pictureId, string accountName)
     {
         var picture = await _pictureService.GetPictureByIdAsync(pictureId);
@@ -163,7 +162,7 @@ public class ErpAccountController : NopStationAdminController
 
         if (ModelState.IsValid)
         {
-            var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
             var stateProvidence = await _stateProvinceService.GetStateProvinceByIdAsync(model.BillingAddress.StateProvinceId ?? 0);
             var country = await _countryService.GetCountryByIdAsync(model.BillingAddress.CountryId ?? 0);
 
@@ -265,7 +264,11 @@ public class ErpAccountController : NopStationAdminController
         //try to get a customer with the specified id
         var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(id);
         if (erpAccount == null)
+        {
+            _notificationService.WarningNotification(
+                await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.ErpAccount.ErpAccountNotAvailable"));
             return RedirectToAction("List");
+        }
 
         //prepare model
         var model = await _erpAccountModelFactory.PrepareErpAccountModelAsync(null, erpAccount);
@@ -283,7 +286,11 @@ public class ErpAccountController : NopStationAdminController
         //try to get a erpAccount with the specified id
         var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(model.Id);
         if (erpAccount == null)
+        {
+            _notificationService.WarningNotification(
+                await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.ErpAccount.ErpAccountNotAvailable"));
             return RedirectToAction("List");
+        }
 
         if (ModelState.IsValid)
         {
@@ -310,9 +317,8 @@ public class ErpAccountController : NopStationAdminController
                 erpAccount.OverrideStockDisplayFormatConfigSetting = model.OverrideStockDisplayFormatConfigSetting;
                 erpAccount.ErpAccountStatusTypeId = model.ErpAccountStatusTypeId;
                 erpAccount.B2BPriceGroupCodeId = model.B2BPriceGroupCodeId;
-                //erpAccount.LastPriceRefresh = model.LastPriceRefresh;
                 erpAccount.UpdatedOnUtc = DateTime.UtcNow;
-                erpAccount.UpdatedById = (await _b2BB2CWorkContext.GetCurrentCustomerAsync()).Id;
+                erpAccount.UpdatedById = (await _workContext.GetCurrentCustomerAsync()).Id;
 
                 await _erpAccountService.UpdateErpAccountAsync(erpAccount);
 
@@ -350,7 +356,7 @@ public class ErpAccountController : NopStationAdminController
                 var successMsg = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Updated");
                 _notificationService.SuccessNotification(successMsg);
 
-                await _erpLogsService.InformationAsync($"{successMsg}. Erp Account Id: {erpAccount.Id}", ErpSyncLevel.Account, customer: await _b2BB2CWorkContext.GetCurrentCustomerAsync());
+                await _erpLogsService.InformationAsync($"{successMsg}. Erp Account Id: {erpAccount.Id}", ErpSyncLevel.Account, customer: await _workContext.GetCurrentCustomerAsync());
 
                 //erp activity log
                 await _erpActivityLogsService.InsertErpActivityAsync("Erp_EditErpAccount",
@@ -366,6 +372,7 @@ public class ErpAccountController : NopStationAdminController
             catch (Exception exc)
             {
                 _notificationService.ErrorNotification(exc.Message);
+                await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Error, ErpSyncLevel.Account, exc.Message, exc.StackTrace);
             }
         }
 
@@ -385,7 +392,11 @@ public class ErpAccountController : NopStationAdminController
         //try to get a erpSalesOrg with the specified id
         var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(id);
         if (erpAccount == null)
+        {
+            _notificationService.WarningNotification(
+                await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.ErpAccount.ErpAccountNotAvailable"));
             return RedirectToAction("List");
+        }
 
         //delete a erpShipToAddress
         await _erpAccountService.DeleteErpAccountByIdAsync(erpAccount.Id);
@@ -393,7 +404,7 @@ public class ErpAccountController : NopStationAdminController
         var successMsg = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Deleted");
         _notificationService.SuccessNotification(successMsg);
 
-        await _erpLogsService.InformationAsync($"{successMsg}. Erp Account Id: {erpAccount.Id}", ErpSyncLevel.Account, customer: await _b2BB2CWorkContext.GetCurrentCustomerAsync());
+        await _erpLogsService.InformationAsync($"{successMsg}. Erp Account Id: {erpAccount.Id}", ErpSyncLevel.Account, customer: await _workContext.GetCurrentCustomerAsync());
 
         //erp activity log
         await _erpActivityLogsService.InsertErpActivityAsync("Erp_DeleteErpAccount",
@@ -416,11 +427,11 @@ public class ErpAccountController : NopStationAdminController
 
         var result =
             (from acc in accounts
-             select new
-             {
-                 label = $"{acc.AccountNumber} ({acc.AccountName}),",
-                 erpaccountid = acc.Id
-             }
+                 select new
+                 {
+                     label = $"{acc.AccountNumber} ({acc.AccountName}),",
+                     erpaccountid = acc.Id
+                 }
             ).ToList();
 
         return Json(result);
@@ -433,7 +444,7 @@ public class ErpAccountController : NopStationAdminController
 
         var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpAccountId);
 
-        var erpAccountDetails = $"{erpAccount.AccountNumber} ({erpAccount.AccountName})";
+        var erpAccountDetails = $"{erpAccount?.AccountNumber} ({erpAccount?.AccountName})";
 
         return Json(erpAccountDetails);
     }

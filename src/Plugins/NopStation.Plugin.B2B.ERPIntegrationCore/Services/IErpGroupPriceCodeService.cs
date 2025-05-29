@@ -17,7 +17,7 @@ public interface IErpGroupPriceCodeService
 
     Task<ErpGroupPriceCode> GetErpGroupPriceCodeByIdAsync(int id);
 
-    Task<ErpGroupPriceCode> GetErpGroupPriceCodeByCodedAsync(string code);
+    Task<ErpGroupPriceCode> GetErpGroupPriceCodeByCodeAsync(string groupPriceCode);
 
     Task<ErpGroupPriceCode> GetErpGroupPriceCodeByIdWithActiveAsync(int id);
 
@@ -30,6 +30,4 @@ public interface IErpGroupPriceCodeService
         bool getOnlyTotalCount = false);
 
     Task<bool> CheckAnyErpGroupPriceCodeExistByCode(string groupPriceCode);
-
 }
-

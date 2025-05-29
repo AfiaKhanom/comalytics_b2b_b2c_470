@@ -169,7 +169,7 @@ public class NopCustomerErpAccountInfoComponent : NopViewComponent
             if (erpNopUser == null)
                 return View(new CustomerErpAccountInfoModel());
 
-            var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpNopUser.ErpAccountId);
+            var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpNopUser.ErpAccountId, filterOutDeleted: false);
 
             var model = new CustomerErpAccountInfoModel();
             model.Id = erpNopUser.Id;
@@ -178,7 +178,7 @@ public class NopCustomerErpAccountInfoComponent : NopViewComponent
             model.ErpAccountId = erpNopUser.ErpAccountId;
             model.ErpAccountInfo = $"{erpAccount?.AccountName} ({erpAccount?.AccountNumber})";
             model.ErpSalesOrgId = erpAccount?.ErpSalesOrgId ?? 0;
-            model.ErpSalesOrg = (await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount?.ErpSalesOrgId ?? 0))?.Name ?? "";
+            model.ErpSalesOrg = (await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount?.ErpSalesOrgId ?? 0, filterOutDeleted: false))?.Name ?? "";
             model.ErpShipToAddressId = erpNopUser.ErpShipToAddressId;
             model.CreatedBy = (await _customerService.GetCustomerByIdAsync(erpNopUser.CreatedById))?.Email ?? $"{erpNopUser.CreatedById}";
             model.UpdatedBy = (await _customerService.GetCustomerByIdAsync(erpNopUser.UpdatedById))?.Email ?? $"{erpNopUser.UpdatedById}";
@@ -193,25 +193,29 @@ public class NopCustomerErpAccountInfoComponent : NopViewComponent
             ErpShipToAddress erpShipToAddress = null;
             if (erpAccount?.Id > 0)
             {
-                erpShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(erpNopUser.ErpShipToAddressId);
-
                 if (_b2BB2CFeaturesSettings.UseDefaultAccountForB2CUser && erpNopUser.ErpUserType == ErpUserType.B2CUser)
                 {
                     erpShipToAddress = (await _erpShipToAddressService.
-                        GetErpShipToAddressesByCustomerAddressesAsync(customerId: erpNopUser.NopCustomerId, erpAccountId: erpAccount.Id))
+                        GetErpShipToAddressesByCustomerAddressesAsync(customerId: erpNopUser.NopCustomerId, 
+                        erpAccountId: erpAccount.Id, 
+                        filterOutDeleted: false))
                         .FirstOrDefault();
+                }
+                else
+                {
+                    erpShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(erpNopUser.ErpShipToAddressId, filterOutDeleted: false);
                 }
 
                 if (erpShipToAddress != null)
-                { 
+                {
                     var address = await _addressService.GetAddressByIdAsync(erpShipToAddress.AddressId);
 
                     if (address != null)
-                    {      
+                    {
                         var addressModel = address.ToModel<AddressModel>();
                         addressModel.CountryName = (await _countryService.GetCountryByAddressAsync(address))?.Name;
                         addressModel.StateProvinceName = (await _stateProvinceService.GetStateProvinceByAddressAsync(address))?.Name;
-                        model.ErpShipToAddressInfo = $"{erpShipToAddress.ShipToName} - {await PrepareModelAddressHtmlAsync(addressModel, address)}";
+                        model.ErpShipToAddressInfo = $"{erpShipToAddress.ShipToName} - ({erpShipToAddress.ShipToCode}) - {await PrepareModelAddressHtmlAsync(addressModel, address)}";
                     }
                 }
             }

@@ -96,17 +96,19 @@ public class ErpShipToAddressService : IErpShipToAddressService
 
     #region Read
 
-    public async Task<ErpShipToAddress> GetErpShipToAddressByIdAsync(int id)
+    public async Task<ErpShipToAddress> GetErpShipToAddressByIdAsync(int id, bool filterOutDeleted = true)
     {
         if (id == 0)
             return null;
 
-        var erpShipToAddress = await _erpShipToAddressRepository.GetByIdAsync(id);
+        var query = _erpShipToAddressRepository.Table.Where(x => x.Id == id);
 
-        if (erpShipToAddress == null || erpShipToAddress.IsDeleted)
-            return null;
+        if (filterOutDeleted)
+        {
+            query = query.Where(x => !x.IsDeleted);
+        }
 
-        return erpShipToAddress;
+        return await query.FirstOrDefaultAsync();
     }
 
     public async Task<ErpShipToAddress> GetErpShipToAddressByIdWithActiveAsync(int id)
@@ -299,7 +301,10 @@ public class ErpShipToAddressService : IErpShipToAddressService
         return erpShipToAddresses;
     }
 
-    public async Task<List<ErpShipToAddress>> GetErpShipToAddressesByCustomerAddressesAsync(int customerId, int erpAccountId = 0, bool isActiveOnly = true)
+    public async Task<List<ErpShipToAddress>> GetErpShipToAddressesByCustomerAddressesAsync(int customerId, 
+        int erpAccountId = 0, 
+        bool isActiveOnly = true,
+        bool filterOutDeleted = true)
     {
         var erpShipToAddresses = await _erpShipToAddressRepository.GetAllAsync(query =>
         {
@@ -308,10 +313,17 @@ public class ErpShipToAddressService : IErpShipToAddressService
                     where customerAddressMapping.CustomerId == customerId
                     select shipToAddress;
 
+            if (filterOutDeleted)
+            {
+                query = query.Where(v => !v.IsDeleted);
+            }
+
             query = query.Distinct();
 
             if (isActiveOnly)
+            {
                 query = query.Where(v => v.IsActive);
+            }
 
             if (erpAccountId > 0)
             {

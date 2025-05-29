@@ -7,7 +7,6 @@ using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Stores;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
-using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Helpers;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
@@ -29,7 +28,6 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
     private readonly IErpGroupPriceCodeService _erpGroupPriceCodeService;
     private readonly IDateTimeHelper _dateTimeHelper;
-    private readonly ISettingService _settingService;
     private readonly IErpLogsService _erpLogsService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
     private readonly IProductService _productService;
@@ -49,7 +47,6 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
         IErpGroupPriceCodeService erpGroupPriceCodeService,
         IDateTimeHelper dateTimeHelper,
-        ISettingService settingService,
         IErpLogsService erpLogsService,
         IErpIntegrationPluginManager erpIntegrationPluginManager,
         IProductService productService,
@@ -65,7 +62,6 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
         _erpGroupPriceCodeService = erpGroupPriceCodeService;
         _dateTimeHelper = dateTimeHelper;
-        _settingService = settingService;
         _erpLogsService = erpLogsService;
         _erpIntegrationPluginManager = erpIntegrationPluginManager;
         _productService = productService;
@@ -166,9 +162,9 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
 
         var erpSpecialPriceInsertList = new List<ErpSpecialPrice>();
         var erpSpecialPriceUpdateList = new List<ErpSpecialPrice>();
-        var lastErpSpecialPriceSynced = (decimal)0.0;
+        /*var lastErpSpecialPriceSynced = decimal.Zero;
         var lastErpSpecialPriceSyncedOfErpAccount = "";
-        var lastErpSpecialPriceSyncedOfProduct = "";
+        var lastErpSpecialPriceSyncedOfProduct = "";*/
         var isError = false;
         var lastErrorMessage = "";
 
@@ -242,9 +238,9 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
                     erpSpecialPriceUpdateList.Add(oldSpecialPrice);
                 }
 
-                lastErpSpecialPriceSynced = oldSpecialPrice.Price;
+                /*lastErpSpecialPriceSynced = oldSpecialPrice.Price;
                 lastErpSpecialPriceSyncedOfErpAccount = erpAccount.AccountNumber;
-                lastErpSpecialPriceSyncedOfProduct = product.Sku;
+                lastErpSpecialPriceSyncedOfProduct = product.Sku;*/
                 totalSyncedSoFarForThisAccount++;
             }
 
@@ -341,7 +337,6 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
             await _erpLogsService.InformationAsync($"Erp Group Price Sync started for: ErpAccount Number = {erpAccount.AccountNumber}", ErpSyncLevel.GroupPrice);
 
             var start = "0";
-            var dateFrom = DateTime.Today;
             var isError = false;
             var totalSyncedSoFar = 0;
             var lastErpGroupPriceCodeSynced = string.Empty;
@@ -390,7 +385,7 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
 
                     if (!string.IsNullOrEmpty(erpGroupPrice.GroupPriceCode))
                     {
-                        var oldErpGroupPriceCode = await _erpGroupPriceCodeService.GetErpGroupPriceCodeByCodedAsync(erpGroupPrice.GroupPriceCode);
+                        var oldErpGroupPriceCode = await _erpGroupPriceCodeService.GetErpGroupPriceCodeByCodeAsync(erpGroupPrice.GroupPriceCode);
                         if (!processedErpGroupPriceCodes.Contains(oldErpGroupPriceCode.Code))
                         {
                             if (oldErpGroupPriceCode == null)
@@ -456,7 +451,7 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
                         {
                             if (price.Value > 0)
                             {
-                                var oldErpGroupPriceCode = await _erpGroupPriceCodeService.GetErpGroupPriceCodeByCodedAsync(price.Key);
+                                var oldErpGroupPriceCode = await _erpGroupPriceCodeService.GetErpGroupPriceCodeByCodeAsync(price.Key);
 
                                 if (oldErpGroupPriceCode == null)
                                 {

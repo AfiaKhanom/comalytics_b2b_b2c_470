@@ -43,18 +43,6 @@ public class ErpStockSyncService : IErpStockSyncService
 
     #endregion
 
-    #region Utilities
-
-    private async Task MapProductAndStockQuantityHistory(Dictionary<string, int> skuStockQuantityMap, string productSku, int stockQuantity)
-    {
-        if (!skuStockQuantityMap.TryAdd(productSku, stockQuantity))
-        {
-            skuStockQuantityMap[productSku] += stockQuantity;
-        }
-    }
-
-    #endregion
-
     #region Method
 
     public virtual async Task<bool> IsErpStockSyncSuccessfulAsync(string? stockCode, bool isManualTrigger = false, bool isIncrementalSync = true, CancellationToken cancellationToken = default)
@@ -168,13 +156,10 @@ public class ErpStockSyncService : IErpStockSyncService
                         if (products is null || products.Count == 0)
                         {
                             totalNotSyncedSoFar += response.Data.Count;
-                            isError = false;
-                            break;
+                            continue;
                         }
 
                         var inventories = await _erpProductService.GetProductWarehouseInventoryByProductIdsAndNopWarehouseIdsAsync(products.Select(x => x.Id).ToArray(), wareHouseMap?.NopWarehouseId ?? 0);
-
-                        var skuWarehouseStockMapForThisProduct = new Dictionary<string, int>();
 
                         foreach (var erpStock in responseData)
                         {
@@ -238,8 +223,6 @@ public class ErpStockSyncService : IErpStockSyncService
                                             stockQuantityHistoriesToInsert.Add(stockQuantityHistory);
                                         }
                                     }
-
-                                    await MapProductAndStockQuantityHistory(skuWarehouseStockMapForThisProduct, product.Sku, inventory.StockQuantity);
 
                                     product.StockQuantity = 0;
                                     product.ManageInventoryMethodId = (int)ManageInventoryMethod.ManageStock;
