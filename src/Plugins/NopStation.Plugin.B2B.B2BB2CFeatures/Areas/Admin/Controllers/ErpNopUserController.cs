@@ -490,7 +490,8 @@ public class ErpNopUserController : NopStationAdminController
         customer.RequireReLogin = false;
         await _customerService.UpdateCustomerAsync(customer);
         await _genericAttributeService.SaveAttributeAsync<int?>(currentCustomer, NopCustomerDefaults.ImpersonatedCustomerIdAttribute, customer.Id);
-        await _genericAttributeService.SaveAttributeAsync<string?>(currentCustomer, NopCustomerDefaults.LastVisitedPageAttribute, $"{_webHelper.GetStoreLocation().TrimEnd('/')}/Admin/ErpNopUser/ErpNopUserEdit/{erpNopUser.Id}");
+        await _genericAttributeService.SaveAttributeAsync<string?>(currentCustomer, NopCustomerDefaults.LastVisitedPageAttribute, 
+            $"{_webHelper.GetStoreLocation().TrimEnd('/')}/Admin/ErpNopUser/ErpNopUserEdit/{erpNopUser.Id}");
 
         await _workContext.SetCurrentCustomerAsync(customer);
 

@@ -313,4 +313,34 @@ ORDER BY
 
 -- Make the ErpNopUserAccountMap CustomerRoleIds column nullable
 ALTER TABLE [Erp_Nop_User_Account_Map]
-ALTER COLUMN [CustomerRoles_Ids] NVARCHAR(MAX) NULL;
+ALTER COLUMN [CustomerRolesIds] NVARCHAR(MAX) NULL;
+
+
+-- Rename the B2B related customer roles to the latest names and system names
+Update[dbo].[CustomerRole] Set[Name] = 'B2B Customer', [SystemName] = 'B2BCustomer' Where[SystemName] = 'B2BUser';
+Update[dbo].[CustomerRole] Set[Name] = 'B2C Customer', [SystemName] = 'B2CCustomer' Where[SystemName] = 'B2CUser';
+Update[dbo].[CustomerRole] Set[Name] = 'B2B Sales Rep', [SystemName] = 'B2BSalesRep' Where[SystemName] = 'ERPSalesRep';
+Update[dbo].[CustomerRole] Set[Name] = 'Quick Order User', [SystemName] = 'QuickOrderUser' Where[SystemName] = 'QuickOrderUser';
+Update[dbo].[CustomerRole] Set[Name] = 'B2B-B2C Admin', [SystemName] = 'B2BB2CAdmin' Where[SystemName] = 'B2BB2CAdmin';
+Update[dbo].[CustomerRole] Set[Name] = 'B2B Order Assistant', [SystemName] = 'B2BOrderAssistant' Where[SystemName] = 'B2BOrderAssistant';
+Update[dbo].[CustomerRole] Set[Name] = 'B2B Quote Assistant', [SystemName] = 'B2BQuoteAssistant' Where[SystemName] = 'B2BQuoteAssistant';
+Update[dbo].[CustomerRole] Set[Name] = 'B2B Customer Accounting Personnel', [SystemName] = 'B2BCustomerAccountingPersonnel' Where[SystemName] = 'B2BCustomerAccountingPersonnel';
+
+-- Show the duplicate customer roles that needed to be deleted
+WITH DuplicateCTEShow AS (
+    SELECT Id, Name, SystemName,
+           ROW_NUMBER() OVER (PARTITION BY [Name], [SystemName] ORDER BY Id ASC) as Records
+    FROM [dbo].[CustomerRole]
+)
+SELECT * FROM DuplicateCTEShow 
+WHERE Records > 1
+ORDER BY Name, Id;
+
+-- Delete the duplicate customer roles
+WITH DuplicateCTEDelete AS (
+    SELECT Id, Name, SystemName,
+           ROW_NUMBER() OVER (PARTITION BY [Name], [SystemName] ORDER BY Id ASC) as Records
+    FROM [dbo].[CustomerRole]
+)
+DELETE FROM DuplicateCTEDelete 
+WHERE Records > 1

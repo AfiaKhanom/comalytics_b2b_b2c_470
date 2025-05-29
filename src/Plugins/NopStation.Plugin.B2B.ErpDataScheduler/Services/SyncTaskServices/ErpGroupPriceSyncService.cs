@@ -223,7 +223,7 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
                         if (!string.IsNullOrEmpty(erpGroupPrice.GroupPriceCode))
                         {
                             var oldErpGroupPriceCode = await _erpGroupPriceCodeService
-                                .GetErpGroupPriceCodeByCodedAsync(erpGroupPrice.GroupPriceCode);
+                                .GetErpGroupPriceCodeByCodeAsync(erpGroupPrice.GroupPriceCode);
 
                             if (!processedErpGroupPriceCodes.Contains(oldErpGroupPriceCode?.Code ?? string.Empty))
                             {
@@ -312,7 +312,7 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
                             {
                                 if (price.Value > 0)
                                 {
-                                    var oldErpGroupPriceCode = await _erpGroupPriceCodeService.GetErpGroupPriceCodeByCodedAsync(price.Key);
+                                    var oldErpGroupPriceCode = await _erpGroupPriceCodeService.GetErpGroupPriceCodeByCodeAsync(price.Key);
 
                                     if (!processedErpGroupPriceCodes.Contains(oldErpGroupPriceCode?.Code ?? string.Empty))
                                     {

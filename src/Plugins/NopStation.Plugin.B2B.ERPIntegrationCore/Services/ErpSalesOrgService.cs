@@ -71,17 +71,19 @@ public class ErpSalesOrgService : IErpSalesOrgService
 
     #region Read
 
-    public async Task<ErpSalesOrg> GetErpSalesOrgByIdAsync(int id)
+    public async Task<ErpSalesOrg> GetErpSalesOrgByIdAsync(int id, bool filterOutDeleted = true)
     {
         if (id == 0)
             return null;
 
-        var erpSalesOrg = await _erpErpSalesOrgRepository.GetByIdAsync(id, cache => default);
+        var query = _erpErpSalesOrgRepository.Table.Where(x => x.Id == id);
 
-        if (erpSalesOrg == null || erpSalesOrg.IsDeleted)
-            return null;
+        if (filterOutDeleted)
+        {
+            query = query.Where(x => !x.IsDeleted);
+        }
 
-        return erpSalesOrg;
+        return await query.FirstOrDefaultAsync();
     }
 
     public async Task<ErpSalesOrg> GetErpSalesOrgByIdWithActiveAsync(int id)

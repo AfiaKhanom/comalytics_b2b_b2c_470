@@ -258,7 +258,7 @@ public class ErpAccountSyncService : IErpAccountSyncService
 
                             oldErpAccount.AllowOverspend = erpAccount.AllowOverspend ? erpAccount.AllowOverspend : _b2BB2CFeaturesSettings.AllowOverspend;
                             oldErpAccount.AllowAccountsAddressEditOnCheckout = _b2BB2CFeaturesSettings.AllowAddressEditOnCheckoutForAll;
-                            oldErpAccount.B2BPriceGroupCodeId = (await _erpGroupPriceCodeService.GetErpGroupPriceCodeByCodedAsync(erpAccount.PriceGroupCode))?.Id ?? 0;
+                            oldErpAccount.B2BPriceGroupCodeId = (await _erpGroupPriceCodeService.GetErpGroupPriceCodeByCodeAsync(erpAccount.PriceGroupCode))?.Id ?? 0;
 
                             oldErpAccount.CreditLimitAvailable = erpAccount.CreditLimitAvailable ?? 0;
                             oldErpAccount.CreditLimit = erpAccount.CreditLimit ?? 0;
@@ -315,7 +315,7 @@ public class ErpAccountSyncService : IErpAccountSyncService
 
                             oldErpAccount.AllowOverspend = erpAccount.AllowOverspend ? erpAccount.AllowOverspend : _b2BB2CFeaturesSettings.AllowOverspend;
                             oldErpAccount.AllowAccountsAddressEditOnCheckout = _b2BB2CFeaturesSettings.AllowAddressEditOnCheckoutForAll;
-                            oldErpAccount.B2BPriceGroupCodeId = (await _erpGroupPriceCodeService.GetErpGroupPriceCodeByCodedAsync(erpAccount.PriceGroupCode))?.Id ?? 0;
+                            oldErpAccount.B2BPriceGroupCodeId = (await _erpGroupPriceCodeService.GetErpGroupPriceCodeByCodeAsync(erpAccount.PriceGroupCode))?.Id ?? 0;
 
                             oldErpAccount.CreditLimitAvailable = erpAccount.CreditLimitAvailable ?? 0;
                             oldErpAccount.CreditLimit = erpAccount.CreditLimit ?? 0;

@@ -356,12 +356,12 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
                 {
                     var nopCustomer = await _customerService.GetCustomerByIdAsync(erpNopUser.NopCustomerId);
 
-                    var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpNopUser.ErpAccountId);
+                    var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpNopUser.ErpAccountId, filterOutDeleted: false);
 
                     if (erpAccount == null)
                         return null;
 
-                    var erpSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount.ErpSalesOrgId);
+                    var erpSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount.ErpSalesOrgId, filterOutDeleted: false);
 
                     if (erpSalesOrg == null)
                         return null;
@@ -508,7 +508,7 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
         {
             var nopCustomer = await _customerService.GetCustomerByIdAsync(erpNopUser.NopCustomerId);
 
-            var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpNopUser.ErpAccountId);
+            var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpNopUser.ErpAccountId, filterOutDeleted: false);
 
             model ??= new ErpNopUserModel();
 

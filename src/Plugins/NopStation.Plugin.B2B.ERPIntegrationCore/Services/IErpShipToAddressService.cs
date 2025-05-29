@@ -20,7 +20,7 @@ public interface IErpShipToAddressService
 
     Task DeleteErpShipToAddressAsync(ErpShipToAddress erpShipToAddress);
 
-    Task<ErpShipToAddress> GetErpShipToAddressByIdAsync(int id);
+    Task<ErpShipToAddress> GetErpShipToAddressByIdAsync(int id, bool filterOutDeleted = true);
 
     Task<ErpShipToAddress> GetErpShipToAddressByIdWithActiveAsync(int id);
 
@@ -50,7 +50,10 @@ public interface IErpShipToAddressService
 
     Task<ErpShipToAddress> GetCustomerBillingAddressAsync(ErpAccount erpAccount);
 
-    Task<List<ErpShipToAddress>> GetErpShipToAddressesByCustomerAddressesAsync(int customerId, int erpAccountId = 0, bool isActiveOnly = false);
+    Task<List<ErpShipToAddress>> GetErpShipToAddressesByCustomerAddressesAsync(int customerId, 
+        int erpAccountId = 0, 
+        bool isActiveOnly = true, 
+        bool filterOutDeleted = true);
 
     Task<ErpShipToAddress> GetErpShipToAddressByShipToCodeAndErpAccountIdAsync(string shipToCode, int erpAccountId);
 
