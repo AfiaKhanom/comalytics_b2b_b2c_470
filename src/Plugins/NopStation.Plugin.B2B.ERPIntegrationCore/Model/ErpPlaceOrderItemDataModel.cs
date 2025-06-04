@@ -15,4 +15,5 @@ public class ErpPlaceOrderItemDataModel
     public decimal? DiscountAmountExclTax { get; set; }
     public decimal? PriceExclTax { get; set; }
     public decimal? PriceInclTax { get; set; }
+    public string? WarehouseCode { get; set; }
 }

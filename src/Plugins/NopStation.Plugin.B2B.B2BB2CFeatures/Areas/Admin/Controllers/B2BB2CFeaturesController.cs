@@ -241,6 +241,7 @@ public class B2BB2CFeaturesController : NopStationAdminController
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.OverSpendWarningText, model.OverSpendWarningText_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.DefaultB2COrganizationId, model.DefaultB2COrganizationId_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.PreFilterFacetSpecificationAttributeId, model.PreFilterFacetSpecificationAttributeId_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.WarehouseCodeSpecificationAttributeId, model.WarehouseCodeSpecificationAttributeId_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.UnitOfMeasureSpecificationAttributeId, model.UnitOfMeasureSpecificationAttributeId_OverrideForStore, storeScope, false);
 
             //new settings

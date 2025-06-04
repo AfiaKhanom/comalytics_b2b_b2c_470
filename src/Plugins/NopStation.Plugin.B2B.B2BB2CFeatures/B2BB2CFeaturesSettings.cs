@@ -98,6 +98,8 @@ public partial class B2BB2CFeaturesSettings : ISettings
 
     public int PreFilterFacetSpecificationAttributeId { get; set; }
 
+    public int WarehouseCodeSpecificationAttributeId { get; set; }
+
     public int UnitOfMeasureSpecificationAttributeId { get; set; }
 
     public bool DisplayAddToQuickListFavouriteButton { get; set; }

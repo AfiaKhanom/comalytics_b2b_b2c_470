@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.Drawing.ChartDrawing;
 using Nop.Core;
+using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Localization;
@@ -11,6 +13,7 @@ using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Domain.Tax;
 using Nop.Core.Events;
+using Nop.Data;
 using Nop.Services.Affiliates;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
@@ -55,6 +58,8 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
     private readonly IErpWorkflowMessageService _erpWorkflowMessageService;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
     private readonly IErpSpecialPriceService _erpSpecialPriceService;
+    private readonly IRepository<ProductSpecificationAttribute> _productSpecificationAttributeRepository;
+    private readonly IRepository<SpecificationAttributeOption> _specificationAttributeOptionRepository;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
     private const string DELIVERY_METHOD_COLLECT = "COLLECT";
     private const string DELIVERY_METHOD_DELIVERY = "DELIVERY";
@@ -122,7 +127,9 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
         IErpWorkflowMessageService erpWorkflowMessageService,
         IStoreMappingService storeMappingService,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
-        IErpSpecialPriceService erpSpecialPriceService) : base(currencySettings,
+        IErpSpecialPriceService erpSpecialPriceService,
+        IRepository<ProductSpecificationAttribute> productSpecificationAttributeRepository,
+        IRepository<SpecificationAttributeOption> specificationAttributeOptionRepository) : base(currencySettings,
             addressService,
             affiliateService,
             checkoutAttributeFormatter,
@@ -183,6 +190,8 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
         _erpWorkflowMessageService = erpWorkflowMessageService;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
         _erpSpecialPriceService = erpSpecialPriceService;
+        _productSpecificationAttributeRepository = productSpecificationAttributeRepository;
+        _specificationAttributeOptionRepository = specificationAttributeOptionRepository;
     }
 
     #endregion
@@ -190,6 +199,16 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
     #region Methods
 
     #region Common
+
+    private async Task<SpecificationAttributeOption> GetSpecificationAttributeOptionByProductIdAndOptionIdAsync(int specAttId, int productId)
+    {
+        return await (from sao in _specificationAttributeOptionRepository.Table
+                        where sao.SpecificationAttributeId == specAttId
+                        join psam in _productSpecificationAttributeRepository.Table
+                        on sao.Id equals psam.SpecificationAttributeOptionId
+                        where psam.ProductId == productId
+                        select sao).FirstOrDefaultAsync();
+    }
 
     public override async Task<PlaceOrderResult> PlaceOrderAsync(ProcessPaymentRequest processPaymentRequest)
     {
@@ -271,7 +290,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
         (var b2BAccount, var b2BUser, var b2CUser) = await GetB2BAccountAndUserOfCurrentCustomerAsync();
 
-        ArgumentNullException.ThrowIfNull(b2BAccount);        
+        ArgumentNullException.ThrowIfNull(b2BAccount);
 
         if (b2BUser != null)
         {
@@ -576,7 +595,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
                 );
                 erpOrderAdditionalData.ErpShipToAddressId = erpShipToAddress.Id;
 
-                erpOrderAdditionalData.SpecialInstructions = erpShipToAddress.DeliveryNotes; 
+                erpOrderAdditionalData.SpecialInstructions = erpShipToAddress.DeliveryNotes;
                 order.ShippingAddressId = erpShipToAddress.AddressId;
             }
 
@@ -678,6 +697,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
                     DiscountPercentage = discountPercentage,
                     PriceExclTax = priceExclTax,
                     PriceInclTax = priceInclTax,
+                    WarehouseCode = (await GetSpecificationAttributeOptionByProductIdAndOptionIdAsync(_b2BB2CFeaturesSettings.WarehouseCodeSpecificationAttributeId, product.Id))?.Name ?? string.Empty
                 });
             }
             catch (Exception ex)
@@ -776,6 +796,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
                     DiscountPercentage = unitDiscount,
                     PriceExclTax = Math.Round(_currencyService.ConvertCurrency(nopOrderItem.PriceExclTax, nopOrder.CurrencyRate), 2),
                     PriceInclTax = Math.Round(_currencyService.ConvertCurrency(nopOrderItem.PriceInclTax, nopOrder.CurrencyRate), 2),
+                    WarehouseCode = (await GetSpecificationAttributeOptionByProductIdAndOptionIdAsync(_b2BB2CFeaturesSettings.WarehouseCodeSpecificationAttributeId, product.Id))?.Name ?? string.Empty
                 });
             }
             catch (Exception ex)

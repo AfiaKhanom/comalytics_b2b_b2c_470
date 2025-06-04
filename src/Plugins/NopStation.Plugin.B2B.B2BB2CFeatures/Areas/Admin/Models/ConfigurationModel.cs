@@ -118,6 +118,10 @@ public record ConfigurationModel : BaseNopModel, ISettingsModel
     public int PreFilterFacetSpecificationAttributeId { get; set; }
     public bool PreFilterFacetSpecificationAttributeId_OverrideForStore { get; set; }
 
+    [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.WarehouseCodeSpecificationAttributeId")]
+    public int WarehouseCodeSpecificationAttributeId { get; set; }
+    public bool WarehouseCodeSpecificationAttributeId_OverrideForStore { get; set; }
+
     [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.UnitOfMeasureSpecificationAttribute")]
     public int UnitOfMeasureSpecificationAttributeId { get; set; }
     public bool UnitOfMeasureSpecificationAttributeId_OverrideForStore { get; set; }

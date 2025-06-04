@@ -6231,6 +6231,12 @@
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Orders.ErpOrderItem.NoOrderItemFound">
         <Value>No order item found with the specified id</Value>
     </LocaleResource>
+  <LocaleResource Name="b2bb2cfeatures.configuration.fields.warehousecodespecificationattributeid">
+    <Value>Specification attribute for warehouse code</Value>
+  </LocaleResource>
+  <LocaleResource Name="b2bb2cfeatures.configuration.fields.warehousecodespecificationattributeid.hint">
+    <Value>Select a specification attribute for warehouse code</Value>
+  </LocaleResource>
 
     <!-- Card: 2963-2804-Bug-4.7-Basic-B2B-issues  - 20-Apr-2025 -->
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.ErpCheckout.ErpUser.NotFound">
