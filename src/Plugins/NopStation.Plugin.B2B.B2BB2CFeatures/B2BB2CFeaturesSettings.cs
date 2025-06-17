@@ -32,10 +32,6 @@ public partial class B2BB2CFeaturesSettings : ISettings
 
     public bool IsActive { get; set; }
 
-    public bool PlaceB2BOrder { get; set; }
-
-    public bool PlaceB2COrder { get; set; }
-
     public bool UseNopProductPrice { get; set; }
 
     public bool UseProductGroupPrice { get; set; }
@@ -55,8 +51,6 @@ public partial class B2BB2CFeaturesSettings : ISettings
     public bool IsShowYearlySavings { get; set; }
 
     public bool IsShowAllTimeSavings { get; set; }
-
-    public DateTime LastDateTimeOfTCUpdate { get; set; }
 
     public DateTime UpdatedOnUtc { get; set; }
 
@@ -78,7 +72,7 @@ public partial class B2BB2CFeaturesSettings : ISettings
 
     public int MaxErpIntegrationOrderPlaceRetries { get; set; }
 
-    public bool EnableLogOnErpCall { get; set; }
+    public bool EnableErpLogs { get; set; } = true;
 
     public bool EnableLiveStockChecks { get; set; }
 

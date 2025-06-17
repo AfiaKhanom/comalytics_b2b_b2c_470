@@ -99,7 +99,13 @@ public class ErpSalesOrgService : IErpSalesOrgService
         return erpSalesOrg;
     }
 
-    public async Task<IPagedList<ErpSalesOrg>> GetAllErpSalesOrgAsync(int pageIndex = 0, int pageSize = int.MaxValue, string name = null, string email = null, string code = null, bool? showHidden = null, bool getOnlyTotalCount = false)
+    public async Task<IPagedList<ErpSalesOrg>> GetAllErpSalesOrgAsync(int pageIndex = 0, 
+        int pageSize = int.MaxValue, 
+        string name = null, 
+        string email = null, 
+        string code = null, 
+        bool? showHidden = null, 
+        bool getOnlyTotalCount = false)
     {
         var erpSalesOrgs = await _erpErpSalesOrgRepository.GetAllPagedAsync(query =>
         {
@@ -143,8 +149,7 @@ public class ErpSalesOrgService : IErpSalesOrgService
 
     public async Task<bool> IsMappedWithAnyERPAccountAsync(int erpSalesOrgId)
     {
-        var isMapped = await _erpAccountRepository.Table.AnyAsync(ea => !ea.IsDeleted && ea.ErpSalesOrgId == erpSalesOrgId);
-        return isMapped;
+        return await _erpAccountRepository.Table.AnyAsync(ea => !ea.IsDeleted && ea.ErpSalesOrgId == erpSalesOrgId);
     }
 
     public async Task<ErpSalesOrg> GetSalesOrgByCodeAsync(string salesorgCode)
@@ -152,7 +157,8 @@ public class ErpSalesOrgService : IErpSalesOrgService
         if (string.IsNullOrWhiteSpace(salesorgCode))
             return null;
 
-        var erpSalesOrg = await _erpErpSalesOrgRepository.Table.FirstOrDefaultAsync(x => x.Code.Trim().ToLower() == salesorgCode.Trim().ToLower());
+        var erpSalesOrg = await _erpErpSalesOrgRepository.Table
+            .FirstOrDefaultAsync(x => x.Code.Trim().ToLower() == salesorgCode.Trim().ToLower());
 
         if (erpSalesOrg == null || erpSalesOrg.IsDeleted)
             return null;
@@ -160,19 +166,15 @@ public class ErpSalesOrgService : IErpSalesOrgService
         return erpSalesOrg;
     }
 
-    /// <summary>
-    /// This method retrieves the ErpSalesOrg associated with a given warehouseCode
-    /// </summary>
-    /// <param name="warehouseCode"></param>
-    /// <returns></returns>
     public async Task<ErpSalesOrg> GetSalesOrgByWarehouseCodeAsync(string warehouseCode)
     {
         if (string.IsNullOrEmpty(warehouseCode))
             return null;
+
         warehouseCode = warehouseCode.Trim();
 
         return await (from warehouse in _erpWarehouseAdditionalDataRepository.Table
-                       where warehouse.IsActive && !warehouse.IsDeleted && warehouse.Code.Trim() == warehouseCode
+                           where warehouse.IsActive && !warehouse.IsDeleted && warehouse.Code.Trim() == warehouseCode
                        join map in _erpWarehouseSalesOrgMapRepository.Table
                            on warehouse.Id equals map.ErpWarehouseId
                        join salesOrg in _erpErpSalesOrgRepository.Table
@@ -180,7 +182,7 @@ public class ErpSalesOrgService : IErpSalesOrgService
                        select salesOrg).FirstOrDefaultAsync();
     }
 
-    #endregion Read
+    #endregion
 
-    #endregion Methods
+    #endregion
 }

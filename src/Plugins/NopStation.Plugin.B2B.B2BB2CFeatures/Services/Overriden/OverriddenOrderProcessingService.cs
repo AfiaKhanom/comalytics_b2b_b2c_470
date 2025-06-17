@@ -51,7 +51,6 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
     private readonly IErpShipToAddressService _erpShipToAddressService;
     private readonly IErpOrderItemAdditionalDataService _erpOrderItemAdditionalDataService;
     private readonly IErpAccountService _erpAccountService;
-    private readonly IErpNopUserService _erpNopUserService;
     private readonly IErpLogsService _erpLogsService;
     private readonly IErpSpecificationAttributeService _erpSpecificationAttributeService;
     private readonly IErpWorkflowMessageService _erpWorkflowMessageService;
@@ -119,7 +118,6 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
         IErpShipToAddressService erpShipToAddressService,
         IErpOrderItemAdditionalDataService erpOrderItemAdditionalDataService,
         IErpAccountService erpAccountService,
-        IErpNopUserService erpNopUserService,
         IErpLogsService erpLogsService,
         IErpIntegrationPluginManager erpIntegrationPluginManager,
         IErpSpecificationAttributeService erpSpecificationAttributeService,
@@ -182,7 +180,6 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
         _erpShipToAddressService = erpShipToAddressService;
         _erpOrderItemAdditionalDataService = erpOrderItemAdditionalDataService;
         _erpAccountService = erpAccountService;
-        _erpNopUserService = erpNopUserService;
         _erpLogsService = erpLogsService;
         _erpIntegrationPluginManager = erpIntegrationPluginManager;
         _erpSpecificationAttributeService = erpSpecificationAttributeService;
@@ -266,7 +263,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
         }
         catch (Exception exc)
         {
-            _logger.Error(exc.Message, exc);
+            await _erpLogsService.ErrorAsync(exc.Message, ErpSyncLevel.Order ,exc);
             result.AddError(exc.Message);
         }
 
@@ -275,10 +272,11 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
             return result;
         }
 
-        var logError = result.Errors.Aggregate("Error while placing order. ",
+        var logError = result.Errors.Aggregate("Error while placing order. ", 
             (current, next) => $"{current}Error {result.Errors.IndexOf(next) + 1}: {next}. ");
+
         var customer = await _customerService.GetCustomerByIdAsync(processPaymentRequest.CustomerId);
-        _logger.Error(logError, customer: customer);
+        await _erpLogsService.ErrorAsync(logError, ErpSyncLevel.Order, customer: customer);
 
         return result;
     }
@@ -419,7 +417,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
         erpOrderAdditionalData.ChangedOnUtc = DateTime.UtcNow;
         await _erpOrderAdditionalDataService.UpdateErpOrderAdditionalDataAsync(erpOrderAdditionalData);
         await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Information, ErpSyncLevel.Order, $"{message}. {response.ErrorShortMessage}", response.ErrorFullMessage);
-    }
+     }
 
     #endregion
 
@@ -739,8 +737,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
         if (erpOrderAdditionalData.ErpOrderType != ErpOrderType.B2BQuote
             && erpOrderAdditionalData.ErpOrderType != ErpOrderType.B2CQuote
-            && erpOrderAdditionalData.IntegrationStatusType
-                == IntegrationStatusType.WaitingForPayment)
+            && erpOrderAdditionalData.IntegrationStatusType == IntegrationStatusType.WaitingForPayment)
             return (false, "This Order can't be placed at Erp since this order is not paid");
 
         var nopOrder = await _orderService.GetOrderByIdAsync(erpOrderAdditionalData.NopOrderId);
@@ -800,7 +797,8 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
             }
             catch (Exception ex)
             {
-                await _logger.ErrorAsync($"B2B B2BOrderPlaceModel.DetailLine Prepare error (while retry erp place) for Nop Order Id: {nopOrder.Id}", ex);
+                await _erpLogsService.ErrorAsync(
+                    $"B2B Order Place Model. Detail line prepare error (while retrying order placement in erp) for Nop Order Id: {nopOrder.Id}", ErpSyncLevel.Order, ex);
             }
         }
 
@@ -839,23 +837,12 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
         return (true, string.Empty);
     }
 
-    public async Task PlaceERPOrderAtERPAsync(Order order, ErpOrderAdditionalData erpOrderAdditionalData, ErpNopUser erpNopUser, IList<ErpPlaceOrderItemDataModel> erpPlaceOrderItemData, int maxRetries = 0)
+    public async Task PlaceERPOrderAtERPAsync(Order order, 
+        ErpOrderAdditionalData erpOrderAdditionalData, 
+        ErpNopUser erpNopUser, 
+        IList<ErpPlaceOrderItemDataModel> erpPlaceOrderItemData, 
+        int maxRetries = 0)
     {
-        if (order == null)
-        {
-            await _erpLogsService.ErrorAsync("Order not found", ErpSyncLevel.Order);
-            return;
-        }
-        if (erpOrderAdditionalData == null)
-        {
-            await _erpLogsService.ErrorAsync("Erp Order Additional Data not found", ErpSyncLevel.Order);
-            return;
-        }
-        if (erpNopUser == null)
-        {
-            await _erpLogsService.ErrorAsync("Erp Nop User not found", ErpSyncLevel.Order);
-            return;
-        }
         if (erpPlaceOrderItemData == null)
         {
             await _erpLogsService.ErrorAsync($"Erp Place Order Item Data not found, when trying to place order at ERP. Nop Order Id: {order.Id}", ErpSyncLevel.Order);
@@ -1013,7 +1000,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
             catch (Exception ex)
             {
                 await _erpLogsService.ErrorAsync(
-                    ex.Message,
+                    $"Error while placing the Order (ID - {order.Id}) to Erp. {ex.Message}",
                     ErpSyncLevel.Order,
                     ex,
                     currentCustomer
@@ -1051,7 +1038,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
             var note = $"{orderTypeString} place in ERP call complete. Try no: {erpOrderAdditionalData.IntegrationRetries ?? 0}, Integration status: {await _localizationService.GetLocalizedEnumAsync(erpOrderAdditionalData.IntegrationStatusType)}";
             if (!string.IsNullOrEmpty(erpOrderAdditionalData.IntegrationError))
             {
-                note = note + $", Integration error: {erpOrderAdditionalData.IntegrationError}";
+                note = $"{note}, Integration error: {erpOrderAdditionalData.IntegrationError}";
             }
             await AddOrderNoteAsync(order, note);
 
@@ -1064,7 +1051,8 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
             if (erpOrderAdditionalData.IntegrationStatusType == IntegrationStatusType.Confirmed)
             {
-                await AddOrderNoteAsync(order, erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2BSalesOrder ? await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.B2BOrder.SuccessOrderNote.OrderPlacedInERP")
+                await AddOrderNoteAsync(order, erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2BSalesOrder ? 
+                    await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.B2BOrder.SuccessOrderNote.OrderPlacedInERP")
                     : await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.B2BOrder.SuccessOrderNote.QuotePlacedInERP"));
             }
 
@@ -1089,7 +1077,11 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
         }
         catch (Exception ex)
         {
-            await _erpLogsService.WarningAsync(ex.Message, ErpSyncLevel.Order, ex, await _workContext.GetCurrentCustomerAsync());
+            await _erpLogsService.WarningAsync(
+                $"Error while placing the Order (ID - {order.Id}) to Erp. {ex.Message}", 
+                ErpSyncLevel.Order, 
+                ex, 
+                await _workContext.GetCurrentCustomerAsync());
         }
     }
 

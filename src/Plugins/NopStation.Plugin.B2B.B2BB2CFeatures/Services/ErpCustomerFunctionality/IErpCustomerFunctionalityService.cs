@@ -52,4 +52,5 @@ public interface IErpCustomerFunctionalityService
     Task<bool> IsCustomerInQuickOrderUserRoleAsync(Customer customer);
     Task<bool> IsCustomerInQuickOrderUserRoleAsync(int customerId = 0);
     Task<bool> IsCurrentCustomerInQuickOrderUserRoleAsync();
+    Task<bool> CheckAllowBackOrderingByErpAccount(ErpAccount erpAccount);
 }

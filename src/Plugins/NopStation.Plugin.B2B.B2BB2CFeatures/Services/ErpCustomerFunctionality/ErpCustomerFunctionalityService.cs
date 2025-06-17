@@ -255,19 +255,6 @@ public class ErpCustomerFunctionalityService : IErpCustomerFunctionalityService
             || erpOrder.ERPOrderStatus == nameof(OrderStatus.Complete);
     }
 
-    public async Task<bool> CheckAllowAddressEdit(ErpAccount b2BAccount)
-    {
-        if (b2BAccount == null)
-        {
-            return false;
-        }
-
-        // if Override address edit Config Setting, then we take result from b2BAccount, otherwise from configuration settings
-        return b2BAccount.OverrideAddressEditOnCheckoutConfigSetting ? 
-            b2BAccount.AllowAccountsAddressEditOnCheckout : 
-            _b2BB2CFeaturesSettings.AllowAddressEditOnCheckoutForAll;
-    }
-
     public async Task<(DateTime, DateTime)> GetMinimumAndMaximumDeliveryDateForShippingAddress()
     {
         var minDeliveryDate = DateTime.Now.AddDays(_b2BB2CFeaturesSettings.DeliveryDays);
@@ -290,6 +277,29 @@ public class ErpCustomerFunctionalityService : IErpCustomerFunctionalityService
         var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(B2BB2CFeaturesDefaults.ErpUserAllTimeSavingsByCustomerCacheKey, customerId);
 
         await _staticCacheManager.RemoveAsync(cacheKey);
+    }
+
+    public async Task<bool> CheckAllowAddressEdit(ErpAccount b2BAccount)
+    {
+        if (b2BAccount == null)
+        {
+            return false;
+        }
+
+        // if Override address edit Config Setting, then we take result from erp account, otherwise from configuration settings
+        return b2BAccount.OverrideAddressEditOnCheckoutConfigSetting ?
+            b2BAccount.AllowAccountsAddressEditOnCheckout :
+            _b2BB2CFeaturesSettings.AllowAddressEditOnCheckoutForAll;
+    }
+
+    public async Task<bool> CheckAllowBackOrderingByErpAccount(ErpAccount erpAccount)
+    {
+        if (erpAccount == null)
+            return false;
+        // if Override back ordering Config Setting, then we take result from erp account, otherwise from configuration settings
+        return erpAccount.OverrideBackOrderingConfigSetting ? 
+            erpAccount.AllowAccountsBackOrdering : 
+            _b2BB2CFeaturesSettings.AllowBackOrderingForAll;
     }
 
     #region Customer Role based check

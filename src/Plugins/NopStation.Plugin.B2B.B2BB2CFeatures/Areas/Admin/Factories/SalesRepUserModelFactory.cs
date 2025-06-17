@@ -79,7 +79,6 @@ public class SalesRepUserModelFactory : ISalesRepUserModelFactory
             pageIndex: searchModel.Page - 1, 
             pageSize: searchModel.PageSize);
 
-
         //prepare list model
         var model = await new SalesRepUserListModel().PrepareToGridAsync(searchModel, erpNopUsers, () =>
         {
@@ -118,7 +117,6 @@ public class SalesRepUserModelFactory : ISalesRepUserModelFactory
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
-
         var erpNopUsers = await _erpSalesRepService.GetAllSalesRepUsersBySalesRepIdAsync(
             salesRepId: (erpSalesRep.SalesRepTypeId == (int)SalesRepType.MultiBuyers) ? erpSalesRep.Id : 0,
             erpAccontNo: searchModel.SearchERPAccountNumber,
@@ -127,7 +125,6 @@ public class SalesRepUserModelFactory : ISalesRepUserModelFactory
             fullName: searchModel.SearchCustomerFullName,
             pageIndex: searchModel.Page - 1, 
             pageSize: searchModel.PageSize);
-
 
         //prepare list model
         var model = await new SalesRepUserListModel().PrepareToGridAsync(searchModel, erpNopUsers, () =>
@@ -167,7 +164,9 @@ public class SalesRepUserModelFactory : ISalesRepUserModelFactory
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
-        var erpAccountIdMaps = (await _erpAccountService.GetAllErpAccountsBySalesRepIdAsync(erpSalesRepId: searchModel.ErpAccountId)).ToPagedList(searchModel);
+        var erpAccountIdMaps = 
+            (await _erpAccountService.GetAllErpAccountsBySalesRepIdAsync(salesRepId: Convert.ToInt32(searchModel.ErpAccountId)))
+            .ToPagedList(searchModel);
 
         //prepare list model
         var model = await new ErpAccountListModel().PrepareToGridAsync(searchModel, erpAccountIdMaps, () =>

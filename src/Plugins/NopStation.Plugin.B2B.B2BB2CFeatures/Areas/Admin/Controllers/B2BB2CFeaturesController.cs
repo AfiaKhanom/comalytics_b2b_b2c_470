@@ -15,7 +15,6 @@ using Nop.Services.Security;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Helpers;
 using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
@@ -30,7 +29,7 @@ public class B2BB2CFeaturesController : NopStationAdminController
 
     private readonly IWorkContext _workContext;
     private readonly IStoreContext _storeContext;
-    private readonly ICommonHelper _commonHelper;
+    private readonly IB2BFeaturesCommonHelper _commonHelper;
     private readonly ISettingService _settingService;
     private readonly ICountryService _countryService;
     private readonly IPermissionService _permissionService;
@@ -39,7 +38,6 @@ public class B2BB2CFeaturesController : NopStationAdminController
     private readonly INotificationService _notificationService;
     private readonly IBaseAdminModelFactory _baseAdminModelFactory;
     private readonly ISpecificationAttributeService _specificationAttributeService;
-    private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
     private readonly IErpLogsService _erpLogsService;
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly IErpActivityLogsService _erpActivityLogsService;
@@ -50,7 +48,7 @@ public class B2BB2CFeaturesController : NopStationAdminController
 
     public B2BB2CFeaturesController(IWorkContext workContext,
         IStoreContext storeContext,
-        ICommonHelper commonHelper,
+        IB2BFeaturesCommonHelper commonHelper,
         ISettingService settingService,
         ICountryService countryService,
         IPermissionService permissionService,
@@ -59,7 +57,6 @@ public class B2BB2CFeaturesController : NopStationAdminController
         INotificationService notificationService,
         IBaseAdminModelFactory baseAdminModelFactory,
         ISpecificationAttributeService specificationAttributeService,
-        IB2BB2CWorkContext b2BB2CWorkContext,
         IErpLogsService erpLogsService,
         IErpSalesOrgService erpSalesOrgService,
         IErpActivityLogsService erpActivityLogsService)
@@ -75,7 +72,6 @@ public class B2BB2CFeaturesController : NopStationAdminController
         _notificationService = notificationService;
         _baseAdminModelFactory = baseAdminModelFactory;
         _specificationAttributeService = specificationAttributeService;
-        _b2BB2CWorkContext = b2BB2CWorkContext;
         _erpLogsService = erpLogsService;
         _erpSalesOrgService = erpSalesOrgService;
         _erpActivityLogsService = erpActivityLogsService;
@@ -213,8 +209,6 @@ public class B2BB2CFeaturesController : NopStationAdminController
 
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.IsActive, model.IsActive_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.EnableWarehouse, model.EnableWarehouse_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.PlaceB2BOrder, model.PlaceB2BOrder_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.PlaceB2COrder, model.PlaceB2COrder_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.UseNopProductPrice, model.UseNopProductPrice_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.UseProductGroupPrice, model.UseProductGroupPrice_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.UseProductSpecialPrice, model.UseProductSpecialPrice_OverrideForStore, storeScope, false);
@@ -222,13 +216,10 @@ public class B2BB2CFeaturesController : NopStationAdminController
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.AllowBackOrderingForAll, model.AllowBackOrderingForAll_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.IsB2BUserRegisterAllowed, model.IsB2BUserRegisterAllowed_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.IsShowLoginForPrice, model.IsShowLoginForPrice_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.IsShowYearlySavings, model.IsShowYearlySavings_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.IsShowAllTimeSavings, model.IsShowAllTimeSavings_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.LastDateTimeOfTCUpdate, model.LastDateTimeOfTCUpdate_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.UpdatedOnUtc, model.UpdatedOnUtc_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.UpdatedById, model.UpdatedById_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.MaxErpIntegrationOrderPlaceRetries, model.MaxERPIntegrationOrderPlaceReties_OverrideForStore, storeScope, false);
-            await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.EnableLogOnErpCall, model.EnableLogOnErpCall_OverrideForStore, storeScope, false);
+            //await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.EnableErpLogs, model.EnableErpLogs_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.EnableLiveStockChecks, model.EnableLiveStockChecks_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.EnableLivePriceChecks, model.EnableLivePriceChecks_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.StockDisplayFormatId, model.StockDisplayFormat_OverrideForStore, storeScope, false);
@@ -245,7 +236,7 @@ public class B2BB2CFeaturesController : NopStationAdminController
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.UnitOfMeasureSpecificationAttributeId, model.UnitOfMeasureSpecificationAttributeId_OverrideForStore, storeScope, false);
 
             //new settings
-            await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.AllowOverspend, model.Override_AllowOverspend, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.AllowOverspend, model.AllowOverspend_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.TrackInventoryMethodId, model.Override_TrackInventoryMethodId, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.LowStockActivityId_DefaultValue, model.Override_LowStockActivityId, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.BackorderModeId_DefaultValue, model.Override_BackorderModeId, storeScope, false);
@@ -292,7 +283,7 @@ public class B2BB2CFeaturesController : NopStationAdminController
             var successMsg = await _localizationService.GetResourceAsync("B2BB2CFeatures.Configuration.Updated");
             _notificationService.SuccessNotification(successMsg);
 
-            await _erpLogsService.InformationAsync(successMsg, ErpSyncLevel.Account, customer: await _b2BB2CWorkContext.GetCurrentCustomerAsync());
+            await _erpLogsService.InformationAsync(successMsg, ErpSyncLevel.Account, customer: await _workContext.GetCurrentCustomerAsync());
 
             //erp activity log
             await _erpActivityLogsService.InsertErpActivityAsync("Erp_EditSettings", await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.EditConfigurations"));

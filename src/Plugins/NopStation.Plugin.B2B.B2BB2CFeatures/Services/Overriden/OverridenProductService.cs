@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Linq;
 using System.Threading.Tasks;
-using DocumentFormat.OpenXml.Spreadsheet;
-using MailKit.Search;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Nop.Core;
 using Nop.Core.Caching;
@@ -13,7 +11,6 @@ using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Discounts;
 using Nop.Core.Domain.Localization;
-using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Shipping;
 using Nop.Data;
 using Nop.Services.Catalog;
@@ -21,7 +18,6 @@ using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
-using Nop.Services.Orders;
 using Nop.Services.Security;
 using Nop.Services.Shipping.Date;
 using Nop.Services.Stores;
@@ -197,7 +193,7 @@ public class OverridenProductService : ProductService
             var considerableStockDisplayFormatType = _b2BB2CFeaturesSettings.StockDisplayFormat;
             if (b2bAccount.OverrideStockDisplayFormatConfigSetting)
             {
-                considerableStockDisplayFormatType = StockDisplayFormat.ShowStockQuantities;
+                considerableStockDisplayFormatType = b2bAccount.StockDisplayFormatType;
             }
 
             if (considerableStockDisplayFormatType == StockDisplayFormat.DoNotShowAnyStockAtAll)

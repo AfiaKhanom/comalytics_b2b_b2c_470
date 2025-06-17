@@ -1,26 +1,6 @@
 @model ConfigurationModel
-@using Nop.Services;
-@using Nop.Core.Domain.Catalog;
-
-
-<script>
-
-    $(document).ready(function () {
-        $("#@Html.IdFor(model => model.UsePercentageOfAllocatedStock)").click(toggleUsePercentageOfAllocatedStock);
-
-        toggleUsePercentageOfAllocatedStock();
-    });
-
-
-    function toggleUsePercentageOfAllocatedStock() {
-        if ($('#@Html.IdFor(model => model.UsePercentageOfAllocatedStock)').is(':checked')) {
-            $('#pnlPercentageOfStockAllowed').showElement();
-        } else {
-            $('#pnlPercentageOfStockAllowed').hideElement();
-        }
-    }
-</script>
-
+@using Nop.Services
+@using Nop.Core.Domain.Catalog
 
 <div class="card-body"> 
     <div class="form-group row">
@@ -37,7 +17,7 @@
             <nop-label asp-for="StockDisplayFormatId" />
         </div>
         <div class="col-md-9">
-            <nop-select asp-for="StockDisplayFormatId" asp-items="Model.AvailableStockDisplayFormats" />
+            <nop-select asp-for="StockDisplayFormatId" asp-items="@await (((StockDisplayFormat)Model.StockDisplayFormatId).ToSelectListAsync())" />
             <span asp-validation-for="StockDisplayFormatId"></span>
         </div>
     </div>    
@@ -96,7 +76,7 @@
         </div>
     </div>
     <nop-nested-setting asp-for="UsePercentageOfAllocatedStock" disable-auto-generation="true">
-        <div class="form-group row" id="pnlPercentageOfStockAllowed">
+        <div class="form-group row">
             <div class="col-md-3">
                 <nop-label asp-for="PercentageOfStockAllowed" />
             </div>

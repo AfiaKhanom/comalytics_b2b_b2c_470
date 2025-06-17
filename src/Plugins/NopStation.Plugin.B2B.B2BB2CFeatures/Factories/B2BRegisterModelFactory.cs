@@ -42,7 +42,7 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
     private readonly IWorkContext _workContext;
     private readonly SecuritySettings _securitySettings;
     private readonly TaxSettings _taxSettings;
-    private readonly ICommonHelper _commonHelper;
+    private readonly IB2BFeaturesCommonHelper _commonHelper;
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly IErpAccountService _erpAccountService;
     private readonly AddressSettings _addressSettings;
@@ -67,7 +67,7 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
         IWorkContext workContext,
         SecuritySettings securitySettings,
         TaxSettings taxSettings,
-        ICommonHelper commonHelper,
+        IB2BFeaturesCommonHelper commonHelper,
         IErpSalesOrgService erpSalesOrgService,
         IErpAccountService erpAccountService,
         AddressSettings addressSettings,

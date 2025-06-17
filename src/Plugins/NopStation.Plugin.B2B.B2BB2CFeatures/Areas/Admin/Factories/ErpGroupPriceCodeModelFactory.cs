@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Services.Localization;
 using Nop.Web.Framework.Models.Extensions;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Helpers;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
@@ -17,16 +18,19 @@ public class ErpGroupPriceCodeModelFactory : IErpGroupPriceCodeModelFactory
 
     private readonly ILocalizationService _localizationService;
     private readonly IErpGroupPriceCodeService _erpGroupPriceCodeService;
+    private readonly IB2BFeaturesCommonHelper _b2BFeaturesCommonHelper;
 
     #endregion
 
     #region Ctor
 
     public ErpGroupPriceCodeModelFactory(ILocalizationService localizationService,
-        IErpGroupPriceCodeService erpGroupPriceCodeService)
+        IErpGroupPriceCodeService erpGroupPriceCodeService,
+        IB2BFeaturesCommonHelper b2BFeaturesCommonHelper)
     {
         _localizationService = localizationService;
         _erpGroupPriceCodeService = erpGroupPriceCodeService;
+        _b2BFeaturesCommonHelper = b2BFeaturesCommonHelper;
     }
 
     #endregion
@@ -83,22 +87,7 @@ public class ErpGroupPriceCodeModelFactory : IErpGroupPriceCodeModelFactory
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
-        //prepare "active" filter (0 - all; 1 - active only; 2 - inactive only)
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "0",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccountSearchModel.ShowAll"),
-        });
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "1",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccountSearchModel.ShowOnlyActive"),
-        });
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "2",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccountSearchModel.ShowOnlyInactive"),
-        });
+        searchModel.ShowInActiveOption = await _b2BFeaturesCommonHelper.PrepareActiveFilterOptionsAsync();
 
         searchModel.SetGridPageSize();
         return searchModel;

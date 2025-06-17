@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core.Domain.Common;
 using Nop.Services.Common;
 using Nop.Services.Helpers;
-using Nop.Services.Localization;
 using Nop.Services.Shipping;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Web.Framework.Models.Extensions;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Helpers;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
@@ -26,18 +25,17 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
     private readonly IAddressService _addressService;
     private readonly IAddressModelFactory _addressModelFactory;
     private readonly AddressSettings _addressSettings;
-    private readonly ILocalizationService _localizationService;
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly IErpWarehouseSalesOrgMapService _erpWarehouseSalesOrgMapService;
     private readonly IShippingService _shippingService;
     private readonly IErpWarehouseAdditionalDataService _erpWarehouseAdditionalDataService;
+    private readonly IB2BFeaturesCommonHelper _b2BFeaturesCommonHelper;
 
     #endregion
 
     #region Ctor
 
     public ErpSalesOrgModelFactory(IBaseAdminModelFactory baseAdminModelFactory,
-        ILocalizationService localizationService,
         IDateTimeHelper dateTimeHelper,
         IAddressService addressService,
         IAddressModelFactory addressModelFactory,
@@ -45,10 +43,10 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
         IErpSalesOrgService erpSalesOrgService,
         IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMapService,
         IShippingService shippingService,
-        IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService)
+        IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService,
+        IB2BFeaturesCommonHelper b2BFeaturesCommonHelper)
     {
         _baseAdminModelFactory = baseAdminModelFactory;
-        _localizationService = localizationService;
         _dateTimeHelper = dateTimeHelper;
         _addressService = addressService;
         _addressModelFactory = addressModelFactory;
@@ -57,6 +55,7 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
         _erpWarehouseSalesOrgMapService = erpWarehouseSalesOrgMapService;
         _shippingService = shippingService;
         _erpWarehouseAdditionalDataService = erpWarehouseAdditionalDataService;
+        _b2BFeaturesCommonHelper = b2BFeaturesCommonHelper;
     }
 
     #endregion
@@ -87,22 +86,7 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
-        //prepare "active" filter (0 - all; 1 - active only; 2 - inactive only)
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "0",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrgSearchModel.ShowAll"),
-        });
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "1",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrgSearchModel.ShowOnlyActive"),
-        });
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "2",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrgSearchModel.ShowOnlyInactive"),
-        });
+        searchModel.ShowInActiveOption = await _b2BFeaturesCommonHelper.PrepareActiveFilterOptionsAsync();
 
         //prepare grid
         searchModel.SetGridPageSize();
@@ -187,7 +171,6 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
             model.CreatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(erpSalesOrg.CreatedOnUtc, DateTimeKind.Utc);
             model.UpdatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(erpSalesOrg.UpdatedOnUtc, DateTimeKind.Utc);
             model.IsActive = erpSalesOrg.IsActive;
-
         }
 
         var address = await _addressService.GetAddressByIdAsync(erpSalesOrg?.AddressId ?? 0);
@@ -235,6 +218,7 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
                 };
 
                 return salesOrgWarehouseModel;
+
             }).Where(x => x != null);
         });
         return model;

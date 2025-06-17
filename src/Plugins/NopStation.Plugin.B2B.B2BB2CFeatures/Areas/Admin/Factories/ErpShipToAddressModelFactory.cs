@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core.Domain.Common;
 using Nop.Services.Common;
 using Nop.Services.Helpers;
@@ -11,6 +10,7 @@ using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Web.Framework.Models.Extensions;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpShipToAddress;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Helpers;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
@@ -28,6 +28,7 @@ public class ErpShipToAddressModelFactory : IErpShipToAddressModelFactory
     private readonly AddressSettings _addressSettings;
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly ILocalizationService _localizationService;
+    private readonly IB2BFeaturesCommonHelper _b2BFeaturesCommonHelper;
 
     #endregion
 
@@ -40,7 +41,8 @@ public class ErpShipToAddressModelFactory : IErpShipToAddressModelFactory
         IDateTimeHelper dateTimeHelper,
         AddressSettings addressSettings,
         IErpSalesOrgService erpSalesOrgService,
-        ILocalizationService localizationService)
+        ILocalizationService localizationService,
+        IB2BFeaturesCommonHelper b2BFeaturesCommonHelper)
     {
         _erpShipToAddressService = erpShipToAddressService;
         _addressService = addressService;
@@ -50,6 +52,7 @@ public class ErpShipToAddressModelFactory : IErpShipToAddressModelFactory
         _addressSettings = addressSettings;
         _erpSalesOrgService = erpSalesOrgService;
         _localizationService = localizationService;
+        _b2BFeaturesCommonHelper = b2BFeaturesCommonHelper;
     }
 
     #endregion
@@ -68,22 +71,7 @@ public class ErpShipToAddressModelFactory : IErpShipToAddressModelFactory
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
-        //prepare "active" filter (0 - all; 1 - active only; 2 - inactive only)
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "0",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccountSearchModel.ShowAll"),
-        });
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "1",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccountSearchModel.ShowOnlyActive"),
-        });
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "2",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccountSearchModel.ShowOnlyInactive"),
-        });
+        searchModel.ShowInActiveOption = await _b2BFeaturesCommonHelper.PrepareActiveFilterOptionsAsync();
 
         //prepare page parameters
         searchModel.SetGridPageSize();

@@ -161,11 +161,11 @@
         <Value>Enter max ERP integration order place reties</Value>
     </LocaleResource>
 
-    <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.EnableLogOnErpCall">
+    <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.EnableErpLogs">
         <Value>Enable log on ERP call</Value>
     </LocaleResource>
 
-    <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.EnableLogOnErpCall.Hint">
+    <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.EnableErpLogs.Hint">
         <Value>Check to enable log on ERP call</Value>
     </LocaleResource>
 
@@ -1229,21 +1229,11 @@
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrg.Field.Show.Hint">
         <Value>Select to Show All/Active/Inactive accounts</Value>
     </LocaleResource>
-
-    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccountSearchModel.ShowAll">
-        <Value>Show All</Value>
-    </LocaleResource>
-
-    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccountSearchModel.ShowOnlyInactive">
-        <Value>Show only Inactive</Value>
-    </LocaleResource>
-
-    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccountSearchModel.ShowOnlyActive">
-        <Value>Show only Active</Value>
-    </LocaleResource>
+    
     <!-- Search Erp Sales Org fields end -->
 
     <!-- Search Erp Sales Org Search Model fields start -->
+    
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrgSearchModel.Name">
         <Value>Name</Value>
     </LocaleResource>
@@ -1275,18 +1265,7 @@
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrgSearchModel.Show.Hint">
         <Value>Select to show all/active/inactive Sales Org</Value>
     </LocaleResource>
-
-    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrgSearchModel.ShowOnlyActive">
-        <Value>Show only Active</Value>
-    </LocaleResource>
-
-    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrgSearchModel.ShowOnlyInactive">
-        <Value>Show only Inactive</Value>
-    </LocaleResource>
-
-    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpSalesOrgSearchModel.ShowAll">
-        <Value>Show all</Value>
-    </LocaleResource>
+    
     <!-- Erp Sales Org Search Model fields end-->
 
     <!-- Erp Account view start-->
@@ -1661,18 +1640,6 @@
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Select">
         <Value>Select</Value>
-    </LocaleResource>
-
-    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUserSearchModel.ShowOnlyActive">
-        <Value>Show Only Active</Value>
-    </LocaleResource>
-
-    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUserSearchModel.ShowOnlyInactive">
-        <Value>Show Only Inactive</Value>
-    </LocaleResource>
-
-    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUserSearchModel.ShowAll">
-        <Value>Show All</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.SearchNopUsers">
@@ -5932,7 +5899,7 @@
         <Value>Notice</Value>
     </LocaleResource>    
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.DeliveryDatesErpFailed.Notice.Text">
-        <Value>We are unable to connect to the database at this moment in the time, by default the next available delivery date will be selected - please contact your macsteel sales clerk to select a new date once your order is placed.</Value>
+        <Value>We are unable to connect to the database at this moment in the time, by default the next available delivery date will be selected - please contact your sales clerk to select a new date once your order is placed.</Value>
     </LocaleResource>    
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.DeliveryDatesErpFailedDialog.Close">
         <Value>Close</Value>
@@ -6249,5 +6216,17 @@
 
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Customers.Impersonate.ErpNopUserNotAvailable">
         <Value>The nop user is not available.</Value>
+    </LocaleResource>
+
+    <LocaleResource Name="NopStation.Plugin.B2B.ERPIntegrationCore.Common.ActiveFilter.ShowAll">
+        <Value>Show All</Value>
+    </LocaleResource>
+
+    <LocaleResource Name="NopStation.Plugin.B2B.ERPIntegrationCore.Common.ActiveFilter.ShowOnlyActive">
+        <Value>Show only Active</Value>
+    </LocaleResource>
+
+    <LocaleResource Name="NopStation.Plugin.B2B.ERPIntegrationCore.Common.ActiveFilter.ShowOnlyInactive">
+        <Value>Show only Inactive</Value>
     </LocaleResource>
 </Language>

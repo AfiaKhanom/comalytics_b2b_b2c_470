@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Core;
 using Nop.Services.Common;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
@@ -11,6 +10,7 @@ using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Web.Framework.Models.Extensions;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpRegistrationApplication;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Helpers;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
@@ -20,7 +20,6 @@ public class ErpRegistrationApplicationModelFactory : IErpRegistrationApplicatio
 {
     #region Fields
 
-    private readonly IWorkContext _workContext;
     private readonly IDateTimeHelper _dateTimeHelper;
     private readonly ILocalizationService _localizationService;
     private readonly IErpAccountCustomerRegistrationFormService _erpAccountCustomerRegistrationFormService;
@@ -30,13 +29,13 @@ public class ErpRegistrationApplicationModelFactory : IErpRegistrationApplicatio
     private readonly IErpAccountCustomerRegistrationPremisesService _erpAccountCustomerRegistrationPremisesService;
     private readonly IAddressService _addressService;
     private readonly IAddressModelFactory _addressModelFactory;
+    private readonly IB2BFeaturesCommonHelper _b2BFeaturesCommonHelper;
 
     #endregion
 
-    #region ctor
+    #region Ctor
 
-    public ErpRegistrationApplicationModelFactory(IWorkContext workContext,
-        IDateTimeHelper dateTimeHelper,
+    public ErpRegistrationApplicationModelFactory(IDateTimeHelper dateTimeHelper,
         ILocalizationService localizationService,
         IErpAccountCustomerRegistrationFormService erpAccountCustomerRegistrationFormService,
         IErpAccountCustomerRegistrationBankingDetailsService erpAccountCustomerRegistrationBankingDetailsService,
@@ -44,10 +43,9 @@ public class ErpRegistrationApplicationModelFactory : IErpRegistrationApplicatio
         IErpAccountCustomerRegistrationTradeReferencesService erpAccountCustomerRegistrationTradeReferencesService,
         IErpAccountCustomerRegistrationPremisesService erpAccountCustomerRegistrationPremisesService,
         IAddressService addressService,
-        IAddressModelFactory addressModelFactory
-        )
+        IAddressModelFactory addressModelFactory,
+        IB2BFeaturesCommonHelper b2BFeaturesCommonHelper)
     {
-        _workContext = workContext;
         _localizationService = localizationService;
         _dateTimeHelper = dateTimeHelper;
         _erpAccountCustomerRegistrationFormService = erpAccountCustomerRegistrationFormService;
@@ -57,36 +55,17 @@ public class ErpRegistrationApplicationModelFactory : IErpRegistrationApplicatio
         _erpAccountCustomerRegistrationPremisesService = erpAccountCustomerRegistrationPremisesService;
         _addressService = addressService;
         _addressModelFactory = addressModelFactory;
+        _b2BFeaturesCommonHelper = b2BFeaturesCommonHelper;
     }
-
-    #endregion
-
-    #region Utilities
 
     #endregion
 
     #region Method
     public async Task<ErpRegistrationApplicationSearchModel> PrepareErpRegistrationApplicationSearchModelAsync(ErpRegistrationApplicationSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
-        //prepare "active" filter (0 - all; 1 - active only; 2 - inactive only)
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "0",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUserSearchModel.ShowAll"),
-        });
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "1",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUserSearchModel.ShowOnlyActive"),
-        });
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "2",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUserSearchModel.ShowOnlyInactive"),
-        });
+        searchModel.ShowInActiveOption = await _b2BFeaturesCommonHelper.PrepareActiveFilterOptionsAsync();
 
         //prepare "approved" filter (0 - all; 1 - approved only; 2 - pending only)
         searchModel.ShowIsApprovedOption.Add(new SelectListItem
@@ -113,8 +92,7 @@ public class ErpRegistrationApplicationModelFactory : IErpRegistrationApplicatio
 
     public async Task<ErpRegistrationApplicationListModel> PrepareErpRegistrationApplicationListModelAsync(ErpRegistrationApplicationSearchModel searchModel)
     {
-        if (searchModel == null)
-            throw new ArgumentNullException(nameof(searchModel));
+        ArgumentNullException.ThrowIfNull(searchModel);
 
         //get Erp Registration Applications forms
         var erpRegistrationApplicationForms = await _erpAccountCustomerRegistrationFormService.GetAllErpAccountCustomerRegistrationFormAsync(

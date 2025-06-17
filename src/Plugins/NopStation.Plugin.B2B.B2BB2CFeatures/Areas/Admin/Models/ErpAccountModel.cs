@@ -74,6 +74,12 @@ public record ErpAccountModel : BaseNopEntityModel
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.PaymentTypeCode")]
     public string PaymentTypeCode { get; set; }
 
+    [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Fields.StockDisplayFormatType")]
+    public int StockDisplayFormatTypeId { get; set; }
+
+    [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Fields.StockDisplayFormatType")]
+    public string StockDisplayFormatType { get; set; }
+
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.OverrideBackOrderingConfigSetting")]
     public bool OverrideBackOrderingConfigSetting { get; set; }
 
@@ -145,11 +151,10 @@ public record ErpAccountModel : BaseNopEntityModel
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.ERPNopUserCount")]
     public int ERPNopUserCount { get; set; }
 
-        [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.ShipToAddressCount")]
-        public int ShipToAddressCount { get; set; }
-         
+    [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.ShipToAddressCount")]
+    public int ShipToAddressCount { get; set; }         
 
-        public ErpSalesOrgModel ErpSalesOrgModel { get; set; }
+    public ErpSalesOrgModel ErpSalesOrgModel { get; set; }
 
     public IList<SelectListItem> ErpAccountStatusTypes { get; set; }
     public IList<SelectListItem> AvailableErpSalesOrgs { get; set; }

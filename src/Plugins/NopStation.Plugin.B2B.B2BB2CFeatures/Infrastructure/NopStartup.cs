@@ -50,7 +50,7 @@ public class NopStartup : INopStartup
         });
 
         //register services
-        services.AddScoped<ICommonHelper, CommonHelper>();
+        services.AddScoped<IB2BFeaturesCommonHelper, B2BFeaturesCommonHelper>();
         services.AddScoped<IB2BB2CWorkContext, B2BB2CWebWorkContext>();
         services.AddScoped<ICustomerRegistrationService, B2BB2CCustomerRegistrationService>();
         services.AddScoped<ICommonHelperService, CommonHelperService>();

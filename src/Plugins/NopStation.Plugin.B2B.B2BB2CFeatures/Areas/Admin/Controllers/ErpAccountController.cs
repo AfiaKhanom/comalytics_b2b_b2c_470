@@ -173,10 +173,11 @@ public class ErpAccountController : NopStationAdminController
             if (b2BB2CFeaturesSettings.UseERPIntegration)
             {
                 var erpIntegrationPlugin = await _erpIntegrationPluginManager.LoadActiveERPIntegrationPlugin();
+
                 if (erpIntegrationPlugin == null)
                 {
                     ModelState.AddModelError("", await _localizationService.GetResourceAsync("B2BB2C.Account.Registration.AccountNotCreated"));
-                    await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Error, ErpSyncLevel.Account, "Integration method not found.");
+                    await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Error, ErpSyncLevel.Account, "Integration method not found for creating new Erp Account.");
                 }
                 else
                 {
@@ -316,6 +317,7 @@ public class ErpAccountController : NopStationAdminController
                 erpAccount.AllowAccountsAddressEditOnCheckout = model.AllowAccountsAddressEditOnCheckout;
                 erpAccount.OverrideStockDisplayFormatConfigSetting = model.OverrideStockDisplayFormatConfigSetting;
                 erpAccount.ErpAccountStatusTypeId = model.ErpAccountStatusTypeId;
+                erpAccount.StockDisplayFormatTypeId = model.StockDisplayFormatTypeId;
                 erpAccount.B2BPriceGroupCodeId = model.B2BPriceGroupCodeId;
                 erpAccount.UpdatedOnUtc = DateTime.UtcNow;
                 erpAccount.UpdatedById = (await _workContext.GetCurrentCustomerAsync()).Id;

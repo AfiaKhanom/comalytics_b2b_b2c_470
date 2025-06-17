@@ -116,14 +116,14 @@ public class ErpAccountService : IErpAccountService
         if (id == 0)
             return null;
 
-        var key = _staticCacheManager.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpAccountByIdCacheKey, id, filterOutDeleted);
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(
+            ERPIntegrationCoreDefaults.ErpAccountByIdCacheKey,
+            id,
+            filterOutDeleted);
 
         var query = _erpAccountRepository.Table.Where(x => x.Id == id);
-
         if (filterOutDeleted)
-        {
             query = query.Where(x => !x.IsDeleted);
-        }
 
         return await _staticCacheManager.GetAsync(key, async () => await query.FirstOrDefaultAsync());
     }
@@ -144,9 +144,7 @@ public class ErpAccountService : IErpAccountService
     public async Task<ErpSalesRepErpAccountMap> GetErpSalesRepErpAccountMapByIdAsync(int salesRepId, int? erpAccountId)
     {
         if (salesRepId <= 0 || (erpAccountId.HasValue && erpAccountId <= 0))
-        {
             return null;
-        }
 
         return await _erpSalesRepErpAccountMapRepository.Table
                 .FirstOrDefaultAsync(x => x.ErpSalesRepId == salesRepId && x.ErpAccountId == erpAccountId);
@@ -270,12 +268,12 @@ public class ErpAccountService : IErpAccountService
         });
     }
 
-    public async Task<IList<ErpSalesRepErpAccountMap>> GetAllErpAccountsBySalesRepIdAsync(string erpSalesRepId = null)
+    public async Task<IList<ErpSalesRepErpAccountMap>> GetAllErpAccountsBySalesRepIdAsync(int salesRepId)
     {
         return await _erpSalesRepErpAccountMapRepository.GetAllAsync(query =>
         {
-            if (!string.IsNullOrWhiteSpace(erpSalesRepId))
-                query = query.Where(c => c.ErpSalesRepId.Equals(Convert.ToInt32(erpSalesRepId)));
+            if (salesRepId > 0)
+                query = query.Where(c => c.ErpSalesRepId == salesRepId);
 
             query = query.OrderBy(ea => ea.Id);
             return query;

@@ -19,6 +19,7 @@ using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Web.Framework.Models.Extensions;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Helpers;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
@@ -46,6 +47,7 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
     private readonly IErpShipToAddressService _erpShipToAddressService;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
     private readonly IErpCustomerFunctionalityService _erpCustomerFunctionalityService;
+    private readonly IB2BFeaturesCommonHelper _b2BFeaturesCommonHelper;
 
     #endregion
 
@@ -66,7 +68,8 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
         IErpNopUserAccountMapService erpNopUserAccountMapService,
         IErpShipToAddressService erpShipToAddressService,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
-        IErpCustomerFunctionalityService erpCustomerFunctionalityService)
+        IErpCustomerFunctionalityService erpCustomerFunctionalityService,
+        IB2BFeaturesCommonHelper b2BFeaturesCommonHelper)
     {
         _localizationService = localizationService;
         _dateTimeHelper = dateTimeHelper;
@@ -84,6 +87,7 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
         _erpShipToAddressService = erpShipToAddressService;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
         _erpCustomerFunctionalityService = erpCustomerFunctionalityService;
+        _b2BFeaturesCommonHelper = b2BFeaturesCommonHelper;
     }
 
     #endregion
@@ -309,22 +313,7 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
 
         searchModel.AvailableErpShipToAddresses = await PrepareShipToAddressDropdownAsync(searchModel.AccountId);
 
-        //prepare "active" filter (0 - all; 1 - active only; 2 - inactive only)
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "0",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUserSearchModel.ShowAll"),
-        });
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "1",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUserSearchModel.ShowOnlyActive"),
-        });
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "2",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUserSearchModel.ShowOnlyInactive"),
-        });
+        searchModel.ShowInActiveOption = await _b2BFeaturesCommonHelper.PrepareActiveFilterOptionsAsync();
 
         //prepare grid
         searchModel.SetGridPageSize();
@@ -357,17 +346,14 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
                     var nopCustomer = await _customerService.GetCustomerByIdAsync(erpNopUser.NopCustomerId);
 
                     var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpNopUser.ErpAccountId, filterOutDeleted: false);
-
                     if (erpAccount == null)
                         return null;
 
                     var erpSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount.ErpSalesOrgId, filterOutDeleted: false);
-
                     if (erpSalesOrg == null)
                         return null;
 
                     var erpShipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdAsync(erpNopUser.ErpShipToAddressId);
-
                     if (erpShipToAddress == null)
                         return null;
 
@@ -395,12 +381,11 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
 
                     var selectedCustomerRoles = await _customerService.GetCustomerRolesAsync(nopCustomer);
 
-
                     erpNopUserModel = new ErpNopUserModel
                     {
                         Id = erpNopUser.Id,
                         NopCustomerId = erpNopUser.NopCustomerId,
-                        NopCustomer = $"{nopCustomer.FirstName} {nopCustomer.LastName}",
+                        NopCustomer = $"{nopCustomer.FirstName} {nopCustomer.LastName} - ({nopCustomer.Email})",
                         NopCustomerEmail = nopCustomer.Email,
                         ErpAccountId = erpNopUser.ErpAccountId,
                         ErpAccountInfo = $"{erpAccount.AccountName} ({erpAccount.AccountNumber})",

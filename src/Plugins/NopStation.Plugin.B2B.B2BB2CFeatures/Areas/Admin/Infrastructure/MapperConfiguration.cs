@@ -24,8 +24,6 @@ public class MapperConfiguration : Profile, IOrderedMapperProfile
         CreateMap<B2BB2CFeaturesSettings, ConfigurationModel>()
             .ForMember(model => model.IsActive_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.EnableWarehouse_OverrideForStore, options => options.Ignore())
-            .ForMember(model => model.PlaceB2BOrder_OverrideForStore, options => options.Ignore())
-            .ForMember(model => model.PlaceB2COrder_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.UseNopProductPrice_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.UseProductGroupPrice_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.UseProductSpecialPrice_OverrideForStore, options => options.Ignore())
@@ -34,11 +32,10 @@ public class MapperConfiguration : Profile, IOrderedMapperProfile
             .ForMember(model => model.IsB2BUserRegisterAllowed_OverrideForStore, options => options.Ignore())
             
             .ForMember(model => model.IsShowLoginForPrice_OverrideForStore, options => options.Ignore())
-            .ForMember(model => model.LastDateTimeOfTCUpdate_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.UpdatedOnUtc_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.UpdatedById_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.MaxERPIntegrationOrderPlaceReties_OverrideForStore, options => options.Ignore())
-            .ForMember(model => model.EnableLogOnErpCall_OverrideForStore, options => options.Ignore())
+            .ForMember(model => model.EnableErpLogs_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.EnableLiveStockChecks_OverrideForStore, options => options.Ignore())
 
             .ForMember(model => model.EnableLivePriceChecks_OverrideForStore, options => options.Ignore())
@@ -54,7 +51,7 @@ public class MapperConfiguration : Profile, IOrderedMapperProfile
             .ForMember(model => model.OrderMaximumQuantity_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.DefaultCountryId_OverrideForStore, options => options.Ignore())
             
-            .ForMember(model => model.Override_AllowOverspend, options => options.Ignore())
+            .ForMember(model => model.AllowOverspend_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.Override_TrackInventoryMethodId, options => options.Ignore())
             .ForMember(model => model.Override_LowStockActivityId, options => options.Ignore())
             .ForMember(model => model.Override_BackorderModeId, options => options.Ignore())
@@ -92,9 +89,11 @@ public class MapperConfiguration : Profile, IOrderedMapperProfile
 
         #region ErpAccount
 
-        CreateMap<ErpAccount, ErpAccountModel>();
+        CreateMap<ErpAccount, ErpAccountModel>()
+            .ForMember(model => model.StockDisplayFormatType, options => options.Ignore());
         CreateMap<ErpAccountModel, ErpAccount>()
-            .ForMember(model => model.ErpAccountStatusType, options => options.Ignore());
+            .ForMember(model => model.ErpAccountStatusType, options => options.Ignore())
+            .ForMember(model => model.StockDisplayFormatType, options => options.Ignore());
 
         #endregion
 

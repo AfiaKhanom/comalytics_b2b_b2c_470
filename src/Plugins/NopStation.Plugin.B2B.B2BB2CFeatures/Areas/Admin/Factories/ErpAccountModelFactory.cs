@@ -12,6 +12,7 @@ using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Web.Framework.Models.Extensions;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Helpers;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
@@ -35,6 +36,7 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
     private readonly IErpShipToAddressModelFactory _erpShipToAddressModelFactory;
     private readonly IErpNopUserAccountMapService _erpNopUserAccountMapService;
     private readonly IErpShipToAddressService _erpShipToAddressService;
+    private readonly IB2BFeaturesCommonHelper _b2BFeaturesCommonHelper;
 
     #endregion
 
@@ -52,7 +54,8 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
         IErpNopUserModelFactory erpNopUserModelFactory,
         IErpShipToAddressModelFactory erpShipToAddressModelFactory,
         IErpNopUserAccountMapService erpNopUserAccountMapService,
-        IErpShipToAddressService erpShipToAddressService)
+        IErpShipToAddressService erpShipToAddressService,
+        IB2BFeaturesCommonHelper b2BFeaturesCommonHelper)
     {
         _localizationService = localizationService;
         _dateTimeHelper = dateTimeHelper;
@@ -67,16 +70,13 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
         _erpShipToAddressModelFactory = erpShipToAddressModelFactory;
         _erpNopUserAccountMapService = erpNopUserAccountMapService;
         _erpShipToAddressService = erpShipToAddressService;
+        _b2BFeaturesCommonHelper = b2BFeaturesCommonHelper;
     }
 
     #endregion
 
     #region Utilities
 
-    /// <summary>
-    /// Set some address fields as required
-    /// </summary>
-    /// <param name="model">Address model</param>
     protected virtual void SetAddressFieldsAsRequired(AddressModel model)
     {
         model.FirstNameRequired = true;
@@ -117,8 +117,8 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
         searchModel.AvailableErpSalesOrgs = (await _erpSalesOrgService.GetAllErpSalesOrgAsync(showHidden: false))
             .Select(erpSalesOrg => new SelectListItem
             {
-                Value = erpSalesOrg.Id.ToString(),
-                Text = erpSalesOrg.Name.ToString()
+                Value = $"{erpSalesOrg.Id}",
+                Text = $"{erpSalesOrg.Name}"
             }).ToList();
 
         searchModel.AvailableErpSalesOrgs.Insert(0, new SelectListItem
@@ -127,22 +127,7 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
             Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Select")
         });
 
-        //prepare "active" filter (0 - all; 1 - active only; 2 - inactive only)
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "0",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccountSearchModel.ShowAll"),
-        });
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "1",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccountSearchModel.ShowOnlyActive"),
-        });
-        searchModel.ShowInActiveOption.Add(new SelectListItem
-        {
-            Value = "2",
-            Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccountSearchModel.ShowOnlyInactive"),
-        });
+        searchModel.ShowInActiveOption = await _b2BFeaturesCommonHelper.PrepareActiveFilterOptionsAsync();
 
         //prepare grid
         searchModel.SetGridPageSize();
@@ -203,7 +188,9 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
                     AllowAccountsBackOrdering = erpAccount.AllowAccountsBackOrdering,
                     OverrideStockDisplayFormatConfigSetting = erpAccount.OverrideStockDisplayFormatConfigSetting,
                     ErpAccountStatusTypeId = erpAccount.ErpAccountStatusTypeId,
-                    ErpAccountStatusType = ((ErpAccountStatusType)erpAccount.ErpAccountStatusTypeId).ToString(),
+                    ErpAccountStatusType = await _localizationService.GetLocalizedEnumAsync(erpAccount.ErpAccountStatusType),
+                    StockDisplayFormatTypeId = erpAccount.StockDisplayFormatTypeId,
+                    StockDisplayFormatType = await _localizationService.GetLocalizedEnumAsync(erpAccount.StockDisplayFormatType),
                     LastErpAccountSyncDate = erpAccount.LastErpAccountSyncDate,
                     B2BPriceGroupCodeId = erpAccount.B2BPriceGroupCodeId,
                     TotalSavingsForthisYear = erpAccount.TotalSavingsForthisYear ?? 0,
@@ -235,22 +222,21 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
 
     public async Task<ErpAccountModel> PrepareErpAccountModelAsync(ErpAccountModel model, ErpAccount erpAccount)
     {
-
         if (erpAccount == null)
         {
-            model.AvailableErpSalesOrgs = (await _erpSalesOrgService.GetAllErpSalesOrgAsync(showHidden: false))
+            model.AvailableErpSalesOrgs = (await _erpSalesOrgService.GetAllErpSalesOrgsAsync())
               .Select(erpSalesOrg => new SelectListItem
               {
-                  Value = erpSalesOrg.Id.ToString(),
-                  Text = erpSalesOrg.Name.ToString(),
+                  Value = $"{erpSalesOrg.Id}",
+                  Text = $"{erpSalesOrg.Name}",
               }).ToList();
 
             // Prepare B2BPriceGroupCodes dropdown options
             model.AvailableB2BPriceGroupCodes = (await _erpGroupPriceCodeService.GetAllErpGroupPriceCodesAsync())
                 .Select(erpGroupPrice => new SelectListItem
                 {
-                    Value = erpGroupPrice.Id.ToString(),
-                    Text = erpGroupPrice.Code.ToString()
+                    Value = $"{erpGroupPrice.Id}",
+                    Text = $"{erpGroupPrice.Code}"
                 }).ToList();
 
             model.AvailableB2BPriceGroupCodes.Insert(0, new SelectListItem
@@ -302,7 +288,9 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
             model.AllowAccountsBackOrdering = erpAccount.AllowAccountsBackOrdering;
             model.OverrideStockDisplayFormatConfigSetting = erpAccount.OverrideStockDisplayFormatConfigSetting;
             model.ErpAccountStatusTypeId = erpAccount.ErpAccountStatusTypeId;
-            model.ErpAccountStatusType = ((ErpAccountStatusType)erpAccount.ErpAccountStatusTypeId).ToString();
+            model.ErpAccountStatusType = await _localizationService.GetLocalizedEnumAsync(erpAccount.ErpAccountStatusType);
+            model.StockDisplayFormatTypeId = erpAccount.StockDisplayFormatTypeId;
+            model.StockDisplayFormatType = await _localizationService.GetLocalizedEnumAsync(erpAccount.StockDisplayFormatType);
             model.LastErpAccountSyncDate = erpAccount.LastErpAccountSyncDate;
             model.B2BPriceGroupCodeId = erpAccount.B2BPriceGroupCodeId;
             model.TotalSavingsForthisYear = erpAccount.TotalSavingsForthisYear ?? 0;
@@ -324,21 +312,19 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
                 model.ErpSalesOrgName = model.ErpSalesOrgModel.Name;
             }
 
-            // Prepare ErpSalesOrgs dropdown options
-            model.AvailableErpSalesOrgs = (await _erpSalesOrgService.GetAllErpSalesOrgAsync(showHidden: false))
-            .Select(erpSalesOrg => new SelectListItem
-            {
-                Value = erpSalesOrg.Id.ToString(),
-                Text = erpSalesOrg.Name.ToString()
-            }).ToList();
+            model.AvailableErpSalesOrgs = (await _erpSalesOrgService.GetAllErpSalesOrgsAsync())
+              .Select(erpSalesOrg => new SelectListItem
+              {
+                  Value = $"{erpSalesOrg.Id}",
+                  Text = $"{erpSalesOrg.Name}",
+              }).ToList();
 
-            // Prepare B2BPriceGroupCodes dropdown options
             model.AvailableB2BPriceGroupCodes = (await _erpGroupPriceCodeService.GetAllErpGroupPriceCodesAsync())
-            .Select(erpGroupPrice => new SelectListItem
-            {
-                Value = erpGroupPrice.Id.ToString(),
-                Text = erpGroupPrice.Code.ToString()
-            }).ToList();
+                .Select(erpGroupPrice => new SelectListItem
+                {
+                    Value = $"{erpGroupPrice.Id}",
+                    Text = $"{erpGroupPrice.Code}"
+                }).ToList();
 
             model.AvailableB2BPriceGroupCodes.Insert(0, new SelectListItem
             {

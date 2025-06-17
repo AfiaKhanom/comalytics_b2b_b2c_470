@@ -15,6 +15,7 @@ using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Framework.Models.Extensions;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.ErpProductList;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.OrderSummary;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpSpecificationAttributeService;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Infrastructure;
@@ -42,6 +43,7 @@ public class ErpProductModelFactory : IErpProductModelFactory
     private readonly IErpSpecificationAttributeService _erpSpecificationAttributeService;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
     private readonly IOrderService _orderService;
+    private readonly IErpCustomerFunctionalityService _erpCustomerFunctionalityService;
 
     #endregion
 
@@ -62,7 +64,8 @@ public class ErpProductModelFactory : IErpProductModelFactory
         IPriceCalculationService priceCalculationService,
         IErpSpecificationAttributeService erpSpecificationAttributeService,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
-        IOrderService orderService)
+        IOrderService orderService,
+        IErpCustomerFunctionalityService erpCustomerFunctionalityService)
     {
         _baseAdminModelFactory = baseAdminModelFactory;
         _priceFormatter = priceFormatter;
@@ -80,6 +83,7 @@ public class ErpProductModelFactory : IErpProductModelFactory
         _erpSpecificationAttributeService = erpSpecificationAttributeService;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
         _orderService = orderService;
+        _erpCustomerFunctionalityService = erpCustomerFunctionalityService;
     }
 
     #endregion
@@ -282,14 +286,15 @@ public class ErpProductModelFactory : IErpProductModelFactory
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
         if (currentCustomer.HasShoppingCartItems)
         {
-            var shoppingCartItems = (await _shoppingCartService.GetShoppingCartAsync(currentCustomer))?.Where(x => x.ShoppingCartType == ShoppingCartType.ShoppingCart).ToList();
+            var shoppingCartItems = (await _shoppingCartService.GetShoppingCartAsync(currentCustomer))?
+                .Where(x => x.ShoppingCartType == ShoppingCartType.ShoppingCart).ToList();
 
             var b2bAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currentCustomer.Id);
 
             if (b2bAccount == null)
                 return new ErpOrderSummaryModel();
 
-            var isBackorderAllowed = b2bAccount.AllowAccountsBackOrdering;
+            var isBackorderAllowed = await _erpCustomerFunctionalityService.CheckAllowBackOrderingByErpAccount(b2bAccount);
 
             foreach (var cartItemProduct in shoppingCartItems)
             {

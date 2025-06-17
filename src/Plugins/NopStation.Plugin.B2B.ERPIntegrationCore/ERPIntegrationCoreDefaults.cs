@@ -79,7 +79,7 @@ public static class ERPIntegrationCoreDefaults
     /// </summary>
     /// <remarks>
     /// {0} : Erp Account Id
-    /// {0} : erp user
+    /// {1} : Erp Nop User
     /// </remarks>
     public static CacheKey ErpNopUserAccountMapByErpAccountAndErpUserCacheKey => new("Nop.erpnopuseraccountmap.byerpaccount.{0}-{1}", NopEntityCacheDefaults<ErpNopUserAccountMap>.Prefix);
 
@@ -88,36 +88,36 @@ public static class ERPIntegrationCoreDefaults
     #region Product Pricing Cache Key
 
     /// <summary>
-    /// Gets a key for ERP product Special Price
+    /// Gets a key for Erp product Special Price
     /// </summary>
     /// <remarks>
-    /// {0} : product id
+    /// {0} : Product id
     /// </remarks>
     public static CacheKey ErpProductPricingSpecialPriceByProductCacheKey => new("Nop.totals.erpproductpricing.specialprice.byproduct.{0}", ErpProductPricingPrefix);
 
     /// <summary>
-    /// Gets a key for ERP product Special Price
+    /// Gets a key for Erp product Special Price
     /// </summary>
     /// <remarks>
-    /// {0} : product id
-    /// {1} : account id
+    /// {0} : Product id
+    /// {1} : Erp Account id
     /// </remarks>
     public static CacheKey ErpProductPricingSpecialPriceByProductIdAndAccountCacheKey => new("Nop.totals.erpproductpricing.specialprice.byproduct.{0}-{1}", ErpProductPricingPrefix);
 
     /// <summary>
-    /// Gets a key for ERP product Group Price
+    /// Gets a key for Erp product Group Price
     /// </summary>
     /// <remarks>
-    /// {0} : product id
+    /// {0} : Product id
     /// </remarks>
     public static CacheKey ErpProductPricingGroupPriceByProductIdCacheKey => new("Nop.totals.erpproductpricing.groupprice.byproduct.{0}", ErpProductPricingPrefix);
 
     /// <summary>
-    /// Gets a key for ERP product Group Price
+    /// Gets a key for Erp product Group Price
     /// </summary>
     /// <remarks>
-    /// {0} : product id
-    /// {1} : price group id
+    /// {0} : Product id
+    /// {1} : Erp Group Price Id
     /// </remarks>
     public static CacheKey ErpProductPricingGroupPriceByProductIdAndPriceGroupIdCacheKey => new("Nop.totals.erpproductpricing.groupprice.byproduct.{0}-{1}", ErpProductPricingPrefix);
 
@@ -169,13 +169,6 @@ public static class ERPIntegrationCoreDefaults
     #region Erp Warehouse Sales Org Map Cache keys and Prefixes
 
     public static string SalesRepOrgPrefix => "Nop.salesrep.salesreporgs.";
-
-    /// <summary>
-    /// Gets a key pattern to clear cache
-    /// </summary>
-    /// <remarks>
-    /// {0} : customer identifier
-    /// </remarks>
     public static string SalesRepOrgBySalesRepPrefix => "Nop.salesrep.salesreporgs.{0}";
     public static CacheKey SalesRepOrgCacheKey => new("Nop.salesrep.salesreporgs.{0}-{1}", SalesRepOrgBySalesRepPrefix, SalesRepOrgPrefix);  
     public static CacheKey ErpWarehouseSalesOrgMapByCodeCacheKey => new("ERPIntegration.warehouse.salesOrgMap.byWarehouseCode-{0}", ErpWarehouseSalesOrgMapByCodePrefix);

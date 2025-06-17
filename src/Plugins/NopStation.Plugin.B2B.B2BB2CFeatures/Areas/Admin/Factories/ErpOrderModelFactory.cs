@@ -27,7 +27,7 @@ public class ErpOrderModelFactory : IErpOrderModelFactory
     private readonly IErpOrderItemAdditionalDataService _erpOrderItemAdditionalDataService;
     private readonly IErpAccountService _erpAccountService;
     private readonly IErpSalesOrgService _erpSalesOrgService;
-    private readonly ICommonHelper _commonHelper;
+    private readonly IB2BFeaturesCommonHelper _commonHelper;
     private readonly IErpShipToAddressService _erpShipToAddressService;
 
     #endregion
@@ -42,7 +42,7 @@ public class ErpOrderModelFactory : IErpOrderModelFactory
         IErpOrderItemAdditionalDataService erpOrderItemAdditionalDataService,
         IErpAccountService erpAccountService,
         IErpSalesOrgService erpSalesOrgService,
-        ICommonHelper commonHelper,
+        IB2BFeaturesCommonHelper commonHelper,
         IErpShipToAddressService erpShipToAddressService)
     {
         _localizationService = localizationService;

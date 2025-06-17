@@ -130,6 +130,16 @@ public class ErpNopUserController : NopStationAdminController
 
     #region Methods
 
+    public async Task<IActionResult> ShipToAddressDropdownList(int erpAccountId, int customerId = 0)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
+            return await AccessDeniedDataTablesJson();
+
+        var availableShipToAddresses = await _erpNopUserModelFactory.PrepareShipToAddressDropdownAsync(erpAccountId, customerId);
+
+        return Json(availableShipToAddresses);
+    }
+
     public async Task<IActionResult> Index()
     {
         return RedirectToAction("List");
@@ -144,16 +154,6 @@ public class ErpNopUserController : NopStationAdminController
         model = await _erpNopUserModelFactory.PrepareErpNopUserSearchModelAsync(searchModel: model);
 
         return View(model);
-    }
-
-    public async Task<IActionResult> ShipToAddressDropdownList(int erpAccountId, int customerId = 0)
-    {
-        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
-            return await AccessDeniedDataTablesJson();
-
-        var availableShipToAddresses = await _erpNopUserModelFactory.PrepareShipToAddressDropdownAsync(erpAccountId, customerId);
-
-        return Json(availableShipToAddresses);
     }
 
     [HttpPost]

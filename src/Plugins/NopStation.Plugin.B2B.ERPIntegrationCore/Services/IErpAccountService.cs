@@ -16,7 +16,7 @@ public interface IErpAccountService
     Task DeleteErpAccountByIdAsync(int id);
     Task DeleteErpSalesRepErpAccountMapAsync(ErpSalesRepErpAccountMap salesRepErpAccountMap);
     Task<ErpSalesRepErpAccountMap> GetErpSalesRepErpAccountMapByIdAsync(int salesRepId, int? erpAccountId);
-    Task<IList<ErpSalesRepErpAccountMap>> GetAllErpAccountsBySalesRepIdAsync(string erpSalesRepId = null);
+    Task<IList<ErpSalesRepErpAccountMap>> GetAllErpAccountsBySalesRepIdAsync(int salesRepId);
     Task<ErpAccount> GetErpAccountByIdAsync(int id, bool filterOutDeleted = true);
     Task<ErpAccount> GetErpAccountByIdWithActiveAsync(int id);
     Task<IList<ErpAccount>> GetAllActiveErpAccountsAsync();

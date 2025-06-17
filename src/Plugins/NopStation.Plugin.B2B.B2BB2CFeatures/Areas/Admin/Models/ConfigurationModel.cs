@@ -26,14 +26,6 @@ public record ConfigurationModel : BaseNopModel, ISettingsModel
     public bool IsActive { get; set; }
     public bool IsActive_OverrideForStore { get; set; }
 
-    [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.PlaceB2BOrder")]
-    public bool PlaceB2BOrder { get; set; }
-    public bool PlaceB2BOrder_OverrideForStore { get; set; }
-
-    [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.PlaceB2COrder")]
-    public bool PlaceB2COrder { get; set; }
-    public bool PlaceB2COrder_OverrideForStore { get; set; }
-
     [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.UseNopProductPrice")]
     public bool UseNopProductPrice { get; set; }
     public bool UseNopProductPrice_OverrideForStore { get; set; }
@@ -66,18 +58,6 @@ public record ConfigurationModel : BaseNopModel, ISettingsModel
     public bool IsShowLoginForPrice { get; set; }
     public bool IsShowLoginForPrice_OverrideForStore { get; set; }
 
-    [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.IsShowYearlySavings")]
-    public bool IsShowYearlySavings { get; set; }
-    public bool IsShowYearlySavings_OverrideForStore { get; set; }
-
-    [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.IsShowAllTimeSavings")]
-    public bool IsShowAllTimeSavings { get; set; }
-    public bool IsShowAllTimeSavings_OverrideForStore { get; set; }
-
-    [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.LastDateTimeOfTCUpdate")]
-    public DateTime LastDateTimeOfTCUpdate { get; set; }
-    public bool LastDateTimeOfTCUpdate_OverrideForStore { get; set; }
-
     [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.UpdatedOnUtc")]
     public DateTime UpdatedOnUtc { get; set; }
     public bool UpdatedOnUtc_OverrideForStore { get; set; }
@@ -90,9 +70,9 @@ public record ConfigurationModel : BaseNopModel, ISettingsModel
     public int MaxErpIntegrationOrderPlaceRetries { get; set; }
     public bool MaxERPIntegrationOrderPlaceReties_OverrideForStore { get; set; }
 
-    [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.EnableLogOnErpCall")]
-    public bool EnableLogOnErpCall { get; set; }
-    public bool EnableLogOnErpCall_OverrideForStore { get; set; }
+    [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.EnableErpLogs")]
+    public bool EnableErpLogs { get; set; }
+    public bool EnableErpLogs_OverrideForStore { get; set; }
 
     [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.EnableLiveStockChecks")]
     public bool EnableLiveStockChecks { get; set; }
@@ -156,7 +136,7 @@ public record ConfigurationModel : BaseNopModel, ISettingsModel
 
     [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.AllowOverspend")]
     public bool AllowOverspend { get; set; }
-    public bool Override_AllowOverspend { get; set; }
+    public bool AllowOverspend_OverrideForStore { get; set; }
 
     [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.TrackInventoryMethodId")]
     public int TrackInventoryMethodId { get; set; }

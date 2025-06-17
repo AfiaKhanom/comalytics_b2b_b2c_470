@@ -38,7 +38,7 @@
             <span asp-validation-for="IsCustomerReferenceRequiredDuringPayment"></span>
         </div>
     </div>
-    <nop-nested-setting asp-for="IsCustomerReferenceRequiredDuringPayment" id="pnlIsCustomerReferenceRequiredDuringPayment">
+    <nop-nested-setting asp-for="IsCustomerReferenceRequiredDuringPayment">
         <div class="form-group row">
             <div class="col-md-3">
                 <nop-override-store-checkbox asp-for="MaintainUniqueCustomerReference_OverrideForStore" asp-input="MaintainUniqueCustomerReference" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
@@ -60,7 +60,7 @@
             </div>
         </div>
         <nop-nested-setting asp-for="PreventSpecialCharactersInCustomerReference">
-            <div class="form-group row" id="pnlPreventSpecialCharactersInCustomerReference">
+            <div class="form-group row">
                 <div class="col-md-3">
                     <nop-override-store-checkbox asp-for="SpecialCharactersToPreventInCustomerReference_OverrideForStore" asp-input="SpecialCharactersToPreventInCustomerReference" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
                     <nop-label asp-for="SpecialCharactersToPreventInCustomerReference" />
@@ -83,30 +83,3 @@
         </div>
     </div>
 </div>
-
-
-<script>
-    $(document).ready(function () {
-        $("#@Html.IdFor(model => model.PreventSpecialCharactersInCustomerReference)").click(togglePreventSpecialCharactersInCustomerReference);
-        togglePreventSpecialCharactersInCustomerReference();
-
-        $("#@Html.IdFor(model => model.IsCustomerReferenceRequiredDuringPayment)").click(toggleIsCustomerReferenceRequiredDuringPayment);
-        toggleIsCustomerReferenceRequiredDuringPayment();
-    });
-
-    function togglePreventSpecialCharactersInCustomerReference() {
-        if ($('#@Html.IdFor(model => model.PreventSpecialCharactersInCustomerReference)').is(':checked')) {
-            $('#pnlPreventSpecialCharactersInCustomerReference').show();
-        } else {
-            $('#pnlPreventSpecialCharactersInCustomerReference').hide();
-        }
-    }
-
-    function toggleIsCustomerReferenceRequiredDuringPayment() {
-        if ($('#@Html.IdFor(model => model.IsCustomerReferenceRequiredDuringPayment)').is(':checked')) {
-            $('#pnlIsCustomerReferenceRequiredDuringPayment').show();
-        } else {
-            $('#pnlIsCustomerReferenceRequiredDuringPayment').hide();
-        }
-    }
-</script>

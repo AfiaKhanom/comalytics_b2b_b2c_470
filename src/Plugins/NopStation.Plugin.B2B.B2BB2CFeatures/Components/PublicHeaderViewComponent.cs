@@ -45,7 +45,7 @@ public class PublicHeaderViewComponent : NopViewComponent
             var salesRep = (await _erpSalesRepService.GetErpSalesRepsByNopCustomerIdAsync(erpCustomer.OriginalCustomer.Id)).FirstOrDefault();
             if (salesRep != null && salesRep.IsActive && !salesRep.IsDeleted && salesRep.SalesRepTypeId == (int)SalesRepType.MultiBuyers)
             {
-                var erpAccountIdMaps = await _erpAccountService.GetAllErpAccountsBySalesRepIdAsync(salesRep.Id.ToString());
+                var erpAccountIdMaps = await _erpAccountService.GetAllErpAccountsBySalesRepIdAsync(salesRep.Id);
                 mappedAccounts = mappedAccounts.Where(x => erpAccountIdMaps.Any(y => y.ErpAccountId == x.ErpAccountId)).ToList();
             }
 

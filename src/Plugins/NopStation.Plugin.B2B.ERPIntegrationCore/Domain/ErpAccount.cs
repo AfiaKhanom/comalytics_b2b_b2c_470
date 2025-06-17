@@ -71,5 +71,11 @@ public partial class ErpAccount : ErpBaseEntity
 
     public int StockDisplayFormatTypeId { get; set; }
 
+    public StockDisplayFormat StockDisplayFormatType
+    {
+        get => (StockDisplayFormat)StockDisplayFormatTypeId;
+        set => StockDisplayFormatTypeId = (int)value;
+    }
+
     public decimal? PercentageOfStockAllowed { get; set; }
 }
