@@ -1,0 +1,82 @@
+﻿@using NopStation.Plugin.Misc.ErpSqlIntegration.Areas.Admin.Models;
+@using NopStation.Plugin.Misc.ErpSqlIntegration;
+@model NopStation.Plugin.Misc.ErpSqlIntegration.Areas.Admin.Models.ConfigurationModel
+
+@{
+    Layout = "_ConfigurePlugin";
+    NopHtml.SetActiveMenuItemSystemName("Misc.B2B.SqlIntegration.Configuration");
+}
+
+@await Component.InvokeAsync(typeof(StoreScopeConfigurationViewComponent))
+
+<form asp-controller="ErpSqlIntegration" asp-action="Configure" method="post">
+    <nop-cards id="SqlIntegration-cards">
+        <nop-card asp-name="SqlIntegration-general" asp-icon="fas fa-info" asp-title="@T("NopStation.Plugin.Misc.ErpSqlIntegration.General")" asp-hide-block-attribute-name="@SqlIntegrationDefaults.HideGeneralBlock" asp-hide="@Model.HideGeneralBlock" asp-advanced="false">
+            <div class="card-body">
+                <div class="card card-default">
+                    <div class="card-body">
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="HttpCallMaxRetries" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="HttpCallMaxRetries" />
+                                <span asp-validation-for="HttpCallMaxRetries"></span>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="HttpCallRestTimeInSeconds" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="HttpCallRestTimeInSeconds" />
+                                <span asp-validation-for="HttpCallRestTimeInSeconds"></span>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="ConnectionString" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="ConnectionString" />
+                                <span asp-validation-for="ConnectionString"></span>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="BaseUrl" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="BaseUrl" />
+                                <span asp-validation-for="BaseUrl"></span>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="AuthUserName" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="AuthUserName" />
+                                <span asp-validation-for="AuthUserName"></span>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="AuthPassword" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="AuthPassword" />
+                                <span asp-validation-for="AuthPassword"></span>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-9 offset-md-3">
+                                <button type="submit" name="save" class="btn btn-primary">@T("Admin.Common.Save")</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nop-card>
+    </nop-cards>
+</form>

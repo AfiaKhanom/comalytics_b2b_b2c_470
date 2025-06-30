@@ -1,0 +1,100 @@
+﻿@using NopStation.Plugin.Misc.ErpSqlIntegration.Areas.Admin.Models;
+
+
+@model SqlQueryTemplateSearchModel
+
+@{
+    ViewBag.PageTitle = T("Plugin.Misc.NopStation.ErpSqlIntegration.Admin.SqlQueryTemplate.Title").Text;
+
+    NopHtml.SetActiveMenuItemSystemName("Misc.B2B.SqlIntegration.SqlQueryTemplates");
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">
+        @T("Plugin.Misc.NopStation.ErpSqlIntegration.Admin.SqlQueryTemplates")
+    </h1>
+    <div class="float-right">
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fas fa-plus-square"></i>
+            @T("Admin.Common.AddNew")
+        </a>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="form-horizontal">
+            <div class="form-horizontal">
+                <div class="cards-group">
+                    <div class="card card-default">
+                        <div class="card-body">
+                            @await Html.PartialAsync("Table", new DataTablesModel
+                       {
+                           Name = "SqlQueryTemplate-grid",
+                           UrlRead = new DataUrl("List", "SqlQueryTemplate", null),
+                           Length = Model.PageSize,
+                           LengthMenu = Model.AvailablePageSizes,
+                           ColumnCollection = new List<ColumnProperty>
+                            {
+                            new ColumnProperty(nameof(SqlQueryTemplateModel.ErpSyncLevelId))
+                            {
+                            Title = T("Plugin.Misc.NopStation.ErpSqlIntegration.Admin.SqlQueryTemplateModel.ErpSyncStatus").Text,
+                            ClassName =  NopColumnClassDefaults.CenterAll,
+                            Render = new RenderCustom("renderErpSyncStatus"),
+                            Width = "150",
+                            },
+                            new ColumnProperty(nameof(SqlQueryTemplateModel.Query))
+                            {
+                            Title = T("Plugin.Misc.NopStation.ErpSqlIntegration.Admin.SqlQueryTemplateModel.Query").Text,
+                            Render = new RenderCustom("truncateQuery"),
+                            ClassName =  NopColumnClassDefaults.CenterAll,
+                            Width = "150",
+                            },
+                            new ColumnProperty(nameof(SqlQueryTemplateModel.Id))
+                            {
+                            Title = T("Admin.Common.Edit").Text,
+                            Width = "100",
+                            ClassName = NopColumnClassDefaults.Button,
+                            Render = new RenderButtonEdit(new DataUrl("Edit"))
+                            }
+                            }
+                       })
+
+                            <script>
+                                function renderErpSyncStatus(data, type, row, meta) {
+                                    var statusMap = {
+                                        10: 'Account',
+                                        20: 'Group Price',
+                                        30: 'Product',
+                                        40: 'Stock',
+                                        50: 'Ship To Address',
+                                        60: 'Invoice',
+                                        70: 'Sales Org',
+                                        80: 'Special Price',
+                                        90: 'Order',
+                                        100: 'Sales Rep',
+                                        110: 'Erp Nop User',
+                                        120: 'Login Logout'
+                                    };
+                                    return '<div class="p-2 rounded badge" style="text-align:center;white-space: normal;font-size: 1rem;">' + statusMap[data] + '</div>';
+                                }
+
+                                function truncateQuery(data, type, row, meta) {
+                                    return `
+                                        <div style="text-align:center;
+                                                white-space: nowrap;
+                                                overflow: hidden;
+                                                text-overflow: ellipsis;
+                                                font-size: 1rem;
+                                                max-width: 550px;">
+                                                ${row.Query}
+                                        </div>`;
+                                }
+                            </script>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

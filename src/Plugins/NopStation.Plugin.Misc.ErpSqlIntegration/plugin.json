@@ -1,0 +1,11 @@
+﻿{
+  "Group": "Nopstation_ErpIntegration",
+  "FriendlyName": "ErpSqlIntegration",
+  "SystemName": "NopStation.Plugin.Misc.ErpSqlIntegration",
+  "Version": "4.70.2.0",
+  "SupportedVersions": [ "4.70" ],
+  "Author": "comalytics team",
+  "DisplayOrder": 1,
+  "FileName": "NopStation.Plugin.Misc.ErpSqlIntegration.dll",
+  "Description": "This plugin allows to integrate with SQL"
+}

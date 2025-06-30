@@ -1,0 +1,68 @@
+@model ErpOrderSettingsModel
+@{
+	Layout = "_AdminLayout";
+    ViewBag.PageTitle = T("Plugins.NopStation.Misc.ErpSqlIntegration.MappingOrder.Title").Text;
+	NopHtml.SetActiveMenuItemSystemName("NopStation.Plugin.Misc.ErpSqlIntegration.MappingOrder");
+}
+
+@{
+	var customer = await workContext.GetCurrentCustomerAsync();
+	const string hideSettingsBlockAttributeName = "MappingOrder.hideSettingsBlock";
+	var hideSettingsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideSettingsBlockAttributeName);
+
+	const string hideOrderItemSettingsBlockAttributeName = "MappingOrder.hideOrderItemSettingsBlock";
+	var hideOrderItemSettingsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideOrderItemSettingsBlockAttributeName);
+
+	const string hideShippingAddressSettingsBlockAttributeName = "MappingOrder.hideShippingAddressSettingsBlock";
+	var hideShippingAddressSettingsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideShippingAddressSettingsBlockAttributeName);
+
+	const string hideBillingAddressSettingsBlockAttributeName = "MappingOrder.hideBillingAddressSettingsBlock";
+	var hideBillingAddressSettingsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideBillingAddressSettingsBlockAttributeName);
+
+	const string hideRequestSettingsBlockAttributeName = "MappingOrder.hideRequestSettingsBlock";
+	var hideRequestSettingsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideRequestSettingsBlockAttributeName);
+}
+
+<form asp-controller="ErpSqlIntegration" asp-action="ConfigurePlaceOrderParams" method="post">
+	<div class="content-header clearfix">
+		<h1 class="float-left">
+            @T("Plugins.NopStation.Misc.ErpSqlIntegration.MappingOrder.Title")
+		</h1>
+		<div class="float-right">
+			<button type="submit" name="save" class="btn btn-primary">
+				<i class="far fa-save"></i>
+				@T("Admin.Common.Save")
+			</button>
+		</div>
+	</div>
+
+	<div asp-validation-summary="All"></div>
+
+	<section class="content">
+		<div class="container-fluid">
+			<div class="form-horizontal">
+				<nop-cards id="erp-sql-integration-order-cards">
+                    <nop-card asp-name="erp-sql-integration-order-settings"
+							  asp-icon="fas fa-file-alt"
+                              asp-title="@T("Plugins.NopStation.Misc.ErpSqlIntegration.MappingOrder.Settings")"
+							  asp-hide-block-attribute-name="@hideSettingsBlockAttributeName"
+							  asp-hide="@hideSettingsBlock"
+							  asp-advanced="false">
+                        @await Html.PartialAsync("_MappingOrder.ErpSqlIntegrationSettings", Model)
+					</nop-card>
+				</nop-cards>
+
+                <nop-cards id="erp-sql-integration-order-item-cards">
+                    <nop-card asp-name="erp-sql-integration-order-Item-settings"
+							  asp-icon="fas fa-file-alt"
+                              asp-title="@T("Plugins.NopStation.Misc.ErpSqlIntegration.MappingOrderItem.Settings")"
+							  asp-hide-block-attribute-name="@hideOrderItemSettingsBlockAttributeName"
+							  asp-hide="@hideOrderItemSettingsBlock"
+							  asp-advanced="false">
+                        @await Html.PartialAsync("_MappingOrderItem.ErpSqlIntegrationSettings", Model)
+					</nop-card>
+				</nop-cards>
+			</div>
+		</div>
+	</section>
+</form>

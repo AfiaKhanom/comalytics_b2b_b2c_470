@@ -1,0 +1,47 @@
+﻿@using NopStation.Plugin.Misc.ErpSqlIntegration.Areas.Admin.Models;
+
+@model SqlQueryTemplateModel
+
+<div class="card-body">
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpSyncLevelId" />
+        </div>
+        <div class="col-md-9">
+            <nop-select asp-for="ErpSyncLevelId" asp-items="Model.ErpSyncLevels" />
+            <span asp-validation-for="ErpSyncLevelId"></span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="Query" />
+        </div>
+        <div class="col-md-9">
+            <nop-textarea asp-for="Query" asp-required="true" />
+            <span asp-validation-for="Query"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#ErpSyncLevelId').change(function () {
+            var selectedValue = $(this).val();
+
+            if (selectedValue && selectedValue > 0) {
+                $.ajax({
+                    url: "@(Url.Action("GetSqlQueryBySyncLevelId", "SqlQueryTemplate"))",
+                    type: 'GET',
+                    data: { erpSyncLevelId: selectedValue },
+                    success: function (response) {
+                        console.log("res", response);
+                        $('#Query').val(response);
+                    },
+                    error: function () {
+                        alert('Error occurred while getting query by sync level id.');
+                    }
+                });
+            }
+        });
+    });
+</script>

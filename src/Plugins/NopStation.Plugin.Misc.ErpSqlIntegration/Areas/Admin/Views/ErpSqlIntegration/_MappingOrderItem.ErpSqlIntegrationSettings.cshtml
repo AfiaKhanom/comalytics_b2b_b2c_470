@@ -1,0 +1,196 @@
+@model ErpOrderSettingsModel
+
+<div class="card-body">
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.Sku" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpOrderItemDataSettingsModel.Sku" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.Sku" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.BatchCode" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpOrderItemDataSettingsModel.BatchCode" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.BatchCode" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.Description" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpOrderItemDataSettingsModel.Description" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.Description" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.Quantity" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpOrderItemDataSettingsModel.Quantity" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.Quantity" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.UnitOfMeasure" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpOrderItemDataSettingsModel.UnitOfMeasure" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.UnitOfMeasure" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.SpecialInstruction" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpOrderItemDataSettingsModel.SpecialInstruction" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.SpecialInstruction" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.UnitPriceExclTax" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpOrderItemDataSettingsModel.UnitPriceExclTax" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.UnitPriceExclTax" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.UnitPriceInclTax" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpOrderItemDataSettingsModel.UnitPriceInclTax" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.UnitPriceInclTax" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.DiscountPercentage" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpOrderItemDataSettingsModel.DiscountPercentage" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.DiscountPercentage" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.DiscountAmountInclTax" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpOrderItemDataSettingsModel.DiscountAmountInclTax" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.DiscountAmountInclTax" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.DiscountAmountExclTax" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpOrderItemDataSettingsModel.DiscountAmountExclTax" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.DiscountAmountExclTax" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.PriceExclTax" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpOrderItemDataSettingsModel.PriceExclTax" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.PriceExclTax" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.PriceInclTax" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpOrderItemDataSettingsModel.PriceInclTax" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.PriceInclTax" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.WarehouseCode" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpOrderItemDataSettingsModel.WarehouseCode" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.WarehouseCode" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.ErpOrderPayloadLinesKey" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpOrderItemDataSettingsModel.ErpOrderPayloadLinesKey" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.ErpOrderPayloadLinesKey" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpOrderItemDataSettingsModel.AdditionalHardCodedValues" />
+        </div>
+        <div class="col-md-9">
+            <nop-textarea asp-for="ErpOrderItemDataSettingsModel.AdditionalHardCodedValues" />
+            <span asp-validation-for="ErpOrderItemDataSettingsModel.AdditionalHardCodedValues" class="text-danger"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        const $textArea = $("#@Html.IdFor(model => model.ErpOrderItemDataSettingsModel.AdditionalHardCodedValues)");
+        const placeholderText = `Add hard-coded values with key, value, and type in JSON format. Allowed types: string, int, bool, decimal, datetime. Example:
+                            [
+                                { "key": "channel", "value": "web", "type": "string" },
+                                { "key": "priority", "value": "1", "type": "int" },
+                                { "key": "isTest", "value": "true", "type": "bool" },
+                                { "key": "discount", "value": "10.5", "type": "decimal" },
+                                { "key": "createdDate", "value": "2025-06-01", "type": "datetime" }
+                            ]`;
+        function togglePlaceholder() {
+            if ($textArea.val().trim() === "") {
+                $textArea
+                    .attr("placeholder", placeholderText)
+                    .addClass("with-placeholder");
+            } else {
+                $textArea
+                    .removeAttr("placeholder")
+                    .removeClass("with-placeholder");
+            }
+        }
+
+        togglePlaceholder();
+        $textArea.on("input change", togglePlaceholder);
+    });
+</script>
+
+<style>
+    .with-placeholder {
+        min-height: 200px;
+        font-style: italic;
+        color: #6c757d;
+    }
+</style>

@@ -1,0 +1,33 @@
+@using NopStation.Plugin.Misc.ErpSqlIntegration.Areas.Admin.Models;
+
+@model SqlQueryTemplateModel
+
+@using Nop.Core.Domain.Catalog
+
+@{
+    ViewBag.PageTitle = T("Misc.B2B.SqlIntegration.SqlQueryTemplate.Edit").Text;
+    NopHtml.SetActiveMenuItemSystemName("Misc.B2B.SqlIntegration.SqlQueryTemplates");
+}
+
+<form asp-controller="SqlQueryTemplate" asp-action="Edit" method="post" id="sqlQueryTemplate-form">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("Admin.SqlQueryTemplate.EditSqlQueryTemplateDetails")
+            <small>
+                <i class="fas fa-arrow-circle-left"></i>
+                <a asp-action="SqlQueryTemplates">@T("Admin.SqlQueryTemplate.BackToList")</a>
+            </small>
+        </h1>
+        <div class="float-right">
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.Save")
+            </button>
+            <button type="submit" name="save-continue" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.SaveContinue")
+            </button>
+        </div>
+    </div>
+    @await Html.PartialAsync("_CreateOrUpdate", Model)
+</form>
