@@ -680,6 +680,14 @@ public class ErpCheckoutController : CheckoutController
 
         #region B2B User
 
+        var shipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdWithActiveAsync(b2BUser.ErpShipToAddressId);
+
+        if(shipToAddress == null)
+        {
+            _notificationService.WarningNotification("ShipToAddress is required for checkout.");
+            return RedirectToRoute("ShoppingCart");
+        }
+
         if (b2BUser != null && b2BAccount != null && b2BUser.ErpShipToAddressId > 0)
         {
             var b2BShipToAddressModel = await _erpCheckoutModelFactory.PrepareCheckoutB2BShippingAddressModelAsync(cart, b2BUser, b2BAccount);

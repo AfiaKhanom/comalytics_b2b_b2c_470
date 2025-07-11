@@ -61,6 +61,8 @@ public class OverridenShoppingCartController : ShoppingCartController
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
     private readonly IOrderProcessingService _orderProcessingService;
     private readonly IErpSalesOrgService _erpSalesOrgService;
+    private readonly IErpNopUserService _erpNopUserService;
+    private readonly IErpShipToAddressService _erpShipToAddressService;
 
     #endregion
 
@@ -115,7 +117,9 @@ public class OverridenShoppingCartController : ShoppingCartController
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
         IErpIntegrationPluginManager erpIntegrationPluginManager,
         IOrderProcessingService orderProcessingService,
-        IErpSalesOrgService erpSalesOrgService) : base(captchaSettings,
+        IErpSalesOrgService erpSalesOrgService,
+        IErpNopUserService erpNopUserService,
+        IErpShipToAddressService erpShipToAddressService) : base(captchaSettings,
             customerSettings,
             checkoutAttributeParser,
             checkoutAttributeService,
@@ -166,6 +170,8 @@ public class OverridenShoppingCartController : ShoppingCartController
         _orderProcessingService = orderProcessingService;
         _erpAccountService = erpAccountService;
         _erpSalesOrgService = erpSalesOrgService;
+        _erpNopUserService = erpNopUserService;
+        _erpShipToAddressService = erpShipToAddressService;
     }
 
     #endregion
@@ -344,15 +350,26 @@ public class OverridenShoppingCartController : ShoppingCartController
     [FormValueRequired("checkout")]
     public override async Task<IActionResult> StartCheckout(IFormCollection form)
     {
-        var b2bb2cContext = await _b2BB2CWorkContext.GetCurrentERPCustomerAsync();
-        if (b2bb2cContext == null || b2bb2cContext.ErpNopUser == null)
+        var customer = await _workContext.GetCurrentCustomerAsync();
+        var erpNopUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(customer.Id);
+
+        if (erpNopUser == null)
         {
             _notificationService.WarningNotification("Erp Accounts Need for Checkout");
             return RedirectToAction(nameof(Cart));
         }
 
-        var customer = await _workContext.GetCurrentCustomerAsync();
+        var shipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdWithActiveAsync(erpNopUser.ErpShipToAddressId);
+
+        if (shipToAddress == null)
+        {
+            _notificationService.WarningNotification("ShipToAddress is required for checkout.");
+            return RedirectToAction(nameof(Cart));
+        }
+
         var store = await _storeContext.GetCurrentStoreAsync();
+        
+
         var cart = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, store.Id);
 
         if (cart != null && cart.Any())
