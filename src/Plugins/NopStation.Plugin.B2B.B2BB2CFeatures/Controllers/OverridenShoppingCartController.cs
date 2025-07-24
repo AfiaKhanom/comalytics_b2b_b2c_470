@@ -38,9 +38,9 @@ using Nop.Web.Framework.Mvc.Routing;
 using Nop.Web.Models.ShoppingCart;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Factories;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpAccountCreditSyncFunctionality;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
-using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
 namespace NopStation.Plugin.B2B.B2BB2CFeatures.Controllers;
@@ -63,6 +63,7 @@ public class OverridenShoppingCartController : ShoppingCartController
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly IErpNopUserService _erpNopUserService;
     private readonly IErpShipToAddressService _erpShipToAddressService;
+    private readonly IErpAccountCreditSyncFunctionality _erpAccountCreditSyncFunctionality;
 
     #endregion
 
@@ -119,7 +120,8 @@ public class OverridenShoppingCartController : ShoppingCartController
         IOrderProcessingService orderProcessingService,
         IErpSalesOrgService erpSalesOrgService,
         IErpNopUserService erpNopUserService,
-        IErpShipToAddressService erpShipToAddressService) : base(captchaSettings,
+        IErpShipToAddressService erpShipToAddressService,
+        IErpAccountCreditSyncFunctionality erpAccountCreditSyncFunctionality) : base(captchaSettings,
             customerSettings,
             checkoutAttributeParser,
             checkoutAttributeService,
@@ -172,6 +174,7 @@ public class OverridenShoppingCartController : ShoppingCartController
         _erpSalesOrgService = erpSalesOrgService;
         _erpNopUserService = erpNopUserService;
         _erpShipToAddressService = erpShipToAddressService;
+        _erpAccountCreditSyncFunctionality = erpAccountCreditSyncFunctionality;
     }
 
     #endregion
@@ -180,7 +183,7 @@ public class OverridenShoppingCartController : ShoppingCartController
 
     protected override async Task<IActionResult> GetProductToCartDetailsAsync(List<string> addToCartWarnings, ShoppingCartType cartType, Product product)
     {
-        if (addToCartWarnings.Any())
+        if (addToCartWarnings.Count != 0)
         {
             //cannot be added to the cart/wishlist
             //let's display warnings
@@ -276,66 +279,6 @@ public class OverridenShoppingCartController : ShoppingCartController
         }
     }
 
-    private async Task LiveErpAccountCreditCheckByCustomerAsync(Customer customer)
-    {
-        if (customer == null)
-            return;
-        try
-        {
-            var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(customer.Id);
-
-            if (_b2BB2CFeaturesSettings.EnableLiveCreditChecks && b2BAccount != null)
-            {
-                var erpIntegrationPlugin = await _erpIntegrationPluginManager.LoadActiveERPIntegrationPlugin();
-
-                if (erpIntegrationPlugin is not null)
-                {
-                    var erpSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(b2BAccount.ErpSalesOrgId);
-                    var response = await erpIntegrationPlugin.GetAllAccountCreditFromErpAsync(
-                        new ErpGetRequestModel()
-                        {
-                            Location = erpSalesOrg.Code,
-                            AccountNumber = b2BAccount.AccountNumber
-                        }
-                    );
-
-                    if (!response.ErpResponseModel.IsError)
-                    {
-                        if (response.Data is not null)
-                        {
-                            var data = response.Data?.FirstOrDefault();
-                            b2BAccount.CreditLimit = data?.CreditLimit ?? b2BAccount.CreditLimit;
-                            b2BAccount.CurrentBalance = data?.CurrentBalance ?? b2BAccount.CurrentBalance;
-                            b2BAccount.CreditLimitAvailable = data?.CreditLimitAvailable ?? b2BAccount.CreditLimitAvailable;
-                            b2BAccount.UpdatedById = 1;
-                            b2BAccount.UpdatedOnUtc = DateTime.UtcNow;
-                            b2BAccount.LastErpAccountSyncDate = DateTime.UtcNow;
-                            await _erpAccountService.UpdateErpAccountAsync(b2BAccount);
-                            await _erpLogsService.InformationAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit synced.", ErpSyncLevel.Account, customer: customer);
-                        }
-                        else
-                        {
-                            await _erpLogsService.InformationAsync($"No credit data found for Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber})", ErpSyncLevel.Account, customer: customer);
-                        }
-                    }
-                    else
-                    {
-                        await _erpLogsService.ErrorAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit Check error: {response.ErpResponseModel.ErrorShortMessage}", ErpSyncLevel.Account, customer: customer);
-                    }
-                }
-                else
-                {
-                    await _erpLogsService.ErrorAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit Check error: No integration method found.", ErpSyncLevel.Account, customer: customer);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            await _erpLogsService.ErrorAsync($"Error during live credit check for customer: {customer.Email} (Id: {customer.Id}): {ex.Message}",
-                ErpSyncLevel.Account, ex, customer: customer);
-        }
-    }
-
     #endregion
 
     #region Shopping cart
@@ -351,7 +294,9 @@ public class OverridenShoppingCartController : ShoppingCartController
         var model = new ShoppingCartModel();
         model = await _shoppingCartModelFactory.PrepareShoppingCartModelAsync(model, cart);
 
-        await LiveErpAccountCreditCheckByCustomerAsync(currCustomer);
+        var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
+
+        await _erpAccountCreditSyncFunctionality.LiveErpAccountCreditCheckAsync(b2BAccount, currCustomer);
 
         return View(model);
     }
