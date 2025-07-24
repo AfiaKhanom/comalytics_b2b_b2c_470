@@ -278,51 +278,61 @@ public class OverridenShoppingCartController : ShoppingCartController
 
     private async Task LiveErpAccountCreditCheckByCustomerAsync(Customer customer)
     {
-        var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(customer.Id);
-
-        if (_b2BB2CFeaturesSettings.EnableLiveCreditChecks && b2BAccount != null)
+        if (customer == null)
+            return;
+        try
         {
-            var erpIntegrationPlugin = await _erpIntegrationPluginManager.LoadActiveERPIntegrationPlugin();
+            var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(customer.Id);
 
-            if (erpIntegrationPlugin is not null)
+            if (_b2BB2CFeaturesSettings.EnableLiveCreditChecks && b2BAccount != null)
             {
-                var erpSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(b2BAccount.ErpSalesOrgId);
-                var response = await erpIntegrationPlugin.GetAllAccountCreditFromErpAsync(
-                    new ErpGetRequestModel()
-                    {
-                        Location = erpSalesOrg.Code,
-                        AccountNumber = b2BAccount.AccountNumber
-                    }
-                );
+                var erpIntegrationPlugin = await _erpIntegrationPluginManager.LoadActiveERPIntegrationPlugin();
 
-                if (!response.ErpResponseModel.IsError)
+                if (erpIntegrationPlugin is not null)
                 {
-                    if (response.Data is not null)
+                    var erpSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(b2BAccount.ErpSalesOrgId);
+                    var response = await erpIntegrationPlugin.GetAllAccountCreditFromErpAsync(
+                        new ErpGetRequestModel()
+                        {
+                            Location = erpSalesOrg.Code,
+                            AccountNumber = b2BAccount.AccountNumber
+                        }
+                    );
+
+                    if (!response.ErpResponseModel.IsError)
                     {
-                        var data = response.Data?.FirstOrDefault();
-                        b2BAccount.CreditLimit = data?.CreditLimit ?? b2BAccount.CreditLimit;
-                        b2BAccount.CurrentBalance = data?.CurrentBalance ?? b2BAccount.CurrentBalance;
-                        b2BAccount.CreditLimitAvailable = data?.CreditLimitAvailable ?? b2BAccount.CreditLimitAvailable;
-                        b2BAccount.UpdatedById = 1;
-                        b2BAccount.UpdatedOnUtc = DateTime.UtcNow;
-                        b2BAccount.LastErpAccountSyncDate = DateTime.UtcNow;
-                        await _erpAccountService.UpdateErpAccountAsync(b2BAccount);
-                        await _erpLogsService.InformationAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit synced.", ErpSyncLevel.Account, customer: customer);
+                        if (response.Data is not null)
+                        {
+                            var data = response.Data?.FirstOrDefault();
+                            b2BAccount.CreditLimit = data?.CreditLimit ?? b2BAccount.CreditLimit;
+                            b2BAccount.CurrentBalance = data?.CurrentBalance ?? b2BAccount.CurrentBalance;
+                            b2BAccount.CreditLimitAvailable = data?.CreditLimitAvailable ?? b2BAccount.CreditLimitAvailable;
+                            b2BAccount.UpdatedById = 1;
+                            b2BAccount.UpdatedOnUtc = DateTime.UtcNow;
+                            b2BAccount.LastErpAccountSyncDate = DateTime.UtcNow;
+                            await _erpAccountService.UpdateErpAccountAsync(b2BAccount);
+                            await _erpLogsService.InformationAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit synced.", ErpSyncLevel.Account, customer: customer);
+                        }
+                        else
+                        {
+                            await _erpLogsService.InformationAsync($"No credit data found for Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber})", ErpSyncLevel.Account, customer: customer);
+                        }
                     }
                     else
                     {
-                        await _erpLogsService.InformationAsync($"No credit data found for Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber})", ErpSyncLevel.Account, customer: customer);
+                        await _erpLogsService.ErrorAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit Check error: {response.ErpResponseModel.ErrorShortMessage}", ErpSyncLevel.Account, customer: customer);
                     }
                 }
                 else
                 {
-                    await _erpLogsService.ErrorAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit Check error: {response.ErpResponseModel.ErrorShortMessage}", ErpSyncLevel.Account, customer: customer);
+                    await _erpLogsService.ErrorAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit Check error: No integration method found.", ErpSyncLevel.Account, customer: customer);
                 }
             }
-            else
-            {
-                await _erpLogsService.ErrorAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit Check error: No integration method found.", ErpSyncLevel.Account, customer: customer);
-            }
+        }
+        catch (Exception ex)
+        {
+            await _erpLogsService.ErrorAsync($"Error during live credit check for customer: {customer.Email} (Id: {customer.Id}): {ex.Message}",
+                ErpSyncLevel.Account, ex, customer: customer);
         }
     }
 
