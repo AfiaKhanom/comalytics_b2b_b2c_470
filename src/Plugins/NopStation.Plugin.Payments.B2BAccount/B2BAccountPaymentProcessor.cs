@@ -13,8 +13,8 @@ using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Services.Plugins;
 using NopStation.Plugin.B2B.B2BB2CFeatures;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpAccountCreditSyncFunctionality;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
-using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 using NopStation.Plugin.Misc.Core.Services;
 using NopStation.Plugin.Payments.B2BAccount.Components;
@@ -35,12 +35,10 @@ public class B2BAccountPaymentProcessor : BasePlugin, IPaymentMethod, INopStatio
     private readonly IShoppingCartService _shoppingCartService;
     private readonly IStoreContext _storeContext;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
-    private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
-    private readonly IErpLogsService _erpLogsService;
     private readonly INotificationService _notificationService;
     private readonly IErpOrderAdditionalDataService _erpOrderAdditionalDataService;
     private readonly IGenericAttributeService _genericAttributeService;
-    private readonly IErpSalesOrgService _erpSalesOrgService;
+    private readonly IErpAccountCreditSyncFunctionality _erpAccountCreditSyncFunctionality;
 
     #endregion
 
@@ -53,14 +51,11 @@ public class B2BAccountPaymentProcessor : BasePlugin, IPaymentMethod, INopStatio
         IErpNopUserService erpNopUserService,
         IShoppingCartService shoppingCartService,
         IStoreContext storeContext,
-        IPaymentService paymentService,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
-        IErpIntegrationPluginManager erpIntegrationPluginManager,
-        IErpLogsService erpLogsService,
         INotificationService notificationService,
         IErpOrderAdditionalDataService erpOrderAdditionalDataService,
         IGenericAttributeService genericAttributeService,
-        IErpSalesOrgService erpSalesOrgService)
+        IErpAccountCreditSyncFunctionality erpAccountCreditSyncFunctionality)
     {
         _orderTotalCalculationService = orderTotalCalculationService;
         _localizationService = localizationService;
@@ -70,67 +65,10 @@ public class B2BAccountPaymentProcessor : BasePlugin, IPaymentMethod, INopStatio
         _shoppingCartService = shoppingCartService;
         _storeContext = storeContext;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
-        _erpIntegrationPluginManager = erpIntegrationPluginManager;
-        _erpLogsService = erpLogsService;
         _notificationService = notificationService;
         _erpOrderAdditionalDataService = erpOrderAdditionalDataService;
         _genericAttributeService = genericAttributeService;
-        _erpSalesOrgService = erpSalesOrgService;
-    }
-
-    #endregion
-
-    #region Utilities
-
-    private async Task LiveErpAccountCreditCheckAsync()
-    {
-        var customer = await _workContext.GetCurrentCustomerAsync();
-        var nopErpUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(customer.Id);
-        var b2BAccount = await _erpAccountService.GetErpAccountByIdAsync(nopErpUser?.ErpAccountId ?? 0);
-
-        if (nopErpUser != null && nopErpUser.ErpUserType == ErpUserType.B2BUser && _b2BB2CFeaturesSettings.EnableLiveCreditChecks && b2BAccount != null)
-        {
-            var erpIntegrationPlugin = await _erpIntegrationPluginManager.LoadActiveERPIntegrationPlugin();
-
-            if (erpIntegrationPlugin is not null)
-            {
-                var erpSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(b2BAccount.ErpSalesOrgId);
-                var response = await erpIntegrationPlugin.GetAllAccountCreditFromErpAsync(
-                    new ErpGetRequestModel() 
-                    { 
-                        Location = erpSalesOrg.Code,
-                        AccountNumber = b2BAccount.AccountNumber 
-                    }
-                );
-                if (!response.ErpResponseModel.IsError)
-                {
-                    if (response.Data is not null)
-                    {
-                        var data = response.Data?.FirstOrDefault();
-                        b2BAccount.CreditLimit = data?.CreditLimit ?? b2BAccount.CreditLimit;
-                        b2BAccount.CurrentBalance = data?.CurrentBalance ?? b2BAccount.CurrentBalance;
-                        b2BAccount.CreditLimitAvailable = data?.CreditLimitAvailable ?? b2BAccount.CreditLimitAvailable;
-                        b2BAccount.UpdatedById = 1;
-                        b2BAccount.UpdatedOnUtc = DateTime.UtcNow;
-                        b2BAccount.LastErpAccountSyncDate = DateTime.UtcNow;
-                        await _erpAccountService.UpdateErpAccountAsync(b2BAccount);
-                        await _erpLogsService.InformationAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit synced.", ErpSyncLevel.Account, customer: customer);
-                    }
-                    else
-                    {
-                        await _erpLogsService.InformationAsync($"No credit data found for Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber})", ErpSyncLevel.Account, customer: customer);
-                    }
-                }
-                else
-                {
-                    await _erpLogsService.ErrorAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit Check error: {response.ErpResponseModel.ErrorShortMessage}", ErpSyncLevel.Account, customer: customer);
-                }
-            }
-            else
-            {
-                await _erpLogsService.ErrorAsync($"Erp Account {b2BAccount.AccountName} ({b2BAccount.AccountNumber}) Live Credit Check error: No integration method found.", ErpSyncLevel.Account, customer: customer);
-            }
-        }
+        _erpAccountCreditSyncFunctionality = erpAccountCreditSyncFunctionality;
     }
 
     #endregion
@@ -204,18 +142,18 @@ public class B2BAccountPaymentProcessor : BasePlugin, IPaymentMethod, INopStatio
 
     public async Task PostProcessPaymentAsync(PostProcessPaymentRequest postProcessPaymentRequest)
     {
-
+        return;
     }
 
     public async Task<ProcessPaymentResult> ProcessPaymentAsync(ProcessPaymentRequest processPaymentRequest)
     {
         var paymentResult = new ProcessPaymentResult();
 
-        await LiveErpAccountCreditCheckAsync();
-
         var customer = await _workContext.GetCurrentCustomerAsync();
         var b2BUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(customer.Id);
         var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(customer.Id);
+
+        await _erpAccountCreditSyncFunctionality.LiveErpAccountCreditCheckAsync(b2BAccount, customer);
 
         if (b2BUser != null && !b2BUser.IsDeleted && b2BUser.IsActive)
         {
