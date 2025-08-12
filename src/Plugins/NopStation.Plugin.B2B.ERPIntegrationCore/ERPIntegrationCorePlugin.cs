@@ -142,7 +142,46 @@ public class ERPIntegrationCorePlugin : BasePlugin, IMiscPlugin, IAdminMenuPlugi
 
     public override async Task UninstallAsync()
     {
-
+        var b2BCustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BCustomerRoleSystemName);
+        if (b2BCustomerRole != null)
+        {
+            await _customerService.DeleteCustomerRoleAsync(b2BCustomerRole);
+        }
+        var b2CCustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2CCustomerRoleSystemName);
+        if (b2CCustomerRole != null)
+        {
+            await _customerService.DeleteCustomerRoleAsync(b2CCustomerRole);
+        }
+        var quoteAssistantRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BQuoteAssistantRoleSystemName);
+        if (quoteAssistantRole != null)
+        {
+            await _customerService.DeleteCustomerRoleAsync(quoteAssistantRole);
+        }
+        var orderAssistantRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BOrderAssistantRoleSystemName);
+        if (orderAssistantRole != null)
+        {
+            await _customerService.DeleteCustomerRoleAsync(orderAssistantRole);
+        }
+        var b2BSalesRepRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName);
+        if (b2BSalesRepRole != null)
+        {
+            await _customerService.DeleteCustomerRoleAsync(b2BSalesRepRole);
+        }
+        var quickOrderUserRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.QuickOrderUserRoleSystemName);
+        if (quickOrderUserRole != null)
+        {
+            await _customerService.DeleteCustomerRoleAsync(quickOrderUserRole);
+        }
+        var b2BB2CAdminRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BB2CAdminRoleSystemName);
+        if (b2BB2CAdminRole != null)
+        {
+            await _customerService.DeleteCustomerRoleAsync(b2BB2CAdminRole);
+        }
+        var b2bCustomerAccountingPersonnelRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BCustomerAccountingPersonnelRoleSystemName);
+        if (b2bCustomerAccountingPersonnelRole != null)
+        {
+            await _customerService.DeleteCustomerRoleAsync(b2bCustomerAccountingPersonnelRole);
+        }
         await this.UninstallPluginAsync();
 
         await base.UninstallAsync();
