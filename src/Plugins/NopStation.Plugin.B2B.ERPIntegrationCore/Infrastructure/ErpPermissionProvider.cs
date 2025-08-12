@@ -57,7 +57,7 @@ public class ErpPermissionProvider : IPermissionProvider
                 }
             ),
             (
-                ERPIntegrationCoreDefaults.B2BCustomerRole,
+                ERPIntegrationCoreDefaults.B2BCustomerRoleSystemName,
                 new[]
                 {
                     PlaceB2BOrder,
@@ -118,7 +118,7 @@ public class ErpPermissionProvider : IPermissionProvider
                 }
             ),
             (
-                ERPIntegrationCoreDefaults.B2CCustomerRole,
+                ERPIntegrationCoreDefaults.B2CCustomerRoleSystemName,
                 new[]
                 {
                     StandardPermissionProvider.DisplayPrices,

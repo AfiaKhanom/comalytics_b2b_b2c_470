@@ -142,6 +142,7 @@ public class ERPIntegrationCorePlugin : BasePlugin, IMiscPlugin, IAdminMenuPlugi
 
     public override async Task UninstallAsync()
     {
+
         await this.UninstallPluginAsync();
 
         await base.UninstallAsync();
