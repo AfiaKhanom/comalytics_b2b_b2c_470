@@ -78,3 +78,11 @@ Follow [Documentation 1](https://brainstationo365-my.sharepoint.com/personal/nop
 
 ## QA & Developer Feedback
 [QA Feedback](https://brainstationo365-my.sharepoint.com/:x:/r/personal/nopbs_brainstation-23_com/_layouts/15/Doc.aspx?sourcedoc=%7BF348E081-4E54-4A60-A909-924A0D16F745%7D&file=Comalytics%20Testing-v1.xlsx&action=default&mobileredirect=true)
+
+## Server Details and Site credential
+[Bitwarden](https://bitwarden.com/)
+nopstation_comalytics@outlook.com
+%T#,WyS!ATuh7zW
+[Outlook](https://outlook.office365.com/)
+nopstation_comalytics@outlook.com
+Brain@2323
