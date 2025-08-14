@@ -1,80 +1,80 @@
-﻿﻿nopCommerce: free and open-source eCommerce solution
-===========
+# Comalytics 
 
-[nopCommerce](https://www.nopcommerce.com/?utm_source=github&utm_medium=content&utm_campaign=homepage) is the best open-source eCommerce platform. nopCommerce is free, and it is the most popular ASP.NET Core shopping cart.
+## Introduction
 
-![nopCommerce demo](https://www.nopcommerce.com/images/github/responsive_devices_codeplex.png#v1)
+**Comalytics Ltd.** , Copyrights 2025 Comalytics. 
 
-### Key features ###
-
-* The product is being developed and supported by the professional team since 2008.
-* nopCommerce has been downloaded more than 3,000,000 times.
-* The active developer community has more than 250,000 members.
-* nopCommerce runs on .NET 8 with an MS SQL 2012 (or higher) backend database.
-* nopCommerce is cross-platform, and you can run it on Windows, Linux, or Mac.
-* nopCommerce supports Docker out of the box, so you can easily run nopCommerce on a Linux machine.
-* nopCommerce supports PostgreSQL and MySQL databases.
-* nopCommerce fully supports web farms. You can read more about it [here](https://docs.nopcommerce.com/en/developer/tutorials/web-farms.html?utm_source=github&utm_medium=referral&utm_campaign=documentation&utm_content=text).  
-* All methods in nopCommerce are async.
-* nopCommerce supports multi-factor authentication out of the box.
-* Start our [online course for developers](https://nopcommerce.com/training?utm_source=github&utm_medium=referral&utm_campaign=course&utm_content=text) and get the practical and technical skills you need to run and customize nopCommerce websites.
-
-![Logo](https://www.nopcommerce.com/images/github/logos.png#v2)
-
-nopCommerce architecture follows well-known software patterns and the best security practices. The source code is fully customizable. Pluggable and clear architecture makes it easy to develop custom functionality and follow any business requirements.
-
-Using the latest Microsoft technologies, nopCommerce provides high performance, stability, and security. nopCommerce is also fully compatible with Azure and web farms.
-
-Our clear and detailed [documentation](https://docs.nopcommerce.com/developer/index.html?utm_source=github&utm_medium=referral&utm_campaign=documentation&utm_content=text) and [online course](https://nopcommerce.com/training?utm_source=github&utm_medium=referral&utm_campaign=course&utm_content=text) for developers will help you start with nopCommerce easily.
+Note, **This world-class platform provides your B2B buyers with all the conveniences of a B2C buying journey, combined with the efficiency and functionality of B2B.**
 
 
-### The advantages of working with nopCommerce ###
+## Getting Started
 
-nopCommerce offers powerful [out-of-the-box features](https://www.nopcommerce.com/features?utm_source=github&utm_medium=referral&utm_campaign=features&utm_content=text) for creating an online store of any size and type.
+### Tools We Use
 
-nopCommerce is integrated with all the popular third-party services. You can find thousands of integrations on nopCommerce [Marketplace](https://www.nopcommerce.com/marketplace?utm_source=github&utm_medium=referral&utm_campaign=marketplace&utm_content=text).
+- **Visual Studio 2022**: Our primary development environment.
+- **NopCommerce**: An open-source e-commerce solution.
+- **SQL Server**: For database management.
+- **GitLab**: For version control.
+### Tools Needed to Run This Project
 
-The [Web API plugin](https://www.nopcommerce.com/web-api?utm_source=github&utm_medium=referral&utm_campaign=WebAPI&utm_content=text) by the nopCommerce team lets you build integrations with third-party services or mobile applications using REST. The Web API plugin is available with source code and covers all methods of nopCommerce: backend and frontend. You can read more about it [here](https://www.nopcommerce.com/web-api?utm_source=github&utm_medium=referral&utm_campaign=WebAPI&utm_content=text).
+- **Visual Studio 2022**: Download and install from [Visual Studio](https://visualstudio.microsoft.com/).
+- **SQL Server**: Download and install from [Microsoft SQL Server](https://www.microsoft.com/en-us/sql-server/sql-server-downloads).
+- **.NET 8.0 SDK**: Ensure it's installed from [.NET SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+- **Git**: Download and install from [Git](https://git-scm.com/).
 
-Friendly members of the [nopCommerce community](https://www.nopcommerce.com/boards?utm_source=github&utm_medium=referral&utm_campaign=forum&utm_content=text) will always help with advice and share their experiences. nopCommerce core development team provides [professional support](https://www.nopcommerce.com/nopcommerce-premium-support-services?utm_source=github&utm_medium=referral&utm_campaign=premium_support&utm_content=text) within 24 hours.
+## Gitflow
 
+We have our own Gitflow policy that implements the best practices for versioning. Visit our gitflow process documentation -
 
-## Store demo ##
-
-Evaluate the functionality and convenience of nopCommerce as a customer and store owner.
-
-Front End | Admin area
-----|------
-[![ScreenShot](https://www.nopcommerce.com/images/github/public-demo.png#v1)](https://demo.nopcommerce.com?utm_source=github&utm_medium=referral&utm_campaign=demo_store&utm_content=button) | [![ScreenShot](https://www.nopcommerce.com/images/github/admin-demo.png#v1)](https://admin-demo.nopcommerce.com/admin?utm_source=github&utm_medium=referral&utm_campaign=demo_store&utm_content=button)
-
-
-### nopCommerce resources ###
-
-nopCommerce official site: [https://www.nopcommerce.com](https://www.nopcommerce.com/?utm_source=github&utm_medium=referral&utm_campaign=homepage&utm_content=links)
-
-* [Demo store](https://www.nopcommerce.com/demo?utm_source=github&utm_medium=referral&utm_campaign=demo_store&utm_content=links)
-* [Download nopCommerce](https://www.nopcommerce.com/download-nopcommerce?utm_source=github&utm_medium=referral&utm_campaign=download_nop&utm_content=links)
-* [Online course for developers](https://nopcommerce.com/training?utm_source=github&utm_medium=referral&utm_campaign=course&utm_content=links)
-* [Feature list](https://www.nopcommerce.com/features?utm_source=github&utm_medium=referral&utm_campaign=features&utm_content=links)
-* [Web API plugin](https://www.nopcommerce.com/web-api?utm_source=github&utm_medium=referral&utm_campaign=WebAPI&utm_content=links)
-* [nopCommerce documentation](https://docs.nopcommerce.com?utm_source=github&utm_medium=referral&utm_campaign=documentation&utm_content=links)
-* [Community forums](https://www.nopcommerce.com/boards?utm_source=github&utm_medium=referral&utm_campaign=forum&utm_content=links)
-* [Premium support services](https://www.nopcommerce.com/nopcommerce-premium-support-services?utm_source=github&utm_medium=referral&utm_campaign=premium_support&utm_content=links)
-* [Certified developer program](https://www.nopcommerce.com/certified-developer-program?utm_source=github&utm_medium=referral&utm_campaign=certified_developer&utm_content=links)
-* [nopCommerce partners](https://www.nopcommerce.com/partners?utm_source=github&utm_medium=referral&utm_campaign=solution_partners&utm_content=links)
-
-nopCommerce YouTube: [The Architecture behind the nopCommerce eCommerce Platform](https://www.youtube.com/watch?v=6gLbizzSA9o&list=PLnL_aDfmRHwtJmzeA7SxrpH3-XDY2ue0a)
+[RNA Git Flow Process](VERSION_CONTROL_AND_RELEASE.md).
 
 
-### Earn with nopCommerce ###
+## PR Review Guideline
+follow the [PR Guideline](PR_Review_Guideline.md) to create and Reveiw Pull Requests.
 
-60,000 stores worldwide are powered by nopCommerce, and 10,000 new stores open every year. nopCommerce [solution partners’ directory](https://www.nopcommerce.com/partners?utm_source=github&utm_medium=referral&utm_campaign=solution_partners&utm_content=text_become_partner) gets 80,000+ page views per year from store owners who are looking for a partner to build a store from scratch, migrate from another platform, or improve and customize an existing store.
+## Coding Style
 
-Become a solution partner of nopCommerce and get new clients – [learn more](https://www.nopcommerce.com/become-partner?utm_source=github&utm_medium=referral&utm_campaign=become-partner&utm_content=learn_more).
+We adhere to the following coding styles and best practices:
 
-Create a new graphical theme or develop a new plugin or integration and sell it on the nopCommerce [Marketplace](https://www.nopcommerce.com/marketplace?utm_source=github&utm_medium=referral&utm_campaign=marketplace&utm_content=text_sell_on_marketplace).
+- **C# Coding Conventions**: Follow the [Microsoft C# Coding Conventions](https://docs.microsoft.com/en-us/dotnet/csharp/fundamentals/coding-style/coding-conventions).
+- **NopCommerce Guidelines**: Nop Commerce has its own coding conventions. Visit this [NopCommerce Coding Convensions](https://docs.nopcommerce.com/en/developer/tutorials/coding-standards.html).
+- **NopStation Coding Convention**: Nopstation has its own coding structure. it can be found [here](CodingStructure.md) 
+## Project Structure
+
+The NopCommerce project is structured into several key areas:
+
+- **Core**: Contains the core libraries and functionalities of the application.
+- **Data**: Manages the database context, entities, and data access logic.
+- **Services**: Provides the business logic and service layer between the data layer and the web layer.
+- **Web**: Handles the presentation layer, including controllers, views, and front-end assets.
+
+## Database Configuration
+
+First, the  database backup needs to be restored from a backup file of existing database.
+After that to configure the database, update the `appsettings.json` file in the Web project with your SQL Server connection string:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=your_server_name\\your_SQL_instance_name;Initial Catalog=your_database_name;Integrated Security=True;Persist Security Info=False;Trust Server Certificate=True""
+  }
+}
+```
+## Deployment
+
+For deployment, we follow these steps:
+
+1. **Build**: Ensure the project builds successfully in Visual Studio 2022.
+2. **Publish**: NopCommerce plugin upload facility, but in case of size exceeding 50mb login to server through RDP and replace selected build.
+3. **Database Update**: Ensure the database is updated with any new migrations.
+   feature
+
+## B2B-B2C & ERP Documentation:
+
+For b2b-b2c and erp plugin knowledge:
+Follow [Documentation 1](https://brainstationo365-my.sharepoint.com/personal/nopbs_brainstation-23_com/_layouts/15/onedrive.aspx?CT=1755162028183&OR=OWA%2DNTB%2DMail&CID=3468fa4f%2Dbe9e%2D4ea0%2D8177%2Df7de74de74c3&e=5%3A05fd532fb1df48efa0f33e4371a82548&sharingv2=true&fromShare=true&at=9&FolderCTID=0x01200048E50B89D2DE024CA989FB883225497B&id=%2Fpersonal%2Fnopbs%5Fbrainstation%2D23%5Fcom%2FDocuments%2Fnopbs%5FnopStation%2FnopStation%5FClients%2FNCL0001%5FJannie%5FComalytics%2FnopStation%20Documentation%2FB2B%2FnopStation%20B2B%20B2C%20and%20Integration%20Documentation%20%281%29%2Epdf&parent=%2Fpersonal%2Fnopbs%5Fbrainstation%2D23%5Fcom%2FDocuments%2Fnopbs%5FnopStation%2FnopStation%5FClients%2FNCL0001%5FJannie%5FComalytics%2FnopStation%20Documentation%2FB2B)
+[Documentation 2](https://brainstationo365-my.sharepoint.com/personal/nopbs_brainstation-23_com/_layouts/15/onedrive.aspx?CT=1755162028183&OR=OWA%2DNTB%2DMail&CID=3468fa4f%2Dbe9e%2D4ea0%2D8177%2Df7de74de74c3&e=5%3A05fd532fb1df48efa0f33e4371a82548&sharingv2=true&fromShare=true&at=9&FolderCTID=0x01200048E50B89D2DE024CA989FB883225497B&id=%2Fpersonal%2Fnopbs%5Fbrainstation%2D23%5Fcom%2FDocuments%2Fnopbs%5FnopStation%2FnopStation%5FClients%2FNCL0001%5FJannie%5FComalytics%2FnopStation%20Documentation%2FB2B%2FB2B%20User%20Manual%2Epdf&parent=%2Fpersonal%2Fnopbs%5Fbrainstation%2D23%5Fcom%2FDocuments%2Fnopbs%5FnopStation%2FnopStation%5FClients%2FNCL0001%5FJannie%5FComalytics%2FnopStation%20Documentation%2FB2B)
 
 
-### Contribute ###
-
-As a free and open-source project, we are very grateful to everyone who helps us to develop nopCommerce. Please find more details about the options and bonuses for contributors at [contribute page](https://www.nopcommerce.com/contribute?utm_source=github&utm_medium=referral&utm_campaign=contribute&utm_content=text).
+## QA & Developer Feedback
+[QA Feedback](https://brainstationo365-my.sharepoint.com/:x:/r/personal/nopbs_brainstation-23_com/_layouts/15/Doc.aspx?sourcedoc=%7BF348E081-4E54-4A60-A909-924A0D16F745%7D&file=Comalytics%20Testing-v1.xlsx&action=default&mobileredirect=true)
