@@ -26,7 +26,7 @@ Note, **This world-class platform provides your B2B buyers with all the convenie
 
 We have our own Gitflow policy that implements the best practices for versioning. Visit our gitflow process documentation -
 
-[RNA Git Flow Process](VERSION_CONTROL_AND_RELEASE.md).
+[Git Flow Process](VERSION_CONTROL_AND_RELEASE.md).
 
 
 ## PR Review Guideline
