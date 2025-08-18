@@ -24,6 +24,7 @@ like in the above example commit messages for branch
 ## PR Assignment and Tracking
 
 - **Assign Yourself**: If you are the assignee or the reviewer, make sure to assign yourself to the PR. 
+- **Add PR to Review Sheet**: Add the PR link to the [PR sheet](https://tinyurl.com/2be5zsg8).
 
 ## PR Checklist
 
