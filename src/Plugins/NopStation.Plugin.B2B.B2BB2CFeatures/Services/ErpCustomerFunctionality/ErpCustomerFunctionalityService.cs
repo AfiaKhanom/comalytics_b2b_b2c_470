@@ -142,19 +142,14 @@ public class ErpCustomerFunctionalityService : IErpCustomerFunctionalityService
 
     public async Task<ErpAccount> GetActiveErpAccountByCustomerAsync(Customer customer)
     {
-        var key = _staticCacheManager.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpAccountByCustomerCacheKey, customer.Id, string.Join(",", await _customerService.GetCustomerRoleIdsAsync(customer)));
-
-        return await _staticCacheManager.Get(key, async () =>
+        var erpNopUser = await GetActiveErpNopUserByCustomerAsync(customer);
+        if (erpNopUser != null && !erpNopUser.IsDeleted && erpNopUser.IsActive)
         {
-            var erpNopUser = await GetActiveErpNopUserByCustomerAsync(customer);
-            if (erpNopUser != null && !erpNopUser.IsDeleted && erpNopUser.IsActive)
-            {
-                var erpAccount = await _erpAccountService.GetErpAccountByIdWithActiveAsync(erpNopUser.ErpAccountId);
-                if (erpAccount != null)
-                    return erpAccount;
-            }
-            return null;
-        });
+            var erpAccount = await _erpAccountService.GetErpAccountByIdWithActiveAsync(erpNopUser.ErpAccountId);
+            if (erpAccount != null)
+                return erpAccount;
+        }
+        return null;
     }
 
     public async Task<bool> IsErpAccountBlockSalesOrderAsync(Customer customer)

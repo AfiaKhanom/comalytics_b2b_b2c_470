@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Identity.Client;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Data;
@@ -171,4 +170,3 @@ public class ErpSpecialPriceService : IErpSpecialPriceService
 
     #endregion
 }
-

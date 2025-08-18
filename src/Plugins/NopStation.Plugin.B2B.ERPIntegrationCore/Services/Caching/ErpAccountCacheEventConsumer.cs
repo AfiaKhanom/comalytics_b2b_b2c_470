@@ -14,7 +14,7 @@ public class ErpAccountCacheEventConsumer : CacheEventConsumer<ErpAccount>
         await RemoveAsync(ERPIntegrationCoreDefaults.ErpAccountByAccountNumberCacheKey, entity.AccountNumber);
         await RemoveAsync(ERPIntegrationCoreDefaults.ErpAccountBySalesOrgIdCacheKey, entity.ErpSalesOrgId);
 
-        await RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpAccountByIdPrefixCacheKey);
+        await RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpAccountByIdCacheKeyPrefix);
         await RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpAccountByIdWithActivePrefixCacheKey);
         await RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpAccountByErpShipToAddressPrefixCacheKey);
         await RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpAccountByAccountNumberPrefixCacheKey);

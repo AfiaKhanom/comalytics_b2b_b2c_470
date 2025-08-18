@@ -1444,9 +1444,10 @@ public class B2BB2CCustomerController : CustomerController
 
                 var productsHomepageCacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopCatalogDefaults.ProductsHomepageCacheKey);
                 await _staticCacheManager.RemoveAsync(productsHomepageCacheKey);
+                await _staticCacheManager.RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpAccountPrefix);
 
                 var store = await _storeContext.GetCurrentStoreAsync();
-                var cart = await _shoppingCartService.GetShoppingCartAsync(await _workContext.GetCurrentCustomerAsync(), ShoppingCartType.ShoppingCart, store.Id);
+                var cart = await _shoppingCartService.GetShoppingCartAsync(currentCustomer, ShoppingCartType.ShoppingCart, store.Id);
                 foreach (var sci in cart)
                 {
                     var product = await _productService.GetProductByIdAsync(sci.ProductId);
