@@ -69,7 +69,7 @@ For deployment, we follow these steps:
 3. **Database Update**: Ensure the database is updated with any new migrations.
    feature 
 
-follow the [Deplyment Guideline](Deployment_GuideLine.md) to create and Reveiw Pull Requests.
+follow the [Deplyment Guideline](Deployment_GuideLine.md) to deploye setp by setp.
 
 ## B2B-B2C & ERP Documentation:
 
