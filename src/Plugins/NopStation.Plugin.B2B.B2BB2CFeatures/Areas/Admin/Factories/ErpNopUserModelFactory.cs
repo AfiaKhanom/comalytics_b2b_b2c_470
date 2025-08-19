@@ -246,7 +246,7 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
             Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Select")
         });
 
-        var erpAccounts = await _erpAccountService.GetAllErpAccountsAsync();
+        var erpAccounts = await _erpAccountService.GetAllActiveErpAccountsAsync();
         searchModel.AvailableErpAccounts = new List<SelectListItem>();
 
         foreach (var erpAccount in erpAccounts)

@@ -177,7 +177,7 @@ public class OverridenCustomerModelFactory : CustomerModelFactory
         var isErpAccount = erpAccount is not null;
         var store = await _storeContext.GetCurrentStoreAsync();
 
-        if (isErpAccount)
+        if (isErpAccount && erpUser != null)
         {
             model.CustomerNavigationItems.Add(new CustomerNavigationItemModel
             {
@@ -396,7 +396,7 @@ public class OverridenCustomerModelFactory : CustomerModelFactory
         var erpAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(customer.Id);
         var erpUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(customer.Id);
 
-        if (erpAccount != null)
+        if (erpAccount != null && erpUser != null)
         {
             var erpShipToAddresses = new List<ErpShipToAddress>();
 

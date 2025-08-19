@@ -30,7 +30,8 @@ public class EventConsumer :
     IConsumer<OrderStatusChangedEvent>,
     IConsumer<EntityTokensAddedEvent<Customer, Token>>,
     IConsumer<EntityTokensAddedEvent<Order, Token>>,
-    IConsumer<EntityInsertedEvent<ErpNopUser>>
+    IConsumer<EntityInsertedEvent<ErpNopUser>>,
+    IConsumer<EntityUpdatedEvent<ErpNopUser>>
 {
     #region Fields
 
@@ -215,6 +216,12 @@ public class EventConsumer :
     }
 
     public async Task HandleEventAsync(EntityInsertedEvent<ErpNopUser> eventMessage)
+    {
+        await _staticCacheManager.RemoveAsync(_staticCacheManager.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpNopUserByCustomerCacheKey,
+            eventMessage.Entity.NopCustomerId));
+    }
+
+    public async Task HandleEventAsync(EntityUpdatedEvent<ErpNopUser> eventMessage)
     {
         await _staticCacheManager.RemoveAsync(_staticCacheManager.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpNopUserByCustomerCacheKey,
             eventMessage.Entity.NopCustomerId));

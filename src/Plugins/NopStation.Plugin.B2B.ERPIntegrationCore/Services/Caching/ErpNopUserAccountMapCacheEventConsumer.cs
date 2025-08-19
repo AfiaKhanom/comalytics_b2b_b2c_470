@@ -3,10 +3,14 @@ using Nop.Services.Caching;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
 namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services.Caching;
-internal class ErpNopUserAccountMapCacheEventConsumer : CacheEventConsumer<ErpNopUserAccountMap>
+
+public class ErpNopUserAccountMapCacheEventConsumer : CacheEventConsumer<ErpNopUserAccountMap>
 {
     protected override async Task ClearCacheAsync(ErpNopUserAccountMap entity, EntityEventType entityEventType)
     {
+        await RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpAccountByCustomerCacheKeyPrefix);
+        await RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpNopUserByCustomerCacheKeyPrefix);
+        await RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpAccountByIdWithActiveCacheKeyPrefix);
         await RemoveAsync(ERPIntegrationCoreDefaults.ErpNopUserAccountMapByErpUserCacheKey, entity.ErpUserId);
         await RemoveAsync(ERPIntegrationCoreDefaults.ErpNopUserAccountMapByErpAccountCacheKey, entity.ErpAccountId);
         await RemoveAsync(ERPIntegrationCoreDefaults.ErpNopUserAccountMapByErpAccountAndErpUserCacheKey, entity.ErpAccountId, entity.ErpUserId);

@@ -244,7 +244,6 @@ public class ErpNopUserService : IErpNopUserService
             query = query.Where(enu => enu.ErpAccountId == accountId);
             query = query.OrderBy(enu => enu.Id);
             return query;
-
         });
 
         return erpNopUsers;

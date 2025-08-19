@@ -101,6 +101,7 @@ public class ErpAccountService : IErpAccountService
             await DeleteErpAccountAsync(erpAccount);
         }
     }
+
     public async Task DeleteErpSalesRepErpAccountMapAsync(ErpSalesRepErpAccountMap salesRepErpAccountMap)
     {
         await _erpSalesRepErpAccountMapRepository.DeleteAsync(salesRepErpAccountMap);
@@ -151,16 +152,19 @@ public class ErpAccountService : IErpAccountService
                 .FirstOrDefaultAsync(x => x.ErpSalesRepId == salesRepId && x.ErpAccountId == erpAccountId);
     }
 
-
     public async Task<ErpAccount> GetErpAccountByIdWithActiveAsync(int id)
     {
         if (id == 0)
             return null;
-        
-        return await _erpAccountRepository.Table.FirstOrDefaultAsync(x => x.Id == id && x.IsActive && !x.IsDeleted);
+
+        var key = _staticCacheManager.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpAccountByIdWithActiveCacheKey, id);
+
+        var query = _erpAccountRepository.Table.Where(x => x.Id == id && x.IsActive && !x.IsDeleted);
+
+        return await _staticCacheManager.GetAsync(key, async () => await query.FirstOrDefaultAsync());
     }
 
-    public async Task<IList<ErpAccount>> GetAllErpAccountsAsync()
+    public async Task<IList<ErpAccount>> GetAllActiveErpAccountsAsync()
     {
         var query = _erpAccountRepository.Table.Where(v => v.IsActive && !v.IsDeleted).OrderBy(ea => ea.Id);
 

@@ -6240,4 +6240,8 @@
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.ErpAccount.ErpAccountNotAvailable">
         <Value>The account is not available.</Value>
     </LocaleResource>
+
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Customers.Impersonate.ErpNopUserNotAvailable">
+        <Value>The nop user is not available.</Value>
+    </LocaleResource>
 </Language>

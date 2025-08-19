@@ -459,6 +459,12 @@ public class ErpNopUserController : NopStationAdminController
             return RedirectToAction("List");
 
         var erpNopUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(id);
+        if (erpNopUser == null)
+        {
+            _notificationService.WarningNotification(
+                await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Customers.Impersonate.ErpNopUserNotAvailable"));
+            return RedirectToAction("List");
+        }
         var erpAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(customer.Id);
         if (erpAccount == null)
         {

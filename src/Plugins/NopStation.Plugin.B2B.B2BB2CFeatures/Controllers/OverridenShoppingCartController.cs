@@ -310,7 +310,7 @@ public class OverridenShoppingCartController : ShoppingCartController
 
         if (erpNopUser == null)
         {
-            _notificationService.WarningNotification("Erp Accounts Need for Checkout");
+            _notificationService.WarningNotification("Active Erp user need for checkout");
             return RedirectToAction(nameof(Cart));
         }
 

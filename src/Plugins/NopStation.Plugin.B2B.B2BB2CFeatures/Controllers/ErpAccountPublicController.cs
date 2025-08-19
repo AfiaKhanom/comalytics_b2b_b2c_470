@@ -169,6 +169,7 @@ public class ErpAccountPublicController : BasePluginController
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(currCustomer.Id);
 
         if (erpAccount == null || 
+            erpNopUser == null ||
             await _erpCustomerFunctionalityService.IsCustomerInB2BQuoteAssistantRoleAsync(currCustomer) ||
             !await _permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BFinancialTransactions))
             return await AccessDeniedDataTablesJson();
@@ -176,10 +177,7 @@ public class ErpAccountPublicController : BasePluginController
         if (erpAccount.Id > 0)
             searchModel.ErpAccountId = erpAccount.Id;
 
-        if (erpNopUser != null)
-        {
-            searchModel.ErpNopUserId = erpNopUser.Id;
-        }
+        searchModel.ErpNopUserId = erpNopUser.Id;        
 
         var model = await _erpAccountPublicModelFactory.PrepareRecentTransactionListAsync(searchModel);
         return Json(model);
@@ -409,7 +407,7 @@ public class ErpAccountPublicController : BasePluginController
 
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(currCustomer.Id);
 
-        if (erpAccount == null)
+        if (erpAccount == null || erpNopUser == null)
             return RedirectToRoute("CustomerInfo");
 
         if (!await _permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BOrders))
@@ -425,7 +423,7 @@ public class ErpAccountPublicController : BasePluginController
         var currCustomer = await _workContext.GetCurrentCustomerAsync();
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(currCustomer.Id);
 
-        if (erpAccount == null)
+        if (erpAccount == null || erpNopUser == null)
             return await AccessDeniedDataTablesJson();
 
         if (!await _permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BOrders))
@@ -463,7 +461,7 @@ public class ErpAccountPublicController : BasePluginController
             return Challenge();
 
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(customer.Id);
-        if (erpAccount == null)
+        if (erpAccount == null || erpNopUser == null)
             return RedirectToRoute("CustomerInfo");
 
         if (!await _permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BQuotes))
@@ -480,7 +478,7 @@ public class ErpAccountPublicController : BasePluginController
         var currCustomer = await _workContext.GetCurrentCustomerAsync();
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(currCustomer.Id);
 
-        if (erpAccount == null)
+        if (erpAccount == null || erpNopUser == null)
             return await AccessDeniedDataTablesJson();
 
         if (!await _permissionService.AuthorizeAsync(ErpPermissionProvider.DisplayB2BQuotes))

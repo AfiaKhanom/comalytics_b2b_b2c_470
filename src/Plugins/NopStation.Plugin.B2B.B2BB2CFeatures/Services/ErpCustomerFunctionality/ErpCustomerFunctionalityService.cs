@@ -72,13 +72,19 @@ public class ErpCustomerFunctionalityService : IErpCustomerFunctionalityService
     public async void ClearGenericAttributeOfB2BQuoteOrder()
     {
         var currStore = await _storeContext.GetCurrentStoreAsync();
-        await _genericAttributeService.SaveAttributeAsync<int?>(await _workContext.GetCurrentCustomerAsync(), B2BB2CFeaturesDefaults.B2BConvertedQuoteB2BOrderId, null, currStore.Id);
+        await _genericAttributeService.SaveAttributeAsync<int?>(await _workContext.GetCurrentCustomerAsync(), 
+            B2BB2CFeaturesDefaults.B2BConvertedQuoteB2BOrderId, 
+            null, 
+            currStore.Id);
     }
 
     public async void ClearGenericAttributeOfB2CQuoteOrder()
     {
         var currStore = await _storeContext.GetCurrentStoreAsync();
-        await _genericAttributeService.SaveAttributeAsync<int?>(await _workContext.GetCurrentCustomerAsync(), B2BB2CFeaturesDefaults.B2CConvertedQuoteB2COrderId, null, currStore.Id);
+        await _genericAttributeService.SaveAttributeAsync<int?>(await _workContext.GetCurrentCustomerAsync(), 
+            B2BB2CFeaturesDefaults.B2CConvertedQuoteB2COrderId, 
+            null, 
+            currStore.Id);
     }
 
     public async Task<bool> CheckAndUpdateGenericAttributeOfB2BQuoteOrder(int erpOrderId, IList<ShoppingCartItem> currentShoppingCartItems)

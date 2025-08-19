@@ -30,7 +30,7 @@ public static class ERPIntegrationCoreDefaults
 
     public static CacheKey ErpProductSpecificationAttributeList => new("NopB2bB2cFeaturesAdminProductSpecificationAttributeForB2b");
 
-    #region ERP Nop user Cache key
+    #region Erp Nop user Cache key
 
     /// <summary>
     /// Gets a key for caching
@@ -38,7 +38,7 @@ public static class ERPIntegrationCoreDefaults
     /// <remarks>
     /// {0} : Customer ID
     /// </remarks>
-    public static CacheKey ErpNopUserByCustomerCacheKey => new("Nop.erpnopuser.bycustomer.{0}", ErpNopUserByCustomerPrefixCacheKey);
+    public static CacheKey ErpNopUserByCustomerCacheKey => new("Nop.erpnopuser.bycustomer.{0}", ErpNopUserByCustomerCacheKeyPrefix);
 
     /// <summary>
     /// Gets a key for caching
@@ -47,16 +47,16 @@ public static class ERPIntegrationCoreDefaults
     /// {0} : Customer ID
     /// {1} : Erp Account Id
     /// </remarks>
-    public static CacheKey ErpNopUserByCustomerAndErpAccountCacheKey => new("Nop.erpnopuser.bycustomer.{0}-{1}", ErpNopUserByCustomerPrefixCacheKey);
+    public static CacheKey ErpNopUserByCustomerAndErpAccountCacheKey => new("Nop.erpnopuser.bycustomer.{0}-{1}", ErpNopUserByCustomerCacheKeyPrefix);
 
     /// <summary>
     /// Gets a key pattern to clear cache
     /// </summary>
-    public static string ErpNopUserByCustomerPrefixCacheKey => "Nop.erpnopuser.bycustomer.";
+    public static string ErpNopUserByCustomerCacheKeyPrefix => "Nop.erpnopuser.bycustomer.";
 
     #endregion
 
-    #region ERP Nop user Account Map Cache key
+    #region Erp Nop user Account Map Cache key
 
     /// <summary>
     /// Gets a key for caching
@@ -128,27 +128,12 @@ public static class ERPIntegrationCoreDefaults
 
     #endregion
 
-    #region ERP Account Cache keys and Prefixes
+    #region Erp Account Cache keys and Prefixes
 
-    // Prefixes
     public static string ErpAccountPrefix => "Nop.erpaccount.";
-    public static string ErpAccountByIdCacheKeyPrefix => "Nop.erpaccount.byid.";
-    public static string ErpAccountByErpShipToAddressPrefixCacheKey => "Nop.erpaccount.byshiptoaddress.";
-    public static string ErpSalesRepErpAccountMapByIdsPrefixCacheKey => "Nop.erpsalesreperpaccountmap.byids.";
-    public static string ErpSalesRepErpAccountMapBySalesRepIdPrefixCacheKey => "Nop.erpsalesreperpaccountmap.bysalesrepid.";
-    public static string ErpAccountByIdWithActivePrefixCacheKey => "Nop.erpaccount.byidwithactive.";
-    public static string ErpAccountAllActivePrefixCacheKey => "Nop.erpaccount.allactive.";
-    public static string ErpAccountPagedPrefixCacheKey => "Nop.erpaccount.paged.";
-    public static string ErpAccountListPrefixCacheKey => "Nop.erpaccount.list.";
-    public static string ErpAccountPagedByIdsPrefixCacheKey => "Nop.erpaccount.pagedbyids.";
-    public static string ErpAccountOfActiveNopUsersPrefixCacheKey => "Nop.erpaccount.ofactivenopusers.";
-    public static string ErpAccountByAccountNumberPrefixCacheKey => "Nop.erpaccount.byaccountnumber.";
-    public static string ErpAccountByCustomerIdPrefixCacheKey => "Nop.erpaccount.bycustomerid.";
-    public static string ErpAccountBySalesOrgIdPrefixCacheKey => "Nop.erpaccount.bysalesorgid.";
-    public static string ShiptoAddressesByErpAccountrPrefix => "Nop.erpaccount.shiptoaddresses.{0}";
-    public static string ErpAccountByCustomerPrefixCacheKey => "Nop.erpaccount.bycustomer.{0}";
 
-    // CacheKeys
+    public static string ErpAccountByIdCacheKeyPrefix => "Nop.erpaccount.byid.";
+
     /// <summary>
     /// Gets a key for caching Erp Accounts by Id
     /// </summary>
@@ -156,31 +141,32 @@ public static class ERPIntegrationCoreDefaults
     /// {0} : Erp Account Id
     /// {1} : Filter out deleted flag
     /// </remarks>
-    public static CacheKey ErpAccountByIdCacheKey => new("Nop.erpaccount.byid.{0}-{1}", ErpAccountByIdCacheKeyPrefix);
-    public static CacheKey ErpAccountByErpShipToAddressCacheKey => new("Nop.erpaccount.byshiptoaddress.{0}", ErpAccountByErpShipToAddressPrefixCacheKey);
-    public static CacheKey ErpSalesRepErpAccountMapByIdsCacheKey => new("Nop.erpsalesreperpaccountmap.byids.{0}-{1}", ErpSalesRepErpAccountMapByIdsPrefixCacheKey);
-    public static CacheKey ErpSalesRepErpAccountMapBySalesRepIdCacheKey => new("Nop.erpsalesreperpaccountmap.bysalesrepid.{0}", ErpSalesRepErpAccountMapBySalesRepIdPrefixCacheKey);
-    public static CacheKey ErpAccountByIdWithActiveCacheKey => new("Nop.erpaccount.byidwithactive.{0}", ErpAccountByIdWithActivePrefixCacheKey);
-    public static CacheKey ErpAccountAllActiveCacheKey => new("Nop.erpaccount.allactive", ErpAccountAllActivePrefixCacheKey);
-    public static CacheKey ErpAccountPagedCacheKey => new("Nop.erpaccount.paged.{0}-{1}-{2}-{3}-{4}-{5}-{6}-{7}-{8}-{9}", ErpAccountPagedPrefixCacheKey);
-    public static CacheKey ErpAccountListCacheKey => new("Nop.erpaccount.list.{0}-{1}-{2}-{3}-{4}-{5}-{6}", ErpAccountListPrefixCacheKey);
-    public static CacheKey ErpAccountPagedByIdsCacheKey => new("Nop.erpaccount.pagedbyids.{0}-{1}-{2}-{3}-{4}-{5}", ErpAccountPagedByIdsPrefixCacheKey);
-    public static CacheKey ErpAccountOfActiveNopUsersCacheKey => new("Nop.erpaccount.ofactivenopusers.{0}-{1}", ErpAccountOfActiveNopUsersPrefixCacheKey);
-    public static CacheKey ErpAccountByAccountNumberCacheKey => new("Nop.erpaccount.byaccountnumber.{0}", ErpAccountByAccountNumberPrefixCacheKey);
-    public static CacheKey ErpAccountByCustomerIdCacheKey => new("Nop.erpaccount.bycustomerid.{0}", ErpAccountByCustomerIdPrefixCacheKey);
-    public static CacheKey ErpAccountBySalesOrgIdCacheKey => new("Nop.erpaccount.bysalesorgid.{0}", ErpAccountBySalesOrgIdPrefixCacheKey);
-    public static CacheKey ShipToAddressCacheKey => new("Nop.erpaccount.ShiptoAddress.{0}-{1}", ErpAccountPrefix, ShiptoAddressesByErpAccountrPrefix);
+    public static CacheKey ErpAccountByIdCacheKey => new("Nop.erpaccount.byid.{0}-{1}", ErpAccountByIdCacheKeyPrefix, ErpAccountPrefix);
+
+    public static string ErpAccountByCustomerCacheKeyPrefix => "Nop.erpaccount.bycustomer.";
 
     /// <summary>
-    /// Gets a key for caching
+    /// Gets a key for caching Erp Accounts by Customer
     /// </summary>
     /// <remarks>
     /// {0} : Customer ID
-    /// {1} : roles of the current customer
+    /// {1} : Roles of the current customer
     /// </remarks>
-    public static CacheKey ErpAccountByCustomerCacheKey => new("Nop.erpaccount.bycustomer.{0}-{1}", ErpAccountByCustomerPrefixCacheKey);
+    public static CacheKey ErpAccountByCustomerCacheKey => new("Nop.erpaccount.bycustomer.{0}-{1}", ErpAccountByCustomerCacheKeyPrefix, ErpAccountPrefix);
+
+    public static string ErpAccountByIdWithActiveCacheKeyPrefix => "Nop.erpaccount.byidwithactive.";
+
+    /// <summary>
+    /// Gets a key for caching Active Erp Account by Id
+    /// </summary>
+    /// <remarks>
+    /// {0} : Erp Account Id
+    /// </remarks>
+    public static CacheKey ErpAccountByIdWithActiveCacheKey => new("Nop.erpaccount.byidwithactive.{0}", ErpAccountByIdWithActiveCacheKeyPrefix, ErpAccountPrefix);
 
     #endregion
+
+    #region Erp Warehouse Sales Org Map Cache keys and Prefixes
 
     public static string SalesRepOrgPrefix => "Nop.salesrep.salesreporgs.";
 
@@ -194,6 +180,8 @@ public static class ERPIntegrationCoreDefaults
     public static CacheKey SalesRepOrgCacheKey => new("Nop.salesrep.salesreporgs.{0}-{1}", SalesRepOrgBySalesRepPrefix, SalesRepOrgPrefix);  
     public static CacheKey ErpWarehouseSalesOrgMapByCodeCacheKey => new("ERPIntegration.warehouse.salesOrgMap.byWarehouseCode-{0}", ErpWarehouseSalesOrgMapByCodePrefix);
     public static string ErpWarehouseSalesOrgMapByCodePrefix => "ERPwarehouse.salesOrgMap.ByWarehouseCode";
+
+    #endregion
 
     #endregion
 

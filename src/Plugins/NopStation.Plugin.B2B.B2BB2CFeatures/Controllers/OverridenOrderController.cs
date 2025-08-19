@@ -133,10 +133,7 @@ public class OverridenOrderController : OrderController
 
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(customer.Id);
 
-        if (erpAccount == null)
-            return Challenge();
-
-        if (erpNopUser == null)
+        if (erpAccount == null || erpNopUser == null)
             return Challenge();
 
         var erpOrderPerAccount = await _erpOrderAdditionalDataService.GetErpOrderAdditionalDataByNopOrderIdAsync(orderId);
@@ -313,13 +310,13 @@ public class OverridenOrderController : OrderController
         #region B2B
 
         (var erpAccount, var erpNopUser) = await GetErpAccountAndUserOfCurrentCustomerAsync(customer.Id);
-        if (erpAccount != null)
+        if (erpAccount != null && erpNopUser != null)
         {
             if (!await _permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BOrder) && 
                 !await _permissionService.AuthorizeAsync(ErpPermissionProvider.PlaceB2BQuote))
                 return RedirectToRoute("ShoppingCart");
 
-            if (erpNopUser != null && erpNopUser.ErpUserType == ErpUserType.B2BUser)
+            if (erpNopUser.ErpUserType == ErpUserType.B2BUser)
             {
                 var erpOrderPerAccount = await _erpOrderAdditionalDataService.GetErpOrderAdditionalDataByNopOrderIdAsync(orderId);
                 if (erpOrderPerAccount == null || erpOrderPerAccount.ErpAccountId != erpAccount.Id)

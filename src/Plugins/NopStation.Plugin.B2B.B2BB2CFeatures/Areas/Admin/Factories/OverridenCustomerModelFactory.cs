@@ -282,7 +282,7 @@ public partial class OverridenCustomerModelFactory : CustomerModelFactory
             var isErpAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(customer.Id) != null;
             var erpUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(customer.Id);
 
-            if (isErpAccount && erpUser.ErpUserType == ErpUserType.B2CUser)
+            if (isErpAccount && erpUser != null && erpUser.ErpUserType == ErpUserType.B2CUser)
             {
                 //prepare model customer attributes
                 await PrepareCustomerAttributeModelsAsync(model.CustomerAttributes, customer);

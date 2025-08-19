@@ -19,7 +19,7 @@ public interface IErpAccountService
     Task<IList<ErpSalesRepErpAccountMap>> GetAllErpAccountsBySalesRepIdAsync(string erpSalesRepId = null);
     Task<ErpAccount> GetErpAccountByIdAsync(int id, bool filterOutDeleted = true);
     Task<ErpAccount> GetErpAccountByIdWithActiveAsync(int id);
-    Task<IList<ErpAccount>> GetAllErpAccountsAsync();
+    Task<IList<ErpAccount>> GetAllActiveErpAccountsAsync();
     Task<IPagedList<ErpAccount>> GetAllErpAccountsAsync(int pageIndex = 0,
         int pageSize = int.MaxValue,
         bool? showHidden = null,

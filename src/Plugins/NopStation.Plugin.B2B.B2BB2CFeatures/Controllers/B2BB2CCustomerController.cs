@@ -1410,7 +1410,7 @@ public class B2BB2CCustomerController : CustomerController
 
         try
         {
-            var erpAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(model.CustomerId);
+            var erpAccount = await _erpAccountService.GetErpAccountByIdWithActiveAsync(model.ErpAccountId);
             if (erpAccount == null)
             {
                 _notificationService.WarningNotification(
@@ -1423,7 +1423,9 @@ public class B2BB2CCustomerController : CustomerController
             {
                 erpUser.ErpAccountId = model.ErpAccountId;
 
-                var defaultShipToAddress = (await _erpShipToAddressService.GetErpShipToAddressesByAccountIdAsync(showHidden: false, isActiveOnly: true, accountId: erpUser.ErpAccountId)).FirstOrDefault();
+                var defaultShipToAddress = (await _erpShipToAddressService.GetErpShipToAddressesByAccountIdAsync(showHidden: false, 
+                    isActiveOnly: true, 
+                    accountId: erpUser.ErpAccountId)).FirstOrDefault();
                 
                 if (defaultShipToAddress == null)
                 {
