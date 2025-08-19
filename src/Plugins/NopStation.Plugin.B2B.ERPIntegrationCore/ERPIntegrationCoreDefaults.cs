@@ -143,7 +143,7 @@ public static class ERPIntegrationCoreDefaults
     /// </remarks>
     public static CacheKey ErpAccountByIdCacheKey => new("Nop.erpaccount.byid.{0}-{1}", ErpAccountByIdCacheKeyPrefix, ErpAccountPrefix);
 
-    public static string ErpAccountByCustomerCacheKeyPrefix => "Nop.erpaccount.bycustomer.";
+    public static string ErpAccountByCustomerCacheKeyPrefix => "Nop.erpaccount.bycustomer.{0}";
 
     /// <summary>
     /// Gets a key for caching Erp Accounts by Customer

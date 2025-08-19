@@ -8,6 +8,6 @@ public class CustomerCacheEventConsumer : CacheEventConsumer<Customer>
 {
     protected override async Task ClearCacheAsync(Customer entity, EntityEventType entityEventType)
     {
-        await RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpAccountByCustomerCacheKeyPrefix);
+        await RemoveByPrefixAsync(ERPIntegrationCoreDefaults.ErpAccountByCustomerCacheKeyPrefix, entity.Id);
     }
 }

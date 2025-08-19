@@ -1466,14 +1466,6 @@ public class B2BB2CCustomerController : CustomerController
                     erpUser.Id, erpUser.ErpAccountId),
                     erpUser);
             }
-            else
-            {
-                _notificationService.WarningNotification(
-                    string.Format(await _localizationService
-                    .GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.Customers.Impersonate.ErpNopUserNotAvailable"),
-                    erpAccount.AccountName, erpAccount.AccountNumber));
-                return Redirect(model.RedirectUrl);
-            }
         }
         catch (Exception ex)
         {
