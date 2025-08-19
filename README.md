@@ -67,7 +67,9 @@ For deployment, we follow these steps:
 1. **Build**: Ensure the project builds successfully in Visual Studio 2022.
 2. **Publish**: NopCommerce plugin upload facility, but in case of size exceeding 50mb login to server through RDP and replace selected build.
 3. **Database Update**: Ensure the database is updated with any new migrations.
-   feature
+   feature 
+
+follow the [Deplyment Guideline](Deployment_GuideLine.md) to create and Reveiw Pull Requests.
 
 ## B2B-B2C & ERP Documentation:
 
