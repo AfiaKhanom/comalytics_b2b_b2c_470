@@ -7,11 +7,11 @@ using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Gdpr;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Tax;
 using Nop.Services.Attributes;
-using Nop.Services.Configuration;
 using Nop.Services.Directory;
 using Nop.Services.Gdpr;
 using Nop.Services.Helpers;
@@ -20,7 +20,6 @@ using Nop.Web.Models.Customer;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Helpers;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Model.Registration;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
-using Nop.Core.Domain.Directory;
 
 namespace NopStation.Plugin.B2B.B2BB2CFeatures.Factories;
 
@@ -45,8 +44,6 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
     private readonly TaxSettings _taxSettings;
     private readonly ICommonHelper _commonHelper;
     private readonly IErpSalesOrgService _erpSalesOrgService;
-    private readonly ISettingService _settingService;
-    private readonly IStoreContext _storeContext;
     private readonly IErpAccountService _erpAccountService;
     private readonly AddressSettings _addressSettings;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
@@ -72,9 +69,7 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
         TaxSettings taxSettings,
         ICommonHelper commonHelper,
         IErpSalesOrgService erpSalesOrgService,
-        IStoreContext storeContext,
         IErpAccountService erpAccountService,
-        ISettingService settingService,
         AddressSettings addressSettings,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings)
     {
@@ -96,8 +91,6 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
         _commonHelper = commonHelper;
         _erpSalesOrgService = erpSalesOrgService;
         _erpAccountService = erpAccountService;
-        _settingService = settingService;
-        _storeContext = storeContext;
         _addressSettings = addressSettings;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
     }
@@ -137,7 +130,7 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
                 var items = new SelectListItem
                 {
                     Text = salesOrg.Name,
-                    Value = salesOrg.Id.ToString()
+                    Value = $"{salesOrg.Id}"
                 };
                 model.AvailableB2BSalesOrganizations.Add(items);
             }
@@ -244,7 +237,7 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
                 model.AvailableCountries.Add(new SelectListItem
                 {
                     Text = await _localizationService.GetLocalizedAsync(c, x => x.Name),
-                    Value = c.Id.ToString(),
+                    Value = $"{c.Id}",
                     Selected = c.Id == model.CountryId
                 });
             }
@@ -272,7 +265,6 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
                         Value = "0"
                     });
                 }
-
             }
         }
 
@@ -351,16 +343,16 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
                             if (!_customerAttributeParser.ParseValues(selectedAttributesXml, attribute.Id).Any())
                                 break;
 
-                            //clear default selection                                
+                            //clear default selection
                             foreach (var item in attributeModel.Values)
                                 item.IsPreSelected = false;
 
                             //select new values
                             var selectedValues = await _customerAttributeParser.ParseAttributeValuesAsync(selectedAttributesXml);
                             foreach (var attributeValue in selectedValues)
-                                foreach (var item in attributeModel.Values)
-                                    if (attributeValue.Id == item.Id)
-                                        item.IsPreSelected = true;
+                            foreach (var item in attributeModel.Values)
+                                if (attributeValue.Id == item.Id)
+                                    item.IsPreSelected = true;
                         }
                     }
                     break;
@@ -467,7 +459,7 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
                 model.AvailableCountries_ROA.Add(new SelectListItem
                 {
                     Text = await _localizationService.GetLocalizedAsync(c, x => x.Name),
-                    Value = c.Id.ToString(),
+                    Value = $"{c.Id}",
                     Selected = c.Id == model.CountryId_ROA
                 });
             }
@@ -477,7 +469,7 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
                 var states = (await _stateProvinceService
                     .GetStateProvincesByCountryIdAsync(model.CountryId_ROA ?? 0, languageId))
                     .ToList();
-                if (states.Any())
+                if (states.Count != 0)
                 {
                     model.AvailableStates_ROA.Add(new SelectListItem { Text = await _localizationService.GetResourceAsync("Address.SelectState"), Value = "0" });
                     foreach (var s in states)
@@ -485,8 +477,8 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
                         model.AvailableStates_ROA.Add(new SelectListItem
                         {
                             Text = await _localizationService.GetLocalizedAsync(s, x => x.Name),
-                            Value = s.Id.ToString(),
-                            Selected = (s.Id == model.StateProvinceId_ROA)
+                            Value = $"{s.Id}",
+                            Selected = s.Id == model.StateProvinceId_ROA
                         });
                     }
                 }
@@ -585,7 +577,7 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
                 model.AvailableCountries_PTA.Add(new SelectListItem
                 {
                     Text = await _localizationService.GetLocalizedAsync(c, x => x.Name),
-                    Value = c.Id.ToString(),
+                    Value = $"{c.Id}",
                     Selected = c.Id == model.CountryId_PTA
                 });
             }
@@ -595,7 +587,7 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
                 var states = (await _stateProvinceService
                     .GetStateProvincesByCountryIdAsync(model.CountryId_PTA ?? 0, languageId))
                     .ToList();
-                if (states.Any())
+                if (states.Count != 0)
                 {
                     model.AvailableStates_PTA.Add(new SelectListItem { Text = await _localizationService.GetResourceAsync("Address.SelectState"), Value = "0" });
                     foreach (var s in states)
@@ -603,8 +595,8 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
                         model.AvailableStates_PTA.Add(new SelectListItem
                         {
                             Text = await _localizationService.GetLocalizedAsync(s, x => x.Name),
-                            Value = s.Id.ToString(),
-                            Selected = (s.Id == model.StateProvinceId_PTA)
+                            Value = $"{s.Id}",
+                            Selected = s.Id == model.StateProvinceId_PTA
                         });
                     }
                 }

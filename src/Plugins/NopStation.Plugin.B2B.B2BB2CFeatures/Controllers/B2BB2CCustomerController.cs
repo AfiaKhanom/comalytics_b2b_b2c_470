@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -158,53 +159,52 @@ public class B2BB2CCustomerController : CustomerController
         ICommonHelperService commonHelperService,
         IErpCustomerFunctionalityService erpCustomerFunctionalityService,
         IShoppingCartService shoppingCartService) : base(addressSettings,
-             captchaSettings,
-             customerSettings,
-             dateTimeSettings,
-             forumSettings,
-             gdprSettings,
-             htmlEncoder,
-             addressModelFactory,
-             addressService,
-             addressAttributeParser,
-             customerAttributeParser,
-             customerAttributeService,
-             authenticationService,
-             countryService,
-             currencyService,
-             customerActivityService,
-             customerModelFactory,
-             customerRegistrationService,
-             customerService,
-             downloadService,
-             eventPublisher,
-             exportManager,
-             externalAuthenticationService,
-             gdprService,
-             genericAttributeService,
-             giftCardService,
-             localizationService,
-             logger,
-             multiFactorAuthenticationPluginManager,
-             newsLetterSubscriptionService,
-             notificationService,
-             orderService,
-             permissionService,
-             pictureService,
-             priceFormatter,
-             productService,
-             stateProvinceService,
-             storeContext,
-             taxService,
-             workContext,
-             workflowMessageService,
-             localizationSettings,
-             mediaSettings,
-             multiFactorAuthenticationSettings,
-             storeInformationSettings,
+            captchaSettings,
+            customerSettings,
+            dateTimeSettings,
+            forumSettings,
+            gdprSettings,
+            htmlEncoder,
+            addressModelFactory,
+            addressService,
+            addressAttributeParser,
+            customerAttributeParser,
+            customerAttributeService,
+            authenticationService,
+            countryService,
+            currencyService,
+            customerActivityService,
+            customerModelFactory,
+            customerRegistrationService,
+            customerService,
+            downloadService,
+            eventPublisher,
+            exportManager,
+            externalAuthenticationService,
+            gdprService,
+            genericAttributeService,
+            giftCardService,
+            localizationService,
+            logger,
+            multiFactorAuthenticationPluginManager,
+            newsLetterSubscriptionService,
+            notificationService,
+            orderService,
+            permissionService,
+            pictureService,
+            priceFormatter,
+            productService,
+            stateProvinceService,
+            storeContext,
+            taxService,
+            workContext,
+            workflowMessageService,
+            localizationSettings,
+            mediaSettings,
+            multiFactorAuthenticationSettings,
+            storeInformationSettings,
              taxSettings)
     {
-
         _b2BB2CWorkContext = b2BB2CWorkContext;
         _shoppingCartService = shoppingCartService;
         _b2BRegisterModelFactory = b2BRegisterModelFactory;
@@ -277,8 +277,8 @@ public class B2BB2CCustomerController : CustomerController
                     //load read-only (already server-side selected) values
                     var attributeValues = await _customerAttributeService.GetAttributeValuesAsync(attribute.Id);
                     foreach (var selectedAttributeId in attributeValues
-                        .Where(v => v.IsPreSelected)
-                        .Select(v => v.Id)
+                            .Where(v => v.IsPreSelected)
+                            .Select(v => v.Id)
                         .ToList())
                     {
                         attributesXml = _customerAttributeParser.AddAttribute(attributesXml,
@@ -443,6 +443,10 @@ public class B2BB2CCustomerController : CustomerController
                 {
                     ModelState.AddModelError("", error);
                 }
+
+                ModelState.Remove(nameof(model.AccountNumber));
+                ModelState.Remove(nameof(model.B2CIdentificationNumber));
+                ModelState.Remove(nameof(model.AccountName));
             }
 
             if (_captchaSettings.Enabled && _captchaSettings.ShowOnRegistrationPage && !captchaValid)
@@ -530,7 +534,7 @@ public class B2BB2CCustomerController : CustomerController
 
                             if (_b2BB2CFeaturesSettings.UseERPIntegration)
                             {
-                                var erpAccountInfo = await erpIntegrationPlugin.CreateAccountNoErpAsync(new ErpCreateAccountModel
+                                var createAccountModel = new ErpCreateAccountModel
                                 {
                                     VatNumber = model.VatNumber ?? "Normal",
                                     StateProvince = stateProvidence == null ? string.Empty : stateProvidence.Name,
@@ -545,9 +549,28 @@ public class B2BB2CCustomerController : CustomerController
                                     Address1 = model.StreetAddress ?? string.Empty,
                                     Address2 = model.StreetAddress2 ?? string.Empty,
                                     Email = model.Email ?? string.Empty,
-                                    AccountNumber = model.AccountNumber ?? model.B2CIdentificationNumber,
+                                    AccountNumber =
+                                        model.AccountNumber
+                                        ?? model.B2CIdentificationNumber
+                                        ?? string.Empty,
                                     AccountName = model.AccountName ?? string.Empty,
-                                });
+                                };
+
+                                var accountModelData = new StringBuilder();
+
+                                foreach (var property in createAccountModel.GetType().GetProperties())
+                                {
+                                    var value = property.GetValue(createAccountModel, null);
+                                    accountModelData.AppendLine($"{property.Name}: {value}");
+                                }
+
+                                await _erpLogsService.InsertErpLogAsync(
+                                    ErpLogLevel.Information,
+                                    ErpSyncLevel.Account,
+                                    $"ERP Account creation request data: \n\n{accountModelData}"
+                                );
+
+                                var erpAccountInfo = await erpIntegrationPlugin.CreateAccountNoErpAsync(createAccountModel);
 
                                 if (erpAccountInfo.IsError)
                                 {
@@ -568,7 +591,7 @@ public class B2BB2CCustomerController : CustomerController
                                         {
                                             //fetch shipToAddress from ERP for new ErpAccount
                                             var erpShipToAddressesbyErpAccount = await erpIntegrationPlugin.GetShipToAddressesFromErpAsync(new ErpGetRequestModel
-                                            {
+                                                    {
                                                 AccountNumber = erpAccountInfo.AccountNumber
                                             });
 
@@ -698,11 +721,11 @@ public class B2BB2CCustomerController : CustomerController
                                 if (model.Newsletter)
                                 {
                                     await _newsLetterSubscriptionService.InsertNewsLetterSubscriptionAsync(new NewsLetterSubscription
-                                    {
-                                        NewsLetterSubscriptionGuid = Guid.NewGuid(),
-                                        Email = customerEmail,
-                                        Active = isNewsletterActive,
-                                        StoreId = store.Id,
+                                        {
+                                            NewsLetterSubscriptionGuid = Guid.NewGuid(),
+                                            Email = customerEmail,
+                                            Active = isNewsletterActive,
+                                            StoreId = store.Id,
                                         CreatedOnUtc = DateTime.UtcNow
                                     });
 
@@ -799,7 +822,7 @@ public class B2BB2CCustomerController : CustomerController
                             await _workflowMessageService.SendCustomerRegisteredStoreOwnerNotificationMessageAsync(customer,
                                 _localizationSettings.DefaultAdminLanguageId);
 
-                        //raise event       
+                        //raise event
                         await _eventPublisher.PublishAsync(new CustomerRegisteredEvent(customer));
                         var shipToAddressIdForB2BB2CUserId = 0;
 
@@ -807,7 +830,7 @@ public class B2BB2CCustomerController : CustomerController
                         {
                             if (!_b2BB2CFeaturesSettings.UseDefaultAccountForB2CUser)
                             {
-                                #region Prepare and save ErpAccount 
+                                #region Prepare and save ErpAccount
 
                                 erpAccount = new ErpAccount
                                 {
@@ -960,7 +983,7 @@ public class B2BB2CCustomerController : CustomerController
                             erpNopUser.Id),
                             erpNopUser);
 
-                        //prepare and save erpNopUser 
+                        //prepare and save erpNopUser
                         var erpNopUserAccountMap = new ErpNopUserAccountMap
                         {
                             ErpAccountId = erpAccount.Id,
@@ -1012,7 +1035,7 @@ public class B2BB2CCustomerController : CustomerController
                                 //send customer welcome message
                                 await _workflowMessageService.SendCustomerWelcomeMessageAsync(customer, currentLanguage.Id);
 
-                                //raise event       
+                                //raise event
                                 await _eventPublisher.PublishAsync(new CustomerActivatedEvent(customer));
 
                                 returnUrl = Url.RouteUrl("RegisterResult", new { resultId = (int)UserRegistrationType.Standard, returnUrl });
@@ -1069,7 +1092,7 @@ public class B2BB2CCustomerController : CustomerController
     {
         //For backward compatibility with previous versions where email was used as a parameter in the URL
         var customer = await _customerService.GetCustomerByEmailAsync(email)
-                       ?? await _customerService.GetCustomerByGuidAsync(guid);
+            ?? await _customerService.GetCustomerByGuidAsync(guid);
 
         if (customer == null)
             return RedirectToRoute("Homepage");
@@ -1093,7 +1116,7 @@ public class B2BB2CCustomerController : CustomerController
         //send welcome message
         //await _workflowMessageService.SendCustomerWelcomeMessageAsync(customer, (await _workContext.GetWorkingLanguageAsync()).Id);
 
-        //raise event       
+        //raise event
         await _eventPublisher.PublishAsync(new CustomerActivatedEvent(customer));
 
         //authenticate customer after activation
@@ -1210,7 +1233,6 @@ public class B2BB2CCustomerController : CustomerController
         return View("~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Views/B2BB2CCustomer/Login.cshtml", model);
     }
 
-
     [HttpPost]
     [ValidateCaptcha]
     //available even when a store is closed
@@ -1235,8 +1257,8 @@ public class B2BB2CCustomerController : CustomerController
             var loginResult = CustomerLoginResults.NotRegistered;
 
             var customer = _customerSettings.UsernamesEnabled
-                                ? await _customerService.GetCustomerByUsernameAsync(model.Username)
-                                : await _customerService.GetCustomerByEmailAsync(model.Email);
+                ? await _customerService.GetCustomerByUsernameAsync(model.Username)
+                : await _customerService.GetCustomerByEmailAsync(model.Email);
 
             ErpAccount erpAccount = null;
             if (customer != null)
@@ -1256,11 +1278,11 @@ public class B2BB2CCustomerController : CustomerController
             switch (loginResult)
             {
                 case CustomerLoginResults.Successful:
-                    {
+                {
                         return await _customerRegistrationService.SignInCustomerAsync(customer, returnUrl, model.RememberMe);
-                    }
+                }
                 case CustomerLoginResults.MultiFactorAuthenticationRequired:
-                    {
+                {
                         var customerMultiFactorAuthenticationInfo = new CustomerMultiFactorAuthenticationInfo
                         {
                             UserName = userNameOrEmail,
@@ -1268,8 +1290,8 @@ public class B2BB2CCustomerController : CustomerController
                             ReturnUrl = returnUrl
                         };
                         await HttpContext.Session.SetAsync(NopCustomerDefaults.CustomerMultiFactorAuthenticationInfo, customerMultiFactorAuthenticationInfo);
-                        return RedirectToRoute("MultiFactorVerification");
-                    }
+                    return RedirectToRoute("MultiFactorVerification");
+                }
                 case CustomerLoginResults.CustomerNotExist:
                     ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.CustomerNotExist"));
                     break;
@@ -1349,7 +1371,7 @@ public class B2BB2CCustomerController : CustomerController
             return RedirectToAction("List");
         }
 
-        //standard logout 
+        //standard logout
         await _authenticationService.SignOutAsync();
 
         //activity log
@@ -1368,7 +1390,7 @@ public class B2BB2CCustomerController : CustomerController
             await _localizationService.GetResourceAsync("ActivityLog.PublicStore.Logout"), customer);
 
 
-        //raise logged out event       
+        //raise logged out event
         await _eventPublisher.PublishAsync(new CustomerLoggedOutEvent(customer));
 
         //EU Cookie
@@ -1424,9 +1446,9 @@ public class B2BB2CCustomerController : CustomerController
                 erpUser.ErpAccountId = model.ErpAccountId;
 
                 var defaultShipToAddress = (await _erpShipToAddressService.GetErpShipToAddressesByAccountIdAsync(showHidden: false, 
-                    isActiveOnly: true, 
+                        isActiveOnly: true,
                     accountId: erpUser.ErpAccountId)).FirstOrDefault();
-                
+
                 if (defaultShipToAddress == null)
                 {
                     _notificationService.WarningNotification(
@@ -1595,13 +1617,13 @@ public class B2BB2CCustomerController : CustomerController
                 await _addressService.InsertAddressAsync(physicalTradingAddress);
 
                 var erpPhysicalTradingAddress = new ErpAccountCustomerRegistrationPhysicalTradingAddress
-                {
-                    FormId = applicationForm.Id,
-                    FullName = model.PhysicalTradingAddressModel.FullName,
-                    Surname = model.PhysicalTradingAddressModel.Surname,
-                    PhysicalTradingAddressId = physicalTradingAddress.Id,
+                    {
+                        FormId = applicationForm.Id,
+                        FullName = model.PhysicalTradingAddressModel.FullName,
+                        Surname = model.PhysicalTradingAddressModel.Surname,
+                        PhysicalTradingAddressId = physicalTradingAddress.Id,
                     IsActive = true
-                };
+                    };
 
                 await _erpAccountCustomerRegistrationPhysicalTradingAddressService.InsertErpAccountCustomerRegistrationPhysicalTradingAddressAsync(erpPhysicalTradingAddress);
             }
