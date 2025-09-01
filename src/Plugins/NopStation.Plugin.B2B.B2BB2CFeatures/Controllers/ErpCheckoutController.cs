@@ -680,7 +680,8 @@ public class ErpCheckoutController : CheckoutController
 
         #region B2B User
 
-        var shipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdWithActiveAsync(b2BUser.ErpShipToAddressId);
+        var shipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdWithActiveAsync(
+            b2BUser?.ErpShipToAddressId ?? b2CUser?.ErpShipToAddressId ?? 0);
 
         if(shipToAddress == null)
         {
