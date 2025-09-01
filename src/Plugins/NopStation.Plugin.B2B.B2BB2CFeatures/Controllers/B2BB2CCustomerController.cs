@@ -991,11 +991,28 @@ public class B2BB2CCustomerController : CustomerController
                         };
                         await _erpNopUserAccountMapService.InsertErpNopUserAccountMapAsync(erpNopUserAccountMap);
 
-                        //erp activity log
-                        await _erpActivityLogsService.InsertErpActivityAsync("Erp_AddNewErpNopUserAccountMap",
-                            string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.AddNewErpNopUserAccountMap"),
-                            erpNopUserAccountMap.Id),
-                            erpNopUserAccountMap);
+                        if (erpNopUserAccountMap.Id > 0)
+                        {
+                            var b2BB2CustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(model.IsB2BUser ? ERPIntegrationCoreDefaults.B2BCustomerRoleSystemName : ERPIntegrationCoreDefaults.B2CCustomerRoleSystemName);
+                            if (b2BB2CustomerRole != null)
+                            {
+                                await _customerService.AddCustomerRoleMappingAsync(new CustomerCustomerRoleMapping { CustomerId = customer.Id, CustomerRoleId = b2BB2CustomerRole.Id });
+                            }
+                            else
+                            {
+                                await _erpLogsService.ErrorAsync($"B2B/B2C customer role not found. So b2b/b2c customer role hasn't been added to: {customer.Email}", ErpSyncLevel.Account, customer: customer);
+                            }
+
+                            //erp activity log
+                            await _erpActivityLogsService.InsertErpActivityAsync("Erp_AddNewErpNopUserAccountMap",
+                                string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.AddNewErpNopUserAccountMap"),
+                                erpNopUserAccountMap.Id),
+                                erpNopUserAccountMap);
+                        }
+                        else
+                        {
+                            await _erpLogsService.InformationAsync($"Registration successful! Customer Id: {customer.Id}, but ErpNopUserAccountMap was not created", ErpSyncLevel.Account, customer: customer);
+                        }
 
                         #endregion
 
