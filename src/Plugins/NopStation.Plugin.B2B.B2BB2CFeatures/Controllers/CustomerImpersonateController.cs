@@ -14,6 +14,7 @@ using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Web.Controllers;
 using Nop.Web.Framework;
+using Nop.Web.Framework.Mvc.Filters;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.SalesRepUser;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.Customers;
@@ -197,7 +198,10 @@ public class CustomerImpersonateController : BasePublicController
 
         return RedirectToAction("Index", "Home", new { area = string.Empty });
     }
-
+    //available even when a store is closed
+    [CheckAccessClosedStore(ignore: true)]
+    //available even when navigation is not allowed
+    [CheckAccessPublicStore(ignore: true)]
     public virtual async Task<IActionResult> Logout()
     {
         var customer = await _workContext.GetCurrentCustomerAsync();
