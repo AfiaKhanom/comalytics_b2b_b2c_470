@@ -211,32 +211,27 @@ public class ErpSalesRepService : IErpSalesRepService
             query = query.Where(v => !v.IsDeleted);
 
             //filter erpAccounts by account number, account name
-            var account = _erpErpAccountRepository.Table;
+            var account = _erpErpAccountRepository.Table.Where(a => !a.IsDeleted);
+            if (!showHidden)
+                account = account.Where(a => a.IsActive);
+
             if (!string.IsNullOrWhiteSpace(erpAccontNo))
                 account = account.Where(c => c.AccountNumber.Contains(erpAccontNo));
             if (!string.IsNullOrWhiteSpace(accountName))
                 account = account.Where(c => c.AccountName.Contains(accountName));
 
-            if (!string.IsNullOrWhiteSpace(email) || !string.IsNullOrWhiteSpace(fullName))
-            {
-                var customer = _customerRepository.Table;
+            var customer = _customerRepository.Table.Where(c => c.Active && !c.Deleted);
 
-                if (!string.IsNullOrWhiteSpace(email))
-                    customer = customer.Where(c => c.Email.Contains(email));
+            if (!string.IsNullOrWhiteSpace(email))
+                customer = customer.Where(c => c.Email.Contains(email));
 
-                if (!string.IsNullOrWhiteSpace(fullName))
-                    customer = customer.Where(c => (c.FirstName + " " + c.LastName).Contains(fullName));
+            if (!string.IsNullOrWhiteSpace(fullName))
+                customer = customer.Where(c => (c.FirstName + " " + c.LastName).Contains(fullName));
 
-                if (!string.IsNullOrWhiteSpace(erpAccontNo))
-                    account = account.Where(c => c.AccountNumber.Contains(erpAccontNo));
-
-                query = query.Join(
-                    customer,
-                    u => u.NopCustomerId,
-                    c => c.Id,
-                    (u, c) => new { ErPUser = u, Customer = c })
-                .Select(t => t.ErPUser);
-            }
+            query = from u in query
+                    join c in customer
+                    on u.NopCustomerId equals c.Id
+                    select u;
 
             //for allUsers salesRep = 0, no need to filter by sales org
 
@@ -313,32 +308,27 @@ public class ErpSalesRepService : IErpSalesRepService
             query = query.Where(v => !v.IsDeleted);
 
             //filter erpAccounts by account number, account name
-            var account = _erpErpAccountRepository.Table;
+            var account = _erpErpAccountRepository.Table.Where(a => !a.IsDeleted);
+            if (!showHidden)
+                account = account.Where(a => a.IsActive);
+
             if (!string.IsNullOrWhiteSpace(erpAccontNo))
                 account = account.Where(c => c.AccountNumber.Contains(erpAccontNo));
             if (!string.IsNullOrWhiteSpace(accountName))
                 account = account.Where(c => c.AccountName.Contains(accountName));
 
-            if (!string.IsNullOrWhiteSpace(email) || !string.IsNullOrWhiteSpace(fullName))
-            {
-                var customer = _customerRepository.Table;
+            var customer = _customerRepository.Table.Where(c => c.Active && !c.Deleted);
 
-                if (!string.IsNullOrWhiteSpace(email))
-                    customer = customer.Where(c => c.Email.Contains(email));
+            if (!string.IsNullOrWhiteSpace(email))
+                customer = customer.Where(c => c.Email.Contains(email));
 
-                if (!string.IsNullOrWhiteSpace(fullName))
-                    customer = customer.Where(c => (c.FirstName + " " + c.LastName).Contains(fullName));
+            if (!string.IsNullOrWhiteSpace(fullName))
+                customer = customer.Where(c => (c.FirstName + " " + c.LastName).Contains(fullName));
 
-                if (!string.IsNullOrWhiteSpace(erpAccontNo))
-                    account = account.Where(c => c.AccountNumber.Contains(erpAccontNo));
-
-                query = query.Join(
-                    customer,
-                    u => u.NopCustomerId,
-                    c => c.Id,
-                    (u, c) => new { ErPUser = u, Customer = c })
-                .Select(t => t.ErPUser);
-            }
+            query = from u in query
+                    join c in customer
+                    on u.NopCustomerId equals c.Id
+                    select u;
 
             //for allUsers salesRep = 0, no need to filter by sales org
 
