@@ -80,10 +80,12 @@ public class SqlQueryTemplateModelFactory : ISqlQueryTemplateModelFactory
         {
             if (model == null)
             {
-                model = new SqlQueryTemplateModel();
+                model = new SqlQueryTemplateModel
+                {
+                    Query = sqlQueryTemplate.Query,
+                    ErpSyncLevelId = sqlQueryTemplate.ErpSyncLevelId
+                };
             }
-            model.Query = sqlQueryTemplate.Query;
-            model.ErpSyncLevelId = sqlQueryTemplate.ErpSyncLevelId;
 
             model.ErpSyncLevels = Enum.GetValues(typeof(ErpSyncLevel))
                 .Cast<ErpSyncLevel>()

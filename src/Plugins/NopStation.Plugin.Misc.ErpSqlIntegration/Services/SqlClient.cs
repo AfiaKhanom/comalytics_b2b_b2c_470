@@ -1,5 +1,4 @@
 ﻿using System.Data;
-using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using Microsoft.Data.SqlClient;
@@ -117,9 +116,6 @@ namespace NopStation.Plugin.Misc.ErpSqlIntegration.Services
                     switch (paramValue)
                     {
                         case null:
-                            //// Replace direct equality checks with IS NULL
-                            //queryString = queryString.Replace($"{paramName} =", "IS");
-                            //queryString = queryString.Replace($"= {paramName}", "IS NULL");
                             queryString = queryString.Replace(paramName, "NULL");
                             break;
 
@@ -151,14 +147,14 @@ namespace NopStation.Plugin.Misc.ErpSqlIntegration.Services
         #region Method
 
         public async Task<HttpResponseMessage> HttpCall(object payloadData, ErpSyncLevel erpSyncLevel, string path = "")
-        { 
+        {
             try
             {
                 var currentRetries = 0;
                 HttpResponseMessage httpResponse = new HttpResponseMessage();
 
                 // Serialize the JSON object to a JSON string
-                var jsonPayload = JsonConvert.SerializeObject(payloadData);
+                var jsonPayload = JsonConvert.SerializeObject(payloadData, Formatting.Indented);
 
                 // Log the payload
                 await _erpLogsService.InformationAsync($"Serialized JSON Payload: {jsonPayload}", erpSyncLevel);
@@ -251,8 +247,6 @@ namespace NopStation.Plugin.Misc.ErpSqlIntegration.Services
                     response.Message = "SQL command generation failed. Please verify request parameters.";
                     return response;
                 }
-
-                //sqlCommand = AppendPagination(sqlCommand, requestModel);
 
                 await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Information, erpSyncLevel, "Executing SQL query. View query here.", $"SQL query - {sqlCommand}", await _workContext.GetCurrentCustomerAsync());
 

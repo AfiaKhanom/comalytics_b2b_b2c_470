@@ -15,4 +15,6 @@ public interface ISqlQueryTemplatService
     Task<IPagedList<SqlQueryTemplate>> GetAllSqlQueryTemplatesAsync(int storeId = 0,
         int pageIndex = 0,
         int pageSize = int.MaxValue);
+
+    (bool IsSafe, string Message) IsSafeQuery(string query);
 }

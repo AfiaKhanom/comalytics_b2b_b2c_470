@@ -11,6 +11,7 @@ public class MapperConfiguration : Profile, IOrderedMapperProfile
     {
         CreateMap<ErpOrderSettingsModel, ErpPlaceOrderSettings>().ReverseMap();
         CreateMap<ErpOrderItemDataSettingsModel, ErpPlaceOrderItemSettings>().ReverseMap();
+        CreateMap<ErpShippingAddressPayloadSettingsModel, ErpShippingAddressPayloadSettings>().ReverseMap();
     }
 
     public int Order => 1;

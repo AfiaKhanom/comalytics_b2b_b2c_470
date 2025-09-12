@@ -96,7 +96,7 @@ public class B2BPricingService : IB2BPricingService
             if (!await _sqlIntegrationService.IsValidSqlIntegrationSettings())
             {
                 erpResponseData.ErpResponseModel.IsError = true;
-                erpResponseData.ErpResponseModel.ErrorShortMessage = "Syspro Integration Settings is not configured well.";
+                erpResponseData.ErpResponseModel.ErrorShortMessage = "ERP SQL Integration Settings is not configured well.";
                 return erpResponseData;
             }
 

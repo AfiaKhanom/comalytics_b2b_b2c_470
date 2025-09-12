@@ -117,7 +117,7 @@ public class SqlQueryTemplateController : NopStationAdminController
         {
             sqlQueryTemplate = new SqlQueryTemplate
             {
-                Query = model.Query,
+                Query = model.Query.Trim(),
                 ErpSyncLevelId = model.ErpSyncLevelId
             };
             await _sqlQueryTemplatService.InsertSqlQueryTemplateAsync(sqlQueryTemplate);
@@ -165,6 +165,7 @@ public class SqlQueryTemplateController : NopStationAdminController
         if (ModelState.IsValid)
         {
             sqlQueryTemplate = await _sqlQueryTemplatService.GetSqlQueryTemplateBySyncLevelIdAsync(model.ErpSyncLevelId);
+            model.Query = model.Query.Trim();
 
             if (sqlQueryTemplate == null)
             {

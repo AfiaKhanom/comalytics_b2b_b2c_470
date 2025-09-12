@@ -290,6 +290,50 @@ public class SqlIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegratio
             new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.MappingOrderItem.Settings", "Order item mapping settings"),
 
             new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.MappingOrderItem.DuplicateKey", "Mappings could not be saved because the following keys are duplicated: {0}"),
+
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Name", "Name"),
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Name.Hint", "Specify the name key for the ERP req payload."),
+
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Email", "Email"),
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Email.Hint", "Specify the email key for the ERP req payload."),
+
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Company", "Company"),
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Company.Hint", "Specify the company key for the ERP req payload."),
+
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Address1", "Address 1"),
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Address1.Hint", "Specify the address 1 key for the ERP req payload."),
+
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Address2", "Address 2"),
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Address2.Hint", "Specify the address 2 key for the ERP req payload."),
+
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Address3", "Address 3"),
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Address3.Hint", "Specify the address 3 key for the ERP req payload."),
+
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.City", "City"),
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.City.Hint", "Specify the city key for the ERP req payload."),
+
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.StateProvince", "State/Province"),
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.StateProvince.Hint", "Specify the state/province key for the ERP req payload."),
+
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Region", "Region"),
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Region.Hint", "Specify the region key for the ERP req payload."),
+
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.ZipPostalCode", "Zip/Postal Code"),
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.ZipPostalCode.Hint", "Specify the zip/postal code key for the ERP req payload."),
+
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Country", "Country"),
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Country.Hint", "Specify the country key for the ERP req payload."),
+
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.PhoneNumber", "Phone Number"),
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.PhoneNumber.Hint", "Specify the phone number key for the ERP req payload."),
+
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Suburb", "Suburb"),
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.Suburb.Hint", "Specify the suburb key for the ERP req payload."),
+
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.ShippingAddressPayloadKey", "Shipping address payload key"),
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.ShippingAddressPayloadKey.Hint", "Specify the JSON key for the ERP req payload that contains the shipping address block."),
+
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.MappingShippingAddress.Settings", "Shipping Address mapping settings"),
         };
 
         return resources;

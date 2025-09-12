@@ -18,6 +18,10 @@ public partial class ErpOrderSettingsModelValidator : BaseNopValidator<ErpOrderS
             .NotEmpty()
             .WithMessageAwait(localizationService.GetResourceAsync("Admin.ErpOrderSettingsModel.ErpOrderItemDataSettingsModel.Fields.ErpOrderPayloadLinesKey.Required"));
 
+        RuleFor(x => x.ErpShippingAddressPayloadSettingsModel.ShippingAddressPayloadKey)
+            .NotEmpty()
+            .WithMessageAwait(localizationService.GetResourceAsync("Admin.ErpOrderSettingsModel.ErpOrderItemDataSettingsModel.Fields.ShippingAddressPayloadKey.Required"));
+
         RuleFor(x => x.AdditionalHardCodedValues).Must((x, s, context) =>
         {
             var validation = sqlIntegrationService.ValidateAdditionalHardCodedValuesSettings(x.AdditionalHardCodedValues);
@@ -33,6 +37,18 @@ public partial class ErpOrderSettingsModelValidator : BaseNopValidator<ErpOrderS
         RuleFor(x => x.ErpOrderItemDataSettingsModel.AdditionalHardCodedValues).Must((x, s, context) =>
         {
             var validation = sqlIntegrationService.ValidateAdditionalHardCodedValuesSettings(x.ErpOrderItemDataSettingsModel.AdditionalHardCodedValues);
+            if (validation.IsValid)
+            {
+                return true;
+            }
+
+            context.AddFailure(validation.ErrorMessage);
+            return false;
+        });
+
+        RuleFor(x => x.ErpShippingAddressPayloadSettingsModel.AdditionalHardCodedValues).Must((x, s, context) =>
+        {
+            var validation = sqlIntegrationService.ValidateAdditionalHardCodedValuesSettings(x.ErpShippingAddressPayloadSettingsModel.AdditionalHardCodedValues);
             if (validation.IsValid)
             {
                 return true;

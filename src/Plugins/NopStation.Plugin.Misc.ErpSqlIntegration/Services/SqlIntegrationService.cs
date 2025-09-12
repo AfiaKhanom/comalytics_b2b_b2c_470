@@ -426,6 +426,7 @@ public partial class SqlIntegrationService : ISqlIntegrationService
         var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
         var erpPlaceOrderSettings = await _settingService.LoadSettingAsync<ErpPlaceOrderSettings>(storeScope);
         var erpPlaceOrderItemSettings = await _settingService.LoadSettingAsync<ErpPlaceOrderItemSettings>(storeScope);
+        var erpShippingAddressPayloadSettings = await _settingService.LoadSettingAsync<ErpShippingAddressPayloadSettings>(storeScope);
 
         // Prepare order details
         var orderDetailsDict = await PrepareRequestBodyWithConfigurableParamsAsync(erpRequest, erpPlaceOrderSettings)
@@ -446,6 +447,12 @@ public partial class SqlIntegrationService : ISqlIntegrationService
         }
 
         orderDetailsDict[erpPlaceOrderItemSettings.ErpOrderPayloadLinesKey] = orderLines;
+
+        // Prepare shipping address
+        var shippingAddressDict = await PrepareRequestBodyWithConfigurableParamsAsync(erpRequest.ShippingAddress, erpShippingAddressPayloadSettings)
+                        ?? new Dictionary<string, object>();
+
+        orderDetailsDict[erpShippingAddressPayloadSettings.ShippingAddressPayloadKey] = shippingAddressDict;
 
         return root;
     }

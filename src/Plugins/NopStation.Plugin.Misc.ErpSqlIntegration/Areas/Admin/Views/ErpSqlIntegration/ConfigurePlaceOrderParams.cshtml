@@ -15,12 +15,6 @@
 
 	const string hideShippingAddressSettingsBlockAttributeName = "MappingOrder.hideShippingAddressSettingsBlock";
 	var hideShippingAddressSettingsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideShippingAddressSettingsBlockAttributeName);
-
-	const string hideBillingAddressSettingsBlockAttributeName = "MappingOrder.hideBillingAddressSettingsBlock";
-	var hideBillingAddressSettingsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideBillingAddressSettingsBlockAttributeName);
-
-	const string hideRequestSettingsBlockAttributeName = "MappingOrder.hideRequestSettingsBlock";
-	var hideRequestSettingsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideRequestSettingsBlockAttributeName);
 }
 
 <form asp-controller="ErpSqlIntegration" asp-action="ConfigurePlaceOrderParams" method="post">
@@ -62,6 +56,17 @@
                         @await Html.PartialAsync("_MappingOrderItem.ErpSqlIntegrationSettings", Model)
 					</nop-card>
 				</nop-cards>
+
+                <nop-cards id="erp-sql-integration-order-delivery-address-cards">
+                    <nop-card asp-name="erp-sql-integration-delivery-address-settings"
+                              asp-icon="fas fa-file-alt"
+                              asp-title="@T("Plugins.NopStation.Misc.ErpSqlIntegration.MappingShippingAddress.Settings")"
+                              asp-hide-block-attribute-name="@hideShippingAddressSettingsBlockAttributeName"
+                              asp-hide="@hideShippingAddressSettingsBlock"
+                              asp-advanced="false">
+                        @await Html.PartialAsync("_MappingShippingAddress.ErpSqlIntegrationSettings", Model)
+                    </nop-card>
+                </nop-cards>
 			</div>
 		</div>
 	</section>

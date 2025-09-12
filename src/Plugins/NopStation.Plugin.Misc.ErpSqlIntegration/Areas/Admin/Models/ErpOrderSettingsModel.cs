@@ -6,6 +6,7 @@ public record ErpOrderSettingsModel : AdditionalHardcodedValueModel
     public ErpOrderSettingsModel()
     {
         ErpOrderItemDataSettingsModel = new ErpOrderItemDataSettingsModel();
+        ErpShippingAddressPayloadSettingsModel = new ErpShippingAddressPayloadSettingsModel();
     }
 
     [NopResourceDisplayName("Plugins.NopStation.Misc.ErpSqlIntegration.ErpOrderSettingsModel.Fields.AccountNumber")]
@@ -66,5 +67,6 @@ public record ErpOrderSettingsModel : AdditionalHardcodedValueModel
     public string? ErpOrderPayloadRootKey { get; set; }
 
     public ErpOrderItemDataSettingsModel ErpOrderItemDataSettingsModel { get; set; }
+    public ErpShippingAddressPayloadSettingsModel ErpShippingAddressPayloadSettingsModel { get; set; }
 }
 

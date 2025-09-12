@@ -37,6 +37,7 @@ public class ErpSqlIntegrationController : NopStationAdminController
     private readonly ISettingService _settingService;
     private readonly ErpPlaceOrderSettings _erpPlaceOrderSettings;
     private readonly ErpPlaceOrderItemSettings _erpPlaceOrderItemSettings;
+    private readonly ErpShippingAddressPayloadSettings _erpShippingAddressPayloadSettings;
     private readonly ISqlIntegrationService _sqlIntegrationService;
 
     #endregion Fields
@@ -56,7 +57,8 @@ public class ErpSqlIntegrationController : NopStationAdminController
         ISettingService settingService,
         ErpPlaceOrderSettings erpPlaceOrderSettings,
         ErpPlaceOrderItemSettings erpPlaceOrderItemSettings,
-        ISqlIntegrationService sqlIntegrationService)
+        ISqlIntegrationService sqlIntegrationService,
+        ErpShippingAddressPayloadSettings erpShippingAddressPayloadSettings)
     {
         _erpActivityLogsService = erpActivityLogsService;
         _localizationService = localizationService;
@@ -72,6 +74,7 @@ public class ErpSqlIntegrationController : NopStationAdminController
         _erpPlaceOrderSettings = erpPlaceOrderSettings;
         _erpPlaceOrderItemSettings = erpPlaceOrderItemSettings;
         _sqlIntegrationService = sqlIntegrationService;
+        _erpShippingAddressPayloadSettings = erpShippingAddressPayloadSettings;
     }
 
     #endregion Ctor
@@ -199,6 +202,7 @@ public class ErpSqlIntegrationController : NopStationAdminController
 
         var model = _erpPlaceOrderSettings.ToSettingsModel<ErpOrderSettingsModel>();
         model.ErpOrderItemDataSettingsModel = _erpPlaceOrderItemSettings.ToSettingsModel<ErpOrderItemDataSettingsModel>();
+        model.ErpShippingAddressPayloadSettingsModel = _erpShippingAddressPayloadSettings.ToSettingsModel<ErpShippingAddressPayloadSettingsModel>();
         return View(model);
     }
 
@@ -227,9 +231,17 @@ public class ErpSqlIntegrationController : NopStationAdminController
             return View(model);
         }
 
+        (hasDuplicates, duplicateKeys) = IsDuplicateKeysPresent(model.ErpShippingAddressPayloadSettingsModel, nameof(ErpShippingAddressPayloadSettingsModel.AdditionalHardCodedValues), false);
+        if (hasDuplicates)
+        {
+            _notificationService.ErrorNotification(string.Format(await _localizationService.GetResourceAsync("Plugins.NopStation.Misc.ErpSqlIntegration.MappingOrderItem.DuplicateKey"), duplicateKeys));
+            return View(model);
+        }
+
         var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
         await _settingService.SaveSettingAsync(model.ToSettings(_erpPlaceOrderSettings), storeScope);
         await _settingService.SaveSettingAsync(model.ErpOrderItemDataSettingsModel.ToSettings(_erpPlaceOrderItemSettings), storeScope);
+        await _settingService.SaveSettingAsync(model.ErpShippingAddressPayloadSettingsModel.ToSettings(_erpShippingAddressPayloadSettings), storeScope);
         await _settingService.ClearCacheAsync();
 
         _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Plugins.NopStation.Misc.ErpSqlIntegration.MappingPlaceOrder.SavedSuccessfully"));
