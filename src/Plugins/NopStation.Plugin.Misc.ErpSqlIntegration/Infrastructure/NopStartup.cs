@@ -6,6 +6,7 @@ using Nop.Core.Infrastructure;
 using Nop.Web.Framework.Infrastructure.Extensions;
 using NopStation.Plugin.Misc.ErpSqlIntegration.Areas.Admin.Factories;
 using NopStation.Plugin.Misc.ErpSqlIntegration.Services;
+using NopStation.Plugin.Misc.ErpSqlIntegration.Services.Auth;
 using NopStation.Plugin.Misc.ErpSqlIntegration.Services.SqLQueryTemplates;
 
 namespace NopStation.Plugin.Misc.ErpSqlIntegration.Infrastructure;
@@ -39,6 +40,7 @@ public class NopStartup : INopStartup
         services.AddScoped<IErpOrderService, ErpOrderService>();
         services.AddScoped<ISqlQueryTemplateModelFactory, SqlQueryTemplateModelFactory>();
         services.AddScoped<ISqlQueryTemplatService, SqlQueryTemplatService>();
+        services.AddScoped<IIntegrationAuthService, IntegrationAuthService>();
 
         services.AddHttpClient<SqlClient>().WithProxy(); 
     }

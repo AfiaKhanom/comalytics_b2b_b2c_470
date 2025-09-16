@@ -22,4 +22,7 @@ public class ConfigurationModel
 
     [NopResourceDisplayName("NopStation.Plugin.Misc.ErpSqlIntegration.Fields.AuthPassword")]
     public string AuthPassword { get; set; }
+
+    [NopResourceDisplayName("Integration.IntegrationSecretKey")]
+    public string IntegrationSecretKey { get; set; }
 }
