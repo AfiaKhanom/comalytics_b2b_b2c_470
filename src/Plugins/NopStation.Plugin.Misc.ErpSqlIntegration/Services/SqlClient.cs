@@ -238,7 +238,8 @@ namespace NopStation.Plugin.Misc.ErpSqlIntegration.Services
                     return response;
                 }
 
-                requestModel.Limit = 100;
+                if(requestModel.Limit <= 0)
+                    requestModel.Limit = 100;
 
                 // generate SQL command with parameters
                 var sqlCommand = await GetParameterizeQueryString(sqlQueryTemplate.Query, requestModel);

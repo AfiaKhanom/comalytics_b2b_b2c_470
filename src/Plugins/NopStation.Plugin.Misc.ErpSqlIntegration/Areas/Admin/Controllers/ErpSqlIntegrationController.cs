@@ -156,6 +156,7 @@ public class ErpSqlIntegrationController : NopStationAdminController
         model.BaseUrl = sqlIntegrationSettings.BaseUrl;
         model.AuthUserName = sqlIntegrationSettings.AuthUserName;
         model.AuthPassword = sqlIntegrationSettings.AuthPassword;
+        model.IntegrationSecretKey = sqlIntegrationSettings.IntegrationSecretKey;
     }
 
     public async Task<IActionResult> Configure()
@@ -181,6 +182,7 @@ public class ErpSqlIntegrationController : NopStationAdminController
         sqlIntegrationSettings.BaseUrl = model.BaseUrl;
         sqlIntegrationSettings.AuthPassword = model.AuthPassword;
         sqlIntegrationSettings.AuthUserName = model.AuthUserName;
+        sqlIntegrationSettings.IntegrationSecretKey = model.IntegrationSecretKey;
 
         await _settingService.SaveSettingAsync(sqlIntegrationSettings, settings => settings.HttpCallMaxRetries, storeId, clearCache: false);
         await _settingService.SaveSettingAsync(sqlIntegrationSettings, settings => settings.HttpCallRestTimeInSeconds, storeId, clearCache: false);
@@ -188,6 +190,7 @@ public class ErpSqlIntegrationController : NopStationAdminController
         await _settingService.SaveSettingAsync(sqlIntegrationSettings, settings => settings.BaseUrl, storeId, clearCache: false);
         await _settingService.SaveSettingAsync(sqlIntegrationSettings, settings => settings.AuthPassword, storeId, clearCache: false);
         await _settingService.SaveSettingAsync(sqlIntegrationSettings, settings => settings.AuthUserName, storeId, clearCache: false);
+        await _settingService.SaveSettingAsync(sqlIntegrationSettings, settings => settings.IntegrationSecretKey, storeId, clearCache: false);
         await _settingService.ClearCacheAsync();
 
         _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));

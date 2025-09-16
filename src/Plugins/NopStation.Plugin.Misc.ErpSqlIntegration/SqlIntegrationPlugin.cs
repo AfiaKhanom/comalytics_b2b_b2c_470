@@ -334,6 +334,35 @@ public class SqlIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegratio
             new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpShippingAddressPayloadSettings.Fields.ShippingAddressPayloadKey.Hint", "Specify the JSON key for the ERP req payload that contains the shipping address block."),
 
             new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.MappingShippingAddress.Settings", "Shipping Address mapping settings"),
+
+            new (
+                "Integration.IntegrationSecretKey.Hint",
+                "Enter any 16-character key (letters and digits only) to represent your token generation."
+            ),
+            new (
+                "Integration.IntegrationSecretKey",
+                "Integration Token"
+            ),
+            new (
+                "Integration.Response.TokenExpired",
+                "Token Expired"
+            ),
+            new (
+                "Integration.Response.InvalidToken",
+                "Invalid Token"
+            ),
+            new (
+                "Integration.Login.CustomerRole",
+                "Please check if the user have Administration role"
+            ),
+            new (
+                "Integration.Login.Permission.Denied",
+                "User don't have administration role"
+            ),
+            new (
+                "Integration.Login.InvalidIntegrationSecretKey",
+                "Integration SecretKey Is Not Set."
+            ),
         };
 
         return resources;
@@ -350,6 +379,33 @@ public class SqlIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegratio
 
         //locales
         await _localizationService.DeleteLocaleResourcesAsync("NopStation.Plugin.Misc.ErpSqlIntegration");
+
+        await _localizationService.DeleteLocaleResourceAsync(
+            "Integration.IntegrationSecretKey.Hint"
+        );
+
+        await _localizationService.DeleteLocaleResourceAsync(
+            "Integration.IntegrationSecretKey"
+        );
+
+        await _localizationService.DeleteLocaleResourceAsync(
+            "Integration.Response.TokenExpired"
+        );
+
+        await _localizationService.DeleteLocaleResourceAsync(
+            "Integration.Response.InvalidToken"
+        );
+
+        await _localizationService.DeleteLocaleResourceAsync(
+            "Integration.Login.CustomerRole"
+        );
+
+        await _localizationService.DeleteLocaleResourceAsync(
+            "Integration.Login.Permission.Denied"
+        );
+        await _localizationService.DeleteLocaleResourceAsync(
+            "Integration.Login.InvalidIntegrationSecretKey"
+        );
 
         await base.UninstallAsync();
     }

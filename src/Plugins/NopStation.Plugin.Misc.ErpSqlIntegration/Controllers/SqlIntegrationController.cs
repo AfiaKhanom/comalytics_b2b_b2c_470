@@ -8,11 +8,13 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
+using NopStation.Plugin.Misc.ErpSqlIntegration.Filters;
 using NopStation.Plugin.Misc.ErpSqlIntegration.Models;
 using NopStation.Plugin.Misc.ErpSqlIntegration.Services;
 
 namespace NopStation.Plugin.Misc.ErpSqlIntegration.Controllers;
 
+[TokenAuthorize]
 public class SqlIntegrationController : BasePluginController
 {
 

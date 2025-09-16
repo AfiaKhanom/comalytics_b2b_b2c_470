@@ -12,4 +12,5 @@ public class SqlIntegrationSettings : ISettings
     public string WarehouseCode { get; set; }
     public string AuthPassword { get; set; }
     public string AuthUserName { get; set; }
+    public string IntegrationSecretKey { get; set; }
 }
