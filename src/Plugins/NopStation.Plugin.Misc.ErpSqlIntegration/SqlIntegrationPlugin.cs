@@ -44,7 +44,7 @@ public class SqlIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegratio
     #endregion
 
     #region Ctor
-
+    
     public SqlIntegrationPlugin(
         ILocalizationService localizationService,
         ISettingService settingService,
@@ -280,7 +280,7 @@ public class SqlIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegratio
             new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpOrderSettingsModel.Fields.ShippingAmount", "Shipping Amount"),
             new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpOrderSettingsModel.Fields.ShippingAmount.Hint", "Total shipping cost for the order."),
             new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpOrderSettingsModel.Fields.ErpOrderPayloadRootKey", "ERP Order Payload Root Key"),
-            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpOrderSettingsModel.Fields.ErpOrderPayloadRootKey.Hint", "The root key in the ERP payload for order data."),           
+            new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpOrderSettingsModel.Fields.ErpOrderPayloadRootKey.Hint", "The root key in the ERP payload for order data."),
             new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpGetRequestSettingsModel.Fields.WarehouseCode", "WarehouseCode"),
             new KeyValuePair<string, string>("Plugins.NopStation.Misc.ErpSqlIntegration.ErpGetRequestSettingsModel.Fields.WarehouseCode.Hint", "The WarehouseCode of item."),
 
@@ -662,19 +662,9 @@ public class SqlIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegratio
 
     #region ship to address
 
-    public async Task<ErpResponseData<IList<ErpShipToAddressDataModel>>> GetShipToAddressByAccountNumberFromErpAsync(ErpGetRequestModel erpRequest)
+    public async Task<ErpResponseData<IList<ErpShipToAddressDataModel>>> GetShipToAddressesFromErpAsync(ErpGetRequestModel erpRequest)
     {
         return await _shipToAddressService.GetShipToAddressFromErpAsync(erpRequest);
-    }
-
-    public async Task<string> GetSalesOrgCodeFromIntegrationSettings()
-    {
-        return string.Empty;
-    }
-
-    public Task<ErpResponseData<IList<ErpShipToAddressDataModel>>> GetShipToAddressesFromErpAsync(ErpGetRequestModel erpRequest)
-    {
-        throw new NotImplementedException();
     }
 
     #endregion

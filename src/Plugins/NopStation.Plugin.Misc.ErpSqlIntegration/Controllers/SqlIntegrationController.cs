@@ -29,6 +29,8 @@ public class SqlIntegrationController : BasePluginController
     private readonly IB2BStockService _b2BStockService;
     private readonly IB2BPricingService _b2BPricingService;
     private readonly IErpOrderService _erpOrderService;
+    private readonly IShipToAddressService _shipToAddressService;
+    private readonly IB2BProductService _b2BProductService;
 
     #endregion
 
@@ -42,7 +44,9 @@ public class SqlIntegrationController : BasePluginController
         IB2BInvoiceService b2BInvoiceService,
         IB2BStockService b2BStockService,
         IB2BPricingService b2BPricingService,
-        IErpOrderService erpOrderService)
+        IErpOrderService erpOrderService,
+        IShipToAddressService shipToAddressService,
+        IB2BProductService b2BProductService)
     {
         _storeContext = storeContext;
         _settingService = settingService;
@@ -53,6 +57,8 @@ public class SqlIntegrationController : BasePluginController
         _b2BStockService = b2BStockService;
         _b2BPricingService = b2BPricingService;
         _erpOrderService = erpOrderService;
+        _shipToAddressService = shipToAddressService;
+        _b2BProductService = b2BProductService;
     }
 
     #endregion
@@ -68,6 +74,27 @@ public class SqlIntegrationController : BasePluginController
         {
             // Return 404 Not Found if the result is null
             return NotFound(new { Message = "No accounts found or service returned no data." });
+        }
+
+        if (result.ErpResponseModel.IsError)
+        {
+            // Return 500 Internal Server Error if there was an error in the response
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                              new { Message = $"Short message: {result.ErpResponseModel.ErrorShortMessage}. Ful message: {result.ErpResponseModel.ErrorFullMessage}" });
+        }
+
+        return Ok(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> GetShipToAddresses([FromBody] ErpGetRequestModel erpRequest)
+    {
+        var result = await _shipToAddressService.GetShipToAddressFromErpAsync(erpRequest);
+
+        if (result == null)
+        {
+            // Return 404 Not Found if the result is null
+            return NotFound(new { Message = "No ship to address found or service returned no data." });
         }
 
         if (result.ErpResponseModel.IsError)
@@ -144,14 +171,35 @@ public class SqlIntegrationController : BasePluginController
     }
 
     [HttpPost]
-    public async Task<IActionResult> GetInvoicePdfHex([FromBody] ErpGetRequestModel erpRequest)
+    public async Task<IActionResult> GetGroupPrices([FromBody] ErpGetRequestModel erpRequest)
     {
-        var result = await _b2BInvoiceService.GetInvoicePdfByteCodeByDocumentNoFromErpAsync(erpRequest);
+        var result = await _b2BPricingService.GetProductGroupPricingFromErpAsync(erpRequest);
 
         if (result == null)
         {
             // Return 404 Not Found if the result is null
-            return NotFound(new { Message = "No invoice found or service returned no data." });
+            return NotFound(new { Message = "No Group Price found or service returned no data." });
+        }
+
+        if (result.ErpResponseModel.IsError)
+        {
+            // Return 500 Internal Server Error if there was an error in the response
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                              new { Message = $"Short message: {result.ErpResponseModel.ErrorShortMessage}. Ful message: {result.ErpResponseModel.ErrorFullMessage}" });
+        }
+
+        return Ok(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> GetProducts([FromBody] ErpGetRequestModel erpRequest)
+    {
+        var result = await _b2BProductService.GetProductsFromErpAsync(erpRequest);
+
+        if (result == null)
+        {
+            // Return 404 Not Found if the result is null
+            return NotFound(new { Message = "No products found or service returned no data." });
         }
 
         if (result.ErpResponseModel.IsError)
@@ -206,14 +254,14 @@ public class SqlIntegrationController : BasePluginController
     }
 
     [HttpPost]
-    public async Task<IActionResult> GetProductGroupPricesFromErp([FromBody] ErpGetRequestModel erpRequest)
+    public async Task<IActionResult> GetInvoicePdfHex([FromBody] ErpGetRequestModel erpRequest)
     {
-        var result = await _b2BPricingService.GetProductGroupPricingFromErpAsync(erpRequest);
+        var result = await _b2BInvoiceService.GetInvoicePdfByteCodeByDocumentNoFromErpAsync(erpRequest);
 
         if (result == null)
         {
             // Return 404 Not Found if the result is null
-            return NotFound(new { Message = "No Group Price found or service returned no data." });
+            return NotFound(new { Message = "No invoice found or service returned no data." });
         }
 
         if (result.ErpResponseModel.IsError)
