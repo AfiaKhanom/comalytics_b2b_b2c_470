@@ -777,8 +777,14 @@ public class ErpCheckoutController : CheckoutController
             var pickupInStore = ParsePickupInStore(form);
             if (pickupInStore)
             {
-                var pickupOption = await ParsePickupOptionAsync(cart, form);
-                await SavePickupOptionAsync(pickupOption);
+                var selectedPickupInStoreShippingOption = await _genericAttributeService.GetAttributeAsync<ShippingOption>(customer, NopCustomerDefaults.SelectedShippingOptionAttribute, store.Id);
+                var selectedPickupPoint = await _genericAttributeService.GetAttributeAsync<PickupPoint>(customer, NopCustomerDefaults.SelectedPickupPointAttribute, store.Id);
+
+                if (selectedPickupInStoreShippingOption == null || selectedPickupPoint == null)
+                {
+                    var pickupOption = await ParsePickupOptionAsync(cart, form);
+                    await SavePickupOptionAsync(pickupOption);
+                }
 
                 if (!string.IsNullOrEmpty(model.SpecialInstructions?.Trim()))
                 {
@@ -3069,6 +3075,21 @@ public class ErpCheckoutController : CheckoutController
         });
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ValidateCustomerReference(string customerReferenceAsPO, int erpAccountId)
+    {
+        if (await _erpOrderAdditionalDataService.IfCustomerReferenceExistWithThisErpAccount(customerReferenceAsPO, erpAccountId))
+        {
+            return Json(new
+            {
+                isValid = false,
+                errorMessage = await _localizationService.GetResourceAsync("Plugins.Payments.NopStation.B2B.Account.CustomerReferenceAsPO.AlreadyExist")
+            });
+        }
+
+        return Json(new { isValid = true });
+    }
+
     public async Task<IActionResult> ClearShippingOptionAndSavePickupPoint()
     {
         if (!_shippingSettings.AllowPickupInStore)
@@ -3096,28 +3117,14 @@ public class ErpCheckoutController : CheckoutController
             Name = string.Format(await _localizationService.GetResourceAsync("Checkout.PickupPoints.Name"), defaultPoint.Name),
             Rate = 0,
             Description = defaultPoint.Description,
-            ShippingRateComputationMethodSystemName = defaultPoint.ProviderSystemName
+            ShippingRateComputationMethodSystemName = defaultPoint.ProviderSystemName,
+            IsPickupInStore = true
         };
 
         await _genericAttributeService.SaveAttributeAsync(currentCustomer, NopCustomerDefaults.SelectedShippingOptionAttribute, pickUpInStoreShippingOption, store.Id);
         await _genericAttributeService.SaveAttributeAsync(currentCustomer, NopCustomerDefaults.SelectedPickupPointAttribute, defaultPoint, store.Id);
 
         return Json(await RenderViewComponentToStringAsync(typeof(OrderTotalsViewComponent), new { isEditable = false }));
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> ValidateCustomerReference(string customerReferenceAsPO, int erpAccountId)
-    {
-        if (await _erpOrderAdditionalDataService.IfCustomerReferenceExistWithThisErpAccount(customerReferenceAsPO, erpAccountId))
-        {
-            return Json(new
-            {
-                isValid = false,
-                errorMessage = await _localizationService.GetResourceAsync("Plugins.Payments.NopStation.B2B.Account.CustomerReferenceAsPO.AlreadyExist")
-            });
-        }
-
-        return Json(new { isValid = true });
     }
 
     public async Task<IActionResult> ClearPickUpPointAndSaveShippingOption()

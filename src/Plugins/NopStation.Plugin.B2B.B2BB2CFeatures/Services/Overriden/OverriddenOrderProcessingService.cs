@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DocumentFormat.OpenXml.Drawing.ChartDrawing;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
@@ -466,7 +465,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
         if (erpNopUser == null)
         {
-            await _erpLogsService.ErrorAsync("Erp Nop User not found", ErpSyncLevel.Order);
+            await _erpLogsService.ErrorAsync($"Erp Nop User not found, when trying to save Erp Order Additional Data. Nop Order Id: {order.Id}", ErpSyncLevel.Order);
             return;
         }
 
@@ -476,7 +475,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
 
         if (erpAccount == null)
         {
-            await _erpLogsService.ErrorAsync("Erp Account not found", ErpSyncLevel.Order);
+            await _erpLogsService.ErrorAsync($"Erp Account not found, when trying to save Erp Order Additional Data. Nop Order Id: {order.Id}", ErpSyncLevel.Order);
             return;
         }
 
@@ -859,7 +858,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
         }
         if (erpPlaceOrderItemData == null)
         {
-            await _erpLogsService.ErrorAsync("Erp Place Order Item Data not found", ErpSyncLevel.Order);
+            await _erpLogsService.ErrorAsync($"Erp Place Order Item Data not found, when trying to place order at ERP. Nop Order Id: {order.Id}", ErpSyncLevel.Order);
             return;
         }
         try
@@ -869,7 +868,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
             );
             if (erpAccount == null)
             {
-                await _erpLogsService.ErrorAsync("Erp Account not found", ErpSyncLevel.Order);
+                await _erpLogsService.ErrorAsync($"Erp Account not found, when trying to place order at ERP. Nop Order Id: {order.Id}", ErpSyncLevel.Order);
                 return;
             }
             var accountSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(
@@ -877,7 +876,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
             );
             if (accountSalesOrg == null)
             {
-                await _erpLogsService.ErrorAsync("Erp Account Sales Org not found", ErpSyncLevel.Order);
+                await _erpLogsService.ErrorAsync($"Erp Account Sales Org not found, when trying to place order at ERP. Nop Order Id: {order.Id}", ErpSyncLevel.Order);
                 return;
             }
 
@@ -887,23 +886,23 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
             var currentCustomer = await _customerService.GetCustomerByIdAsync(order.CustomerId);
             if (currentCustomer == null)
             {
-                await _erpLogsService.ErrorAsync("Customer not found", ErpSyncLevel.Order);
+                await _erpLogsService.ErrorAsync($"Customer not found, when trying to place order at ERP. Nop Order Id: {order.Id}", ErpSyncLevel.Order);
                 return;
             }
 
             var shippingAddress = await _addressService.GetAddressByIdAsync(
                 order.ShippingAddressId ?? 0
             );
-            if (shippingAddress == null)
+            if (shippingAddress == null && !order.PickupInStore)
             {
-                await _erpLogsService.ErrorAsync("Shipping Address not found", ErpSyncLevel.Order);
+                await _erpLogsService.ErrorAsync($"Shipping Address not found, when trying to place order at ERP. Nop Order Id: {order.Id}", ErpSyncLevel.Order);
                 return;
             }
 
             var billingAddress = await _addressService.GetAddressByIdAsync(order.BillingAddressId);
             if (billingAddress == null)
             {
-                await _erpLogsService.ErrorAsync("Billing Address not found", ErpSyncLevel.Order);
+                await _erpLogsService.ErrorAsync($"Billing Address not found, when trying to place order at ERP. Nop Order Id: {order.Id}", ErpSyncLevel.Order);
                 return;
             }
 

@@ -206,6 +206,7 @@
                                         $('#pickup-points-form').hide();
                                         $('#collect').prop('checked', false);
                                         $('#collect-header-text').text('');
+                                        $('#PickupInStore').prop('checked', false);
                                     }
                                 });
 
@@ -217,6 +218,7 @@
                                         $('#pickup-points-form').show();
                                         $('#deliver').prop('checked', false);
                                         $('#collect-header-text').text('@T("Checkout.ShippingAddress.SelectCollectionPoint")');
+                                        $('#PickupInStore').prop('checked', true);
                                     }
                                 });
                             });

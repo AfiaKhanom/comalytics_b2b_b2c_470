@@ -287,7 +287,8 @@ public class PeachPaymentsPaymentMethod : BasePlugin, IPaymentMethod
         //Delivery details
         var shippingAddress = await _addressService.GetAddressByIdAsync(postProcessPaymentRequest.Order.ShippingAddressId ?? 0);
 
-        if (postProcessPaymentRequest.Order.ShippingStatus != ShippingStatus.ShippingNotRequired)
+        if (shippingAddress != null && 
+            postProcessPaymentRequest.Order.ShippingStatus != ShippingStatus.ShippingNotRequired)
         {
             if (!string.IsNullOrEmpty(shippingAddress.City))
                 remotePostHelperData.Add("shipping.city", shippingAddress.City);
