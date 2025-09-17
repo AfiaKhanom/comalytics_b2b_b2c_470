@@ -860,7 +860,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
                 return;
             }
 
-            var orderTypeString = GetOrderTypeString(erpOrderAdditionalData) ?? string.Empty;
+            var orderTypeString = $"{erpOrderAdditionalData?.ErpOrderType}";
 
             var currentStore = await _storeContext.GetCurrentStoreAsync();
             var currentCustomer = await _customerService.GetCustomerByIdAsync(order.CustomerId);
@@ -970,7 +970,7 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
                 CustomerMobileNumber = currentCustomer.Phone ?? string.Empty,
                 CustomerEmail = currentCustomer.Email,
                 VatNumber = erpAccount.VatNumber ?? string.Empty,
-                OrderType = orderTypeString.ToUpper(),
+                OrderType = orderTypeString,
                 QuoteNumber = await GetQuoteNumberAsync(erpOrderAdditionalData),
                 OrderTax = Math.Round(_currencyService.ConvertCurrency(order.OrderTax, order.CurrencyRate), 2),
                 OrderSubtotalExclTax = Math.Round(_currencyService.ConvertCurrency((order.OrderTotal - order.OrderTax), order.CurrencyRate), 2),
@@ -1252,18 +1252,6 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
             return string.Empty;
         }
         return (await _erpOrderAdditionalDataService.GetErpOrderAdditionalDataByIdAsync(erpOrderAdditionalData.QuoteSalesOrderId.Value))?.ErpOrderNumber ?? string.Empty;
-    }
-
-    protected string GetOrderTypeString(ErpOrderAdditionalData erpOrderAdditionalData)
-    {
-        if (erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2BSalesOrder && erpOrderAdditionalData.QuoteSalesOrderId.HasValue)
-        {
-            return "Order from Quote";
-        }
-        else
-        {
-            return erpOrderAdditionalData.ErpOrderType == ErpOrderType.B2BSalesOrder ? "Order" : "Quote";
-        }
     }
 
     protected async Task<StateProvince> GetStateProvinceAsync(int? addressId)
