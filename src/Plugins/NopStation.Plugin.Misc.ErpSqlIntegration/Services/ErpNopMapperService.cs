@@ -198,7 +198,7 @@ public class ErpNopMapperService : IErpNopMapperService
                 FullDescription = product.FullDescription ?? string.Empty,
                 Price = decimal.Zero,
                 TaxCategoryName = product.TaxCategoryName ?? string.Empty,
-                Published = product.Published.Equals(SqlIntegrationDefaults.SqlProductPublishedStatus),
+                Published = SqlIntegrationDefaults.IsPublished(product.Published),
                 VendorCode = product.VendorCode ?? string.Empty,
                 VendorName = product.VendorName ?? string.Empty,
                 Weight = decimal.TryParse(product.Weight, out var weight) ? weight : 0,

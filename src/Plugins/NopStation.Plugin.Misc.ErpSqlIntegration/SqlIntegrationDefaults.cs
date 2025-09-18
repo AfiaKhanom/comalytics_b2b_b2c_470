@@ -4,7 +4,20 @@ public static class SqlIntegrationDefaults
     public static string HideGeneralBlock => "SqlIntegrationPage.HideGeneralBlock";
     public static int DefaultTimeOutPeriod => 1800;
     public static int AccountNoLengthLimit => 20;
-    public static string SqlProductPublishedStatus => "Yes";
+
+    private static readonly HashSet<string> _validPublishedValues =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "yes", "y", "1", "true"
+            };
+
+    public static bool IsPublished(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return false;
+
+        return _validPublishedValues.Contains(value.Trim());
+    }
 
     #region JWT
 

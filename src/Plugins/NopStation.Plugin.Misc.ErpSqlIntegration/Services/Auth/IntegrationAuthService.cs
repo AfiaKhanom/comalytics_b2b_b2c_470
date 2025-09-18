@@ -26,7 +26,7 @@ public class IntegrationAuthService : IIntegrationAuthService
     {
         var unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         var now = Math.Round((DateTime.UtcNow.AddDays(180) - unixEpoch).TotalSeconds);
-        var expiration = now + 30 * 60;
+        var expiration = now + _settings.TokenExpiryInMinutes * 60;
 
         var payload = new Dictionary<string, object>()
         {
