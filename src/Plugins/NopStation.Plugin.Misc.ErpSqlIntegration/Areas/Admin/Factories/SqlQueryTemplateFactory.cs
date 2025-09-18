@@ -76,6 +76,14 @@ public class SqlQueryTemplateModelFactory : ISqlQueryTemplateModelFactory
 
     public async Task<SqlQueryTemplateModel> PrepareSqlQueryTemplateModelAsync(SqlQueryTemplateModel model, SqlQueryTemplate sqlQueryTemplate)
     {
+        var ignoredSync = new[]
+        { 
+            ErpSyncLevel.SalesRep,
+            ErpSyncLevel.ErpNopUser,
+            ErpSyncLevel.LoginLogout,
+            ErpSyncLevel.SalesOrg
+        };
+
         if (sqlQueryTemplate != null)
         {
             if (model == null)
@@ -89,7 +97,8 @@ public class SqlQueryTemplateModelFactory : ISqlQueryTemplateModelFactory
 
             model.ErpSyncLevels = Enum.GetValues(typeof(ErpSyncLevel))
                 .Cast<ErpSyncLevel>()
-                .Where(e => (int)e != sqlQueryTemplate.ErpSyncLevelId)
+                .Where(e => (int)e != sqlQueryTemplate.ErpSyncLevelId &&
+                                        !ignoredSync.Contains(e))
                 .Select(e => new SelectListItem
                 {
                     Text = e.ToString(),
@@ -108,6 +117,7 @@ public class SqlQueryTemplateModelFactory : ISqlQueryTemplateModelFactory
 
         model.ErpSyncLevels = Enum.GetValues(typeof(ErpSyncLevel))
         .Cast<ErpSyncLevel>()
+        .Where(e => !ignoredSync.Contains(e))
         .Select(e => new SelectListItem
         {
             Text = e.ToString(),
