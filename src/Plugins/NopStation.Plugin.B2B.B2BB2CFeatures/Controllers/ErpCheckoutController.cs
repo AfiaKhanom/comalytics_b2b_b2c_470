@@ -771,7 +771,6 @@ public class ErpCheckoutController : CheckoutController
         if (!await _shoppingCartService.ShoppingCartRequiresShippingAsync(cart))
             return RedirectToRoute("CheckoutShippingMethod");
 
-        //pickup point
         if (_shippingSettings.AllowPickupInStore /*&& !_orderSettings.DisplayPickupInStoreOnShippingMethodPage*/)
         {
             var pickupInStore = ParsePickupInStore(form);
@@ -810,7 +809,6 @@ public class ErpCheckoutController : CheckoutController
             return RedirectToRoute("ShoppingCart");
         }
 
-        //custom address attributes
         var customAttributes = await _addressAttributeParser.ParseCustomAttributesAsync(form, NopCommonDefaults.AddressAttributeControlName);
         var customAttributeWarnings = await _addressAttributeParser.GetAttributeWarningsAsync(customAttributes);
         foreach (var error in customAttributeWarnings)
@@ -820,7 +818,6 @@ public class ErpCheckoutController : CheckoutController
 
         var date = model.DeliveryDate;
 
-        // validate DeliveryDate
         if (!model.ErpToDetermineDate)
         {
             if (model.CustomDeliveryDateString is null)
@@ -859,24 +856,21 @@ public class ErpCheckoutController : CheckoutController
         model.ErpAccountId = b2BAccount.Id;
         var shipToAddress = await _erpShipToAddressService.GetErpShipToAddressByIdWithActiveAsync(model.ErpShipToAddressId);
 
-        if (ModelState.IsValid && erpUser.ErpUserType == ErpUserType.B2BUser && shipToAddress != null && model.ErpShipToAddressId > 0)
+        if (ModelState.IsValid && shipToAddress != null && model.ErpShipToAddressId > 0)
         {
             if (shipToAddress.AddressId == 0)
                 throw new Exception("Ship to Address can't be loaded");
 
-            //special Instruction set at generic attribute
             if (!string.IsNullOrEmpty(model.SpecialInstructions?.Trim()))
             {
                 await _genericAttributeService.SaveAttributeAsync(customer, B2BB2CFeaturesDefaults.ProvidedB2BSpecialInstructions, model.SpecialInstructions?.Trim(), store.Id);
             }
 
-            // customer ref set at generic attribute
             if (!string.IsNullOrEmpty(model.CustomerReference?.Trim()))
             {
                 await _genericAttributeService.SaveAttributeAsync(customer, B2BB2CFeaturesDefaults.ProvidedB2BCustomerReferenceAsPO, model.CustomerReference?.Trim(), store.Id);
             }
 
-            // no need to check allow address edit
             erpUser.ShippingErpShipToAddressId = shipToAddress.Id;
             await _erpNopUserService.UpdateErpNopUserAsync(erpUser);
 
@@ -893,45 +887,14 @@ public class ErpCheckoutController : CheckoutController
 
             return RedirectToRoute("CheckoutShippingMethod");
         }
-        else if (ModelState.IsValid && erpUser.ErpUserType == ErpUserType.B2CUser && shipToAddress != null && model.ErpShipToAddressId > 0)
+
+        var erpShipToAddressModel = new CheckoutErpShippingAddressModel();
+
+        if (erpUser.ErpUserType == ErpUserType.B2BUser)
         {
-            if (shipToAddress.AddressId == 0)
-                throw new Exception("Ship to Address can't be loaded");            
-
-            //special Instruction set at generic attribute
-            if (!string.IsNullOrEmpty(model.SpecialInstructions?.Trim()))
-            {
-                await _genericAttributeService.SaveAttributeAsync(customer, B2BB2CFeaturesDefaults.ProvidedB2BSpecialInstructions, model.SpecialInstructions?.Trim(), store.Id);
-            }
-
-            // customer ref set at generic attribute
-            if (!string.IsNullOrEmpty(model.CustomerReference?.Trim()))
-            {
-                await _genericAttributeService.SaveAttributeAsync(customer, B2BB2CFeaturesDefaults.ProvidedB2BCustomerReferenceAsPO, model.CustomerReference?.Trim(), store.Id);
-            }
-
-            // no need to check allow address edit
-            erpUser.ShippingErpShipToAddressId = shipToAddress.Id;
-            await _erpNopUserService.UpdateErpNopUserAsync(erpUser);
-
-            var address = await _addressService.GetAddressByIdAsync(shipToAddress.AddressId);
-
-            address.Email = customer.Email;
-            address.FirstName = customer.FirstName;
-            address.LastName = customer.LastName;
-            address.Company = shipToAddress.ShipToName;
-
-            customer.ShippingAddressId = address.Id;
-            await _customerService.UpdateCustomerAsync(customer);
-            await _customerService.InsertCustomerAddressAsync(customer, address);
-
-            return RedirectToRoute("CheckoutPaymentMethod");
-        }
-
-        // If we got this far, something failed, redisplay form
-        var erpShipToAddressModel = await _erpCheckoutModelFactory.PrepareCheckoutB2BShippingAddressModelAsync(cart, b2BUser, b2BAccount);
-        
-        if (erpUser.ErpUserType == ErpUserType.B2CUser)
+            await _erpCheckoutModelFactory.PrepareCheckoutB2BShippingAddressModelAsync(cart, b2BUser, b2BAccount);
+        }        
+        else if (erpUser.ErpUserType == ErpUserType.B2CUser)
         {
             erpShipToAddressModel = await _erpCheckoutModelFactory.PrepareCheckoutB2CShippingAddressModelAsync(cart, b2CUser, b2BAccount);
         }
