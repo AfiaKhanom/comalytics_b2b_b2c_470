@@ -189,6 +189,51 @@ public class ErpNopMapperService : IErpNopMapperService
 
         var erpProducts = (await Task.WhenAll(erpProductResponseData.Select(async product =>
         {
+            // extract valid category paths 
+            var categoryPaths = product.CategoryPaths?
+                            .Select(c => c.CategoryPath)
+                            .Where(cp => !string.IsNullOrWhiteSpace(cp))
+                            .ToList() ?? new List<string>();
+
+            // If no path data, fall back to legacy CategoryName1, CategoryName2, CategoryName3
+            if (!categoryPaths.Any())
+            {
+                var legacyCategories = new List<string>();
+                if (!string.IsNullOrWhiteSpace(product.CategoryName1))
+                    legacyCategories.Add(product.CategoryName1);
+                if (!string.IsNullOrWhiteSpace(product.CategoryName2))
+                    legacyCategories.Add(product.CategoryName2);
+                if (!string.IsNullOrWhiteSpace(product.CategoryName3))
+                    legacyCategories.Add(product.CategoryName3);
+
+                if (legacyCategories.Any())
+                {
+                    categoryPaths.Add(string.Join($" {B2BB2CFeaturesDefaults.CategorySeparatorSignInPath} ", legacyCategories));
+                }
+            }
+
+            var categories = new List<ErpCategoryDataModel>();
+
+            foreach (var categoryPath in categoryPaths)
+            {
+                if (string.IsNullOrWhiteSpace(categoryPath))
+                    continue;
+
+                var hierarchy = categoryPath.Split(new[] { B2BB2CFeaturesDefaults.CategorySeparatorSignInPath }, StringSplitOptions.RemoveEmptyEntries)
+                                          .Select(c => c.Trim())
+                                          .Where(c => !string.IsNullOrWhiteSpace(c))
+                                          .ToList();
+
+                if (hierarchy.Any())
+                {
+                    categories.Add(new ErpCategoryDataModel
+                    {
+                        CategoryPath = categoryPath,
+                        Description = product.CategoryPaths?.FirstOrDefault(c => c.CategoryPath == categoryPath)?.DescriptionOfLeafCategory ?? string.Empty
+                    });
+                }
+            }
+
             return new ErpProductDataModel
             {
                 Name = product.Name ?? string.Empty,
@@ -208,29 +253,12 @@ public class ErpNopMapperService : IErpNopMapperService
                 ManufacturerCode = product.ManufacturerCode ?? string.Empty,
                 ManufacturerName = product.ManufacturerName ?? string.Empty,
                 LastChangedDate = product.LastChangedDate,
-                ProductCategories = new List<ErpCategoryDataModel>()
-                    {
-                        new ()
-                        {
-                            CategoryName = product.CategoryName1 ?? string.Empty
-                        },
-                        new ()
-                        {
-                            CategoryName = product.CategoryName2 ?? string.Empty
-                        },
-                        new ()
-                        {
-                            CategoryName = product.CategoryName3 ?? string.Empty
-                        }
-                    },
-                ProductAttributes = new List<KeyValuePair<string, string>>()
-                {
-                    new (uomSpecificAttribute != null ? uomSpecificAttribute.Name : "UnitOfMeasure", product.UnitOfMeasure),
-                    new (preFilterSpecificAttribute != null ? preFilterSpecificAttribute.Name : "PrefilterFacet", product.PrefilterFacet),
-                    new ("Colour", product.Colour),
-                    new ("Size", product.Size),
-                    new ("Thickness", product.Thickness)
-                },
+                Categories = categories,
+                IsUsingCategoryPathMapping = true,
+                ProductAttributes = product
+                                    .SpecList
+                                    .Select(s => new KeyValuePair<string, string>(s.Key, s.Value))
+                                    .ToList(),
                 ProductTags = product.ProductTags ?? string.Empty,
                 ProductCost = product.ProductCost,
                 Gtin = product.Gtin ?? string.Empty

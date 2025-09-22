@@ -195,6 +195,89 @@ public class ErpProductSyncService : IErpProductSyncService
         return validationResult.IsValid;
     }
 
+    /// <summary>
+    /// Takes a full CategoryPath string like "A >> B >> C >> D" and creates or updates the full hierarchy. 
+    /// Then returns the ID of the leaf category (D) for mapping to the product.
+    /// </summary>
+    /// <param name="categoryPath"></param>
+    /// <param name="allCategories"></param>
+    /// <param name="categoryTemplate"></param>
+    /// <returns></returns>
+    private async Task<int> CreateOrUpdateCategoryHierarchyAsync(string categoryPath ,
+        IList<Category> allCategories,
+        int categoryTemplateId)
+    {
+        if (string.IsNullOrEmpty(categoryPath) || allCategories is null)
+            return 0;
+
+        var categoryNames = categoryPath.Split(new[] { B2BB2CFeaturesDefaults.CategorySeparatorSignInPath }, StringSplitOptions.RemoveEmptyEntries)
+                                       .Select(name => name.Trim())
+                                       .Where(name => !string.IsNullOrWhiteSpace(name))
+                                       .ToArray();
+
+        if (!categoryNames.Any())
+            return 0;
+
+        var leafCategoryId = 0;
+        var parentCategoryId = 0;
+
+        for (int i = 0; i < categoryNames.Length; i++)
+        {
+            var categoryName = categoryNames[i];
+
+            // Find existing category with the same name and parent
+            var existingCategory = allCategories.FirstOrDefault(c =>
+                c.Name.Equals(categoryName, StringComparison.OrdinalIgnoreCase) &&
+                c.ParentCategoryId == parentCategoryId);
+
+            if (existingCategory == null)
+            {
+                // Create new category
+                var newCategory = new Category
+                {
+                    Name = categoryName,
+                    CategoryTemplateId = categoryTemplateId,
+                    CreatedOnUtc = DateTime.UtcNow,
+                    UpdatedOnUtc = DateTime.UtcNow,
+                    Published = true,
+                    AllowCustomersToSelectPageSize = true,
+                    PageSize = CATEGORY_PAGE_SIZE,
+                    ParentCategoryId = parentCategoryId
+                };
+
+                if (await IsValidCategoryAsync(newCategory))
+                {
+                    await _categoryService.InsertCategoryAsync(newCategory);
+                    await SaveOrUpdateEntitySeNameAsync(newCategory);
+                    allCategories.Add(newCategory);
+                    parentCategoryId = newCategory.Id;
+
+                    // Only add leaf categories (last in hierarchy) to the list
+                    if (i == categoryNames.Length - 1)
+                    {
+                        leafCategoryId = newCategory.Id;
+                    }
+                }
+            }
+            else
+            {
+                // Update existing category
+                existingCategory.UpdatedOnUtc = DateTime.UtcNow;
+                await _categoryService.UpdateCategoryAsync(existingCategory);
+                await SaveOrUpdateEntitySeNameAsync(existingCategory);
+                parentCategoryId = existingCategory.Id;
+
+                // Only add leaf categories (last in hierarchy) to the list
+                if (i == categoryNames.Length - 1)
+                {
+                    leafCategoryId = existingCategory.Id;
+                }
+            }
+        }
+
+        return leafCategoryId;
+    }
+
     #endregion
 
     #region Method
@@ -286,7 +369,7 @@ public class ErpProductSyncService : IErpProductSyncService
                         Start = start,
                         Location = salesOrg.Code,
                         ProductSku = stockCode,
-                        DateFrom = isIncrementalSync ? salesOrg.LastErpProductSyncTimeOnUtc : null                        
+                        DateFrom = isIncrementalSync ? salesOrg.LastErpProductSyncTimeOnUtc : null
                     };
 
                     var response = await erpIntegrationPlugin.GetProductsFromErpAsync(erpGetRequestModel);
@@ -478,109 +561,129 @@ public class ErpProductSyncService : IErpProductSyncService
 
                         #region Categories
 
-                        if (erpProduct.ProductCategories.Any())
+                        if (erpProduct.Categories.Any())
                         {
                             var incommingCategoryIds = new List<int>();
-                            var categories = erpProduct.ProductCategories.ToList();
-                            var parentCategoryId = 0;
 
-                            for (int i = 0; i < categories.Count; i++)
+                            if (erpProduct.IsUsingCategoryPathMapping)
                             {
-                                if (string.IsNullOrWhiteSpace(categories[i].CategoryName))
+                                foreach (var erpCategory in erpProduct.Categories)
                                 {
-                                    continue;
+                                    if (string.IsNullOrWhiteSpace(erpCategory.CategoryPath))
+                                        continue;
+
+                                    var categoryIdToMap = await CreateOrUpdateCategoryHierarchyAsync(erpCategory.CategoryPath, allCategories, categoryTemplate?.Id ?? 0);
+                                    if (categoryIdToMap > 0)
+                                    {
+                                        incommingCategoryIds.Add(categoryIdToMap);
+                                    }
                                 }
+                            }
+                            else
+                            {
+                                var categories = erpProduct.Categories.ToList();
+                                var parentCategoryId = 0;
 
-                                var categoriesWithSameName = allCategories.Where
-                                    (category => category.Name.ToLower().Trim() == categories[i].CategoryName.ToLower().Trim());
-
-                                var currentCategory = categoriesWithSameName.FirstOrDefault();
-
-                                #region Delete all categories with same name except the first one
-
-                                var categoriesToDelete = new List<Category>();
-                                var productCategoriesToDelete = new List<ProductCategory>();
-
-                                foreach (var category in categoriesWithSameName.Skip(1).ToList())
+                                for (int i = 0; i < categories.Count; i++)
                                 {
-                                    productCategoriesToDelete.AddRange(allProductCategories.Where(pc => pc.CategoryId == category.Id));
-                                    categoriesToDelete.Add(category);
-                                }
-                                foreach (var productCategory in productCategoriesToDelete)
-                                {
-                                    allProductCategories.Remove(productCategory);
-                                    await _categoryService.DeleteProductCategoryAsync(productCategory);
-                                }
-                                if (categoriesToDelete.Count > 0)
-                                {
-                                    categoriesToDelete.ForEach(x => allCategories.Remove(x));
-                                    await _categoryService.DeleteCategoriesAsync(categoriesToDelete);
-                                }
+                                    if (string.IsNullOrWhiteSpace(categories[i].CategoryName))
+                                    {
+                                        continue;
+                                    }
 
-                                #endregion
+                                    var categoriesWithSameName = allCategories.Where
+                                        (category => category.Name.ToLower().Trim() == categories[i].CategoryName.ToLower().Trim());
 
-                                if (currentCategory is null)
-                                {
-                                    currentCategory = new Category();
-                                    currentCategory.Name = categories[i].CategoryName.Trim();
-                                    currentCategory.Description = categories[i].Description;
-                                    currentCategory.CategoryTemplateId = categoryTemplate?.Id ?? 0;
-                                    currentCategory.CreatedOnUtc = DateTime.UtcNow;
-                                    currentCategory.UpdatedOnUtc = DateTime.UtcNow;
-                                    currentCategory.Published = true;
-                                    currentCategory.AllowCustomersToSelectPageSize = true;
-                                    currentCategory.PageSize = CATEGORY_PAGE_SIZE;
-                                    currentCategory.ParentCategoryId = parentCategoryId;
-                                    await _categoryService.InsertCategoryAsync(currentCategory);
+                                    var currentCategory = categoriesWithSameName.FirstOrDefault();
+
+                                    #region Delete all categories with same name except the first one
+
+                                    var categoriesToDelete = new List<Category>();
+                                    var productCategoriesToDelete = new List<ProductCategory>();
+
+                                    foreach (var category in categoriesWithSameName.Skip(1).ToList())
+                                    {
+                                        productCategoriesToDelete.AddRange(allProductCategories.Where(pc => pc.CategoryId == category.Id));
+                                        categoriesToDelete.Add(category);
+                                    }
+                                    foreach (var productCategory in productCategoriesToDelete)
+                                    {
+                                        allProductCategories.Remove(productCategory);
+                                        await _categoryService.DeleteProductCategoryAsync(productCategory);
+                                    }
+                                    if (categoriesToDelete.Count > 0)
+                                    {
+                                        categoriesToDelete.ForEach(x => allCategories.Remove(x));
+                                        await _categoryService.DeleteCategoriesAsync(categoriesToDelete);
+                                    }
+
+                                    #endregion
+
+                                    if (currentCategory is null)
+                                    {
+                                        currentCategory = new Category();
+                                        currentCategory.Name = categories[i].CategoryName.Trim();
+                                        currentCategory.Description = categories[i].Description;
+                                        currentCategory.CategoryTemplateId = categoryTemplate?.Id ?? 0;
+                                        currentCategory.CreatedOnUtc = DateTime.UtcNow;
+                                        currentCategory.UpdatedOnUtc = DateTime.UtcNow;
+                                        currentCategory.Published = true;
+                                        currentCategory.AllowCustomersToSelectPageSize = true;
+                                        currentCategory.PageSize = CATEGORY_PAGE_SIZE;
+                                        currentCategory.ParentCategoryId = parentCategoryId;
+
+                                        if (await IsValidCategoryAsync(currentCategory))
+                                        {
+                                            await _categoryService.InsertCategoryAsync(currentCategory);
+                                            allCategories.Add(currentCategory);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        currentCategory.UpdatedOnUtc = DateTime.UtcNow;
+                                        await _categoryService.UpdateCategoryAsync(currentCategory);
+                                    }
 
                                     if (await IsValidCategoryAsync(currentCategory))
                                     {
-                                        await _categoryService.InsertCategoryAsync(currentCategory);
-                                        allCategories.Add(currentCategory);
+                                        //search engine name
+                                        await SaveOrUpdateEntitySeNameAsync(currentCategory);
+
+                                        parentCategoryId = currentCategory.Id;
+                                        incommingCategoryIds.Add(currentCategory.Id);
                                     }
-                                }
-                                else
-                                {
-                                    currentCategory.UpdatedOnUtc = DateTime.UtcNow;
-                                    await _categoryService.UpdateCategoryAsync(currentCategory);
-                                }
-
-                                if (await IsValidCategoryAsync(currentCategory))
-                                {
-                                    //search engine name
-                                    await SaveOrUpdateEntitySeNameAsync(currentCategory);
-
-                                    parentCategoryId = currentCategory.Id;
-                                    incommingCategoryIds.Add(currentCategory.Id);
                                 }
                             }
 
-                            if (thisProductIsValid)
+                            if (thisProductIsValid && incommingCategoryIds.Any())
                             {
                                 var existingCategoryMapping = allProductCategories.Where(pc => pc.ProductId == oldErpProduct.Id).ToList();
 
-                                if (parentCategoryId > 0 &&
-                                    !existingCategoryMapping.Exists(a => a.CategoryId == parentCategoryId && a.ProductId == oldErpProduct.Id))
+                                // Add product to all leaf categories (last category in each hierarchy)
+                                foreach (var categoryId in incommingCategoryIds.Distinct())
                                 {
-                                    var newProductCategory = new ProductCategory
+                                    if (!existingCategoryMapping.Exists(a => a.CategoryId == categoryId && a.ProductId == oldErpProduct.Id))
                                     {
-                                        ProductId = oldErpProduct.Id,
-                                        CategoryId = parentCategoryId,
-                                        DisplayOrder = 0
-                                    };
+                                        var newProductCategory = new ProductCategory
+                                        {
+                                            ProductId = oldErpProduct.Id,
+                                            CategoryId = categoryId,
+                                            DisplayOrder = 0
+                                        };
 
-                                    await _categoryService.InsertProductCategoryAsync(newProductCategory);
+                                        await _categoryService.InsertProductCategoryAsync(newProductCategory);
 
-                                    allProductCategories.Add(newProductCategory);
-                                    existingCategoryMapping.Add(newProductCategory);
+                                        allProductCategories.Add(newProductCategory);
+                                        existingCategoryMapping.Add(newProductCategory);
+                                    }
                                 }
 
-                                if (parentCategoryId > 0)
+                                // Remove product from categories that are no longer associated
+                                var categoriesToRemove = existingCategoryMapping.Where(a => !incommingCategoryIds.Contains(a.CategoryId)).ToList();
+                                foreach (var categoryToRemove in categoriesToRemove)
                                 {
-                                    foreach (var category in existingCategoryMapping.Where(a => a.CategoryId != parentCategoryId))
-                                    {
-                                        await _categoryService.DeleteProductCategoryAsync(category);
-                                    }
+                                    await _categoryService.DeleteProductCategoryAsync(categoryToRemove);
+                                    // allProductCategories.Remove(categoryToRemove);
                                 }
                             }
                         }
@@ -813,7 +916,7 @@ public class ErpProductSyncService : IErpProductSyncService
                             ErpDataSchedulerDefaults.ErpProductSyncTaskName,
                             ErpSyncLevel.Product,
                             $"The Erp Product Sync run is cancelled for Sales Org: ({salesOrg.Code}) {salesOrg.Name}." +
-                            (!string.IsNullOrWhiteSpace(lastSyncedErpProduct) ? 
+                            (!string.IsNullOrWhiteSpace(lastSyncedErpProduct) ?
                             $"The last synced Erp Product: {lastSyncedErpProduct} in this batch. " : string.Empty) +
                             $"Total products synced so far: {totalSyncedSoFar} " +
                             $"And total products not sync due to invalid data: {totalNotSyncedSoFar}");
@@ -848,7 +951,7 @@ public class ErpProductSyncService : IErpProductSyncService
                 await _erpSyncLogService.SyncLogSaveOnFileAsync(
                     ErpDataSchedulerDefaults.ErpProductSyncTaskName,
                     ErpSyncLevel.Product,
-                    (!string.IsNullOrWhiteSpace(lastSyncedErpProduct) ? 
+                    (!string.IsNullOrWhiteSpace(lastSyncedErpProduct) ?
                     $"The last synced Erp Product: {lastSyncedErpProduct}. " : string.Empty) +
                     $"Total product synced so far: {totalSyncedSoFar} " +
                     $"And total products not sync due to invalid data: {totalNotSyncedSoFar}");

@@ -117,4 +117,6 @@ public static class B2BB2CFeaturesDefaults
     public static string ProcessFailedErpOrdersTaskName => "B2B Process Failed ERP Orders";
     public static string LastStockSyncDateTime => "LastStockSyncDateTime";
     public static int DefaultTaskTimeOutPeriod => 360;
+
+    public static string CategorySeparatorSignInPath => ">>";
 }

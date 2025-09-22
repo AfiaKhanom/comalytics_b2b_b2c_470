@@ -1,4 +1,7 @@
-﻿namespace NopStation.Plugin.Misc.ErpSqlIntegration.Models;
+﻿using Newtonsoft.Json;
+
+namespace NopStation.Plugin.Misc.ErpSqlIntegration.Models;
+
 public class ErpProductSqlResponseModel
 {
     public string Sku { get; set; }
@@ -28,4 +31,32 @@ public class ErpProductSqlResponseModel
     public string Thickness { get; set; }
     public DateTime? LastChangedDate { get; set; }
     public decimal? ProductCost { get; set; }
+
+    // we'll get this string from SQL response as JSON
+    public string SpecificationAttributes { get; set; }
+
+    public List<SpecAttributeDto> SpecList =>
+        string.IsNullOrWhiteSpace(SpecificationAttributes)
+            ? new List<SpecAttributeDto>()
+            : JsonConvert.DeserializeObject<List<SpecAttributeDto>>(SpecificationAttributes);
+
+    // we'll get this string from SQL response as JSON
+    public string Categories { get; set; }
+
+    public List<CategoryPathDto> CategoryPaths =>
+        string.IsNullOrWhiteSpace(Categories)
+            ? new List<CategoryPathDto>()
+            : JsonConvert.DeserializeObject<List<CategoryPathDto>>(Categories);
+}
+
+public class SpecAttributeDto
+{
+    public string Key { get; set; }
+    public string Value { get; set; }
+}
+
+public class CategoryPathDto
+{
+    public string CategoryPath { get; set; }
+    public string DescriptionOfLeafCategory { get; set; }
 }
