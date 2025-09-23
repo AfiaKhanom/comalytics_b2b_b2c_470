@@ -17,75 +17,75 @@ namespace NopStation.Plugin.Misc.ErpSqlIntegration.Services;
 /// </summary>
 public partial class SqlIntegrationService : ISqlIntegrationService
 {
-    private readonly SqlIntegrationSettings _sqlIntegrationSettings;
     private readonly IStoreContext _storeContext;
     private readonly ISettingService _settingService;
     private readonly IErpLogsService _erpLogsService;
-    private readonly ErpPlaceOrderSettings _erpPlaceOrderSettings;
-    private readonly ErpPlaceOrderItemSettings _erpPlaceOrderItemSettings;
     private readonly HashSet<string> _validTypes = new HashSet<string>
     {
         "string", "int", "bool", "decimal", "datetime"
     };
 
-    public SqlIntegrationService(SqlIntegrationSettings sqlIntegrationSettings,
+    public SqlIntegrationService(
         IStoreContext storeContext,
         ISettingService settingService,
-        IErpLogsService erpLogsService,
-        ErpPlaceOrderSettings erpPlaceOrderSettings,
-        ErpPlaceOrderItemSettings erpPlaceOrderItemSettings)
+        IErpLogsService erpLogsService)
     {
-        _sqlIntegrationSettings = sqlIntegrationSettings;
         _storeContext = storeContext;
         _settingService = settingService;
         _erpLogsService = erpLogsService;
-        _erpPlaceOrderSettings = erpPlaceOrderSettings;
-        _erpPlaceOrderItemSettings = erpPlaceOrderItemSettings;
     }
 
-    public Task<bool> IsValidSqlIntegrationSettings()
+    public async Task<bool> IsValidSqlIntegrationSettings()
     {
-        if (string.IsNullOrEmpty(_sqlIntegrationSettings.ConnectionString))
+        var sqlIntegrationSettings = await _settingService.LoadSettingAsync<SqlIntegrationSettings>(await _storeContext.GetActiveStoreScopeConfigurationAsync());
+
+        if (string.IsNullOrEmpty(sqlIntegrationSettings.ConnectionString))
         {
-            return Task.FromResult(false);
+            return await Task.FromResult(false);
         }
 
-        return Task.FromResult(true);
+        return await Task.FromResult(true);
     }
 
-    public Task<(bool IsValid, string ErrorMessage)> IsValidSqlIntegrationSettingsForPlacingOrder()
+    public async Task<(bool IsValid, string ErrorMessage)> IsValidSqlIntegrationSettingsForPlacingOrder()
     {
-        if (string.IsNullOrEmpty(_sqlIntegrationSettings.BaseUrl))
+        var sqlIntegrationSettings = await _settingService.LoadSettingAsync<SqlIntegrationSettings>(await _storeContext.GetActiveStoreScopeConfigurationAsync());
+
+        var erpPlaceOrderItemSettings = await _settingService.LoadSettingAsync<ErpPlaceOrderItemSettings>(await _storeContext.GetActiveStoreScopeConfigurationAsync());
+        
+        var erpPlaceOrderSettings = await _settingService.LoadSettingAsync<ErpPlaceOrderSettings>(await _storeContext.GetActiveStoreScopeConfigurationAsync());
+
+        if (string.IsNullOrEmpty(sqlIntegrationSettings.BaseUrl))
         {
-            return Task.FromResult((false, "Base URL is required."));
+            return await Task.FromResult((false, "Base URL is required."));
         }
 
-        if (string.IsNullOrEmpty(_sqlIntegrationSettings.AuthPassword))
+        if (string.IsNullOrEmpty(sqlIntegrationSettings.AuthPassword))
         {
-            return Task.FromResult((false, "Auth password is required."));
+            return await Task.FromResult((false, "Auth password is required."));
         }
 
-        if (string.IsNullOrEmpty(_sqlIntegrationSettings.AuthUserName))
+        if (string.IsNullOrEmpty(sqlIntegrationSettings.AuthUserName))
         {
-            return Task.FromResult((false, "Auth username is required."));
+            return await Task.FromResult((false, "Auth username is required."));
         }
 
-        if (string.IsNullOrEmpty(_erpPlaceOrderItemSettings.ErpOrderPayloadLinesKey))
+        if (string.IsNullOrEmpty(erpPlaceOrderItemSettings.ErpOrderPayloadLinesKey))
         {
-            return Task.FromResult((false, "ErpOrderPayloadLinesKey is required."));
+            return await Task.FromResult((false, "ErpOrderPayloadLinesKey is required."));
         }
 
-        if (string.IsNullOrEmpty(_erpPlaceOrderSettings.ErpOrderPayloadRootKey))
+        if (string.IsNullOrEmpty(erpPlaceOrderSettings.ErpOrderPayloadRootKey))
         {
-            return Task.FromResult((false, "ErpOrderPayloadRootKey is required."));
+            return  await Task.FromResult((false, "ErpOrderPayloadRootKey is required."));
         }
 
-        if (!Uri.IsWellFormedUriString(_sqlIntegrationSettings.BaseUrl, UriKind.Absolute))
+        if (!Uri.IsWellFormedUriString(sqlIntegrationSettings.BaseUrl, UriKind.Absolute))
         {
-            return Task.FromResult((false, "Base URL is not a valid absolute URI."));
+            return  await Task.FromResult((false, "Base URL is not a valid absolute URI."));
         }
 
-        return Task.FromResult((true, string.Empty));
+        return await Task.FromResult((true, string.Empty));
     }
 
     public object? ConvertValueWithType(string value, string type)
@@ -760,7 +760,7 @@ public partial class SqlIntegrationService : ISqlIntegrationService
 
         return new ExpandoObject();
     }
-
+    
     public (bool IsValid, string ErrorMessage) ValidateAdditionalHardCodedValuesSettings(string jsonSetting)
     {
         if (string.IsNullOrEmpty(jsonSetting))

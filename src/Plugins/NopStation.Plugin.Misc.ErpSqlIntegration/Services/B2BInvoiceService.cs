@@ -42,7 +42,9 @@ public class B2BInvoiceService : IB2BInvoiceService
 
             var response = await _sqlClient.ProcessSqlQueryWithRequestModelAsync(ErpSyncLevel.Invoice, erpRequest);
 
-            if (!response.Success || response.Data is null)
+            if (response == null ||
+                !response.Success ||
+                response.Data is null)
             {
                 erpResponseData.ErpResponseModel.IsError = true;
                 erpResponseData.ErpResponseModel.ErrorShortMessage = $"Executing SQL failed due to - {response.Message}";

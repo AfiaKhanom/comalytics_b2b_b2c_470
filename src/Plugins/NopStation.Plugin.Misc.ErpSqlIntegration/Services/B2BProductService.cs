@@ -42,7 +42,10 @@ public class B2BProductService : IB2BProductService
             }
 
             var response = await _sqlClient.ProcessSqlQueryWithRequestModelAsync(ErpSyncLevel.Product, erpRequest);
-            if (!response.Success || response.Data is null)
+
+            if (response == null ||
+                !response.Success ||
+                response.Data is null)
             {
                 erpResponseData.ErpResponseModel.IsError = true;
                 erpResponseData.ErpResponseModel.ErrorShortMessage = $"Executing SQL failed due to - {response.Message}";

@@ -5,6 +5,7 @@ using Microsoft.Data.SqlClient;
 using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Data;
+using Nop.Services.Configuration;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
@@ -19,48 +20,53 @@ namespace NopStation.Plugin.Misc.ErpSqlIntegration.Services
         private readonly IErpLogsService _erpLogsService;
         private readonly ISqlQueryTemplatService _sqlQueryTemplatService;
         private readonly INopDataProvider _nopDataProvider;
-        private readonly SqlIntegrationSettings _sqlIntegrationSettings;
         private readonly IWorkContext _workContext;
+        private readonly IStoreContext _storeContext;
+        private readonly ISettingService _settingService;
 
         public SqlClient(
             HttpClient httpClient,
             IErpLogsService erpLogsService,
             ISqlQueryTemplatService sqlQueryTemplatService,
             INopDataProvider nopDataProvider,
-            SqlIntegrationSettings sqlIntegrationSettings,
-            IWorkContext workContext)
+            IWorkContext workContext,
+            IStoreContext storeContext,
+            ISettingService settingService)
         {
-            _sqlIntegrationSettings = sqlIntegrationSettings;
             _httpClient = httpClient;
             _erpLogsService = erpLogsService;
             _sqlQueryTemplatService = sqlQueryTemplatService;
             _nopDataProvider = nopDataProvider;
             _workContext = workContext;
-
-            // Set HttpClient properties in the constructor, so they are set only once.
-            if (!string.IsNullOrWhiteSpace(_sqlIntegrationSettings.BaseUrl))
-            {
-                _httpClient.BaseAddress = new Uri(_sqlIntegrationSettings.BaseUrl);
-            }
-            _httpClient.Timeout = TimeSpan.FromMinutes(5);
-            var byteArray = Encoding.ASCII.GetBytes($"{_sqlIntegrationSettings.AuthUserName}:{_sqlIntegrationSettings.AuthPassword}");
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+            _storeContext = storeContext;
+            _settingService = settingService;
         }
 
         #region Utilities
 
-        private async Task<SqlResponseModel<object>> ExecuteSqlQueryAsync(SqlResponseModel<object> response, string sqlCommand, string connectionString, ErpSyncLevel erpSyncLevel)
+        private void ConfigureHttpClient(SqlIntegrationSettings sqlIntegrationSettings)
+        {
+            if (!string.IsNullOrWhiteSpace(sqlIntegrationSettings.BaseUrl))
+            {
+                _httpClient.BaseAddress = new Uri(sqlIntegrationSettings.BaseUrl);
+            }
+            _httpClient.Timeout = TimeSpan.FromMinutes(5);
+            var byteArray = Encoding.ASCII.GetBytes($"{sqlIntegrationSettings.AuthUserName}:{sqlIntegrationSettings.AuthPassword}");
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+        }
+
+        private async Task<SqlResponseModel<object>> ExecuteSqlQueryAsync(SqlResponseModel<object> response, string sqlCommand, ErpSyncLevel erpSyncLevel, SqlIntegrationSettings sqlIntegrationSettings)
         {
             var currentRetries = 0;
-            var maxRetries = _sqlIntegrationSettings.HttpCallMaxRetries;
-            var delayBetweenRetries = _sqlIntegrationSettings.HttpCallRestTimeInSeconds * 1000;
+            var maxRetries = sqlIntegrationSettings.HttpCallMaxRetries;
+            var delayBetweenRetries = sqlIntegrationSettings.HttpCallRestTimeInSeconds * 1000;
 
             while (currentRetries < maxRetries)
             {
                 try
                 {
                     // fetch data using connection string
-                    using (var connection = new SqlConnection(connectionString))
+                    using (var connection = new SqlConnection(sqlIntegrationSettings.ConnectionString))
                     {
                         await connection.OpenAsync();
 
@@ -80,7 +86,7 @@ namespace NopStation.Plugin.Misc.ErpSqlIntegration.Services
                 }
                 catch (Exception ex)
                 {
-                    await _erpLogsService.InformationAsync($"SQL Error: {ex.Message}. Retrying after {_sqlIntegrationSettings.HttpCallRestTimeInSeconds} seconds.... Attempts left: {maxRetries - currentRetries - 1}", syncLevel: erpSyncLevel);
+                    await _erpLogsService.InformationAsync($"SQL Error: {ex.Message}. Retrying after {sqlIntegrationSettings.HttpCallRestTimeInSeconds} seconds.... Attempts left: {maxRetries - currentRetries - 1}", syncLevel: erpSyncLevel);
 
                     if (currentRetries == maxRetries - 1)
                     {
@@ -152,6 +158,9 @@ namespace NopStation.Plugin.Misc.ErpSqlIntegration.Services
             {
                 var currentRetries = 0;
                 HttpResponseMessage httpResponse = new HttpResponseMessage();
+                var sqlIntegrationSettings = await _settingService.LoadSettingAsync<SqlIntegrationSettings>(await _storeContext.GetActiveStoreScopeConfigurationAsync());
+                if (sqlIntegrationSettings == null)
+                    throw new Exception("SqlIntegrationSettings not found.");
 
                 // Serialize the JSON object to a JSON string
                 var jsonPayload = JsonConvert.SerializeObject(payloadData, Formatting.Indented);
@@ -160,9 +169,10 @@ namespace NopStation.Plugin.Misc.ErpSqlIntegration.Services
                 await _erpLogsService.InformationAsync($"Serialized JSON Payload: {jsonPayload}", erpSyncLevel);
 
                 var httpReqContent = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+                ConfigureHttpClient(sqlIntegrationSettings);
 
                 // Retry loop
-                while (currentRetries <= _sqlIntegrationSettings.HttpCallMaxRetries)
+                while (currentRetries < sqlIntegrationSettings.HttpCallMaxRetries)
                 {
                     httpResponse = await _httpClient.PostAsync(path, httpReqContent).ConfigureAwait(false);
 
@@ -172,12 +182,12 @@ namespace NopStation.Plugin.Misc.ErpSqlIntegration.Services
                         await _erpLogsService.InformationAsync(
                             message: $"HTTP Response status is unsuccessful. " +
                             $"Response: {errorMessage}. " +
-                            ((_sqlIntegrationSettings.HttpCallMaxRetries - currentRetries > 0) ?
-                            $"HTTP call will be retried after {_sqlIntegrationSettings.HttpCallRestTimeInSeconds} seconds. Retry attempts left: {_sqlIntegrationSettings.HttpCallMaxRetries - currentRetries}" :
+                            ((sqlIntegrationSettings.HttpCallMaxRetries - currentRetries > 0) ?
+                            $"HTTP call will be retried after {sqlIntegrationSettings.HttpCallRestTimeInSeconds} seconds. Retry attempts left: {sqlIntegrationSettings.HttpCallMaxRetries - currentRetries}" :
                             "No retry attempts left."),
                             syncLevel: erpSyncLevel);
 
-                        if (currentRetries == _sqlIntegrationSettings.HttpCallMaxRetries)
+                        if (currentRetries == sqlIntegrationSettings.HttpCallMaxRetries)
                         {
                             // Construct an error response
                             var errorResponse = new HttpResponseMessage(httpResponse.StatusCode)
@@ -186,8 +196,8 @@ namespace NopStation.Plugin.Misc.ErpSqlIntegration.Services
                             };
                             return errorResponse;
                         }
-                        if (_sqlIntegrationSettings.HttpCallMaxRetries > 1)
-                            await Task.Delay(_sqlIntegrationSettings.HttpCallRestTimeInSeconds * 1000); // Converting the time into milliseconds.
+                        if (sqlIntegrationSettings.HttpCallMaxRetries > 1)
+                            await Task.Delay(sqlIntegrationSettings.HttpCallRestTimeInSeconds * 1000); // Converting the time into milliseconds.
                     }
                     else
                     {
@@ -223,8 +233,8 @@ namespace NopStation.Plugin.Misc.ErpSqlIntegration.Services
 
             try
             {
-                var connectionString = _sqlIntegrationSettings.ConnectionString;
-                if (string.IsNullOrEmpty(connectionString))
+                var sqlIntegrationSettings = await _settingService.LoadSettingAsync<SqlIntegrationSettings>(await _storeContext.GetActiveStoreScopeConfigurationAsync());
+                if (string.IsNullOrEmpty(sqlIntegrationSettings.ConnectionString))
                 {
                     response.Message = "Connection string not found to fetch data";
                     return response;
@@ -238,7 +248,7 @@ namespace NopStation.Plugin.Misc.ErpSqlIntegration.Services
                     return response;
                 }
 
-                if(requestModel.Limit <= 0)
+                if (requestModel.Limit <= 0)
                     requestModel.Limit = 100;
 
                 // generate SQL command with parameters
@@ -251,7 +261,10 @@ namespace NopStation.Plugin.Misc.ErpSqlIntegration.Services
 
                 await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Information, erpSyncLevel, "Executing SQL query. View query here.", $"SQL query - {sqlCommand}", await _workContext.GetCurrentCustomerAsync());
 
-                return await ExecuteSqlQueryAsync(response, sqlCommand, connectionString, erpSyncLevel);
+                return await ExecuteSqlQueryAsync(response,
+                    sqlCommand,
+                    erpSyncLevel,
+                    sqlIntegrationSettings);
             }
             catch (Exception ex)
             {

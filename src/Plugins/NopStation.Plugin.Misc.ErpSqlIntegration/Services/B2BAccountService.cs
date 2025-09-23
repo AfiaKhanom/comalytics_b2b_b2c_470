@@ -58,7 +58,9 @@ public class B2BAccountService : IB2BAccountService
 
             var response = await _sqlClient.ProcessSqlQueryWithRequestModelAsync(ErpSyncLevel.Account, erpRequest);
 
-            if (!response.Success || response.Data is null)
+            if (response == null ||
+                !response.Success ||
+                response.Data is null)
             {
                 erpResponseData.ErpResponseModel.IsError = true;
                 erpResponseData.ErpResponseModel.ErrorShortMessage = $"Executing SQL failed due to - {response.Message}";
@@ -339,74 +341,7 @@ public class B2BAccountService : IB2BAccountService
 
     public async Task<ErpResponseData<IList<ErpAccountDataModel>>> GetAllAccountCreditFromErpAsync(ErpGetRequestModel erpRequest)
     {
-        var erpResponseData = new ErpResponseData<IList<ErpAccountDataModel>>();
-        var responseContent = string.Empty;
-
-        try
-        {
-            if (erpRequest == null)
-            {
-                erpResponseData.ErpResponseModel.IsError = false;
-                erpResponseData.ErpResponseModel.ErrorShortMessage = "Request body content no data";
-                return erpResponseData;
-            }
-            var serialized = await _sqlIntegrationService.PrepareErpAccountCreditsRequestBody(erpRequest);
-
-            if (!await _sqlIntegrationService.IsValidSqlIntegrationSettings())
-            {
-                erpResponseData.ErpResponseModel.IsError = true;
-                erpResponseData.ErpResponseModel.ErrorShortMessage = "Sql Integration Settings is not configured well.";
-                return erpResponseData;
-            }
-
-            var response = await _sqlClient.HttpCall(serialized, ErpSyncLevel.Account);
-            if (!response.IsSuccessStatusCode)
-            {
-                erpResponseData.ErpResponseModel.IsError = true;
-                erpResponseData.ErpResponseModel.ErrorShortMessage = response.ToString();
-                return erpResponseData;
-            }
-
-            responseContent = await response.Content.ReadAsStringAsync();
-            var jsonResponse = JObject.Parse(responseContent);
-            List<ErpAccountSqlResponseModel> erpAccountsResponseData = null;
-            // Check if the 'Data' field exists and is not null
-            if (jsonResponse["Data"] != null)
-            {
-                erpAccountsResponseData = jsonResponse["Data"].ToObject<List<ErpAccountSqlResponseModel>>();
-            }
-            else
-            {
-                // If 'Data' is missing, try deserializing directly
-                erpAccountsResponseData = JsonConvert.DeserializeObject<List<ErpAccountSqlResponseModel>>(responseContent);
-            }
-
-            if (erpAccountsResponseData != null && erpAccountsResponseData.Any())
-            {
-                erpResponseData.Data = await _erpNopMapperService.ErpAccountMapNop(erpAccountsResponseData);
-                erpResponseData.ErpResponseModel = new ErpResponseModel
-                {
-                    Next = (int.Parse(erpRequest.Start) + 1).ToString(),
-                };
-            }
-            else
-            {
-                erpResponseData.Data = null;
-                erpResponseData.ErpResponseModel = new ErpResponseModel
-                {
-                    Next = null,
-                };
-            }
-
-        }
-        catch (Exception ex)
-        {
-            erpResponseData.ErpResponseModel.IsError = true;
-            erpResponseData.ErpResponseModel.ErrorShortMessage = ex.Message;
-            erpResponseData.ErpResponseModel.ErrorFullMessage = !string.IsNullOrEmpty(responseContent) ? responseContent : ex.StackTrace;
-        }
-
-        return erpResponseData;
+        return await GetAccountsFromErpAsync(erpRequest);
     }
 
     #endregion

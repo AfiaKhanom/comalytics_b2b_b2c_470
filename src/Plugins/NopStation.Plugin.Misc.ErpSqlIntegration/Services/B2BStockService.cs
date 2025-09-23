@@ -42,7 +42,9 @@ public class B2BStockService : IB2BStockService
 
             var response = await _sqlClient.ProcessSqlQueryWithRequestModelAsync(ErpSyncLevel.Stock, erpRequest);
 
-            if (!response.Success || response.Data is null)
+            if (response == null ||
+                !response.Success ||
+                response.Data is null)
             {
                 erpResponseData.ErpResponseModel.IsError = true;
                 erpResponseData.ErpResponseModel.ErrorShortMessage = $"Executing SQL failed due to - {response.Message}";

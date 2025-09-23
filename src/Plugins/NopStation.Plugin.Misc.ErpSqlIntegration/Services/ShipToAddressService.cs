@@ -42,7 +42,9 @@ public class ShipToAddressService : IShipToAddressService
             }
             var response = await _sqlClient.ProcessSqlQueryWithRequestModelAsync(ErpSyncLevel.ShipToAddress, erpRequest);
 
-            if (!response.Success || response.Data is null)
+            if (response == null ||
+                !response.Success ||
+                response.Data is null)
             {
                 erpResponseData.ErpResponseModel.IsError = true;
                 erpResponseData.ErpResponseModel.ErrorShortMessage = $"Executing SQL failed due to - {response.Message}";

@@ -42,7 +42,9 @@ public class B2BPricingService : IB2BPricingService
 
             var response = await _sqlClient.ProcessSqlQueryWithRequestModelAsync(ErpSyncLevel.SpecialPrice, erpRequest);
 
-            if (!response.Success || response.Data is null)
+            if (response == null ||
+                !response.Success ||
+                response.Data is null)
             {
                 erpResponseData.ErpResponseModel.IsError = true;
                 erpResponseData.ErpResponseModel.ErrorShortMessage = $"Executing SQL failed due to - {response.Message}";
@@ -101,8 +103,10 @@ public class B2BPricingService : IB2BPricingService
             }
 
             var response = await _sqlClient.ProcessSqlQueryWithRequestModelAsync(ErpSyncLevel.GroupPrice, erpRequest);
-
-            if (!response.Success || response.Data is null)
+            
+            if (response == null ||
+                !response.Success ||
+                response.Data is null)
             {
                 erpResponseData.ErpResponseModel.IsError = true;
                 erpResponseData.ErpResponseModel.ErrorShortMessage = $"Executing SQL failed due to - {response.Message}";

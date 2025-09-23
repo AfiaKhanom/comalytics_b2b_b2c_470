@@ -5,6 +5,7 @@ using Nop.Core.Domain.Customers;
 using Nop.Core.Events;
 using Nop.Services.Authentication;
 using Nop.Services.Common;
+using Nop.Services.Configuration;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
@@ -29,7 +30,8 @@ public class AuthenticationController : Controller
     private readonly IGenericAttributeService _genericAttributeService;
     private readonly CustomerSettings _customerSettings;
     private readonly IIntegrationAuthService _integrationAuthService;
-    private readonly SqlIntegrationSettings _sqlIntegrationSettings;
+    private readonly ISettingService _settingService;
+    private readonly IStoreContext _storeContext;
 
     #endregion
 
@@ -46,7 +48,8 @@ public class AuthenticationController : Controller
         IGenericAttributeService genericAttributeService,
         CustomerSettings customerSettings,
         IIntegrationAuthService integrationAuthService,
-        SqlIntegrationSettings sqlIntegrationSettings
+        ISettingService settingService,
+        IStoreContext storeContext
     )
     {
         _customerRegistrationService = customerRegistrationService;
@@ -59,7 +62,8 @@ public class AuthenticationController : Controller
         _genericAttributeService = genericAttributeService;
         _customerSettings = customerSettings;
         _integrationAuthService = integrationAuthService;
-        _sqlIntegrationSettings = sqlIntegrationSettings;
+        _settingService = settingService;
+        _storeContext = storeContext;
     }
 
     #endregion
@@ -84,7 +88,9 @@ public class AuthenticationController : Controller
         var response = new GenericResponseModel<LogInResponseModel>();
         var responseData = new LogInResponseModel();
 
-        if (string.IsNullOrWhiteSpace(_sqlIntegrationSettings.IntegrationSecretKey))
+        var sqlIntegrationSettings = await _settingService.LoadSettingAsync<SqlIntegrationSettings>(await _storeContext.GetActiveStoreScopeConfigurationAsync());
+
+        if (string.IsNullOrWhiteSpace(sqlIntegrationSettings.IntegrationSecretKey))
             ModelState.AddModelError(
                 "",
                 await _localizationService.GetResourceAsync(
@@ -102,36 +108,36 @@ public class AuthenticationController : Controller
             switch (loginResult)
             {
                 case CustomerLoginResults.Successful:
-                {
-                    var customer = await _customerService.GetCustomerByEmailAsync(model.Email);
-                    if (!await HasAdminRoleAsync(customer))
                     {
-                        response.Message = await _localizationService.GetResourceAsync(
-                            "Integration.Login.CustomerRole"
-                        );
-                        response.ErrorList.Add(
+                        var customer = await _customerService.GetCustomerByEmailAsync(model.Email);
+                        if (!await HasAdminRoleAsync(customer))
+                        {
+                            response.Message = await _localizationService.GetResourceAsync(
+                                "Integration.Login.CustomerRole"
+                            );
+                            response.ErrorList.Add(
+                                await _localizationService.GetResourceAsync(
+                                    "Integration.Login.Permission.Denied"
+                                )
+                            );
+                            return StatusCode(StatusCodes.Status403Forbidden, response);
+                        }
+
+                        await _authenticationService.SignInAsync(customer, true);
+                        await _eventPublisher.PublishAsync(new CustomerLoggedinEvent(customer));
+                        await _customerActivityService.InsertActivityAsync(
+                            customer,
+                            "PublicStore.Login",
                             await _localizationService.GetResourceAsync(
-                                "Integration.Login.Permission.Denied"
-                            )
+                                "ActivityLog.PublicStore.Login"
+                            ),
+                            customer
                         );
-                        return StatusCode(StatusCodes.Status403Forbidden, response);
+
+                        responseData.Token = _integrationAuthService.GetToken(customer);
+                        response.Data = responseData;
+                        return Ok(response);
                     }
-
-                    await _authenticationService.SignInAsync(customer, true);
-                    await _eventPublisher.PublishAsync(new CustomerLoggedinEvent(customer));
-                    await _customerActivityService.InsertActivityAsync(
-                        customer,
-                        "PublicStore.Login",
-                        await _localizationService.GetResourceAsync(
-                            "ActivityLog.PublicStore.Login"
-                        ),
-                        customer
-                    );
-
-                    responseData.Token = _integrationAuthService.GetToken(customer);
-                    response.Data = responseData;
-                    return Ok(response);
-                }
                 case CustomerLoginResults.CustomerNotExist:
                     ModelState.AddModelError(
                         "",

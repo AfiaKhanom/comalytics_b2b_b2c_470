@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Nop.Core;
-using Nop.Data;
+using Nop.Services.Configuration;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
@@ -15,19 +15,23 @@ public class ErpOrderService : IErpOrderService
     private readonly SqlClient _sqlClient;
     private readonly IErpNopMapperService _erpNopMapperService;
     private readonly IErpLogsService _erpLogsService;
-    private readonly SqlIntegrationSettings _sqlIntegrationSettings;
+    private readonly ISettingService _settingService;
+    private readonly IStoreContext _storeContext;
 
     public ErpOrderService(ISqlIntegrationService sqlIntegrationService,
         SqlClient sqlClient,
         IErpNopMapperService erpNopMapperService,
         IErpLogsService erpLogsService,
-        SqlIntegrationSettings sqlIntegrationSettings)
+        SqlIntegrationSettings sqlIntegrationSettings,
+        ISettingService settingService,
+        IStoreContext storeContext)
     {
         _sqlIntegrationService = sqlIntegrationService;
         _sqlClient = sqlClient;
         _erpNopMapperService = erpNopMapperService;
         _erpLogsService = erpLogsService;
-        _sqlIntegrationSettings = sqlIntegrationSettings;
+        _settingService = settingService;
+        _storeContext = storeContext;
     }
 
     private void ProcessOrderResponse(ErpResponseModel responseModel, ErpOrderResponse orderResponse)
@@ -104,7 +108,9 @@ public class ErpOrderService : IErpOrderService
 
             var reqBody = await _sqlIntegrationService.PrepareErpOrderPlaceRequestBodyAsync(erpRequest);
 
-            var baseUrl = _sqlIntegrationSettings.BaseUrl;
+            var sqlIntegrationSettings = await _settingService.LoadSettingAsync<SqlIntegrationSettings>(await _storeContext.GetActiveStoreScopeConfigurationAsync());
+
+            var baseUrl = sqlIntegrationSettings.BaseUrl;
             if (!baseUrl.EndsWith("/"))
             {
                 baseUrl += "/";
@@ -162,7 +168,9 @@ public class ErpOrderService : IErpOrderService
 
             var response = await _sqlClient.ProcessSqlQueryWithRequestModelAsync(ErpSyncLevel.Order, erpRequest);
 
-            if (!response.Success || response.Data is null)
+            if (response == null ||
+                !response.Success ||
+                response.Data is null)
             {
                 erpResponseData.ErpResponseModel.IsError = true;
                 erpResponseData.ErpResponseModel.ErrorShortMessage = $"Executing SQL failed due to - {response.Message}";
