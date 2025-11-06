@@ -30,7 +30,7 @@ public interface IErpShipToAddressService
 
     Task<IList<ErpShipToAddress>> GetAllErpShipToAddressesByErpAccountIdsAsync(int[] erpAccountIds, bool showHidden = false, bool isActiveOnly = false);
 
-    Task<Dictionary<string, List<ErpShipToAddress>>> GetErpAccountShipToAddressMappingAsync(int[] erpAccountIds, bool showHidden = false, bool isActiveOnly = false);
+    Task<Dictionary<string, List<ErpShipToAddress>>> GetErpAccountShipToAddressMappingAsync(int[] erpAccountIds, bool showHidden = false, bool isActiveOnly = false, int salesOrgId = 0);
 
     Task<IPagedList<ErpShipToAddress>> GetAllErpShipToAddressesAsync(string shipToCode = "",
         string shipToName = "", int erpAccountId = 0, string repNum = "", string repFullName = "", string repEmail = "",
@@ -55,7 +55,11 @@ public interface IErpShipToAddressService
         bool isActiveOnly = true, 
         bool filterOutDeleted = true);
 
-    Task<ErpShipToAddress> GetErpShipToAddressByShipToCodeAndErpAccountIdAsync(string shipToCode, int erpAccountId);
+    Task<int> CountErpShipToAddressOfSameShipToCodeAndErpAccountIdAsync(string shipToCode, int erpAccountId, ErpShipToAddressCreatedByType createdByType);
 
     Task<IList<ErpShiptoAddressErpAccountMap>> GetErpShipToAddressErpAccountMapsByErpAccountIdsAsync(int[] erpAccountIds);
+    
+    Task<(ErpShipToAddress ShipToAddress, string ErrorMessage)> CreateErpShipToAddressWithMappingAsync(ErpShipToAddress erpShipToAddress, ErpAccount erpAccount, ErpShipToAddressCreatedByType createdByType);
+
+    string GenerateUniqueShipToCode();
 }

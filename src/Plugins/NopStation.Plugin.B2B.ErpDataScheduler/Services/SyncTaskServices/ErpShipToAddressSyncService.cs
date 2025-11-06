@@ -115,29 +115,14 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                 return false;
             }
 
-            IList<ErpAccount> specificErpAccounts = null;
-            var specificErpAccountSalesOrgFound = false;
-            if (!string.IsNullOrWhiteSpace(erpAccountNumber))
-            {
-                specificErpAccounts = await _erpAccountService.GetErpAccountListAsync(accountNumber: erpAccountNumber);
-
-                if (specificErpAccounts == null || specificErpAccounts != null && specificErpAccounts.Count == 0)
-                {
-                    await _erpSyncLogService.SyncLogSaveOnFileAsync(
-                        ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName,
-                        ErpSyncLevel.ShipToAddress,
-                        $"No Erp Account found with Account Number: {erpAccountNumber}");
-
-                    return false;
-                }
-            }
-
             var allCountries = await _countryService.GetAllCountriesAsync();
             var allStateProvinces = await _stateProvinceService.GetStateProvincesAsync();
 
             var erpShipToAddressUpdateList = new Dictionary<int, List<ErpShipToAddress>>();
             var erpShipToAddressInsertList = new Dictionary<int, List<ErpShipToAddress>>();
             var erpShiptoAddressErpAccountMapInsertList = new List<ErpShiptoAddressErpAccountMap>();
+            IList<ErpAccount> oldErpAccounts;
+            var specificErpAccountSalesOrgFound = false;
 
             #endregion
 
@@ -148,40 +133,42 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
 
             foreach (var salesOrg in salesOrgs)
             {
-                IList<ErpAccount> oldErpAccounts;
-
-                if (specificErpAccounts != null)
+                if (!string.IsNullOrWhiteSpace(erpAccountNumber))
                 {
-                    if (specificErpAccounts.FirstOrDefault(x => x.ErpSalesOrgId == salesOrg.Id) != null)
+                    oldErpAccounts = await _erpAccountService.GetErpAccountListAsync(accountNumber: erpAccountNumber, salesOrgId: salesOrg.Id);
+
+                    if (oldErpAccounts == null || !oldErpAccounts.Any())
                     {
-                        specificErpAccountSalesOrgFound = true;
-                        oldErpAccounts = specificErpAccounts;
-                    }
-                    else
-                    {
+                        await _erpSyncLogService.SyncLogSaveOnFileAsync(
+                            ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName,
+                            ErpSyncLevel.ShipToAddress,
+                            $"No Erp Account found with Account Number: {erpAccountNumber}" +
+                            $"and Sales Org: {salesOrg.Code}");
+
                         continue;
                     }
+                    specificErpAccountSalesOrgFound = true;
                 }
                 else
                 {
-                    oldErpAccounts = await _erpAccountService.GetErpAccountListAsync(salesOrgId: salesOrg.Id, showHidden: false);               
+                    oldErpAccounts = await _erpAccountService.GetErpAccountListAsync(showHidden: false, salesOrgId: salesOrg.Id);
                 }
 
-                if (oldErpAccounts.Count == 0)
+                if (oldErpAccounts == null || !oldErpAccounts.Any())
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpShipToAddressSyncTaskName,
                         ErpSyncLevel.ShipToAddress,
-                        $"No Erp Accounts found with the Sales org : {salesOrg.Name}");
-
-                    if (specificErpAccounts != null)
-                        return false;
-
+                        $"No Erp Accounts found with the Sales org : {salesOrg.Name}-{salesOrg.Code}");
                     continue;
                 }
 
                 var erpAccountShipToAddressesMap = await _erpShipToAddressService
-                    .GetErpAccountShipToAddressMappingAsync(oldErpAccounts.Select(x => x.Id).ToArray());
+                    .GetErpAccountShipToAddressMappingAsync(
+                        erpAccountIds: oldErpAccounts.Select(x => x.Id).ToArray(),
+                        showHidden: true,
+                        isActiveOnly: false,
+                        salesOrgId: salesOrg.Id);
 
                 var isError = false;
                 var start = "0";
@@ -249,13 +236,13 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                         var matchingErpAccountShipToAddress = erpAccountShipToAddressesMap
                             .FirstOrDefault(map => map.Key.Trim() == erpAccount.AccountNumber);
 
-                        if (matchingErpAccountShipToAddress.Key != null && 
-                            matchingErpAccountShipToAddress.Value.Exists(addr => addr.ShipToCode.Trim() == erpShipToAddress.ShipToCode.Trim()))
+                        if (matchingErpAccountShipToAddress.Key != null &&
+                            matchingErpAccountShipToAddress.Value.Any())
                         {
                             oldShipToAddressByThisAccount = matchingErpAccountShipToAddress.Value
                                 .Find(addr => addr.ShipToCode.Trim() == erpShipToAddress.ShipToCode.Trim());
 
-                            address = await _addressService.GetAddressByIdAsync(oldShipToAddressByThisAccount.AddressId);
+                            address = await _addressService.GetAddressByIdAsync(oldShipToAddressByThisAccount?.AddressId ?? 0);
                         }
 
                         countryId = allCountries.FirstOrDefault(x =>
@@ -305,26 +292,27 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                             await _addressService.UpdateAddressAsync(address);
                         }
 
-                            if (oldShipToAddressByThisAccount is null)
-                            {
-                                oldShipToAddressByThisAccount = new ErpShipToAddress();
-                                oldShipToAddressByThisAccount.ShipToCode = erpShipToAddress.ShipToCode.Trim();
-                                oldShipToAddressByThisAccount.ShipToName = erpShipToAddress.ShipToName.Trim();
-                                oldShipToAddressByThisAccount.Suburb = erpShipToAddress.Suburb;
-                                oldShipToAddressByThisAccount.ProvinceCode = erpShipToAddress.StateProvince;
-                                oldShipToAddressByThisAccount.DeliveryNotes = erpShipToAddress.DeliveryNotes;
-                                oldShipToAddressByThisAccount.EmailAddresses = erpShipToAddress.EmailAddress;
-                                oldShipToAddressByThisAccount.RepNumber = erpShipToAddress.RepNumber;
-                                oldShipToAddressByThisAccount.RepPhoneNumber = erpShipToAddress.RepPhoneNumber;
-                                oldShipToAddressByThisAccount.RepEmail = erpShipToAddress.RepEmail;
-                                oldShipToAddressByThisAccount.RepFullName = erpShipToAddress.RepFullName;
-                                oldShipToAddressByThisAccount.AddressId = address.Id;
-                                oldShipToAddressByThisAccount.IsActive = erpAccount.IsActive;
-                                oldShipToAddressByThisAccount.CreatedOnUtc = DateTime.UtcNow;
-                                oldShipToAddressByThisAccount.CreatedById = 1;
-                                oldShipToAddressByThisAccount.UpdatedOnUtc = DateTime.UtcNow;
-                                oldShipToAddressByThisAccount.UpdatedById = 1;
-                                oldShipToAddressByThisAccount.LastShipToAddressSyncDate = DateTime.UtcNow;
+                        if (oldShipToAddressByThisAccount is null)
+                        {
+                            oldShipToAddressByThisAccount = new ErpShipToAddress();
+                            oldShipToAddressByThisAccount.ShipToCode = erpShipToAddress.ShipToCode.Trim();
+                            oldShipToAddressByThisAccount.ShipToName = erpShipToAddress.ShipToName.Trim();
+                            oldShipToAddressByThisAccount.Suburb = erpShipToAddress.Suburb;
+                            oldShipToAddressByThisAccount.ProvinceCode = erpShipToAddress.StateProvince;
+                            oldShipToAddressByThisAccount.DeliveryNotes = erpShipToAddress.DeliveryNotes;
+                            oldShipToAddressByThisAccount.EmailAddresses = erpShipToAddress.EmailAddress;
+                            oldShipToAddressByThisAccount.RepNumber = erpShipToAddress.RepNumber;
+                            oldShipToAddressByThisAccount.RepPhoneNumber = erpShipToAddress.RepPhoneNumber;
+                            oldShipToAddressByThisAccount.RepEmail = erpShipToAddress.RepEmail;
+                            oldShipToAddressByThisAccount.RepFullName = erpShipToAddress.RepFullName;
+                            oldShipToAddressByThisAccount.AddressId = address.Id;
+                            oldShipToAddressByThisAccount.IsActive = erpAccount.IsActive;
+                            oldShipToAddressByThisAccount.CreatedOnUtc = DateTime.UtcNow;
+                            oldShipToAddressByThisAccount.CreatedById = 1;
+                            oldShipToAddressByThisAccount.UpdatedOnUtc = DateTime.UtcNow;
+                            oldShipToAddressByThisAccount.UpdatedById = 1;
+                            oldShipToAddressByThisAccount.LastShipToAddressSyncDate = DateTime.UtcNow;
+                            oldShipToAddressByThisAccount.IsDeleted = false;
 
                             if (await IsvalidErpShipToAddressAsync(oldShipToAddressByThisAccount))
                             {
@@ -333,6 +321,15 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                                 else
                                     erpShipToAddressInsertList[erpAccount.Id].Add(oldShipToAddressByThisAccount);
 
+                                // Update the local mapping to include this new address for future iterations
+                                if (erpAccountShipToAddressesMap.ContainsKey(erpAccount.AccountNumber))
+                                {
+                                    erpAccountShipToAddressesMap[erpAccount.AccountNumber].Add(oldShipToAddressByThisAccount);
+                                }
+                                else
+                                {
+                                    erpAccountShipToAddressesMap.Add(erpAccount.AccountNumber, new List<ErpShipToAddress> { oldShipToAddressByThisAccount });
+                                }
                                 lastSyncedErpShipToAddressShipToCode = oldShipToAddressByThisAccount.ShipToCode;
                             }
                             else
@@ -355,6 +352,7 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                             oldShipToAddressByThisAccount.UpdatedOnUtc = DateTime.UtcNow;
                             oldShipToAddressByThisAccount.UpdatedById = 1;
                             oldShipToAddressByThisAccount.LastShipToAddressSyncDate = DateTime.UtcNow;
+                            oldShipToAddressByThisAccount.IsDeleted = false;
 
                             if (await IsvalidErpShipToAddressAsync(oldShipToAddressByThisAccount))
                             {
@@ -376,7 +374,7 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                             }
                             else
                                 totalNotSyncedSoFar++;
-                        }                        
+                        }
                     }
 
                     if (erpShipToAddressInsertList.Count != 0)
@@ -435,7 +433,7 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                         return false;
                     }
                 }
-                
+
                 if (!isError)
                 {
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
@@ -453,7 +451,6 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                 }
 
                 oldErpAccounts.Clear();
-
                 salesOrg.LastErpShipToAddressSyncTimeOnUtc = DateTime.UtcNow;
                 await _erpSalesOrgService.UpdateErpSalesOrgAsync(salesOrg);
 

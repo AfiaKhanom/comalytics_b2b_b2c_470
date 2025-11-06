@@ -881,18 +881,27 @@ public class B2BB2CCustomerController : CustomerController
                                             IsActive = true,
                                             CreatedById = customer.Id,
                                             CreatedOnUtc = DateTime.UtcNow,
+                                            Suburb = shipToAddressModel?.Suburb ?? string.Empty
                                         };
 
-                                        await _erpShipToAddressService.InsertErpShipToAddressAsync(erpShipToAddress);
-                                        await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync(
-                                            erpAccount, erpShipToAddress, ErpShipToAddressCreatedByType.Admin);
-                                        await _erpLogsService.InformationAsync($"{await _localizationService.GetResourceAsync("Admin.ErpShipToAddresss.Added")}, Erp Ship To Address Id: {erpShipToAddress.Id}. For register customer Id: {customer.Id}", ErpSyncLevel.Account, customer: customer);
+                                        var insertionResult = await _erpShipToAddressService.CreateErpShipToAddressWithMappingAsync(erpShipToAddress, erpAccount, ErpShipToAddressCreatedByType.Admin);
+                                        if (insertionResult.ShipToAddress == null)
+                                        {
+                                            await _erpLogsService.ErrorAsync($"ShipToAddress was not created due to - {insertionResult.ErrorMessage}" +
+                                                $"Erp Ship To Address Id: {erpShipToAddress.Id}. " +
+                                                $"For register customer Id: {customer.Id}",
+                                                ErpSyncLevel.Account, customer: customer);
+                                        }
+                                        else
+                                        {
+                                            await _erpLogsService.InformationAsync($"{await _localizationService.GetResourceAsync("Admin.ErpShipToAddresss.Added")}, Erp Ship To Address Id: {erpShipToAddress.Id}. For register customer Id: {customer.Id}", ErpSyncLevel.Account, customer: customer);
 
-                                        //erp activity log
-                                        await _erpActivityLogsService.InsertErpActivityAsync("Erp_AddNewErpShipToAddress",
-                                            string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.AddNewErpShipToAddress"),
-                                            erpShipToAddress.Id, erpAccount.Id),
-                                            erpShipToAddress);
+                                            //erp activity log
+                                            await _erpActivityLogsService.InsertErpActivityAsync("Erp_AddNewErpShipToAddress",
+                                                string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.AddNewErpShipToAddress"),
+                                                erpShipToAddress.Id, erpAccount.Id),
+                                                erpShipToAddress);
+                                        }
 
                                         if (shipToAddressIdForB2BB2CUserId == 0)
                                             shipToAddressIdForB2BB2CUserId = erpShipToAddress.Id;
@@ -913,7 +922,7 @@ public class B2BB2CCustomerController : CustomerController
                                     {
                                         EmailAddresses = customer.Email,
                                         AddressId = defaultAddress.Id,
-                                        ShipToCode = $"STC_{model.B2CIdentificationNumber}",
+                                        ShipToCode = _erpShipToAddressService.GenerateUniqueShipToCode(),
                                         ShipToName = $"{model.FirstName} {model.LastName}",
                                         DeliveryNotes = string.Empty,
                                         RepNumber = model?.RepNumber ?? string.Empty,
