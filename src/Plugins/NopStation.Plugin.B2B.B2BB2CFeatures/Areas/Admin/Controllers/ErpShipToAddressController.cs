@@ -122,20 +122,31 @@ public class ErpShipToAddressController : NopStationAdminController
             erpShipToAddress.AddressId = address.Id;
             erpShipToAddress.CreatedOnUtc = DateTime.UtcNow;
             erpShipToAddress.CreatedById = currentCustomer.Id;
-            await _erpShipToAddressService.InsertErpShipToAddressAsync(erpShipToAddress);
+
             var erpAccount = await _accountService.GetErpAccountByIdAsync(model.ErpAccountId);
-            await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync(erpAccount, erpShipToAddress, ErpShipToAddressCreatedByType.Admin);
+            if (erpAccount != null)
+            {
+                var insertionResult = await _erpShipToAddressService.CreateErpShipToAddressWithMappingAsync(erpShipToAddress, erpAccount, ErpShipToAddressCreatedByType.Admin);
+                if (insertionResult.ShipToAddress == null)
+                {
+                    _notificationService.ErrorNotification(insertionResult.ErrorMessage);
+                    model = await _erpShipToAddressModelFactory.PrepareErpShipToAddressModelAsync(model, null, true);
+                    return View(model);
+                }
 
-            var successMsg = await _localizationService.GetResourceAsync("Admin.ErpShipToAddresss.Added");
-            _notificationService.SuccessNotification(successMsg);
+                var successMsg = await _localizationService.GetResourceAsync("Admin.ErpShipToAddresss.Added");
+                _notificationService.SuccessNotification(successMsg);
 
-            await _erpLogsService.InformationAsync($"{successMsg}. Erp Ship to Address Id: {erpShipToAddress.Id}. Erp Account Id: {erpAccount.Id}", ErpSyncLevel.ShipToAddress, customer: currentCustomer);
+                await _erpLogsService.InformationAsync($"{successMsg}. Erp Ship to Address Id: {erpShipToAddress.Id}. Erp Account Id: {erpAccount.Id}", ErpSyncLevel.ShipToAddress, customer: currentCustomer);
 
-            //erp activity log
-            await _erpActivityLogsService.InsertErpActivityAsync("Erp_AddNewErpShipToAddress",
-                string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.AddNewErpShipToAddress"),
-                erpShipToAddress.Id, erpAccount.Id),
-                erpShipToAddress);
+                //erp activity log
+                await _erpActivityLogsService.InsertErpActivityAsync("Erp_AddNewErpShipToAddress",
+                    string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.AddNewErpShipToAddress"),
+                    erpShipToAddress.Id, erpAccount.Id),
+                    erpShipToAddress);
+            }
+
+            _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.ErpAccount.ErpAccountNotAvailable"));
 
             if (!continueEditing)
                 return RedirectToAction("List");
@@ -187,25 +198,53 @@ public class ErpShipToAddressController : NopStationAdminController
             erpShipToAddress.AddressId = address.Id;
             erpShipToAddress.UpdatedById = currentCustomer.Id;
             erpShipToAddress.UpdatedOnUtc = DateTime.UtcNow;
+
+            var erpAccount = await _accountService.GetErpAccountByIdAsync(model.ErpAccountId);
+            if (erpAccount == null)
+            {
+                _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Admin.ErpShipToAddresss.Edit.Error.ErpAccountNotFound"));
+                return RedirectToAction("Edit", new { id = erpShipToAddress.Id });
+            }
+
+            var countDuplicates = await _erpShipToAddressService.CountErpShipToAddressOfSameShipToCodeAndErpAccountIdAsync(model.ShipToCode,
+                model.ErpAccountId,
+                ErpShipToAddressCreatedByType.Admin);
+
+            if (countDuplicates > 1)
+            {
+                _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Admin.ErpShipToAddresss.Edit.Error.DuplicateShipToAddressExistWithSameCodeAndAccountId"));
+                return RedirectToAction("Edit", new { id = erpShipToAddress.Id });
+            }
+
             await _erpShipToAddressService.UpdateErpShipToAddressAsync(erpShipToAddress);
 
             if (await _erpShipToAddressService.GetErpShipToAddressErpAccountMapByErpShipToAddressIdAsync(erpShipToAddress.Id) == null)
             {
-                await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync(await _accountService.GetErpAccountByIdAsync(model.ErpAccountId), erpShipToAddress, ErpShipToAddressCreatedByType.User);
+                await _erpShipToAddressService.InsertErpShipToAddressErpAccountMapAsync(erpAccount, erpShipToAddress, ErpShipToAddressCreatedByType.Admin);
             }
 
             var shipToAddressErpAccountMap = await _erpShipToAddressService.GetErpShipToAddressErpAccountMapByErpShipToAddressIdAsync(erpShipToAddress.Id);
 
-            var successMsg = await _localizationService.GetResourceAsync("Admin.ErpShipToAddresss.Updated");
-            _notificationService.SuccessNotification(successMsg);
+            if (shipToAddressErpAccountMap != null)
+            {
+                var successMsg = await _localizationService.GetResourceAsync("Admin.ErpShipToAddresss.Updated");
+                _notificationService.SuccessNotification(successMsg);
 
-            await _erpLogsService.InformationAsync($"{successMsg}. Erp Ship to Address Id: {erpShipToAddress.Id}. Erp Account Id: {shipToAddressErpAccountMap.ErpAccountId}", ErpSyncLevel.ShipToAddress, customer: currentCustomer);
+                await _erpLogsService.InformationAsync($"{successMsg}. Erp Ship to Address Id: {erpShipToAddress.Id}. Erp Account Id: {shipToAddressErpAccountMap.ErpAccountId}", ErpSyncLevel.ShipToAddress, customer: currentCustomer);
 
-            //erp activity log
-            await _erpActivityLogsService.InsertErpActivityAsync("Erp_EditErpShipToAddress",
-                string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.EditErpShipToAddress"),
-                erpShipToAddress.Id, shipToAddressErpAccountMap.ErpAccountId),
-                erpShipToAddress);
+                //erp activity log
+                await _erpActivityLogsService.InsertErpActivityAsync("Erp_EditErpShipToAddress",
+                    string.Format(await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.B2BB2CFeatures.ErpActivityLogs.EditErpShipToAddress"),
+                    erpShipToAddress.Id, shipToAddressErpAccountMap.ErpAccountId),
+                    erpShipToAddress);
+            }
+            else
+            {
+                var errorMsg = await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.Admin.ErpAccount.ErpAccountNotAvailable");
+                _notificationService.ErrorNotification(errorMsg);
+
+                await _erpLogsService.InformationAsync($"{errorMsg}. Erp Ship to Address Id: {erpShipToAddress.Id} could not be mapped with an erp-account.", ErpSyncLevel.ShipToAddress, customer: currentCustomer);
+            }
 
             if (!continueEditing)
                 return RedirectToAction("List");

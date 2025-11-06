@@ -671,7 +671,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
             {
                 var newErpShiptoAddress = new ErpShipToAddress
                 {
-                    ShipToCode = erpAccount.AccountNumber,
+                    ShipToCode = _erpShipToAddressService.GenerateUniqueShipToCode(),
                     ShipToName = erpAccount.AccountName,
                     AddressId = oldNopOrder.ShippingAddressId ?? 0,
                     CreatedOnUtc = DateTime.UtcNow,
