@@ -6229,4 +6229,11 @@
     <LocaleResource Name="NopStation.Plugin.B2B.ERPIntegrationCore.Common.ActiveFilter.ShowOnlyInactive">
         <Value>Show only Inactive</Value>
     </LocaleResource>
+
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Customer.Choose">
+        <Value>Choose Customer</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Customer.Remove">
+        <Value>Remove Customer</Value>
+    </LocaleResource>
 </Language>

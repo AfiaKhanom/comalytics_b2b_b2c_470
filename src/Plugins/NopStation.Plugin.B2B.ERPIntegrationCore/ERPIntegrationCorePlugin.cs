@@ -212,10 +212,10 @@ public class ERPIntegrationCorePlugin : BasePlugin, IMiscPlugin, IAdminMenuPlugi
         var keyValuePairs = PluginResouces().ToDictionary(kv => kv.Key, kv => kv.Value);
         foreach (var keyValuePair in keyValuePairs)
         {
-            await _localizationService.AddOrUpdateLocaleResourceAsync(keyValuePair.Key, keyValuePair.Value);
+            //await _localizationService.AddOrUpdateLocaleResourceAsync(keyValuePair.Key, keyValuePair.Value);
         }
 
-        await _erpActivityLogsService.InsertOrUpdateErpActivityTypesAsync(ErpActivityLogTypes());
+        //await _erpActivityLogsService.InsertOrUpdateErpActivityTypesAsync(ErpActivityLogTypes());
         await base.UpdateAsync(currentVersion, targetVersion);
     }
 
