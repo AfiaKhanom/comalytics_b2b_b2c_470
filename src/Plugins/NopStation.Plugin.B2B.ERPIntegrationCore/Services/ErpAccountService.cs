@@ -280,8 +280,12 @@ public class ErpAccountService : IErpAccountService
         });
     }
 
-    public async Task<IPagedList<ErpAccount>> GetAllErpAccountsByIdsAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false,
-        bool getOnlyTotalCount = false, List<int> accountIds = null, string email = "")
+    public async Task<IPagedList<ErpAccount>> GetAllErpAccountsByIdsAsync(int pageIndex = 0, 
+        int pageSize = int.MaxValue, 
+        bool showHidden = false,
+        bool getOnlyTotalCount = false, 
+        List<int> accountIds = null, 
+        string email = "")
     {
         return await _erpAccountRepository.GetAllPagedAsync(query =>
         {
@@ -306,6 +310,35 @@ public class ErpAccountService : IErpAccountService
             return query;
 
         }, pageIndex, pageSize, getOnlyTotalCount);
+    }
+
+    public async Task<IList<ErpAccount>> GetAllErpAccountsByIdsAsync(bool showHidden = false,
+        List<int> erpAccountIds = null,
+        string email = "")
+    {
+        return await _erpAccountRepository.GetAllAsync(query =>
+        {
+            query = query.Where(c => !c.IsDeleted);
+
+            if (!showHidden)
+                query = query.Where(v => v.IsActive);
+
+            if (erpAccountIds != null && erpAccountIds.Any())
+                query = query.Where(c => erpAccountIds.Contains(c.Id));
+
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                query = query.Join(_addressRepository.Table, x => x.BillingAddressId, y => y.Id,
+                        (x, y) => new { ErpAccount = x, Address = y })
+                    .Where(z => z.Address.Email.Contains(email))
+                    .Select(z => z.ErpAccount)
+                    .Distinct();
+            }
+
+            query = query.OrderBy(ea => ea.Id);
+            return query;
+
+        });
     }
 
     public async Task<IList<ErpAccount>> GetErpAccountsOfOnlyActiveErpNopUsersAsync(int salesOrgId = 0, string accountNumber = "")

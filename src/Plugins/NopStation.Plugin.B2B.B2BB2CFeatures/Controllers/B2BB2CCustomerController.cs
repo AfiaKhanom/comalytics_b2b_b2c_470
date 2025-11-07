@@ -992,17 +992,23 @@ public class B2BB2CCustomerController : CustomerController
                             erpNopUser.Id),
                             erpNopUser);
 
+                        var b2BB2CustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(
+                            model.IsB2BUser ? 
+                            ERPIntegrationCoreDefaults.B2BCustomerRole : 
+                            ERPIntegrationCoreDefaults.B2CCustomerRole);
+
                         //prepare and save erpNopUser
                         var erpNopUserAccountMap = new ErpNopUserAccountMap
                         {
                             ErpAccountId = erpAccount.Id,
-                            ErpUserId = erpNopUser.Id
+                            ErpUserId = erpNopUser.Id,
+                            ErpUserTypeId = erpNopUser.ErpUserTypeId,
+                            CustomerRolesIds = b2BB2CustomerRole == null ? string.Empty : $"{b2BB2CustomerRole.Id}"
                         };
                         await _erpNopUserAccountMapService.InsertErpNopUserAccountMapAsync(erpNopUserAccountMap);
 
                         if (erpNopUserAccountMap.Id > 0)
                         {
-                            var b2BB2CustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(model.IsB2BUser ? ERPIntegrationCoreDefaults.B2BCustomerRoleSystemName : ERPIntegrationCoreDefaults.B2CCustomerRoleSystemName);
                             if (b2BB2CustomerRole != null)
                             {
                                 await _customerService.AddCustomerRoleMappingAsync(new CustomerCustomerRoleMapping { CustomerId = customer.Id, CustomerRoleId = b2BB2CustomerRole.Id });
@@ -1469,6 +1475,14 @@ public class B2BB2CCustomerController : CustomerController
             var erpUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(model.CustomerId);
             if (erpUser != null && model.ErpAccountId > 0 && erpUser.ErpAccountId != model.ErpAccountId)
             {
+                var mappedAccount = await _erpNopUserAccountMapService
+                    .GetErpNopUserAccountMapByAccountAndUserIdAsync(accountId: model.ErpAccountId, userId: erpUser.Id);
+
+                if (mappedAccount != null)
+                {
+                    erpUser.ErpUserTypeId = mappedAccount.ErpUserTypeId;
+                }
+
                 erpUser.ErpAccountId = model.ErpAccountId;
 
                 var defaultShipToAddress = (await _erpShipToAddressService.GetErpShipToAddressesByAccountIdAsync(showHidden: false, 
