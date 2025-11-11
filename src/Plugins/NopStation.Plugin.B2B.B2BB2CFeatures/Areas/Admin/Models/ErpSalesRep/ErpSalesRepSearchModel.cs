@@ -10,13 +10,14 @@ public record ErpSalesRepSearchModel: BaseSearchModel
     public ErpSalesRepSearchModel()
     {
         SelectedSalesOrgIds = new List<int>();
+        AvailableActiveOptions = new List<SelectListItem>();
         AvailableSalesReps = new List<SelectListItem>();
         AvailableSalesRepType = new List<SelectListItem>();
         AvailableSalesOrgs = new List<SelectListItem>();
     }
 
-    [NopResourceDisplayName("B2BB2CFeatures.ErpSalesRep.Fields.NopCustomerId")]
-    public int NopCustomerId { get; set; }
+    [NopResourceDisplayName("B2BB2CFeatures.ErpSalesRep.Fields.SearchCustomerEmail")]
+    public string SearchCustomerEmail { get; set; }
 
     [NopResourceDisplayName("B2BB2CFeatures.ErpSalesRep.Fields.SalesRepTypeId")]
     public int SalesRepTypeId { get; set; }
@@ -24,6 +25,9 @@ public record ErpSalesRepSearchModel: BaseSearchModel
     [NopResourceDisplayName("B2BB2CFeatures.ErpSalesRep.Fields.SalesOrgIds")]
     public IList<int> SelectedSalesOrgIds { get; set; }
 
+    [NopResourceDisplayName("B2BB2CFeatures.ErpSalesRep.Fields.SearchActive")]
+    public int SearchActiveId { get; set; }
+    public IList<SelectListItem> AvailableActiveOptions { get; set; }
     public IList<SelectListItem> AvailableSalesReps { get; set; }
     public IList<SelectListItem> AvailableSalesRepType { get; set; }
     public IList<SelectListItem> AvailableSalesOrgs { get; set; }

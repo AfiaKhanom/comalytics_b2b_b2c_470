@@ -1,24 +1,23 @@
 ﻿using System.Collections.Generic;
 using Nop.Web.Framework.Models;
 
-namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models
+namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
+
+public record SalesRepERPAccountMapModel : BaseNopModel
 {
-    public record SalesRepERPAccountMapModel : BaseNopModel
+    #region Ctor
+
+    public SalesRepERPAccountMapModel()
     {
-        #region Ctor
-
-        public SalesRepERPAccountMapModel()
-        {
-            SelectedErpAccountIds = new List<int>();
-        }
-
-        #endregion
-
-        #region Properties
-
-        public int SalesRepId { get; set; }
-        public IList<int> SelectedErpAccountIds { get; set; }
-
-        #endregion
+        SelectedErpAccountIds = new List<int>();
     }
+
+    #endregion
+
+    #region Properties
+
+    public int SalesRepId { get; set; }
+    public IList<int> SelectedErpAccountIds { get; set; }
+
+    #endregion
 }

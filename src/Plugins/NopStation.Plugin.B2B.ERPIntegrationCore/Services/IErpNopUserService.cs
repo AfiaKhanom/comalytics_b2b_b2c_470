@@ -10,36 +10,28 @@ public interface IErpNopUserService
     Task InsertErpNopUserAsync(ErpNopUser erpNopUser);
 
     Task UpdateErpNopUserAsync(ErpNopUser erpNopUser);
-
     Task DeleteErpNopUserByIdAsync(int id);
-
     Task<ErpNopUser> GetErpNopUserByIdAsync(int id);
-
     Task<ErpNopUser> GetErpNopUserByIdWithActiveAsync(int id);
-
-    Task<IPagedList<ErpNopUser>> GetAllErpNopUsersAsync(int pageIndex = 0, int pageSize = int.MaxValue, 
-        bool? showHidden = null, 
-        bool getOnlyTotalCount = false,  
-        string email = null, 
-        string name = null, 
-        int accountId = 0, 
-        int userType = 0, 
-        int salesOrgId = 0, 
+    Task<IPagedList<ErpNopUser>> GetAllErpNopUsersAsync(int pageIndex = 0,
+        int pageSize = int.MaxValue,
+        bool? showHidden = null,
+        bool getOnlyTotalCount = false,
+        string email = null,
+        string name = null,
+        string firstName = null,
+        string lastName = null,
+        int accountId = 0,
+        int userType = 0,
+        int salesOrgId = 0,
+        string shipToCode = "",
         int erpShipToAddressId = 0);
-
-    Task<ErpNopUser> GetErpNopUserByCustomerIdAsync(int customerId);
-
-    Task<ErpNopUser> GetErpNopUserByCustomerIdAsync(int customerId, int erpAccountId = 0);
-
+    Task<ErpNopUser> GetErpNopUserByCustomerIdAsync(int customerId, bool showHidden = false);
+    Task<ErpNopUser> GetErpNopUserByCustomerIdAndErpAccountIdAsync(int customerId, int erpAccountId = 0);
     Task<IList<ErpNopUser>> GetAllErpNopUserByAccountIdAsync(int accountId, bool showHidden = false);
-
     Task<IList<int>> GetAllCustomersByOnlyTheseRoleIdsAsync(int id);
-
     Task<IList<int>> GetAllErpNopUsersCustomerIds();
-
     Task<IList<ErpNopUser>> GetAllErpNopUsersByCustomerIdAsync(int customerId, bool showHidden = false);
-
     Task<IList<int>> GetAllErpNopUsersErpAccountIdsByCustomerId(int customerId = 0);
-
     Task<bool> IsTheCustomerAlreadyAUserOfThisErpAccount(int customerId = 0, int erpAccountId = 0);
 }

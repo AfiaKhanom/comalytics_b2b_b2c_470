@@ -124,19 +124,11 @@ public class CustomerImpersonateController : BasePublicController
 
         var customer = await _workContext.GetCurrentCustomerAsync();
 
-        var salesRep = (await _erpSalesRepService.GetErpSalesRepsByNopCustomerIdAsync(customer.Id)).FirstOrDefault();
+        var salesRep = (await _erpSalesRepService.GetErpSalesRepsByNopCustomerIdAsync(customer.Id)).FirstOrDefault() ?? new ErpSalesRep();
 
-        if (salesRep == null)
-            salesRep = new ErpSalesRep();
+        var salesRepUserListModel = await _salesRepUserModelFactory.PrepareSalesRepUserListModelForSalesRep(searchModel, salesRep);
 
-        if (salesRep.SalesRepTypeId == (int)SalesRepType.MultiBuyers)
-        {
-            var multiBuyermodel = await _salesRepUserModelFactory.PreparePublicSalesRepUserListModelForSalesRep(searchModel, salesRep);
-            return Json(multiBuyermodel);
-        }
-
-        var regularModel = await _salesRepUserModelFactory.PrepareSalesRepUserListModelForSalesRep(searchModel, salesRep);
-        return Json(regularModel);
+        return Json(salesRepUserListModel);
     }
 
 

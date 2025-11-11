@@ -42,7 +42,6 @@ public class SalesRepUsersController : NopStationAdminController
     private readonly IErpAccountModelFactory _erpAccountModelFactory;
     private readonly IErpAccountService _erpAccountService;
     private readonly IErpActivityLogsService _erpActivityLogsService;
-    private const string ADMINISTRATOR_SYSTEM_NAME = "Administrators";
 
     #endregion
 
@@ -92,7 +91,7 @@ public class SalesRepUsersController : NopStationAdminController
         }
         var salesRepRole = salesRepRoles.FirstOrDefault(r => r.SystemName == ERPIntegrationCoreDefaults.B2BSalesRepRoleSystemName);
 
-        if (salesRepRole == null && !salesRepRoles.Any(r => r.SystemName == ADMINISTRATOR_SYSTEM_NAME))
+        if (salesRepRole == null && !salesRepRoles.Any(r => r.SystemName == NopCustomerDefaults.AdministratorsRoleName))
             return false;        
 
         return true;
@@ -146,7 +145,6 @@ public class SalesRepUsersController : NopStationAdminController
         if (salesRep == null || !salesRep.IsActive || salesRep.IsDeleted)
             return await AccessDeniedDataTablesJson();
 
-        //prepare model
         var model = await _salesRepUserModelFactory.PrepareSalesRepErpUserListModelForSalesRep(searchModel, salesRep);
 
         return Json(model);
@@ -203,7 +201,6 @@ public class SalesRepUsersController : NopStationAdminController
         if (!await _permissionService.AuthorizeAsync(B2BB2CPermissionProvider.ManageSalesRepresantatives))
             return await AccessDeniedDataTablesJson();
 
-        //prepare model
         var model = await _erpAccountModelFactory.PrepareErpAccountListModelAsync(searchModel);
 
         return Json(model);
@@ -215,7 +212,6 @@ public class SalesRepUsersController : NopStationAdminController
         if (!await _permissionService.AuthorizeAsync(B2BB2CPermissionProvider.ManageSalesRepresantatives))
             return await AccessDeniedDataTablesJson();
 
-        //try to get a related product with the specified id
         var erpSalesRepErpAccountMap = await _erpAccountService.GetErpSalesRepErpAccountMapByIdAsync(salesRepId, id);
 
         if (erpSalesRepErpAccountMap != null)
@@ -236,7 +232,6 @@ public class SalesRepUsersController : NopStationAdminController
         if (!await HasB2BSalesRepRoleAsync())
             return AccessDeniedView();
 
-        //try to get a erpNopUser with the specified id
         var erpNopUser = await _erpNopUserService.GetErpNopUserByIdAsync(id);
         if (erpNopUser == null || !erpNopUser.IsActive || erpNopUser.IsDeleted)
         {
@@ -244,7 +239,6 @@ public class SalesRepUsersController : NopStationAdminController
             return RedirectToAction("List");
         }
 
-        //try to get a customer with the specified id
         var customer = await _customerService.GetCustomerByIdAsync(erpNopUser.NopCustomerId);
         var currentCustomer = await _workContext.GetCurrentCustomerAsync();
         if (customer == null)

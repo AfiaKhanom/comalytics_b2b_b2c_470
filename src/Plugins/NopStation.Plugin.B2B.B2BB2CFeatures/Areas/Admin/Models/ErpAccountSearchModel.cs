@@ -19,6 +19,7 @@ public record ErpAccountSearchModel : BaseSearchModel
     #endregion
 
     #region Properties
+
     public string ErpAccountId { get; set; }
 
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.AccountNumber")]

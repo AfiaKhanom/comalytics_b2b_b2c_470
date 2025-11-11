@@ -255,7 +255,6 @@
     <None Remove="Views\Checkout\QuoteOrderCompleted.cshtml" />
     <None Remove="Views\Checkout\_PickupPoints.cshtml" />
     <None Remove="Views\CustomerImpersonate\List.cshtml" />
-    <None Remove="Views\CustomerImpersonate\List.Multibuyer.cshtml" />
     <None Remove="Views\ErpAccountPublic\ErpAccountInfo.cshtml" />
     <None Remove="Views\ErpAccountPublic\ErpAccountInvoices.cshtml" />
     <None Remove="Views\ErpAccountPublic\ErpAccountOrders.cshtml" />
@@ -1047,9 +1046,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\CustomerImpersonate\List.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\CustomerImpersonate\List.Multibuyer.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Views\ErpAccountPublic\ErpAccountInfo.cshtml">

@@ -23,6 +23,9 @@ public record SalesRepUserModel : ErpBaseEntityModel
     [NopResourceDisplayName("Plugin.Misc.NopStation.B2BB2CFeaturesErpNopUser.Fields.ErpAccountName")]
     public string ErpAccountName { get; set; }
 
+    [NopResourceDisplayName("Plugin.Misc.NopStation.B2BB2CFeaturesErpNopUser.Fields.ErpSalesOrgName")]
+    public string ErpSalesOrgName { get; set; }
+
     public int ErpShipToAddressId { get; set; }
 
     public int BillingErpShipToAddressId { get; set; }

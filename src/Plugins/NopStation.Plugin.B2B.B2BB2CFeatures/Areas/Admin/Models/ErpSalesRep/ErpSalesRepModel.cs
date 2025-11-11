@@ -10,11 +10,11 @@ public record ErpSalesRepModel : ErpBaseEntityModel
     public ErpSalesRepModel()
     {
         SalesOrgIds = new List<int>();
-        AvailableCustomers = new List<SelectListItem>();
         AvailableSalesRepType = new List<SelectListItem>();
         AvailableSalesOrgs = new List<SelectListItem>();
         ErpAccountSearchModel = new ErpAccountSearchModel();
     }
+
     [NopResourceDisplayName("B2BB2CFeatures.ErpSalesRep.Fields.NopCustomerId")]
     public int NopCustomerId { get; set; }
 
@@ -35,13 +35,10 @@ public record ErpSalesRepModel : ErpBaseEntityModel
     [NopResourceDisplayName("B2BB2CFeatures.ErpSalesRep.Fields.SalesOrgIds")]
     public string CommaSeparatedOrgNames { get; set; } 
     
-    //customer roles
     [NopResourceDisplayName("B2BB2CFeatures.ErpSalesRep.Fields.CustomerRoles")]
     public string CustomerRoleNames { get; set; }
 
     public ErpAccountSearchModel ErpAccountSearchModel { get; set; }
-
-    public IList<SelectListItem> AvailableCustomers { get; set; }
     public IList<SelectListItem> AvailableSalesRepType { get; set; }
     public IList<SelectListItem> AvailableSalesOrgs { get; set; }
 }

@@ -191,13 +191,23 @@ else
                                             Width = "150",
                                             Render = new RenderDate()
                                         },
+                                        new ColumnProperty(nameof(ErpAccountModel.ERPNopUserCount))
+                                        {
+                                            Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.ERPNopUserCount").Text,
+                                            Width = "50"
+                                        },
+                                        new ColumnProperty(nameof(ErpAccountModel.ShipToAddressCount))
+                                        {
+                                            Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.ShipToAddressCount").Text,
+                                            Width = "50"
+                                        },
                                         new ColumnProperty(nameof(ErpAccountModel.Id))
                                         {
                                             Title = T("Admin.Common.Edit").Text,
                                             Width = "80",
                                             ClassName = NopColumnClassDefaults.Button,
                                             Render = new RenderButtonEdit(new DataUrl("~/Admin/ErpAccount/ErpAccountEdit/"))
-                                        },
+                                        }/*,
                                         new ColumnProperty(nameof(ErpAccountModel.Id))
                                         {
                                             Title = T("Admin.Common.Delete").Text,
@@ -205,7 +215,7 @@ else
                                             ClassName =  NopColumnClassDefaults.Button,
                                             Render = new RenderButtonRemove(T("Admin.Common.Delete").Text),
                                             Visible = false
-                                        }
+                                        }*/
                                     }
                                 })
                             </div>

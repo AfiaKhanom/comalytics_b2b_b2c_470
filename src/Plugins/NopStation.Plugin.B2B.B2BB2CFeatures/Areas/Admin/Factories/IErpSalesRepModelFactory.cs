@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Nop.Web.Areas.Admin.Models.Customers;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpSalesRep;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
@@ -9,4 +10,6 @@ public interface IErpSalesRepModelFactory
     Task<ErpSalesRepListModel> PrepareErpSalesRepListModelAsync(ErpSalesRepSearchModel searchModel);
     Task<ErpSalesRepModel> PrepareErpSalesRepModelAsync(ErpSalesRepModel model, ErpSalesRep erpSalesRep);
     Task<ErpSalesRepSearchModel> PrepareErpSalesRepSearchModelAsync(ErpSalesRepSearchModel searchModel);
+    Task<CustomerSearchModelForErpSalesRep> PrepareCustomerSearchModelForErpSalesRepAsync(CustomerSearchModelForErpSalesRep searchModel);
+    Task<CustomerListModel> PrepareCustomertListModelForErpSalesRep(CustomerSearchModelForErpSalesRep searchModel);
 }

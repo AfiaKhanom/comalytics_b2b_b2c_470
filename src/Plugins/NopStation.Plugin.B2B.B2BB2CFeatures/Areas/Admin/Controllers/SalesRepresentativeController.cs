@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Customers;
 using Nop.Services.Customers;
@@ -15,7 +16,6 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Factories;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpSalesRep;
-using NopStation.Plugin.B2B.B2BB2CFeatures.Contexts;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Infrastructure;
 using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
@@ -33,7 +33,7 @@ public class SalesRepresentativeController : NopStationAdminController
     private readonly INotificationService _notificationService;
     private readonly ILocalizationService _localizationService;
     private readonly ICustomerService _customerService;
-    private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
+    private readonly IWorkContext _workContext;
     private readonly IPermissionService _permissionService;
     private readonly IErpSalesRepSalesOrgMapService _erpSalesRepSalesOrgMapService;
     private readonly IErpSalesRepModelFactory _erpSalesRepModelFactory;
@@ -50,7 +50,7 @@ public class SalesRepresentativeController : NopStationAdminController
         INotificationService notificationService,
         ILocalizationService localizationService,
         ICustomerService customerService,
-        IB2BB2CWorkContext b2BB2CWorkContext,
+        IWorkContext workContext,
         IPermissionService permissionService,
         IErpSalesRepSalesOrgMapService erpSalesRepSalesOrgMapService,
         IErpSalesRepModelFactory erpSalesRepModelFactory,
@@ -62,7 +62,7 @@ public class SalesRepresentativeController : NopStationAdminController
         _notificationService = notificationService;
         _localizationService = localizationService;
         _customerService = customerService;
-        _b2BB2CWorkContext = b2BB2CWorkContext;
+        _workContext = workContext;
         _permissionService = permissionService;
         _erpSalesRepSalesOrgMapService = erpSalesRepSalesOrgMapService;
         _erpSalesRepModelFactory = erpSalesRepModelFactory;
@@ -192,7 +192,7 @@ public class SalesRepresentativeController : NopStationAdminController
 
         if (ModelState.IsValid)
         {
-            var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
             var existingErpSalesRep = (await _erpSalesRepService.GetErpSalesRepsByNopCustomerIdAsync(model.NopCustomerId, true)).Any();
             var salesRep = model.ToEntity<ErpSalesRep>();
@@ -271,7 +271,7 @@ public class SalesRepresentativeController : NopStationAdminController
 
         if (ModelState.IsValid)
         {
-            var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
             salesRep.NopCustomerId = model.NopCustomerId;
             salesRep.SalesRepTypeId = model.SalesRepTypeId;
@@ -322,7 +322,7 @@ public class SalesRepresentativeController : NopStationAdminController
         if (salesRep == null)
             return RedirectToAction("List");
 
-        var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
         try
         {
@@ -369,7 +369,7 @@ public class SalesRepresentativeController : NopStationAdminController
         if (selectedIds == null || selectedIds.Count == 0)
             return NoContent();
 
-        var currentCustomer = await _b2BB2CWorkContext.GetCurrentCustomerAsync();
+        var currentCustomer = await _workContext.GetCurrentCustomerAsync();
 
         try
         {
@@ -396,6 +396,64 @@ public class SalesRepresentativeController : NopStationAdminController
             await _erpLogsService.ErrorAsync($"{exc.Message}. Erp Sales Rep Ids: {string.Join(",", selectedIds)}", ErpSyncLevel.SalesRep, exc, customer: currentCustomer);
         }
         return Json(new { Result = false });
+    }
+
+    #endregion
+
+    #region Nop customer popup
+
+    public virtual async Task<IActionResult> NopCustomerForErpSalesRepPopup()
+    {
+        if (!await _permissionService.AuthorizeAsync(B2BB2CPermissionProvider.ManageSalesRepresantatives))
+            return AccessDeniedView();
+
+        var model = await _erpSalesRepModelFactory.PrepareCustomerSearchModelForErpSalesRepAsync(
+            new CustomerSearchModelForErpSalesRep()
+        );
+
+        return View(
+            "~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Areas/Admin/Views/SalesRepresentative/NopCustomerForErpSalesRepPopup.cshtml",
+            model
+        );
+    }
+
+    [HttpPost]
+    [FormValueRequired("save")]
+    public async Task<IActionResult> NopCustomerForErpSalesRepPopup(
+        [Bind(Prefix = nameof(SelectCustomerForErpSalesRepModel))]
+            SelectCustomerForErpSalesRepModel model
+    )
+    {
+        if (!await _permissionService.AuthorizeAsync(B2BB2CPermissionProvider.ManageSalesRepresantatives))
+            return AccessDeniedView();
+
+        var selectedCustomer = await _customerService.GetCustomerByIdAsync(
+            model.SelectedCustomerId
+        );
+
+        if (selectedCustomer == null)
+            return Content("Cannot load a customer");
+
+        ViewBag.RefreshPage = true;
+        ViewBag.customerId = selectedCustomer.Id;
+        ViewBag.customerName = selectedCustomer.Email;
+        return View(
+            "~/Plugins/NopStation.Plugin.B2B.B2BB2CFeatures/Areas/Admin/Views/SalesRepresentative/NopCustomerForErpSalesRepPopup.cshtml",
+            new CustomerSearchModelForErpSalesRep()
+        );
+    }
+
+    [HttpPost]
+    public virtual async Task<IActionResult> NopCustomerForErpSalesRepPopupList(CustomerSearchModelForErpSalesRep searchModel)
+    {
+        if (!await _permissionService.AuthorizeAsync(B2BB2CPermissionProvider.ManageSalesRepresantatives))
+            return await AccessDeniedDataTablesJson();
+
+        var model = await _erpSalesRepModelFactory.PrepareCustomertListModelForErpSalesRep(
+            searchModel
+        );
+
+        return Json(model);
     }
 
     #endregion

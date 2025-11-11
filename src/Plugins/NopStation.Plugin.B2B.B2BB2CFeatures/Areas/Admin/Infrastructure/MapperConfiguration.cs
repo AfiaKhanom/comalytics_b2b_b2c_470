@@ -110,7 +110,6 @@ public class MapperConfiguration : Profile, IOrderedMapperProfile
         CreateMap<ErpNopUserModel, ErpNopUser>();
 
         CreateMap<ErpSalesRep, ErpSalesRepModel>()
-            .ForMember(model => model.AvailableCustomers, options => options.Ignore())
             .ForMember(model => model.AvailableSalesOrgs, options => options.Ignore())
             .ForMember(model => model.SalesOrgIds, options => options.Ignore());
         CreateMap<ErpSalesRepModel, ErpSalesRep>();
