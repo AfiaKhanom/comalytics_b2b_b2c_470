@@ -210,7 +210,7 @@ public class B2BB2CWebWorkContext : IB2BB2CWorkContext
         erpCustomer.Customer = customer;
         erpCustomer.OriginalCustomer = originalCustomerIfImpersonated;
 
-        var erpNopUser = await _erpNopUserService.GetErpNopUserByCustomerIdAsync(customer.Id, erpAccountId);
+        var erpNopUser = await _erpNopUserService.GetErpNopUserByCustomerIdAndErpAccountIdAsync(customer.Id, erpAccountId);
         if (erpNopUser != null)
         {
             erpCustomer.ErpNopUser = erpNopUser;

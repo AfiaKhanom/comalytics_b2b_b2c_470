@@ -28,23 +28,45 @@ public interface IErpShipToAddressService
 
     Task<ErpShipToAddress> GetErpShipToAddressByShippingAddressIdAsync(int shippingAddressId);
 
-    Task<IList<ErpShipToAddress>> GetAllErpShipToAddressesByErpAccountIdsAsync(int[] erpAccountIds, bool showHidden = false, bool isActiveOnly = false);
+    Task<IList<ErpShipToAddress>> GetAllErpShipToAddressesByErpAccountIdsAsync(int[] erpAccountIds, 
+        bool showHidden = false, 
+        bool isActiveOnly = false);
 
-    Task<Dictionary<string, List<ErpShipToAddress>>> GetErpAccountShipToAddressMappingAsync(int[] erpAccountIds, bool showHidden = false, bool isActiveOnly = false, int salesOrgId = 0);
+    Task<Dictionary<string, List<ErpShipToAddress>>> GetErpAccountShipToAddressMappingAsync(int[] erpAccountIds, 
+        bool showHidden = false, 
+        bool isActiveOnly = false, 
+        int salesOrgId = 0);
 
     Task<IPagedList<ErpShipToAddress>> GetAllErpShipToAddressesAsync(string shipToCode = "",
-        string shipToName = "", int erpAccountId = 0, string repNum = "", string repFullName = "", string repEmail = "",
-        int pageIndex = 0, int pageSize = int.MaxValue, bool? showHidden = null, string emailAddresses = "", bool isForOrder = false);
+        string shipToName = "",
+        int erpAccountId = 0,
+        string repNum = "",
+        string repFullName = "",
+        string repEmail = "",
+        int salesOrgId = 0,
+        int pageIndex = 0,
+        int pageSize = int.MaxValue,
+        bool? showHidden = null,
+        string emailAddresses = "",
+        bool isForOrder = false,
+        bool getOnlyTotalCount = false);
 
     Task<ErpShiptoAddressErpAccountMap> GetErpShipToAddressErpAccountMapByErpShipToAddressIdAsync(int erpShipToAddressId);
 
-    Task RemoveErpShipToAddressErpAccountMapAsync(ErpAccount erpAccount, ErpShipToAddress erpShipToAddress);
+    Task RemoveErpShipToAddressErpAccountMapAsync(
+        ErpAccount erpAccount, 
+        ErpShipToAddress erpShipToAddress);
 
-    Task InsertErpShipToAddressErpAccountMapAsync(ErpAccount erpAccount, ErpShipToAddress erpShipToAddress, ErpShipToAddressCreatedByType createdByType);
+    Task InsertErpShipToAddressErpAccountMapAsync(
+        ErpAccount erpAccount, 
+        ErpShipToAddress erpShipToAddress, 
+        ErpShipToAddressCreatedByType createdByType);
 
     Task InsertErpShipToAddressErpAccountMapsAsync(IList<ErpShiptoAddressErpAccountMap> erpShiptoAddressErpAccountMaps);
 
-    Task<IList<ErpShipToAddress>> GetErpShipToAddressesByAccountIdAsync(bool showHidden = false, bool isActiveOnly = false, int accountId = 0);
+    Task<IList<ErpShipToAddress>> GetErpShipToAddressesByAccountIdAsync(bool showHidden = false, 
+        bool isActiveOnly = false, 
+        int accountId = 0);
 
     Task<ErpShipToAddress> GetErpShipToAddressAsync(int accountId, int erpShiptoAddressId);
 
@@ -55,11 +77,19 @@ public interface IErpShipToAddressService
         int erpShipToAddressCreatedByTypeId = 0,
         bool showHidden = false);
 
-    Task<int> CountErpShipToAddressOfSameShipToCodeAndErpAccountIdAsync(string shipToCode, int erpAccountId, ErpShipToAddressCreatedByType createdByType);
+    Task<int> CountErpShipToAddressOfSameShipToCodeAndErpAccountIdAsync(
+        string shipToCode, 
+        int erpAccountId, 
+        ErpShipToAddressCreatedByType createdByType);
 
     Task<IList<ErpShiptoAddressErpAccountMap>> GetErpShipToAddressErpAccountMapsByErpAccountIdsAsync(int[] erpAccountIds);
+
+    Task<IList<ErpShipToAddress>> GetAllErpShipToAddressByAddressIdsAsync(IList<int> addressIds);
     
-    Task<(ErpShipToAddress ShipToAddress, string ErrorMessage)> CreateErpShipToAddressWithMappingAsync(ErpShipToAddress erpShipToAddress, ErpAccount erpAccount, ErpShipToAddressCreatedByType createdByType);
+    Task<(ErpShipToAddress ShipToAddress, string ErrorMessage)> CreateErpShipToAddressWithMappingAsync(
+        ErpShipToAddress erpShipToAddress, 
+        ErpAccount erpAccount, 
+        ErpShipToAddressCreatedByType createdByType);
 
     string GenerateUniqueShipToCode();
 }

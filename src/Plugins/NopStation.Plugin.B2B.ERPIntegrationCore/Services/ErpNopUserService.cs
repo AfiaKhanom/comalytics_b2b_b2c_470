@@ -17,6 +17,9 @@ public class ErpNopUserService : IErpNopUserService
     private readonly IRepository<Customer> _customerRepository;
     private readonly IRepository<CustomerCustomerRoleMapping> _customerCustomerRoleMappingRepository;
     private readonly IStaticCacheManager _staticCacheManager;
+    private readonly IRepository<ErpNopUserAccountMap> _erpNopUserAccountMapRepository;
+    private readonly IRepository<ErpShipToAddress> _erpShipToAddressRepository;
+    private readonly IRepository<ErpAccount> _erpAccountRepository;
 
     #endregion
 
@@ -25,12 +28,18 @@ public class ErpNopUserService : IErpNopUserService
     public ErpNopUserService(IRepository<ErpNopUser> erpNopUserRepository,
         IRepository<Customer> customerRepository,
         IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMappingRepository,
-        IStaticCacheManager staticCacheManager)
+        IStaticCacheManager staticCacheManager,
+        IRepository<ErpNopUserAccountMap> erpNopUserAccountMapRepository,
+        IRepository<ErpShipToAddress> erpShipToAddressRepository,
+        IRepository<ErpAccount> erpAccountRepository)
     {
         _erpNopUserRepository = erpNopUserRepository;
         _customerRepository = customerRepository;
         _customerCustomerRoleMappingRepository = customerCustomerRoleMappingRepository;
         _staticCacheManager = staticCacheManager;
+        _erpNopUserAccountMapRepository = erpNopUserAccountMapRepository;
+        _erpShipToAddressRepository = erpShipToAddressRepository;
+        _erpAccountRepository = erpAccountRepository;
     }
 
     #endregion
@@ -73,14 +82,6 @@ public class ErpNopUserService : IErpNopUserService
 
     #region Read
 
-    /// <summary>
-    /// Gets an ErpAccount by Id
-    /// </summary>
-    /// <param name="id">ErpAccount identifier</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the ErpAccount
-    /// </returns>
     public async Task<ErpNopUser> GetErpNopUserByIdAsync(int id)
     {
         if (id == 0)
@@ -94,14 +95,6 @@ public class ErpNopUserService : IErpNopUserService
         return erpNopUser;
     }
 
-    /// <summary>
-    /// Gets an ErpAccount by Id if it is active
-    /// </summary>
-    /// <param name="id">ErpAccount identifier</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the ErpAccount if it is activ
-    /// </returns>
     public async Task<ErpNopUser> GetErpNopUserByIdWithActiveAsync(int id)
     {
         if (id == 0)
@@ -115,24 +108,18 @@ public class ErpNopUserService : IErpNopUserService
         return erpNopUser;
     }
 
-    /// <summary>
-    /// Gets all ErpAccounts
-    /// </summary>
-    /// <param name="pageIndex">Page number</param>
-    /// <param name="pageSize">Page size</param>
-    /// <param name="getOnlyTotalCount">If only total no of account needed or not</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains all the ErpAccounts
-    /// </returns>
-    public async Task<IPagedList<ErpNopUser>> GetAllErpNopUsersAsync(int pageIndex = 0, int pageSize = int.MaxValue,
+    public async Task<IPagedList<ErpNopUser>> GetAllErpNopUsersAsync(int pageIndex = 0,
+        int pageSize = int.MaxValue,
         bool? showHidden = null,
         bool getOnlyTotalCount = false,
         string email = null,
         string name = null,
+        string firstName = null,
+        string lastName = null,
         int accountId = 0,
         int userType = 0,
         int salesOrgId = 0,
+        string shipToCode = "",
         int erpShipToAddressId = 0)
     {
         var erpNopUsers = await _erpNopUserRepository.GetAllPagedAsync(query =>
@@ -154,7 +141,7 @@ public class ErpNopUserService : IErpNopUserService
                     .Select(z => z.ErpNopUser)
                     .Distinct();
 
-            if (!string.IsNullOrEmpty(name))
+            if (!string.IsNullOrWhiteSpace(name))
             {
                 query = query.Join(_customerRepository.Table, x => x.NopCustomerId, y => y.Id,
                         (x, y) => new { ErpNopUser = x, Customer = y })
@@ -162,8 +149,24 @@ public class ErpNopUserService : IErpNopUserService
                     .Select(z => z.ErpNopUser)
                     .Distinct();
             }
+            if (!string.IsNullOrWhiteSpace(firstName))
+            {
+                query = query.Join(_customerRepository.Table, x => x.NopCustomerId, y => y.Id,
+                        (x, y) => new { ErpNopUser = x, Customer = y })
+                    .Where(z => z.Customer.FirstName.Contains(firstName))
+                    .Select(z => z.ErpNopUser)
+                    .Distinct();
+            }
+            if (!string.IsNullOrWhiteSpace(lastName))
+            {
+                query = query.Join(_customerRepository.Table, x => x.NopCustomerId, y => y.Id,
+                        (x, y) => new { ErpNopUser = x, Customer = y })
+                    .Where(z => z.Customer.LastName.Contains(lastName))
+                    .Select(z => z.ErpNopUser)
+                    .Distinct();
+            }
 
-            if (!string.IsNullOrEmpty(email))
+            if (!string.IsNullOrWhiteSpace(email))
             {
                 query = query.Join(_customerRepository.Table, x => x.NopCustomerId, y => y.Id,
                         (x, y) => new { ErpNopUser = x, Customer = y })
@@ -171,9 +174,47 @@ public class ErpNopUserService : IErpNopUserService
                     .Select(z => z.ErpNopUser)
                     .Distinct();
             }
+            if (!string.IsNullOrWhiteSpace(shipToCode))
+            {
+                query = query.Join(_erpShipToAddressRepository.Table, x => x.ErpShipToAddressId, y => y.Id,
+                        (x, y) => new { ErpNopUser = x, ErpShipToAddress = y })
+                    .Where(z => z.ErpShipToAddress.ShipToCode.Contains(shipToCode))
+                    .Select(z => z.ErpNopUser)
+                    .Distinct();
+            }
+
+            if (salesOrgId > 0)
+            {
+                var directUsers = query.Join(_erpAccountRepository.Table,
+                    enu => enu.ErpAccountId,
+                    ea => ea.Id,
+                    (enu, ea) => new { ErpNopUser = enu, ErpAccount = ea })
+                    .Where(x => x.ErpAccount.ErpSalesOrgId == salesOrgId)
+                    .Select(x => x.ErpNopUser);
+
+                var mappedUsers = query.Join(_erpNopUserAccountMapRepository.Table,
+                    enu => enu.Id,
+                    map => map.ErpUserId,
+                    (enu, map) => new { ErpNopUser = enu, AccountMap = map })
+                    .Join(_erpAccountRepository.Table,
+                        x => x.AccountMap.ErpAccountId,
+                        ea => ea.Id,
+                        (x, ea) => new { x.ErpNopUser, ErpAccount = ea })
+                    .Where(x => x.ErpAccount.ErpSalesOrgId == salesOrgId)
+                    .Select(x => x.ErpNopUser);
+
+                query = directUsers.Union(mappedUsers).Distinct();
+            }
 
             if (accountId > 0)
-                query = query.Where(enu => enu.ErpAccountId.Equals(accountId));
+            {
+                query = query.Join(_erpNopUserAccountMapRepository.Table,
+                    x => x.Id,
+                    y => y.ErpUserId,
+                    (x, y) => new { ErpNopUser = x, AccountMap = y })
+                    .Where(z => z.ErpNopUser.ErpAccountId == accountId || z.AccountMap.ErpAccountId == accountId)
+                    .Select(z => z.ErpNopUser);
+            }
 
             if (erpShipToAddressId > 0)
                 query = query.Where(enu => enu.ErpShipToAddressId.Equals(erpShipToAddressId));
@@ -190,28 +231,24 @@ public class ErpNopUserService : IErpNopUserService
         return erpNopUsers;
     }
 
-    public async Task<ErpNopUser> GetErpNopUserByCustomerIdAsync(int customerId)
+    public async Task<ErpNopUser> GetErpNopUserByCustomerIdAsync(int customerId, bool showHidden = false)
     {
         if (customerId == 0)
             return null;
 
         var key = _staticCacheManager.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpNopUserByCustomerCacheKey, customerId);
 
-        var query = _erpNopUserRepository.Table.Where(enu=> enu.NopCustomerId == customerId && !enu.IsDeleted && enu.IsActive);
+        var query = _erpNopUserRepository.Table.Where(enu => enu.NopCustomerId == customerId && !enu.IsDeleted);
+
+        if (!showHidden)
+        {
+            query = query.Where(enu => enu.IsActive);
+        }
 
         return await _staticCacheManager.GetAsync(key, async () => await query.FirstOrDefaultAsync());
     }
 
-    /// <summary>
-    /// Gets an ErpNopUser by customer Id
-    /// </summary>
-    /// <param name="customerId">customerId</param>
-    /// <param name="erpAccountId">erpAccountId</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the ErpAccount
-    /// </returns>
-    public async Task<ErpNopUser> GetErpNopUserByCustomerIdAsync(int customerId, int erpAccountId = 0)
+    public async Task<ErpNopUser> GetErpNopUserByCustomerIdAndErpAccountIdAsync(int customerId, int erpAccountId = 0)
     {
         if (customerId == 0)
             return null;
@@ -224,7 +261,13 @@ public class ErpNopUserService : IErpNopUserService
 
         if (erpAccountId > 0)
         {
-            query = query.Where(x => x.ErpAccountId == erpAccountId);
+            query = query.Join(_erpNopUserAccountMapRepository.Table,
+                x => x.Id,
+                y => y.ErpUserId,
+                (x, y) => new { ErpNopUser = x, AccountMap = y })
+                .Where(z => z.ErpNopUser.ErpAccountId == erpAccountId || z.AccountMap.ErpAccountId == erpAccountId)
+                .Select(z => z.ErpNopUser)
+                .Distinct();
         }
 
         return await _staticCacheManager.GetAsync(key, async () => await query.FirstOrDefaultAsync());
@@ -303,8 +346,21 @@ public class ErpNopUserService : IErpNopUserService
         if (customerId == 0 || erpAccountId == 0)
             return false;
 
-        return await _erpNopUserRepository.Table
+        var directAssignment = await _erpNopUserRepository.Table
             .AnyAsync(enu => !enu.IsDeleted && enu.NopCustomerId == customerId && enu.ErpAccountId == erpAccountId);
+        
+        if (directAssignment)
+            return true;
+
+        var mappedAssignment = await (from user in _erpNopUserRepository.Table
+                                     join map in _erpNopUserAccountMapRepository.Table
+                                         on user.Id equals map.ErpUserId
+                                     where user.NopCustomerId == customerId 
+                                           && !user.IsDeleted 
+                                           && map.ErpAccountId == erpAccountId
+                                     select user).AnyAsync();
+
+        return mappedAssignment;
     }
 
     #endregion

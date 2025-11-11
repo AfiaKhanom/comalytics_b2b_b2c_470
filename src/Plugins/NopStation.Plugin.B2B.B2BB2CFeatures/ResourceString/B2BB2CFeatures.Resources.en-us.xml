@@ -2055,11 +2055,11 @@
     </LocaleResource>
 
     <LocaleResource Name="B2BB2CFeatures.SalesRepUsers.Fields.Active">
-        <Value>IsActive</Value>
+        <Value>Is Active</Value>
     </LocaleResource>
 
     <LocaleResource Name="B2BB2CFeatures.SalesRepUsers.Fields.Active.Hint">
-        <Value>IsActive</Value>
+        <Value>Is Active</Value>
     </LocaleResource>
 
     <LocaleResource Name="B2BB2CFeatures.SalesRepUsers.List">
@@ -2263,7 +2263,7 @@
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpGroupPrice.Fields.IsActive">
-        <Value>IsActive</Value>
+        <Value>Is Active</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpGroupPrice.Fields.IsActive.Hint">
@@ -2499,7 +2499,7 @@
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpGroupPriceCode.Fields.IsActive">
-        <Value>IsActive</Value>
+        <Value>Is Active</Value>
     </LocaleResource>
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpGroupPriceCode.ErpGroupPriceCode.AddNew">
@@ -6235,5 +6235,14 @@
     </LocaleResource>
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Customer.Remove">
         <Value>Remove Customer</Value>
+    </LocaleResource>
+    <LocaleResource Name="Plugin.Misc.NopStation.B2BB2CFeaturesErpNopUser.Fields.SearchSalesOrgId">
+        <Value>Account Sales Organisation</Value>
+    </LocaleResource>
+    <LocaleResource Name="Plugin.Misc.NopStation.B2BB2CFeaturesErpNopUser.Fields.SearchSalesOrgId.Hint">
+        <Value>Sales Organisation for the account</Value>
+    </LocaleResource>
+    <LocaleResource Name="Plugin.Misc.NopStation.B2BB2CFeaturesErpNopUser.Fields.SearchActiveId">
+        <Value>Active</Value>
     </LocaleResource>
 </Language>

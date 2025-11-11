@@ -125,24 +125,62 @@ public class ErpShipToAddressService : IErpShipToAddressService
     }
 
     public virtual async Task<IPagedList<ErpShipToAddress>> GetAllErpShipToAddressesAsync(string shipToCode = "",
-        string shipToName = "", int erpAccountId = 0, string repNum = "", string repFullName = "", string repEmail = "",
-        int pageIndex = 0, int pageSize = int.MaxValue, bool? showHidden = null, string emailAddresses = "", bool isForOrder = false)
+        string shipToName = "", 
+        int erpAccountId = 0, 
+        string repNum = "", 
+        string repFullName = "", 
+        string repEmail = "", 
+        int salesOrgId = 0,
+        int pageIndex = 0, 
+        int pageSize = int.MaxValue, 
+        bool? showHidden = null, 
+        string emailAddresses = "", 
+        bool isForOrder = false,
+        bool getOnlyTotalCount = false)
     {
         var erpShipToAddresses = await _erpShipToAddressRepository.GetAllPagedAsync(query =>
         {
             if (erpAccountId > 0)
             {
-                query = from address in _erpShipToAddressRepository.Table
-                        join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
-                        where cam.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin && cam.ErpAccountId == erpAccountId
-                        select address;
+                if (salesOrgId > 0)
+                {
+                    query = from address in _erpShipToAddressRepository.Table
+                            join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
+                            join acc in _erpAccountRepository.Table on cam.ErpAccountId equals acc.Id
+                            where cam.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin && cam.ErpAccountId == erpAccountId &&
+                            acc.ErpSalesOrgId == salesOrgId
+                            select address;
+                }
+                else
+                {
+                    query = from address in _erpShipToAddressRepository.Table
+                            join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
+                            join acc in _erpAccountRepository.Table on cam.ErpAccountId equals acc.Id
+                            where cam.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin && cam.ErpAccountId == erpAccountId
+                            && acc.ErpSalesOrgId > 0
+                            select address;
+                }
             }
             else
             {
-                query = from address in _erpShipToAddressRepository.Table
-                        join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
-                        where cam.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin && cam.ErpAccountId > 0
-                        select address;
+                if (salesOrgId > 0)
+                {
+                    query = from address in _erpShipToAddressRepository.Table
+                            join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
+                            join acc in _erpAccountRepository.Table on cam.ErpAccountId equals acc.Id
+                            where cam.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin && cam.ErpAccountId > 0 &&
+                             acc.ErpSalesOrgId == salesOrgId
+                            select address;
+                }
+                else
+                {
+                    query = from address in _erpShipToAddressRepository.Table
+                            join cam in _erpShiptoAddressErpAccountMapRepository.Table on address.Id equals cam.ErpShiptoAddressId
+                            join acc in _erpAccountRepository.Table on cam.ErpAccountId equals acc.Id
+                            where cam.ErpShipToAddressCreatedByTypeId == (int)ErpShipToAddressCreatedByType.Admin && cam.ErpAccountId > 0
+                             && acc.ErpSalesOrgId > 0
+                            select address;
+                }
             }
 
             if (showHidden.HasValue)
@@ -176,7 +214,7 @@ public class ErpShipToAddressService : IErpShipToAddressService
             query = query.OrderByDescending(c => c.CreatedOnUtc);
 
             return query;
-        }, pageIndex, pageSize);
+        }, pageIndex, pageSize, getOnlyTotalCount);
 
         return erpShipToAddresses;
     }
@@ -298,13 +336,13 @@ public class ErpShipToAddressService : IErpShipToAddressService
         return await _erpShipToAddressRepository.Table.FirstOrDefaultAsync(e => e.AddressId == shippingAddressId);
     }
 
-    public async Task<IList<ErpShipToAddress>> GetAllErpShipToAddressByAddressIdAsync(List<int> addressId)
+    public async Task<IList<ErpShipToAddress>> GetAllErpShipToAddressByAddressIdsAsync(IList<int> addressIds)
     {
-        if (addressId == null || addressId.Count == 0)
+        if (addressIds == null || addressIds.Count == 0)
             return null;
 
         var erpShipToAddresses = await _erpShipToAddressRepository.Table
-            .Where(erpAddress => addressId.Contains(erpAddress.AddressId))
+            .Where(erpAddress => addressIds.Contains(erpAddress.AddressId))
             .OrderByDescending(x => x.CreatedOnUtc).ToListAsync();
 
         return erpShipToAddresses;

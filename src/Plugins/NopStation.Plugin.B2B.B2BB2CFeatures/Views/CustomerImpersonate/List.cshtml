@@ -1,4 +1,4 @@
-﻿@using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpNopUser
+@using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.SalesRepUser
 @model SalesRepUserSearchModel
 
 @{
@@ -44,39 +44,47 @@
                             </div>
                             <div class="search-body">
                                 <div class="row">
-                                    <div class="col-md-5">
+                                    <div class="col-md-6">
                                         <div class="form-group row">
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <nop-label asp-for="SearchERPAccountName" />
                                             </div>
-                                            <div class="col-md-8">
+                                            <div class="col-md-6">
                                                 <nop-editor asp-for="SearchERPAccountName" />
                                             </div>
                                         </div>
                                         <div class="form-group row">
-                                            <div class="col-md-4">
-                                                <nop-label asp-for="SearchCustomerFullName" />
+                                            <div class="col-md-3">
+                                                <nop-label asp-for="SearchSalesOrgId" />
                                             </div>
-                                            <div class="col-md-8">
-                                                <nop-editor asp-for="SearchCustomerFullName" />
+                                            <div class="col-md-6">
+                                                <nop-select asp-for="SearchSalesOrgId" asp-items="Model.AvailableSalesOrgs" />
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-7">
+                                    <div class="col-md-6">
                                         <div class="form-group row">
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <nop-label asp-for="SearchERPAccountNumber" />
                                             </div>
-                                            <div class="col-md-8">
+                                            <div class="col-md-6">
                                                 <nop-editor asp-for="SearchERPAccountNumber" />
                                             </div>
                                         </div>
                                         <div class="form-group row">
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <nop-label asp-for="SearchCustomerEmail" />
                                             </div>
-                                            <div class="col-md-8">
+                                            <div class="col-md-6">
                                                 <nop-editor asp-for="SearchCustomerEmail" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-md-3">
+                                                <nop-label asp-for="SearchActiveId" />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <nop-select asp-for="SearchActiveId" asp-items="Model.ShowInActiveOption" />
                                             </div>
                                         </div>
                                     </div>
@@ -108,8 +116,9 @@
                                 {
                                     new FilterParameter(nameof(Model.SearchERPAccountNumber)),
                                     new FilterParameter(nameof(Model.SearchERPAccountName)),
-                                    new FilterParameter(nameof(Model.SearchCustomerFullName)),
                                     new FilterParameter(nameof(Model.SearchCustomerEmail)),
+                                    new FilterParameter(nameof(Model.SearchSalesOrgId)),
+                                    new FilterParameter(nameof(Model.SearchActiveId)),
                                 }
                             };
                                             
@@ -122,20 +131,25 @@
                             {
                                 Title = T("Plugin.Misc.NopStation.B2BB2CFeaturesErpNopUser.Fields.ErpAccountName").Text
                             });
-                                            
-                            gridModel.ColumnCollection.Add(new ColumnProperty(nameof(SalesRepUserModel.CustomerFullName))
+
+                            gridModel.ColumnCollection.Add(new ColumnProperty(nameof(SalesRepUserModel.ErpSalesOrgName))
                             {
-                                Title = T("Plugin.Misc.NopStation.B2BB2CFeaturesErpNopUser.Fields.CustomerFullName").Text,
+                                Title = T("Plugin.Misc.NopStation.B2BB2CFeaturesErpNopUser.Fields.SearchSalesOrgId").Text
+                            });
+
+                            gridModel.ColumnCollection.Add(new ColumnProperty(nameof(SalesRepUserModel.ErpUserType))
+                            {
+                                Title = T("Plugin.Misc.NopStation.B2BB2CFeaturesErpNopUser.Fields.ErpUserType").Text
                             });
                                             
                             gridModel.ColumnCollection.Add(new ColumnProperty(nameof(SalesRepUserModel.CustomerEmail))
                             {
-                                Title = T("Plugin.Misc.NopStation.B2BB2CFeaturesErpNopUser.Fields.CustomerEmail").Text,
+                                Title = T("Plugin.Misc.NopStation.B2BB2CFeaturesErpNopUser.Fields.CustomerEmail").Text
                             });
                                             
-                            gridModel.ColumnCollection.Add(new ColumnProperty(nameof(SalesRepUserModel.ErpUserType))
+                            gridModel.ColumnCollection.Add(new ColumnProperty(nameof(SalesRepUserModel.IsActive))
                             {
-                                Title = T("Plugin.Misc.NopStation.B2BB2CFeaturesErpNopUser.Fields.ErpUserType").Text,
+                                Title = T("Plugin.Misc.NopStation.B2BB2CFeaturesErpNopUser.Fields.SearchActiveId").Text
                             });
                                             
                             gridModel.ColumnCollection.Add(new ColumnProperty(nameof(SalesRepUserModel.NopCustomerId))

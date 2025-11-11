@@ -37,6 +37,7 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
     private readonly IErpNopUserAccountMapService _erpNopUserAccountMapService;
     private readonly IErpShipToAddressService _erpShipToAddressService;
     private readonly IB2BFeaturesCommonHelper _b2BFeaturesCommonHelper;
+    private readonly IErpNopUserService _erpNopUserService;
 
     #endregion
 
@@ -55,7 +56,8 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
         IErpShipToAddressModelFactory erpShipToAddressModelFactory,
         IErpNopUserAccountMapService erpNopUserAccountMapService,
         IErpShipToAddressService erpShipToAddressService,
-        IB2BFeaturesCommonHelper b2BFeaturesCommonHelper)
+        IB2BFeaturesCommonHelper b2BFeaturesCommonHelper,
+        IErpNopUserService erpNopUserService)
     {
         _localizationService = localizationService;
         _dateTimeHelper = dateTimeHelper;
@@ -71,6 +73,7 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
         _erpNopUserAccountMapService = erpNopUserAccountMapService;
         _erpShipToAddressService = erpShipToAddressService;
         _b2BFeaturesCommonHelper = b2BFeaturesCommonHelper;
+        _erpNopUserService = erpNopUserService;
     }
 
     #endregion
@@ -101,7 +104,6 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
-        // Prepare ErpAccountStatusTypes dropdown options
         var availableErpAccountStatusTypes = await ErpAccountStatusType.Normal.ToSelectListAsync(false);
         foreach (var types in availableErpAccountStatusTypes)
         {
@@ -113,7 +115,6 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
             Text = await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Select")
         });
 
-        // Prepare ErpSalesOrgs dropdown options
         searchModel.AvailableErpSalesOrgs = (await _erpSalesOrgService.GetAllErpSalesOrgAsync(showHidden: false))
             .Select(erpSalesOrg => new SelectListItem
             {
@@ -149,13 +150,12 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
             accountName: searchModel.AccountName,
             erpAccountStatusTypeId: searchModel.ErpAccountStatusTypeId);
 
-        //prepare list model
+        var erpSalesOrgs = await _erpSalesOrgService.GetErpSalesOrgsAsync();
+
         var model = await new ErpAccountListModel().PrepareToGridAsync(searchModel, erpAccounts, () =>
         {
-            //fill in model values from the entity
             return erpAccounts.SelectAwait(async erpAccount =>
             {
-                //prepare address model
                 var address = await _addressService.GetAddressByIdAsync(erpAccount.BillingAddressId ?? 0);
 
                 var addressModel = new AddressModel();
@@ -163,7 +163,6 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
                     addressModel = address.ToModel(addressModel);
                 await _addressModelFactory.PrepareAddressModelAsync(addressModel, address);
 
-                //fill in model values from the entity
                 var erpAccountModel = new ErpAccountModel
                 {
                     Id = erpAccount.Id,
@@ -203,7 +202,7 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
                     IsActive = erpAccount.IsActive
                 };
 
-                var erpAccountSalesOrgInfo = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount.ErpSalesOrgId);
+                var erpAccountSalesOrgInfo = erpSalesOrgs.FirstOrDefault(x => x.Id == erpAccount.ErpSalesOrgId);
                 if (erpAccountSalesOrgInfo != null)
                 {
                     var erpAccountSalesOrgInfoModel = new ErpSalesOrgModel();
@@ -211,8 +210,17 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
                     erpAccountModel.ErpSalesOrgModel = await _erpSalesOrgModelFactory.PrepareErpSalesOrgModelAsync(erpAccountSalesOrgInfoModel, erpAccountSalesOrgInfo);
                     erpAccountModel.ErpSalesOrgName = erpAccountSalesOrgInfo.Name;
                 }
-                erpAccountModel.ERPNopUserCount = (await _erpNopUserAccountMapService.GetAllErpNopUserAccountMapsByAccountIdAsync(erpAccount.Id)).Count;
-                erpAccountModel.ShipToAddressCount = (await _erpShipToAddressService.GetErpShipToAddressesByErpAccountIdAsync(erpAccount.Id)).Count;
+
+                erpAccountModel.ERPNopUserCount = (await _erpNopUserService.GetAllErpNopUsersAsync(accountId: erpAccount.Id,
+                    salesOrgId: erpAccountSalesOrgInfo.Id,
+                    showHidden: false,
+                    getOnlyTotalCount: true)).TotalCount;
+
+                erpAccountModel.ShipToAddressCount = (await _erpShipToAddressService.GetAllErpShipToAddressesAsync(erpAccountId: erpAccount.Id, 
+                    salesOrgId: erpAccountSalesOrgInfo.Id,
+                    showHidden: false,
+                    getOnlyTotalCount: true)).TotalCount;
+
                 return erpAccountModel;
             });
         });
@@ -231,7 +239,6 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
                   Text = $"{erpSalesOrg.Name}",
               }).ToList();
 
-            // Prepare B2BPriceGroupCodes dropdown options
             model.AvailableB2BPriceGroupCodes = (await _erpGroupPriceCodeService.GetAllErpGroupPriceCodesAsync())
                 .Select(erpGroupPrice => new SelectListItem
                 {

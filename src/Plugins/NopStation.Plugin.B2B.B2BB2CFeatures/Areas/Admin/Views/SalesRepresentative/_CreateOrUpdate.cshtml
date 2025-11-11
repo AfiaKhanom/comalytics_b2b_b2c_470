@@ -14,6 +14,19 @@
 
 <div asp-validation-summary="All"></div>
 <input asp-for="Id" type="hidden" value="@Model.Id" />
+<script>
+    $(document).ready(function () {
+        toggleRemoveButton();
+    });
+
+    function toggleRemoveButton() {
+        if ($('#@Html.IdFor(model => model.NopCustomerId)').val() > 0) {
+            $('#customer-name-remove').show();
+        } else {
+            $('#customer-name-remove').hide();
+        }
+    }
+</script>
 
 <section class="content">
     <div class="container-fluid">
@@ -29,17 +42,19 @@
                             {
                                 <div class="col-md-9">
                                     <input type="hidden" id="NopCustomerId" name="NopCustomerId" value="@Model.NopCustomerId" />
-                                    <a asp-controller="Customer" asp-action="Edit" asp-route-id="@Model.NopCustomerId" target=”_blank”>@Model.NopCustomer</a>
+                                    <a asp-controller="Customer" asp-action="Edit" asp-route-id="@Model.NopCustomerId">@Model.NopCustomer</a>
                                 </div>
                             }
                             else
                             {
                                 <div class="col-md-9">
-                                    <nop-select asp-for="NopCustomerId" asp-items="Model.AvailableCustomers" asp-required="true" />
+                                    <input type="hidden" asp-for="NopCustomerId" />
+                                    <span id="customer-name">@Model.NopCustomer</span>
                                     <span asp-validation-for="NopCustomerId"></span>
                                     <button type="submit" onclick="javascript:OpenWindow('@(Url.Action("NopCustomerForErpSalesRepPopup", "SalesRepresentative",
-                                                                                        new {customerIdInput = Html.IdFor(model => model.NopCustomerId),
-                                                                                            customerNameInput = "customer-name", btnId = "btnRefreshSelectedCustomer"}))', 800, 850, true); return false;" class="btn btn-primary">
+                                         new {customerIdInput = Html.IdFor(model => model.NopCustomerId),
+                                         customerNameInput = "customer-name", 
+                                         btnId = "btnRefreshSelectedCustomer"}))', 800, 850, true); return false;" class="btn btn-primary">
                                         @T("NopStation.Plugin.B2B.B2BB2CFeatures.Customer.Choose")
                                     </button>
                                     <button type="submit" id="customer-name-remove" class="btn bg-red">
@@ -58,7 +73,6 @@
 
                                         $('#btnRefreshSelectedCustomer').click(function () {
                                             toggleRemoveButton();
-
                                             //return false to don't reload a page
                                             return false;
                                         });
@@ -127,7 +141,7 @@
                     </div>
                 </nop-card>
 
-                @if(Model.Id > 0 && Model.SalesRepTypeId == 30)
+                @if(Model.Id > 0 && Model.SalesRepTypeId == (int)SalesRepType.MultiBuyers)
                 {
                     <nop-card asp-name="buyers" asp-icon="fas fa-users" asp-title="@T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Card.ErpAccounts")" asp-hide-block-attribute-name="@hideCustomerBlockAttributeName" asp-hide="@hideCustomerBlock" asp-advanced="false">
                         @await Html.PartialAsync("_CreateOrUpdate.Customer", Model)
