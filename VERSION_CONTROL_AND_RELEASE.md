@@ -1,4 +1,4 @@
-﻿﻿# Git Workflow
+# Git Workflow
 ![Workflow Image](docs/media/git-flow.png)
 ## Environments:
 
@@ -10,7 +10,7 @@
 
 - `master`/`main`/`production`
 - `develop`
-- `clients\develop`
+- `test`/`test_deploy`
 
 ## Branch Categories:
 
