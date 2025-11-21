@@ -1,5 +1,5 @@
 # Git Workflow
-![Workflow Image](docs/media/git-flow.png)
+![Workflow Image](git-flow.png)
 ## Environments:
 
 - Test Site
@@ -54,7 +54,7 @@
 
 
 ## Versioning Convention
-<img src="docs/media/versioning.png" alt="Workflow Image" width="300" height="200">
+<img src="versioning.png" alt="Workflow Image" width="300" height="200">
 
 
 
