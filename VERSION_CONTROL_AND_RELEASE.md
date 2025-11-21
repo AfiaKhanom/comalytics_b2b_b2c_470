@@ -1,5 +1,5 @@
-﻿﻿# Git Workflow
-![Workflow Image](docs/media/git-flow.png)
+# Git Workflow
+![Workflow Image](git-flow.png)
 ## Environments:
 
 - Test Site
@@ -10,7 +10,7 @@
 
 - `master`/`main`/`production`
 - `develop`
-- `clients\develop`
+- `test`/`test_deploy`
 
 ## Branch Categories:
 
@@ -54,7 +54,7 @@
 
 
 ## Versioning Convention
-<img src="docs/media/versioning.png" alt="Workflow Image" width="300" height="200">
+<img src="versioning.png" alt="Workflow Image" width="300" height="200">
 
 
 
