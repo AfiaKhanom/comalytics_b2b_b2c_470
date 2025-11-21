@@ -176,7 +176,7 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
             {
                 Start = start,
                 Location = salesOrg.Code,
-                DateFrom = erpAccount.LastPriceRefresh,
+                LastChangedDate = erpAccount.LastPriceRefresh,
                 AccountNumber = erpAccount.AccountNumber
             };
 
@@ -445,18 +445,18 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
                         lastErpGroupPriceCodeSynced = oldErpGroupPriceCode.Code;
                     }
 
-                    if (erpGroupPrice.GroupPrices.Count != 0)
+                    if (erpGroupPrice.GroupPrices != null && erpGroupPrice.GroupPrices.Count != 0)
                     {
                         foreach (var price in erpGroupPrice.GroupPrices)
                         {
                             if (price.Value > 0)
                             {
-                                var oldErpGroupPriceCode = await _erpGroupPriceCodeService.GetErpGroupPriceCodeByCodeAsync(price.Key);
+                                var oldErpGroupPriceCode = await _erpGroupPriceCodeService.GetErpGroupPriceCodeByCodeAsync(price.Name);
 
                                 if (oldErpGroupPriceCode == null)
                                 {
                                     oldErpGroupPriceCode = new ErpGroupPriceCode();
-                                    oldErpGroupPriceCode.Code = price.Key;
+                                    oldErpGroupPriceCode.Code = price.Name;
                                     oldErpGroupPriceCode.LastUpdateTime = DateTime.UtcNow;
                                     oldErpGroupPriceCode.CreatedById = 1;
                                     oldErpGroupPriceCode.CreatedOnUtc = DateTime.UtcNow;
@@ -468,7 +468,7 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
                                 }
                                 else
                                 {
-                                    oldErpGroupPriceCode.Code = price.Key;
+                                    oldErpGroupPriceCode.Code = price.Name;
                                     oldErpGroupPriceCode.LastUpdateTime = DateTime.UtcNow;
                                     oldErpGroupPriceCode.UpdatedById = 1;
                                     oldErpGroupPriceCode.UpdatedOnUtc = DateTime.UtcNow;

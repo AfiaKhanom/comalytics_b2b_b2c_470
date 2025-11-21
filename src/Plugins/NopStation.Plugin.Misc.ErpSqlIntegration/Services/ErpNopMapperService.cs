@@ -253,12 +253,16 @@ public class ErpNopMapperService : IErpNopMapperService
                 ManufacturerCode = product.ManufacturerCode ?? string.Empty,
                 ManufacturerName = product.ManufacturerName ?? string.Empty,
                 LastChangedDate = product.LastChangedDate,
-                Categories = categories,
+                ProductCategories = categories,
                 IsUsingCategoryPathMapping = true,
                 ProductAttributes = product
-                                    .SpecList
-                                    .Select(s => new KeyValuePair<string, string>(s.Key, s.Value))
-                                    .ToList(),
+                    .SpecList
+                    .Select(s => new ErpProductAttributeDataModel
+                    {
+                        Name = s.Key,
+                        Value = s.Value
+                    })
+                    .ToList(),
                 ProductTags = product.ProductTags ?? string.Empty,
                 ProductCost = product.ProductCost,
                 Gtin = product.Gtin ?? string.Empty
@@ -336,7 +340,6 @@ public class ErpNopMapperService : IErpNopMapperService
             {
                 PostingDateUtc = invoice.PostingDateUtc,
                 ErpDocumentNumber = invoice.ErpDocumentNumber,
-                Description = invoice.Description,
                 AmountExclVat = invoice.AmountExclVat,
                 AmountInclVat = invoice.AmountInclVat,
                 CurrencyCode = invoice.CurrencyCode,
@@ -365,7 +368,7 @@ public class ErpNopMapperService : IErpNopMapperService
             GroupPriceCode = price.GroupPriceCode ?? string.Empty,
             Sku = price.Sku ?? string.Empty,
             Price = price.Price ?? decimal.Zero,
-            GroupPrices = new Dictionary<string, decimal?>(),
+            GroupPrices = new List<ErpGroupPriceListDataModel>(),
         }).ToListAsync();
     }
 }

@@ -8,7 +8,6 @@ public class ErpInvoiceDataModel
 {
     public DateTime? PostingDateUtc { get; set; }
     public string ErpDocumentNumber { get; set; }
-    public string Description { get; set; }
     public decimal? AmountInclVat { get; set; }
     public decimal? AmountExclVat { get; set; }
     public int ErpAccountId { get; set; }

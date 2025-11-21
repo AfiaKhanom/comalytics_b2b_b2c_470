@@ -14,5 +14,7 @@ public enum IntegrationStatusType
 
     Processing = 50,
 
-    Cancelled = 60
+    Cancelled = 60,
+
+    PartiallyFailed = 70
 }

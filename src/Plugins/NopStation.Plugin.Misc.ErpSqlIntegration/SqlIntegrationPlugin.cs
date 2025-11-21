@@ -667,6 +667,16 @@ public class SqlIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegratio
         return await _shipToAddressService.GetShipToAddressFromErpAsync(erpRequest);
     }
 
+    public Task<ErpResponseData<ErpShipToAddressDataModel>> CreateShipToAddressOnErpAsync(ErpShipToAddressCreateModel erpShipToAddressCreateModel)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ErpResponseData<Dictionary<int, string>>> CreateOrderOnErpAsync(ErpPlaceOrderDataModel erpRequest, List<int> orderItemIds = null)
+    {
+        throw new NotImplementedException();
+    }
+
     #endregion
 
     #endregion

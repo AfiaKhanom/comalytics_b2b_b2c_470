@@ -5,6 +5,7 @@ using Nop.Services.Directory;
 using NopStation.Plugin.B2B.B2BB2CFeatures;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
+using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
@@ -28,6 +29,7 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
     private readonly IValidator<ErpShipToAddress> _erpShipToAddressValidator;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
     private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
+    private readonly ERPIntegrationCoreDataMappingSettings _dataMappingSettings;
 
     #endregion
 
@@ -43,7 +45,8 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
         IErpIntegrationPluginManager erpIntegrationPluginService,
         IValidator<ErpShipToAddress> erpShipToAddressValidator,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
-        ISyncWorkflowMessageService syncWorkflowMessageService)
+        ISyncWorkflowMessageService syncWorkflowMessageService,
+        ERPIntegrationCoreDataMappingSettings dataMappingSettings)
     {
         _addressService = addressService;
         _countryService = countryService;
@@ -56,6 +59,7 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
         _erpShipToAddressValidator = erpShipToAddressValidator;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
         _syncWorkflowMessageService = syncWorkflowMessageService;
+        _dataMappingSettings = dataMappingSettings;
     }
 
     #endregion
@@ -124,6 +128,12 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
             IList<ErpAccount> oldErpAccounts;
             var specificErpAccountSalesOrgFound = false;
 
+            var propsToSkip = new HashSet<string>(
+                _dataMappingSettings.ShipToAddressPropertiesToExclude?
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    ?? Enumerable.Empty<string>()
+            );
+
             #endregion
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
@@ -186,7 +196,7 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                         Start = start,
                         Location = salesOrg.Code,
                         AccountNumber = erpAccountNumber,
-                        DateFrom = isIncrementalSync ? salesOrg.LastErpShipToAddressSyncTimeOnUtc : null,
+                        LastChangedDate = isIncrementalSync ? salesOrg.LastErpShipToAddressSyncTimeOnUtc : null,
                         
                     };
 
@@ -276,17 +286,39 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                         }
                         else
                         {
-                            address.FirstName = erpShipToAddress.ShipToName;
-                            address.Email = erpShipToAddress.EmailAddress.Split(";").FirstOrDefault()?.Trim();
-                            address.Company = erpShipToAddress.Company;
-                            address.CountryId = countryId;
-                            address.City = erpShipToAddress.City;
-                            address.County = erpShipToAddress.County;
-                            address.Address1 = erpShipToAddress.Address1;
-                            address.Address2 = erpShipToAddress.Address2;
-                            address.ZipPostalCode = erpShipToAddress.ZipPostalCode;
-                            address.StateProvinceId = stateProvinceId;
-                            address.PhoneNumber = erpShipToAddress.PhoneNumber;
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.ShipToName)))
+                                address.FirstName = erpShipToAddress.ShipToName;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.EmailAddress)))
+                                address.Email = erpShipToAddress.EmailAddress.Split(";").FirstOrDefault()?.Trim();
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.Company)))
+                                address.Company = erpShipToAddress.Company;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.Country)))
+                                address.CountryId = countryId;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.City)))
+                                address.City = erpShipToAddress.City;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.County)))
+                                address.County = erpShipToAddress.County;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.Address1)))
+                                address.Address1 = erpShipToAddress.Address1;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.Address2)))
+                                address.Address2 = erpShipToAddress.Address2;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.ZipPostalCode)))
+                                address.ZipPostalCode = erpShipToAddress.ZipPostalCode;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.StateProvince)))
+                                address.StateProvinceId = stateProvinceId;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.PhoneNumber)))
+                                address.PhoneNumber = erpShipToAddress.PhoneNumber;
+
                             address.FaxNumber = string.Empty;
 
                             await _addressService.UpdateAddressAsync(address);
@@ -337,16 +369,36 @@ public class ErpShipToAddressSyncService : IErpShipToAddressSyncService
                         }
                         else
                         {
-                            oldShipToAddressByThisAccount.ShipToCode = erpShipToAddress.ShipToCode.Trim();
-                            oldShipToAddressByThisAccount.ShipToName = erpShipToAddress.ShipToName.Trim();
-                            oldShipToAddressByThisAccount.Suburb = erpShipToAddress.Suburb;
-                            oldShipToAddressByThisAccount.ProvinceCode = erpShipToAddress.StateProvince;
-                            oldShipToAddressByThisAccount.DeliveryNotes = erpShipToAddress.DeliveryNotes;
-                            oldShipToAddressByThisAccount.EmailAddresses = erpShipToAddress.EmailAddress;
-                            oldShipToAddressByThisAccount.RepNumber = erpShipToAddress.RepNumber;
-                            oldShipToAddressByThisAccount.RepPhoneNumber = erpShipToAddress.RepPhoneNumber;
-                            oldShipToAddressByThisAccount.RepEmail = erpShipToAddress.RepEmail;
-                            oldShipToAddressByThisAccount.RepFullName = erpShipToAddress.RepFullName;
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.ShipToCode)))
+                                oldShipToAddressByThisAccount.ShipToCode = erpShipToAddress.ShipToCode?.Trim();
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.ShipToName)))
+                                oldShipToAddressByThisAccount.ShipToName = erpShipToAddress.ShipToName?.Trim();
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.Suburb)))
+                                oldShipToAddressByThisAccount.Suburb = erpShipToAddress.Suburb;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.StateProvince)))
+                                oldShipToAddressByThisAccount.ProvinceCode = erpShipToAddress.StateProvince;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.DeliveryNotes)))
+                                oldShipToAddressByThisAccount.DeliveryNotes = erpShipToAddress.DeliveryNotes;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.EmailAddress)))
+                                oldShipToAddressByThisAccount.EmailAddresses = erpShipToAddress.EmailAddress;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.RepNumber)))
+                                oldShipToAddressByThisAccount.RepNumber = erpShipToAddress.RepNumber;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.RepPhoneNumber)))
+                                oldShipToAddressByThisAccount.RepPhoneNumber = erpShipToAddress.RepPhoneNumber;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.RepEmail)))
+                                oldShipToAddressByThisAccount.RepEmail = erpShipToAddress.RepEmail;
+
+                            if (!propsToSkip.Contains(nameof(ErpShipToAddressDataModel.RepFullName)))
+                                oldShipToAddressByThisAccount.RepFullName = erpShipToAddress.RepFullName;
+
                             oldShipToAddressByThisAccount.AddressId = address.Id;
                             oldShipToAddressByThisAccount.IsActive = erpAccount.IsActive;
                             oldShipToAddressByThisAccount.UpdatedOnUtc = DateTime.UtcNow;

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Nop.Core;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
@@ -26,4 +27,6 @@ public interface IErpSpecialPriceService
     Task<ErpSpecialPrice> GetErpSpecialPricesByErpAccountIdAndNopProductIdAsync(int accountId, int nopProductId);
 
     Task<bool> CheckAnySpecialPriceExistWithAccountIdAndProductId(int accountId, int productId);
+
+    Task DeleteSpecialPricesNotUpdatedSinceSyncStart(int accountId, DateTime syncStartTime);
 }

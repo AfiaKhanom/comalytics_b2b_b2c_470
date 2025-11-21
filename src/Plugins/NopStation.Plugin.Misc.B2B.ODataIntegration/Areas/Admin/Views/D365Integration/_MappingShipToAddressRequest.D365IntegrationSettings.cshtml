@@ -1,0 +1,88 @@
+@model ErpShipToAddressSettingModel
+<div class="card-body">
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpGetRequestSettingsModel.ShipToAddressSyncLimit" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpGetRequestSettingsModel.ShipToAddressSyncLimit" />
+			<span asp-validation-for="ErpGetRequestSettingsModel.ShipToAddressSyncLimit" class="text-danger"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpGetRequestSettingsModel.AccountNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpGetRequestSettingsModel.AccountNumber" />
+			<span asp-validation-for="ErpGetRequestSettingsModel.AccountNumber" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpGetRequestSettingsModel.LastChangedDate" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpGetRequestSettingsModel.LastChangedDate" />
+			<span asp-validation-for="ErpGetRequestSettingsModel.LastChangedDate" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpGetRequestSettingsModel.Location" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpGetRequestSettingsModel.Location" />
+			<span asp-validation-for="ErpGetRequestSettingsModel.Location" class="text-danger"></span>
+		</div>
+	</div>
+	
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpGetRequestSettingsModel.AdditionalFilters" />
+		</div>
+		<div class="col-md-9">
+			<nop-textarea asp-for="ErpGetRequestSettingsModel.AdditionalFilters" />
+			<span asp-validation-for="ErpGetRequestSettingsModel.AdditionalFilters" class="text-danger"></span>
+		</div>
+	</div>
+</div>
+
+<script>
+	$(document).ready(function () {
+		const $textArea = $("#@Html.IdFor(model => model.ErpGetRequestSettingsModel.AdditionalFilters)");
+		const placeholderText = `Add hard-coded values with key, value, and type in JSON format. Allowed types: string, int, bool, decimal, datetime. Example:
+						[
+							{ "key": "channel", "value": "web", "type": "string" },
+							{ "key": "priority", "value": "1", "type": "int" },
+							{ "key": "isTest", "value": "true", "type": "bool" },
+							{ "key": "discount", "value": "10.5", "type": "decimal" },
+							{ "key": "createdDate", "value": "2025-06-01", "type": "datetime" }
+						]`;
+		function togglePlaceholder() {
+			if ($textArea.val().trim() === "") {
+				$textArea
+					.attr("placeholder", placeholderText)
+					.addClass("with-placeholder");
+			} else {
+				$textArea
+					.removeAttr("placeholder")
+					.removeClass("with-placeholder");
+			}
+		}
+
+		togglePlaceholder();
+		$textArea.on("input change", togglePlaceholder);
+	});
+</script>
+
+<style>
+	.with-placeholder {
+		min-height: 200px;
+		font-style: italic;
+		color: #6c757d;
+	}
+</style>

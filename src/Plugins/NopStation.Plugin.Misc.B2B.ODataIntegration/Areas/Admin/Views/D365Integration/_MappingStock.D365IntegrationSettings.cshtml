@@ -1,0 +1,90 @@
+@model ErpStockSettingModel
+
+<div class ="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="WarehouseNameOrCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="WarehouseNameOrCode" />
+			<span asp-validation-for="WarehouseNameOrCode" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Sku" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Sku" />
+			<span asp-validation-for="Sku" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="SalesOrgCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="SalesOrgCode" />
+			<span asp-validation-for="SalesOrgCode" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="QuantityOnHand" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="QuantityOnHand" />
+			<span asp-validation-for="QuantityOnHand" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="QuantityOnSalesOrder" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="QuantityOnSalesOrder" />
+			<span asp-validation-for="QuantityOnSalesOrder" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="LastChangedDate" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="LastChangedDate" />
+			<span asp-validation-for="LastChangedDate" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ExcludePropertySelectedValues" />
+		</div>
+		<div class="col-md-9">
+			<div class="input-group-append">
+				<div class="input-group">
+					<nop-select asp-for="ExcludePropertySelectedValues" asp-items="Model.AvailableProperties" asp-multiple="true" />
+				</div>
+			</div>
+			<script>
+				$(function() {
+					var categoryIdsInput = $('#@Html.IdFor(model => model.ExcludePropertySelectedValues)').select2({
+						closeOnSelect: false,
+				@if (!Model.AvailableProperties.Any())
+				{
+					<text>
+						disabled: true,
+						placeholder: "No properties available to select",
+					</text>
+				}
+					});
+				});
+			</script>
+		</div>
+	</div>
+</div>

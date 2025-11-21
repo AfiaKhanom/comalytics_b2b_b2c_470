@@ -26,6 +26,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
     private readonly IStaticCacheManager _staticCacheManager;
     private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
     private readonly IValidator<ErpSpecialPrice> _erpSpecialPriceValidator;
+    private readonly ERPIntegrationCoreDataMappingSettings _dataMappingSettings;
 
     #endregion
 
@@ -40,7 +41,8 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
         IErpIntegrationPluginManager erpIntegrationPluginService,
         IValidator<ErpSpecialPrice> erpSpecialPriceValidator,
         IStaticCacheManager staticCacheManager,
-        ISyncWorkflowMessageService syncWorkflowMessageService)
+        ISyncWorkflowMessageService syncWorkflowMessageService,
+        ERPIntegrationCoreDataMappingSettings dataMappingSettings)
     {
         _erpProductService = erpProductService;
         _erpSyncLogService = erpSyncLogService;
@@ -52,6 +54,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
         _staticCacheManager = staticCacheManager;
         _syncWorkflowMessageService = syncWorkflowMessageService;
         _erpSpecialPriceValidator = erpSpecialPriceValidator;
+        _dataMappingSettings = dataMappingSettings;
     }
 
     #endregion
@@ -132,6 +135,12 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
             var erpSpecialPriceInsertList = new List<ErpSpecialPrice>();
             var erpSpecialPriceUpdateList = new List<ErpSpecialPrice>();
 
+            var propsToSkip = new HashSet<string>(
+                _dataMappingSettings.SpecialPricePropertiesToExclude?
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    ?? Enumerable.Empty<string>()
+            );
+
             #endregion
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
@@ -184,6 +193,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
 
                 foreach (var erpAccount in oldErpAccounts)
                 {
+                    var syncStartTime = DateTime.UtcNow.AddSeconds(-20);
                     var totalSyncedSoFarForThisAccount = 0;
                     var start = "0";
                     lastErpSpecialPriceSyncedOfErpAccount = erpAccount.AccountNumber;
@@ -194,7 +204,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                         {
                             Start = start,
                             Location = salesOrg.Code,
-                            DateFrom = isIncrementalSync ? erpAccount.LastPriceRefresh : null,
+                            LastChangedDate = isIncrementalSync ? erpAccount.LastPriceRefresh : null,
                             AccountNumber = erpAccount.AccountNumber,
                             ProductSku = stockCode,
                             
@@ -268,11 +278,19 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                             }
                             else
                             {
-                                oldSpecialPrice.Price = erpSpecialPrice.SpecialPrice ?? 0;
-                                oldSpecialPrice.ListPrice = erpSpecialPrice.ListPrice ?? 0;
+                                if (!propsToSkip.Contains(nameof(ErpPriceSpecialPricingDataModel.SpecialPrice)))
+                                    oldSpecialPrice.Price = erpSpecialPrice.SpecialPrice ?? 0;
+
+                                if (!propsToSkip.Contains(nameof(ErpPriceSpecialPricingDataModel.ListPrice)))
+                                    oldSpecialPrice.ListPrice = erpSpecialPrice.ListPrice ?? 0;
+
+                                if (!propsToSkip.Contains(nameof(ErpPriceSpecialPricingDataModel.PricingNotes)))
+                                    oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
+
+                                if (!propsToSkip.Contains(nameof(ErpPriceSpecialPricingDataModel.DiscountPercentage)))
+                                    oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;
+
                                 oldSpecialPrice.VolumeDiscount = true;
-                                oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
-                                oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;                                
 
                                 if (await IsValidErpSpecialPriceAsync(oldSpecialPrice))
                                 {
@@ -326,6 +344,11 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
 
                     erpAccount.LastPriceRefresh = DateTime.UtcNow;
                     await _erpAccountService.UpdateErpAccountAsync(erpAccount);
+
+
+                    var isFullSync = string.IsNullOrWhiteSpace(erpAccountNumber) && string.IsNullOrWhiteSpace(stockCode);
+                    if (!isIncrementalSync && isFullSync)
+                        await _erpSpecialPriceService.DeleteSpecialPricesNotUpdatedSinceSyncStart(erpAccount.Id, syncStartTime);
 
                     await _erpDataClearCacheService.ClearCacheOfEntity(erpAccount);
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(

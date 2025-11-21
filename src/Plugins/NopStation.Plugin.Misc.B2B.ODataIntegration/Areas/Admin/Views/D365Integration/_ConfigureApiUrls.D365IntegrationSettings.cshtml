@@ -1,0 +1,191 @@
+@model D365IntegrationApiUrlSettingModel
+
+<div class="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AccessTokenUrl" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="AccessTokenUrl" />
+			<span asp-validation-for="AccessTokenUrl"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ClientId" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ClientId" />
+			<span asp-validation-for="ClientId"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ClientSecret" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ClientSecret" />
+			<span asp-validation-for="ClientSecret"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Scope" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Scope" />
+			<span asp-validation-for="Scope"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ProductApiUrl" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ProductApiUrl" />
+			<span asp-validation-for="ProductApiUrl" class="text-danger"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AccountApiUrl" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="AccountApiUrl" />
+			<span asp-validation-for="AccountApiUrl" class="text-danger"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ShippingAddressApiUrl" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ShippingAddressApiUrl" />
+			<span asp-validation-for="ShippingAddressApiUrl" class="text-danger"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="InvoiceApiUrl" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="InvoiceApiUrl" />
+			<span asp-validation-for="InvoiceApiUrl" class="text-danger"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="InvoicePdfApiUrl" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="InvoicePdfApiUrl" />
+			<span asp-validation-for="InvoicePdfApiUrl" class="text-danger"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="OrderApiUrl" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="OrderApiUrl" />
+			<span asp-validation-for="OrderApiUrl" class="text-danger"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="SpecialPriceApiUrl" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="SpecialPriceApiUrl" />
+			<span asp-validation-for="SpecialPriceApiUrl" class="text-danger"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="GroupPriceApiUrl" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="GroupPriceApiUrl" />
+			<span asp-validation-for="GroupPriceApiUrl" class="text-danger"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="StockApiUrl" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="StockApiUrl" />
+			<span asp-validation-for="StockApiUrl" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="CreateAccountApiUrl" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="CreateAccountApiUrl" />
+			<span asp-validation-for="CreateAccountApiUrl" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="CreateShipToAddressApiUrl" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="CreateShipToAddressApiUrl" />
+			<span asp-validation-for="CreateShipToAddressApiUrl" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="PlaceOrderHeaderApiUrl" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="PlaceOrderHeaderApiUrl" />
+			<span asp-validation-for="PlaceOrderHeaderApiUrl" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="IsOrderItemExcluded" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="IsOrderItemExcluded" />
+			<span asp-validation-for="IsOrderItemExcluded"></span>
+		</div>
+	</div>
+	<nop-nested-setting asp-for="IsOrderItemExcluded" disable-auto-generation="true">
+		<div class="form-group row" id="placeOrderItemsInOrderHeader">
+			<div class="col-md-3">
+				<nop-label asp-for="PlaceOrderLinesApiUrl" />
+			</div>
+			<div class="col-md-9">
+				<nop-editor asp-for="PlaceOrderLinesApiUrl" />
+				<span asp-validation-for="PlaceOrderLinesApiUrl"></span>
+			</div>
+		</div>
+	</nop-nested-setting>
+</div>
+
+<script>
+
+	$(document).ready(function () {
+		$("#@Html.IdFor(model => model.IsOrderItemExcluded)").click(toggleIsOrderItemExcluded);
+
+		toggleIsOrderItemExcluded();
+	});
+
+
+	function toggleIsOrderItemExcluded() {
+		if ($('#@Html.IdFor(model => model.IsOrderItemExcluded)').is(':checked')) {
+			$('#placeOrderItemsInOrderHeader').showElement();
+		} else {
+			$('#placeOrderItemsInOrderHeader').hideElement();
+		}
+	}
+</script>

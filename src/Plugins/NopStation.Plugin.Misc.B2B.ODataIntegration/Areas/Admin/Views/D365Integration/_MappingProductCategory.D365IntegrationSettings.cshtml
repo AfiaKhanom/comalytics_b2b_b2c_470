@@ -1,0 +1,23 @@
+@model ErpProductSettingModel
+
+<div class="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpCategoryDataSettingsModel.CategoryName" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpCategoryDataSettingsModel.CategoryName" />
+			<span asp-validation-for="ErpCategoryDataSettingsModel.CategoryName" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpCategoryDataSettingsModel.Description" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpCategoryDataSettingsModel.Description" />
+			<span asp-validation-for="ErpCategoryDataSettingsModel.Description" class="text-danger"></span>
+		</div>
+	</div>
+</div>

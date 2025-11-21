@@ -1,0 +1,12 @@
+{
+  "Group": "NopStation_ERPIntegration",
+  "FriendlyName": "NopStation Dynamic 365 Integration",
+  "SystemName": "NopStation.Plugin.Misc.B2B.ODataIntegration",
+  "Version": "4.70.5.192",
+  "SupportedVersions": [ "4.70" ],
+  "Author": "nopstation team",
+  "DisplayOrder": 1,
+  "FileName": "NopStation.Plugin.Misc.B2B.ODataIntegration.dll",
+  "Description": "This plugin allows to sync data from Microsoft Dynamic Business Central.",
+  "DependsOnSystemNames": [ "NopStation.Core" ]
+}

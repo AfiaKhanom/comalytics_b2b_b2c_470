@@ -17,7 +17,7 @@ public class ErpInvoiceBuilder : NopEntityBuilder<ErpInvoice>
         table
             .WithColumn(nameof(ErpInvoice.PostingDateUtc)).AsDateTime2()
             .WithColumn(nameof(ErpInvoice.ErpDocumentNumber)).AsString()
-            .WithColumn(nameof(ErpInvoice.Description)).AsString()
+            .WithColumn(nameof(ErpInvoice.Description)).AsString().Nullable()
             .WithColumn(nameof(ErpInvoice.AmountInclVat)).AsDecimal(18, 4)
             .WithColumn(nameof(ErpInvoice.AmountExclVat)).AsDecimal(18, 4)
             .WithColumn(nameof(ErpInvoice.ErpAccountId)).AsInt32()

@@ -1,0 +1,212 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Copyright>Copyright © Nop Solutions, Ltd</Copyright>
+    <Company>Nop Solutions, Ltd</Company>
+    <Authors>Nop Solutions, Ltd</Authors>
+    <PackageLicenseUrl></PackageLicenseUrl>
+    <PackageProjectUrl>https://www.nopcommerce.com/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nopSolutions/nopCommerce</RepositoryUrl>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RepositoryType>Git</RepositoryType>
+    <OutputPath>..\..\Presentation\Nop.Web\Plugins\NopStation.Plugin.Misc.B2B.ODataIntegration</OutputPath>
+    <OutDir>$(OutputPath)</OutDir>
+    <!--Set this parameter to true to get the dlls copied from the NuGet cache to the output of your    project. You need to set this parameter to true if your plugin has a nuget package to ensure that   the dlls copied from the NuGet cache to the output of your project-->
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Areas\Admin\Views\D365Integration\Configure.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\ConfigureApiUrls.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\MappingCreateShipToAddress.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\MappingOrder.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\MappingSpecialPricing.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\_Configure.D365IntegrationSettings.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\_ConfigureApiUrls.D365IntegrationSettings.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\_MappingAccountRequest.D365IntegrationSettings.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\_MappingBillingAddress.D365IntegrationSettings.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\_MappingCreateShipToAddress.D365IntegrationSettings.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\_MappingGroupPriceRequest.D365IntegrationSettings.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\_MappingGroupPricing.D365IntegrationSettings.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\_MappingInvoicePdf.D365IntegrationSettings.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\_MappingInvoiceRequest.D365IntegrationSettings.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\_MappingOrder.D365IntegrationSettings.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\_MappingProductCategory.D365IntegrationSettings.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\_MappingProductRequest.D365IntegrationSettings.cshtml" />
+    <None Remove="Areas\Admin\Views\D365Integration\_MappingSpecialPricing.D365IntegrationSettings.cshtml" />
+    <None Remove="dll\JWT.dll" />
+    <None Remove="logo.png" />
+    <None Remove="plugin.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingCreateShipToAddress.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="dll\JWT.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="JWT">
+      <HintPath>dll\JWT.dll</HintPath>
+    </Reference>
+    <Reference Include="NopStation.Plugin.Misc.Actions">
+      <HintPath>..\NopStation.Plugin.Misc.Core\NopStation.Plugin.Misc.Actions.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Areas\Admin\Views\D365Integration\Configure.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\ConfigureApiUrls.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\MappingCreateShipToAddress.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\MappingInvoicePdf.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\MappingPlaceOrder.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\MappingProduct.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\MappingOrder.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\MappingInvoice.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\MappingSpecialPricing.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\MappingCreateAccount.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\MappingStock.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\MappingShipToAddress.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_ConfigureApiUrls.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingInvoicePdfRequest.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingCreateAccount.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingStockRequest.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingSpecialPriceRequest.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingShipToAddressRequest.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingAccountRequest.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingOrderRequest.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingGroupPriceRequest.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingGroupPricing.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingInvoicePdf.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingInvoiceRequest.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingProductCategory.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingProductRequest.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingShippingAddress.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingBillingAddress.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingOrderItem.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingOrder.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingInvoice.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingSpecialPricing.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingStock.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingShipToAddress.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingProduct.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_Configure.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\_ViewImports.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="plugin.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\_MappingAccount.D365IntegrationSettings.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Areas\Admin\Views\D365Integration\MappingAccount.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\Build\ClearPluginAssemblies.proj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NopStation.Plugin.B2B.B2BB2CFeatures\NopStation.Plugin.B2B.B2BB2CFeatures.csproj" />
+    <ProjectReference Include="..\NopStation.Plugin.B2B.ERPIntegrationCore\NopStation.Plugin.B2B.ERPIntegrationCore.csproj" />
+    <ProjectReference Include="..\NopStation.Plugin.Misc.Actions\NopStation.Plugin.Misc.Actions.csproj" />
+    <ProjectReference Include="..\NopStation.Plugin.Misc.Core\NopStation.Plugin.Misc.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Areas\Admin\Views\D365Integration\MappingGroupPricing.cshtml">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- This target execute after "Build" target -->
+  <Target Name="NopTarget" AfterTargets="Build">
+    <!-- Delete unnecessary libraries from plugins path -->
+    <MSBuild Projects="@(ClearPluginAssemblies)" Properties="PluginPath=$(MSBuildProjectDirectory)\$(OutDir)" Targets="NopClear" />
+  </Target>
+
+</Project>

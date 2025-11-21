@@ -49,6 +49,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
     private readonly IErpOrderAdditionalDataService _erpOrderAdditionalDataService;
     private readonly IErpOrderItemAdditionalDataService _erpOrderItemAdditionalDataService;
     private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
+    private readonly ERPIntegrationCoreDataMappingSettings _dataMappingSettings;
 
     #endregion
 
@@ -75,7 +76,8 @@ public class ErpOrderSyncService : IErpOrderSyncService
         IErpIntegrationPluginManager erpIntegrationPluginService,
         IErpOrderAdditionalDataService erpOrderAdditionalDataService,
         IErpOrderItemAdditionalDataService erpOrderItemAdditionalDataService,
-        ISyncWorkflowMessageService syncWorkflowMessageService)
+        ISyncWorkflowMessageService syncWorkflowMessageService,
+        ERPIntegrationCoreDataMappingSettings dataMappingSettings)
     {
         _orderService = orderService;
         _storeContext = storeContext;
@@ -99,6 +101,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
         _erpOrderAdditionalDataService = erpOrderAdditionalDataService;
         _erpOrderItemAdditionalDataService = erpOrderItemAdditionalDataService;
         _syncWorkflowMessageService = syncWorkflowMessageService;
+        _dataMappingSettings = dataMappingSettings;
     }
 
     #endregion
@@ -122,7 +125,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
         await _erpNopUserService.InsertErpNopUserAsync(erpNopUser);
         
         //add to 'B2B Customer' role
-        var b2bCustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BCustomerRole)
+        var b2bCustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(ERPIntegrationCoreDefaults.B2BCustomerRoleSystemName)
             ?? throw new NopException($"'{ERPIntegrationCoreDefaults.B2BCustomerRole}' role could not be loaded");
         await _customerService.AddCustomerRoleMappingAsync(new CustomerCustomerRoleMapping { CustomerId = customer.Id, CustomerRoleId = b2bCustomerRole.Id });
     }
@@ -176,6 +179,12 @@ public class ErpOrderSyncService : IErpOrderSyncService
             var currency = await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId);
             var allCountries = (await _countryService.GetAllCountriesAsync()).ToList();
             var allStateProvinces = (await _stateProvinceService.GetStateProvincesAsync()).ToList();
+
+            var orderPropsToSkip = new HashSet<string>(
+                _dataMappingSettings.OrderPropertiesToExclude?
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    ?? Enumerable.Empty<string>()
+            );
 
             #endregion
 
@@ -252,7 +261,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
                             Start = start,
                             AccountNumber = erpAccount.AccountNumber,
                             Location = salesOrg.Code,
-                            DateFrom = dateFrom,
+                            LastChangedDate = dateFrom,
                             OrderNumber = orderNumber
                         };
 
@@ -334,7 +343,7 @@ public class ErpOrderSyncService : IErpOrderSyncService
                                 Start = start,
                                 AccountNumber = erpAccount.AccountNumber,
                                 Location = salesOrg.Code,
-                                DateFrom = isIncrementalSync ? erpAccount.LastTimeOrderSyncOnUtc : null,
+                                LastChangedDate = isIncrementalSync ? erpAccount.LastTimeOrderSyncOnUtc : null,
 
                             };
 
@@ -476,6 +485,18 @@ public class ErpOrderSyncService : IErpOrderSyncService
         List<Country> allCountries,
         Currency currency)
     {
+        var orderPropsToSkip = new HashSet<string>(
+            _dataMappingSettings.OrderPropertiesToExclude?
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                ?? Enumerable.Empty<string>()
+        );
+
+        var orderItemPropsToSkip = new HashSet<string>(
+            _dataMappingSettings.OrderItemPropertiesToExclude?
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                ?? Enumerable.Empty<string>()
+        );
+
         foreach (var erpOrder in erpOrders)
         {
             #region Nop Order
@@ -642,21 +663,35 @@ public class ErpOrderSyncService : IErpOrderSyncService
             }
             else
             {
+                if (!orderPropsToSkip.Contains(nameof(ErpPlaceOrderDataModel.OrderSubtotalInclTax)))
+                {
+                    oldNopOrder.OrderTotal = erpOrder.OrderSubtotalInclTax ?? decimal.Zero;
+                    oldNopOrder.OrderSubtotalInclTax = erpOrder.OrderSubtotalInclTax ?? decimal.Zero;
+                } 
+
+                if (!orderPropsToSkip.Contains(nameof(ErpPlaceOrderDataModel.OrderSubtotalExclTax)))
+                    oldNopOrder.OrderSubtotalExclTax = erpOrder.OrderSubtotalExclTax ?? decimal.Zero;
+
+                if (!orderPropsToSkip.Contains(nameof(ErpPlaceOrderDataModel.OrderTax)))
+                    oldNopOrder.OrderTax = erpOrder.OrderTax ?? decimal.Zero;
+
+                if (!orderPropsToSkip.Contains(nameof(ErpPlaceOrderDataModel.ShippingAmount)))
+                    oldNopOrder.OrderShippingInclTax = erpOrder.ShippingAmount;
+
+                if (!orderPropsToSkip.Contains(nameof(ErpPlaceOrderDataModel.OrderType)))
+                {
+                    if (erpOrder.OrderType == ((int)ErpOrderType.B2BSalesOrder).ToString())
+                    {
+                        oldNopOrder.OrderStatusId = (int)OrderStatus.Processing;
+                    }
+                    else if (erpOrder.OrderType == ((int)ErpOrderType.B2BQuote).ToString())
+                    {
+                        oldNopOrder.OrderStatusId = (int)OrderStatus.Pending;
+                    }
+                }
+
                 oldNopOrder.ShippingStatusId = (int)ShippingStatus.NotYetShipped;
-                oldNopOrder.OrderTotal = erpOrder.OrderSubtotalInclTax ?? decimal.Zero;
-                oldNopOrder.OrderSubtotalExclTax = erpOrder.OrderSubtotalExclTax ?? decimal.Zero;
-                oldNopOrder.OrderSubtotalInclTax = erpOrder.OrderSubtotalInclTax ?? decimal.Zero;
-                oldNopOrder.OrderTax = erpOrder.OrderTax ?? decimal.Zero;
-                oldNopOrder.OrderShippingInclTax = erpOrder.ShippingAmount;
                 oldNopOrder.StoreId = (await _storeContext.GetCurrentStoreAsync()).Id;
-                if (erpOrder.OrderType == ((int)ErpOrderType.B2BSalesOrder).ToString())
-                {
-                    oldNopOrder.OrderStatusId = (int)OrderStatus.Processing;
-                }
-                else if (erpOrder.OrderType == ((int)ErpOrderType.B2BQuote).ToString())
-                {
-                    oldNopOrder.OrderStatusId = (int)OrderStatus.Pending;
-                }
                 oldNopOrder.CustomerCurrencyCode = currency.CurrencyCode;
                 oldNopOrder.CurrencyRate = currency.Rate;
                 oldNopOrder.CustomerTaxDisplayTypeId = (int)TaxDisplayType.ExcludingTax;
@@ -719,18 +754,26 @@ public class ErpOrderSyncService : IErpOrderSyncService
             }
             else
             {
+                if (!orderPropsToSkip.Contains(nameof(ErpPlaceOrderDataModel.ErpOrderNumber)))
+                    oldErpOrder.ErpOrderNumber = erpOrder.ErpOrderNumber;
+
+                if (!orderPropsToSkip.Contains(nameof(ErpPlaceOrderDataModel.OrderType)))
+                    oldErpOrder.ErpOrderType = (ErpOrderType)Enum.Parse(typeof(ErpOrderType), erpOrder.OrderType);
+
+                if (!orderPropsToSkip.Contains(nameof(ErpPlaceOrderDataModel.DeliveryDate)))
+                {
+                    oldErpOrder.DeliveryDate = erpOrder.DeliveryDate;
+                    oldErpOrder.QuoteExpiryDate = erpOrder.DeliveryDate;
+                }
+
                 oldErpOrder.NopOrderId = oldNopOrder.Id;
-                oldErpOrder.ErpOrderNumber = erpOrder.ErpOrderNumber;
-                oldErpOrder.ErpOrderType = (ErpOrderType)Enum.Parse(typeof(ErpOrderType), erpOrder.OrderType);
                 oldErpOrder.ChangedOnUtc = DateTime.UtcNow;
                 oldErpOrder.LastERPUpdateUtc = DateTime.UtcNow;
-                oldErpOrder.QuoteExpiryDate = erpOrder.DeliveryDate;
                 oldErpOrder.QuoteSalesOrderId = 0;
                 oldErpOrder.ErpAccountId = erpAccount.Id;
                 oldErpOrder.SpecialInstructions = erpOrder.DeliveryInstruction;
                 oldErpOrder.CustomerReference = erpOrder.CustomerReference;
                 oldErpOrder.ERPOrderStatus = nameof(OrderStatus.Processing);
-                oldErpOrder.DeliveryDate = erpOrder.DeliveryDate;
                 oldErpOrder.IntegrationStatusType = IntegrationStatusType.Confirmed;
                 oldErpOrder.IntegrationError = !string.IsNullOrWhiteSpace(oldErpOrder.IntegrationError) ? oldErpOrder.IntegrationError : string.Empty;
 
@@ -780,13 +823,27 @@ public class ErpOrderSyncService : IErpOrderSyncService
                 }
                 else
                 {
-                    nopOrderItem.Quantity = Convert.ToInt16(item.Quantity);
-                    nopOrderItem.PriceInclTax = item.PriceInclTax ?? 0;
-                    nopOrderItem.PriceExclTax = item.PriceExclTax ?? 0;
-                    nopOrderItem.UnitPriceInclTax = item.UnitPriceInclTax ?? 0;
-                    nopOrderItem.UnitPriceExclTax = item.UnitPriceExclTax ?? 0;
-                    nopOrderItem.DiscountAmountInclTax = item.DiscountAmountInclTax ?? 0;
-                    nopOrderItem.DiscountAmountExclTax = item.DiscountAmountExclTax ?? 0;
+
+                    if (!orderPropsToSkip.Contains(nameof(ErpPlaceOrderItemDataModel.Quantity)))
+                        nopOrderItem.Quantity = Convert.ToInt16(item.Quantity);
+
+                    if (!orderPropsToSkip.Contains(nameof(ErpPlaceOrderItemDataModel.PriceInclTax)))
+                        nopOrderItem.PriceInclTax = item.PriceInclTax ?? 0;
+
+                    if (!orderPropsToSkip.Contains(nameof(ErpPlaceOrderItemDataModel.PriceExclTax)))
+                        nopOrderItem.PriceExclTax = item.PriceExclTax ?? 0;
+
+                    if (!orderPropsToSkip.Contains(nameof(ErpPlaceOrderItemDataModel.UnitPriceInclTax)))
+                        nopOrderItem.UnitPriceInclTax = item.UnitPriceInclTax ?? 0;
+
+                    if (!orderPropsToSkip.Contains(nameof(ErpPlaceOrderItemDataModel.UnitPriceExclTax)))
+                        nopOrderItem.UnitPriceExclTax = item.UnitPriceExclTax ?? 0;
+
+                    if (!orderPropsToSkip.Contains(nameof(ErpPlaceOrderItemDataModel.DiscountAmountInclTax)))
+                        nopOrderItem.DiscountAmountInclTax = item.DiscountAmountInclTax ?? 0;
+
+                    if (!orderPropsToSkip.Contains(nameof(ErpPlaceOrderItemDataModel.DiscountAmountExclTax)))
+                        nopOrderItem.DiscountAmountExclTax = item.DiscountAmountExclTax ?? 0;
 
                     await _orderService.UpdateOrderItemAsync(nopOrderItem);
                 }

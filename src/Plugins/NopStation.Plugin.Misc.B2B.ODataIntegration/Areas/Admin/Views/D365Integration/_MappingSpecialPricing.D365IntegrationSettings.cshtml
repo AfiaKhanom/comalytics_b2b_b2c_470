@@ -1,0 +1,129 @@
+@model ErpPriceSpecialPricingDataSettingsModel
+
+<div class="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AccountNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="AccountNumber" />
+			<span asp-validation-for="AccountNumber" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Branch" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Branch" />
+			<span asp-validation-for="Branch" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Sku" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Sku" />
+			<span asp-validation-for="Sku" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="SpecialPrice" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="SpecialPrice" />
+			<span asp-validation-for="SpecialPrice" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="SellingPrice" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="SellingPrice" />
+			<span asp-validation-for="SellingPrice" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="PromoPrice" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="PromoPrice" />
+			<span asp-validation-for="PromoPrice" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ListPrice" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ListPrice" />
+			<span asp-validation-for="ListPrice" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="RetailPrice" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="RetailPrice" />
+			<span asp-validation-for="RetailPrice" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="DiscountPercentage" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DiscountPercentage" />
+			<span asp-validation-for="DiscountPercentage" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="PricingNotes" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="PricingNotes" />
+			<span asp-validation-for="PricingNotes" class="text-danger"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ExcludePropertySelectedValues" />
+		</div>
+		<div class="col-md-9">
+			<div class="input-group-append">
+				<div class="input-group">
+					<nop-select asp-for="ExcludePropertySelectedValues" asp-items="Model.AvailableProperties" asp-multiple="true" />
+				</div>
+			</div>
+			<script>
+				$(function() {
+					var categoryIdsInput = $('#@Html.IdFor(model => model.ExcludePropertySelectedValues)').select2({
+						closeOnSelect: false,
+				@if (!Model.AvailableProperties.Any())
+				{
+					<text>
+							disabled: true,
+							placeholder: "No properties available to select",
+					</text>
+				}
+					});
+				});
+			</script>
+		</div>
+	</div>
+</div>

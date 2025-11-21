@@ -1,0 +1,13 @@
+@model ErpInvoicePdfSettingsModel
+
+<div class="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="InvoicePDFData" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="InvoicePDFData" />
+			<span asp-validation-for="InvoicePDFData" class="text-danger"></span>
+		</div>
+	</div>
+</div>

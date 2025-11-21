@@ -1,0 +1,104 @@
+@model ErpPriceGroupPricingDataSettingsModel
+
+<div class="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="GroupPriceCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="GroupPriceCode" />
+			<span asp-validation-for="GroupPriceCode" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Sku" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Sku" />
+			<span asp-validation-for="Sku" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Price" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Price" />
+			<span asp-validation-for="Price" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="GroupPrices" />
+		</div>
+		<div class="col-md-9">
+			<nop-textarea asp-for="GroupPrices" />
+			<span asp-validation-for="GroupPrices" class="text-danger"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ExcludePropertySelectedValues" />
+		</div>
+		<div class="col-md-9">
+			<div class="input-group-append">
+				<div class="input-group">
+					<nop-select asp-for="ExcludePropertySelectedValues" asp-items="Model.AvailableProperties" asp-multiple="true" />
+				</div>
+			</div>
+			<script>
+				$(function() {
+					var categoryIdsInput = $('#@Html.IdFor(model => model.ExcludePropertySelectedValues)').select2({
+						closeOnSelect: false,
+				@if (!Model.AvailableProperties.Any())
+				{
+					<text>
+							disabled: true,
+							placeholder: "No properties available to select",
+					</text>
+				}
+					});
+				});
+			</script>
+		</div>
+	</div>
+</div>
+
+
+<script>
+	$(document).ready(function () {
+		const $textArea = $("#@Html.IdFor(model => model.GroupPrices)");
+			const placeholderText = `Add list of group prices with key and value in this format. The "Key" determines the price group name and the "Value" determines the JSONPath selector. Example:
+
+				[
+				  { "Key": "Group_Prices1", "Value": "$.value[*].GroupPricesJsonPath1" },
+				  { "Key": "Group_Prices2", "Value": "$.value[*].GroupPricesJsonPath2" }
+				]`;
+		function togglePlaceholder() {
+			if ($textArea.val().trim() === "") {
+				$textArea
+					.attr("placeholder", placeholderText)
+					.addClass("with-placeholder");
+			} else {
+				$textArea
+					.removeAttr("placeholder")
+					.removeClass("with-placeholder");
+			}
+		}
+
+		togglePlaceholder();
+		$textArea.on("input change", togglePlaceholder);
+	});
+</script>
+
+<style>
+	.with-placeholder {
+		min-height: 200px;
+		font-style: italic;
+		color: #6c757d;
+	}
+</style>
