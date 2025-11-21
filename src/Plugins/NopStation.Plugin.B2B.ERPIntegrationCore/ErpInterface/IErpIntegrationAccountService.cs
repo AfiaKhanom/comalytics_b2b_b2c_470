@@ -21,4 +21,6 @@ public interface IErpIntegrationAccountService
     Task<ErpResponseData<IList<ErpShipToAddressDataModel>>> GetShipToAddressesFromErpAsync(ErpGetRequestModel erpRequest);
 
     Task<ErpResponseData<IList<ErpAccountDataModel>>> GetAllAccountCreditFromErpAsync(ErpGetRequestModel erpRequest);
+
+    Task<ErpResponseData<ErpShipToAddressDataModel>> CreateShipToAddressOnErpAsync(ErpShipToAddressCreateModel erpShipToAddressCreateModel);
 }

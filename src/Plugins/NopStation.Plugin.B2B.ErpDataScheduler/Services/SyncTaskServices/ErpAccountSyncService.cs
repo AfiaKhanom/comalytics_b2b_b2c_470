@@ -1,10 +1,12 @@
-﻿using FluentValidation;
+﻿using DocumentFormat.OpenXml.CustomProperties;
+using FluentValidation;
 using Nop.Core.Domain.Common;
 using Nop.Services.Common;
 using Nop.Services.Directory;
 using NopStation.Plugin.B2B.B2BB2CFeatures;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
+using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
@@ -31,6 +33,7 @@ public class ErpAccountSyncService : IErpAccountSyncService
     private const int ALLOWED_STOCK_PERCENTAGE = 100;
     private readonly IValidator<ErpAccount> _validator;
     private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
+    private readonly ERPIntegrationCoreDataMappingSettings _dataMappingSettings;
 
     #endregion
 
@@ -47,7 +50,8 @@ public class ErpAccountSyncService : IErpAccountSyncService
         IErpIntegrationPluginManager erpIntegrationPluginService,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings,
         IValidator<ErpAccount> validator,
-        ISyncWorkflowMessageService syncWorkflowMessageService)
+        ISyncWorkflowMessageService syncWorkflowMessageService,
+        ERPIntegrationCoreDataMappingSettings dataMappingSettings)
     {
         _addressService = addressService;
         _countryService = countryService;
@@ -61,6 +65,7 @@ public class ErpAccountSyncService : IErpAccountSyncService
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
         _validator = validator;
         _syncWorkflowMessageService = syncWorkflowMessageService;
+        _dataMappingSettings = dataMappingSettings;
     }
 
     #endregion
@@ -129,6 +134,12 @@ public class ErpAccountSyncService : IErpAccountSyncService
             var stateProvinceId = 0;
             //var syncStartTime = DateTime.UtcNow.AddMinutes(-10);
 
+            var propsToSkip =  new HashSet<string>(
+                _dataMappingSettings.AccountPropertiesToExclude?
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    ?? Enumerable.Empty<string>()
+            );
+
             #endregion
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
@@ -150,7 +161,7 @@ public class ErpAccountSyncService : IErpAccountSyncService
                     var erpGetRequestModel = new ErpGetRequestModel
                     {
                         Start = start,
-                        DateFrom = isIncrementalSync ? salesOrg.LastErpAccountSyncTimeOnUtc : null,
+                        LastChangedDate = isIncrementalSync ? salesOrg.LastErpAccountSyncTimeOnUtc : null,
                         AccountNumber = erpAccountNumber,
                         Location = salesOrg.Code
                     };
@@ -226,17 +237,39 @@ public class ErpAccountSyncService : IErpAccountSyncService
                         }
                         else
                         {
-                            address.FirstName = erpAccount.BillingName;
-                            address.Email = erpAccount.Email;
-                            address.Company = erpAccount.CompanyNo;
-                            address.CountryId = countryId;
-                            address.City = erpAccount.City;
-                            address.County = erpAccount.Address3;
-                            address.Address1 = erpAccount.Address1;
-                            address.Address2 = erpAccount.Address2;
-                            address.ZipPostalCode = erpAccount.ZipPostalCode;
-                            address.StateProvinceId = stateProvinceId;
-                            address.PhoneNumber = erpAccount.PhoneNumber;
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.BillingName)))
+                                address.FirstName = erpAccount.BillingName;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.BillingName)))
+                                address.Email = erpAccount.Email;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.BillingName)))
+                                address.Company = erpAccount.CompanyNo;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.Country)))
+                                address.CountryId = countryId;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.City)))
+                                address.City = erpAccount.City;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.Address3)))
+                                address.County = erpAccount.Address3;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.Address1)))
+                                address.Address1 = erpAccount.Address1;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.Address2)))
+                                address.Address2 = erpAccount.Address2;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.ZipPostalCode)))
+                                address.ZipPostalCode = erpAccount.ZipPostalCode;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.StateProvince)))
+                                address.StateProvinceId = stateProvinceId;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.PhoneNumber)))
+                                address.PhoneNumber = erpAccount.PhoneNumber;
+
                             address.FaxNumber = string.Empty;
 
                             await _addressService.UpdateAddressAsync(address);
@@ -270,6 +303,7 @@ public class ErpAccountSyncService : IErpAccountSyncService
                                     && value) ?? false;
 
                             oldErpAccount.OverrideStockDisplayFormatConfigSetting = false;
+                            oldErpAccount.OverrideBackOrderingConfigSetting = erpAccount.OverrideBackOrderingConfigSetting;
                             if (hideStockValues)
                             {
                                 oldErpAccount.StockDisplayFormatTypeId = (int)StockDisplayFormat.ShowInOrOutOfStockIndicators;
@@ -305,21 +339,43 @@ public class ErpAccountSyncService : IErpAccountSyncService
                         }
                         else
                         {
-                            oldErpAccount.AccountName = erpAccount.AccountName;
-                            oldErpAccount.IsActive = erpAccount.IsActive;
-                            oldErpAccount.VatNumber = erpAccount.VatNumber;
-                            oldErpAccount.PreFilterFacets = erpAccount.PreFilterFacets;
-                            oldErpAccount.PaymentTypeCode = erpAccount.PaymentTypeCode;
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.AccountName)))
+                                oldErpAccount.AccountName = erpAccount.AccountName;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.IsActive)))
+                                oldErpAccount.IsActive = erpAccount.IsActive;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.VatNumber)))
+                                oldErpAccount.VatNumber = erpAccount.VatNumber;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.PreFilterFacets)))
+                                oldErpAccount.PreFilterFacets = erpAccount.PreFilterFacets;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.PaymentTypeCode)))
+                                oldErpAccount.PaymentTypeCode = erpAccount.PaymentTypeCode;
+
                             oldErpAccount.BillingAddressId = address.Id;
-                            oldErpAccount.BillingSuburb = address.Address1;
 
-                            oldErpAccount.AllowOverspend = erpAccount.AllowOverspend ? erpAccount.AllowOverspend : _b2BB2CFeaturesSettings.AllowOverspend;
-                            oldErpAccount.AllowAccountsAddressEditOnCheckout = _b2BB2CFeaturesSettings.AllowAddressEditOnCheckoutForAll;
-                            oldErpAccount.B2BPriceGroupCodeId = (await _erpGroupPriceCodeService.GetErpGroupPriceCodeByCodeAsync(erpAccount.PriceGroupCode))?.Id ?? 0;
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.Address1)))
+                                oldErpAccount.BillingSuburb = address.Address1;
 
-                            oldErpAccount.CreditLimitAvailable = erpAccount.CreditLimitAvailable ?? 0;
-                            oldErpAccount.CreditLimit = erpAccount.CreditLimit ?? 0;
-                            oldErpAccount.CurrentBalance = erpAccount.CurrentBalance ?? 0;
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.AllowOverspend)))
+                                oldErpAccount.AllowOverspend = erpAccount.AllowOverspend ? erpAccount.AllowOverspend : _b2BB2CFeaturesSettings.AllowOverspend;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.AllowAccountsAddressEditOnCheckout)))
+                                oldErpAccount.AllowAccountsAddressEditOnCheckout = _b2BB2CFeaturesSettings.AllowAddressEditOnCheckoutForAll;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.PriceGroupCode)))
+                                oldErpAccount.B2BPriceGroupCodeId = (await _erpGroupPriceCodeService.GetErpGroupPriceCodeByCodeAsync(erpAccount.PriceGroupCode))?.Id ?? 0;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.CreditLimitAvailable)))
+                                oldErpAccount.CreditLimitAvailable = erpAccount.CreditLimitAvailable ?? 0;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.CreditLimit)))
+                                oldErpAccount.CreditLimit = erpAccount.CreditLimit ?? 0;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.CurrentBalance)))
+                                oldErpAccount.CurrentBalance = erpAccount.CurrentBalance ?? 0;
 
                             var hideStockValues = erpAccount.ErpAccountAttributes?.Exists(kvp =>
                                     HIDE_STOCK_VALUES.Equals(kvp.Key, StringComparison.InvariantCultureIgnoreCase)
@@ -327,6 +383,10 @@ public class ErpAccountSyncService : IErpAccountSyncService
                                     && value) ?? false;
 
                             oldErpAccount.OverrideStockDisplayFormatConfigSetting = false;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.OverrideBackOrderingConfigSetting)))
+                                oldErpAccount.OverrideBackOrderingConfigSetting = erpAccount.OverrideBackOrderingConfigSetting;
+
                             if (hideStockValues)
                             {
                                 oldErpAccount.StockDisplayFormatTypeId = (int)StockDisplayFormat.ShowInOrOutOfStockIndicators;
@@ -337,14 +397,16 @@ public class ErpAccountSyncService : IErpAccountSyncService
                             }
 
                             oldErpAccount.ErpAccountStatusTypeId = (int)ErpAccountStatusType.Normal;
-                            oldErpAccount.PercentageOfStockAllowed = erpAccount.PercentageOfStockAllowed ?? ALLOWED_STOCK_PERCENTAGE;
+
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.PercentageOfStockAllowed)))
+                                oldErpAccount.PercentageOfStockAllowed = erpAccount.PercentageOfStockAllowed ?? ALLOWED_STOCK_PERCENTAGE;
 
                             if (oldErpAccount.PercentageOfStockAllowed <= 0)
                             {
                                 oldErpAccount.PercentageOfStockAllowed = ALLOWED_STOCK_PERCENTAGE;
                             }
-
-                            oldErpAccount.IsDeleted = erpAccount.IsDeleted;
+                            if (!propsToSkip.Contains(nameof(ErpAccountDataModel.IsDeleted)))
+                                oldErpAccount.IsDeleted = erpAccount.IsDeleted;
 
                             oldErpAccount.UpdatedById = 1;
                             oldErpAccount.UpdatedOnUtc = DateTime.UtcNow;

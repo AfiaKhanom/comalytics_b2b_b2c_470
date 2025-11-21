@@ -1,0 +1,149 @@
+﻿@model ErpCreateShipToAddressSettingsModel
+
+<div class="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AccountNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="AccountNumber" />
+			<span asp-validation-for="AccountNumber" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ShipToCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ShipToCode" />
+			<span asp-validation-for="ShipToCode" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ShipToName" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ShipToName" />
+			<span asp-validation-for="ShipToName" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Country" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Country" />
+			<span asp-validation-for="Country" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="City" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="City" />
+			<span asp-validation-for="City" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Address1" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Address1" />
+			<span asp-validation-for="Address1" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Address2" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Address2" />
+			<span asp-validation-for="Address2" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="PostalCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="PostalCode" />
+			<span asp-validation-for="PostalCode" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ShipToPhone" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ShipToPhone" />
+			<span asp-validation-for="ShipToPhone" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ShipToEmail" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ShipToEmail" />
+			<span asp-validation-for="ShipToEmail" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AdditionalHardCodedValues" />
+		</div>
+		<div class="col-md-9">
+			<nop-textarea asp-for="AdditionalHardCodedValues" />
+			<span asp-validation-for="AdditionalHardCodedValues" class="text-danger"></span>
+		</div>
+	</div>
+</div>
+
+<script>
+	$(document).ready(function () {
+		const $textArea = $("#@Html.IdFor(model => model.AdditionalHardCodedValues)");
+		const placeholderText = `Add hard-coded values with key, value, and type in JSON format. Allowed types: string, int, bool, decimal, datetime. Example:
+						[
+							{ "key": "channel", "value": "web", "type": "string" },
+							{ "key": "priority", "value": "1", "type": "int" },
+							{ "key": "isTest", "value": "true", "type": "bool" },
+							{ "key": "discount", "value": "10.5", "type": "decimal" },
+							{ "key": "createdDate", "value": "2025-06-01", "type": "datetime" }
+						]`;
+		function togglePlaceholder() {
+			if ($textArea.val().trim() === "") {
+				$textArea
+					.attr("placeholder", placeholderText)
+					.addClass("with-placeholder");
+			} else {
+				$textArea
+					.removeAttr("placeholder")
+					.removeClass("with-placeholder");
+			}
+		}
+
+		togglePlaceholder();
+		$textArea.on("input change", togglePlaceholder);
+	});
+</script>
+
+<style>
+	.with-placeholder {
+		min-height: 200px;
+		font-style: italic;
+		color: #6c757d;
+	}
+</style>

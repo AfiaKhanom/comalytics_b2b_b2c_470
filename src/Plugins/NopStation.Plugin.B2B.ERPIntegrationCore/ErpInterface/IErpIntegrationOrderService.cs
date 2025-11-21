@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 
@@ -14,5 +15,5 @@ public interface IErpIntegrationOrderService
 
     Task<ErpResponseData<IList<ErpPlaceOrderDataModel>>> GetQuoteByQuoteNumberFromErpAsync(ErpGetRequestModel erpRequest);
 
-    Task<ErpResponseModel> CreateOrderOnErpAsync(ErpPlaceOrderDataModel erpRequest);
+    Task<ErpResponseData<Dictionary<int, string>>> CreateOrderOnErpAsync(ErpPlaceOrderDataModel erpRequest, List<int> orderItemIds = null);
 }

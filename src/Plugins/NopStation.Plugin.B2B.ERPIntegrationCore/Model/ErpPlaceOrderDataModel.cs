@@ -29,7 +29,7 @@ public class ErpPlaceOrderDataModel
     public string CustomerFirstName { get; set; }
     public string CustomerLastName { get; set; }
     public string CustomerPhoneNumber { get; set; }
-    public string CustomerMobileNumber { get; set; }
+    public string CustomerMobileNumber { get; set; } 
     public string CustomerEmail { get; set; }
     public string VatNumber { get; set; }
     public string OrderType { get; set; }

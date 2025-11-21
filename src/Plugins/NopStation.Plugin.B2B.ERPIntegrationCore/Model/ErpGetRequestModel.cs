@@ -17,6 +17,8 @@ public class ErpGetRequestModel
     public int Limit { get; set; }
 
     public DateTime? DateFrom { get; set; }
+    public DateTime? DateTo { get; set; }
+    public DateTime? LastChangedDate { get; set; }
 
     public string Location { get; set; }
 
@@ -27,4 +29,5 @@ public class ErpGetRequestModel
     public bool SkipTransform { get; set; }
 
     public string CompanyPassword { get; set; }
+    public string WarehouseCode { get; set; }
 }

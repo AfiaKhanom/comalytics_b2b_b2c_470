@@ -1,0 +1,73 @@
+@model ErpPriceGroupPricingDataSettingsModel
+
+<div class="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpGetRequestSettingsModel.GroupPriceSyncLimit" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpGetRequestSettingsModel.GroupPriceSyncLimit" />
+			<span asp-validation-for="ErpGetRequestSettingsModel.GroupPriceSyncLimit" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpGetRequestSettingsModel.ProductSku" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpGetRequestSettingsModel.ProductSku" />
+			<span asp-validation-for="ErpGetRequestSettingsModel.ProductSku" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpGetRequestSettingsModel.LastChangedDate" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpGetRequestSettingsModel.LastChangedDate" />
+			<span asp-validation-for="ErpGetRequestSettingsModel.LastChangedDate" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpGetRequestSettingsModel.DateFrom" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpGetRequestSettingsModel.DateFrom" />
+			<span asp-validation-for="ErpGetRequestSettingsModel.DateFrom" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpGetRequestSettingsModel.DateTo" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpGetRequestSettingsModel.DateTo" />
+			<span asp-validation-for="ErpGetRequestSettingsModel.DateTo" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpGetRequestSettingsModel.Location" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpGetRequestSettingsModel.Location" />
+			<span asp-validation-for="ErpGetRequestSettingsModel.Location" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpGetRequestSettingsModel.PriceCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpGetRequestSettingsModel.PriceCode" />
+			<span asp-validation-for="ErpGetRequestSettingsModel.PriceCode" class="text-danger"></span>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,135 @@
+@model ConfigurationModel
+
+<div class="card-body">
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="ErpCallTimeOut" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="ErpCallTimeOut" />
+            <span asp-validation-for="ErpCallTimeOut"></span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="HttpCallMaxRetries" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="HttpCallMaxRetries" />
+            <span asp-validation-for="HttpCallMaxRetries"></span>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="HttpCallRestTimeInMinutes" />
+        </div>
+        <div class="col-md-9">
+            <nop-editor asp-for="HttpCallRestTimeInMinutes" />
+            <span asp-validation-for="HttpCallRestTimeInMinutes"></span>
+        </div>
+    </div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="DefaultDateTimeFormat" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DefaultDateTimeFormat" />
+			<span asp-validation-for="DefaultDateTimeFormat"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AdditionalMappings" />
+		</div>
+		<div class="col-md-9">
+			<nop-textarea asp-for="AdditionalMappings" />
+			<span asp-validation-for="AdditionalMappings" class="text-danger"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ShippingCostItemPayload" />
+		</div>
+		<div class="col-md-9">
+			<nop-textarea asp-for="ShippingCostItemPayload" />
+			<span asp-validation-for="ShippingCostItemPayload" class="text-danger"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="IntegrationSecretKey" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="IntegrationSecretKey" />
+			<span asp-validation-for="IntegrationSecretKey"></span>
+		</div>
+	</div>
+</div>
+
+
+<script>
+	$(document).ready(function () {
+		const $additionalMappingsTextArea = $("#@Html.IdFor(model => model.AdditionalMappings)");
+		const additionalMappingsPlaceholder = `Add translation table with key and value in JSON format. The "Key" determines the client-side value and the "Value" determines the nopCommerce-side value. Example:
+			{
+			  "OrderTypes": [
+				{ "Key": "your_order1", "Value": "B2BSalesOrder" },
+				{ "Key": "your_order2", "Value": "B2CSalesOrder" },
+				{ "Key": "your_order3", "Value": "B2BQuote" },
+				{ "Key": "your_order4", "Value": "B2CQuote" }
+			  ],
+			  "DeliveryMethods": [
+				{ "Key": "your_deliveryMethod1", "Value": "COLLECT" },
+				{ "Key": "your_deliveryMethod1", "Value": "DELIVERY" }
+			  ],
+			  "DocumentTypes": [
+				{ "Key": "your_DocumentTypes1", "Value": "Invoice" },
+				{ "Key": "your_DocumentTypes2", "Value": "Payment" },
+				{ "Key": "your_DocumentTypes3", "Value": "Document" },
+				{ "Key": "your_DocumentTypes4", "Value": "CreditMemo" },
+				{ "Key": "your_DocumentTypes5", "Value": "AccountingDoc" }
+			  ]
+			}`;
+
+		const $shippingCostTextArea = $("#@Html.IdFor(model => model.ShippingCostItemPayload)");
+		const shippingCostPlaceholder = `Add shipping cost item payload in JSON format. Use {0} as placeholder for dynamic pricing. Example:
+			{
+			  "sku": "ZA00004",
+			  "quantity": 1.0,
+			  "unitPriceExclVat": {0},
+			  "lineType": "item"
+			}`;
+
+		function togglePlaceholder($textArea, placeholderText) {
+			if ($textArea.val().trim() === "") {
+				$textArea
+					.attr("placeholder", placeholderText)
+					.addClass("with-placeholder");
+			} else {
+				$textArea
+					.removeAttr("placeholder")
+					.removeClass("with-placeholder");
+			}
+		}
+
+		togglePlaceholder($additionalMappingsTextArea, additionalMappingsPlaceholder);
+		togglePlaceholder($shippingCostTextArea, shippingCostPlaceholder);
+
+		$additionalMappingsTextArea.on("input change", function() {
+			togglePlaceholder($additionalMappingsTextArea, additionalMappingsPlaceholder);
+		});
+
+		$shippingCostTextArea.on("input change", function() {
+			togglePlaceholder($shippingCostTextArea, shippingCostPlaceholder);
+		});
+	});
+</script>
+
+<style>
+	.with-placeholder {
+		min-height: 200px;
+		font-style: italic;
+		color: #6c757d;
+	}
+</style>

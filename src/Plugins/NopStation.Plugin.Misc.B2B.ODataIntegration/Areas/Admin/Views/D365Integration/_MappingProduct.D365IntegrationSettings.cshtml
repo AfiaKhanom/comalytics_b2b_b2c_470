@@ -1,0 +1,304 @@
+@model ErpProductSettingModel
+
+<div class="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Name" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Name" />
+			<span asp-validation-for="Name"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Sku" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Sku" />
+			<span asp-validation-for="Sku"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ManufacturerPartNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ManufacturerPartNumber" />
+			<span asp-validation-for="ManufacturerPartNumber"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ShortDescription" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ShortDescription" />
+			<span asp-validation-for="ShortDescription"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="FullDescription" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="FullDescription" />
+			<span asp-validation-for="FullDescription"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Height" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Height" />
+			<span asp-validation-for="Height"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Width" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Width" />
+			<span asp-validation-for="Width"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Length" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Length" />
+			<span asp-validation-for="Length"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Weight" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Weight" />
+			<span asp-validation-for="Weight"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Price" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Price" />
+			<span asp-validation-for="Price"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="StockQuantity" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="StockQuantity" />
+			<span asp-validation-for="StockQuantity"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="TaxCategoryId" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="TaxCategoryId" />
+			<span asp-validation-for="TaxCategoryId"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="TaxCategoryName" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="TaxCategoryName" />
+			<span asp-validation-for="TaxCategoryName"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Published" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Published" />
+			<span asp-validation-for="Published"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ManufacturerName" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ManufacturerName" />
+			<span asp-validation-for="ManufacturerName"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ManufacturerCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ManufacturerCode" />
+			<span asp-validation-for="ManufacturerCode"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="VendorCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="VendorCode" />
+			<span asp-validation-for="VendorCode"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="VendorName" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="VendorName" />
+			<span asp-validation-for="VendorName"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ProductTags" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ProductTags" />
+			<span asp-validation-for="ProductTags"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="LastChangedDate" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="LastChangedDate" />
+			<span asp-validation-for="LastChangedDate"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="WarehouseNameOrCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="WarehouseNameOrCode" />
+			<span asp-validation-for="WarehouseNameOrCode"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Gtin" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Gtin" />
+			<span asp-validation-for="Gtin"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ProductCost" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ProductCost" />
+			<span asp-validation-for="ProductCost"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ProductAttributes" />
+		</div>
+		<div class="col-md-9">
+			<nop-textarea asp-for="ProductAttributes" />
+			<span asp-validation-for="ProductAttributes"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ExcludePropertySelectedValues" />
+		</div>
+		<div class="col-md-9">
+			<div class="input-group-append">
+				<div class="input-group">
+					<nop-select asp-for="ExcludePropertySelectedValues" asp-items="Model.AvailableProperties" asp-multiple="true" />
+				</div>
+			</div>
+			<script>
+				$(function() {
+					var categoryIdsInput = $('#@Html.IdFor(model => model.ExcludePropertySelectedValues)').select2({
+						closeOnSelect: false,
+				@if (!Model.AvailableProperties.Any())
+				{
+					<text>
+							disabled: true,
+							placeholder: "No properties available to select",
+					</text>
+				}
+					});
+				});
+			</script>
+		</div>
+	</div>
+</div>
+
+<script>
+	$(document).ready(function () {
+		const $textArea = $("#@Html.IdFor(model => model.ProductAttributes)");
+			const placeholderText = `Add product attribute with key and value in this format. The "Key" determines the attribute name and the "Value" determines the JSONPath selector. Example:
+
+				[
+				  { "Key": "Product_Attribute1", "Value": "$.value[*].PRODUCT_PORTFOLIO" },
+				  { "Key": "Product_Attribute1", "Value": "$.value[*].SUB_BRAND" }
+				]`;
+		function togglePlaceholder() {
+			if ($textArea.val().trim() === "") {
+				$textArea
+					.attr("placeholder", placeholderText)
+					.addClass("with-placeholder");
+			} else {
+				$textArea
+					.removeAttr("placeholder")
+					.removeClass("with-placeholder");
+			}
+		}
+
+		togglePlaceholder();
+		$textArea.on("input change", togglePlaceholder);
+	});
+</script>
+
+<style>
+	.with-placeholder {
+		min-height: 200px;
+		font-style: italic;
+		color: #6c757d;
+	}
+</style>
+

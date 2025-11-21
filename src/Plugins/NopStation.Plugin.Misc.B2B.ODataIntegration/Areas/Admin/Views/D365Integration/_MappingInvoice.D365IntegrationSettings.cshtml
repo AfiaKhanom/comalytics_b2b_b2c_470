@@ -1,0 +1,159 @@
+@model ErpInvoiceDataSettingsModel
+
+<div class="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="PostingDateUtc" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="PostingDateUtc" />
+			<span asp-validation-for="PostingDateUtc" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpDocumentNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpDocumentNumber" />
+			<span asp-validation-for="ErpDocumentNumber" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AmountInclVat" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="AmountInclVat" />
+			<span asp-validation-for="AmountInclVat" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AmountExclVat" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="AmountExclVat" />
+			<span asp-validation-for="AmountExclVat" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpAccountId" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpAccountId" />
+			<span asp-validation-for="ErpAccountId" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="DocumentType" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DocumentType" />
+			<span asp-validation-for="DocumentType" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="DocumentDisplayName" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DocumentDisplayName" />
+			<span asp-validation-for="DocumentDisplayName" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="PODSignedOnUtc" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="PODSignedOnUtc" />
+			<span asp-validation-for="PODSignedOnUtc" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="DueDateUtc" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DueDateUtc" />
+			<span asp-validation-for="DueDateUtc" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="RelatedDocumentNo" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="RelatedDocumentNo" />
+			<span asp-validation-for="RelatedDocumentNo" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ShipmentDateUtc" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ShipmentDateUtc" />
+			<span asp-validation-for="ShipmentDateUtc" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="DocumentDateUtc" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DocumentDateUtc" />
+			<span asp-validation-for="DocumentDateUtc" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpOrderNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpOrderNumber" />
+			<span asp-validation-for="ErpOrderNumber" class="text-danger"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ExcludePropertySelectedValues" />
+		</div>
+		<div class="col-md-9">
+			<div class="input-group-append">
+				<div class="input-group">
+					<nop-select asp-for="ExcludePropertySelectedValues" asp-items="Model.AvailableProperties" asp-multiple="true" />
+				</div>
+			</div>
+			<script>
+				$(function() {
+					var categoryIdsInput = $('#@Html.IdFor(model => model.ExcludePropertySelectedValues)').select2({
+						closeOnSelect: false,
+				@if (!Model.AvailableProperties.Any())
+				{
+					<text>
+							disabled: true,
+							placeholder: "No properties available to select",
+					</text>
+				}
+					});
+				});
+			</script>
+		</div>
+	</div>
+</div>

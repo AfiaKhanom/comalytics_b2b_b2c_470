@@ -344,3 +344,9 @@ WITH DuplicateCTEDelete AS (
 )
 DELETE FROM DuplicateCTEDelete 
 WHERE Records > 1
+
+
+-- Erp Invoice Description Column Made Nullable
+ALTER TABLE [dbo].[Erp_Invoice]
+ALTER COLUMN [Description] NVARCHAR(MAX) NULL;
+GO

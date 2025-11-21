@@ -1,0 +1,59 @@
+﻿@model ErpPriceGroupPricingDataSettingsModel
+@{
+    Layout = "_AdminLayout";
+    ViewBag.PageTitle = T("Plugins.NopStation.D365Integration.MappingPriceGroup.Title").Text;
+	NopHtml.SetActiveMenuItemSystemName("NopStation.Plugin.Misc.B2B.ODataIntegration.MappingGroupPricing");
+}
+
+@{
+    var customer = await workContext.GetCurrentCustomerAsync();
+    const string hideSettingsBlockAttributeName = "MappingPriceGroup.hideSettingsBlock";
+    var hideSettingsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideSettingsBlockAttributeName);
+
+	const string hideRequestSettingsBlockAttributeName = "MappingPriceGroup.hideRequestSettingsBlock";
+	var hideRequestSettingsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideRequestSettingsBlockAttributeName);
+}
+
+<form asp-controller="D365Integration" asp-action="MappingGroupPricing" method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("Plugins.NopStation.D365Integration.MappingPriceGroup.Title")
+        </h1>
+        <div class="float-right">
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.Save")
+            </button>
+        </div>
+    </div>
+
+    <div asp-validation-summary="All"></div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-horizontal">
+                <nop-cards id="d365-integration-cards">
+                    <nop-card asp-name="d365-integration-settings"
+                              asp-icon="fas fa-dollar-sign"
+                              asp-title="@T("Plugins.NopStation.D365Integration.MappingPriceGroup.Settings")"
+                              asp-hide-block-attribute-name="@hideSettingsBlockAttributeName"
+                              asp-hide="@hideSettingsBlock"
+                              asp-advanced="false">
+						@await Html.PartialAsync("_MappingGroupPricing.D365IntegrationSettings", Model)
+                    </nop-card>
+                </nop-cards>
+
+				<nop-cards id="d365-integration-request-cards">
+					<nop-card asp-name="d365-integration-request-settings"
+							  asp-icon="fas fa-info"
+							  asp-title="@T("Plugins.NopStation.D365Integration.ErpGetRequestSettings.Settings")"
+							  asp-hide-block-attribute-name="@hideRequestSettingsBlockAttributeName"
+							  asp-hide="@hideRequestSettingsBlock"
+							  asp-advanced="false">
+						@await Html.PartialAsync("_MappingGroupPriceRequest.D365IntegrationSettings", Model)
+					</nop-card>
+				</nop-cards>
+            </div>
+        </div>
+    </section>
+</form>

@@ -3,6 +3,7 @@ using Nop.Core.Domain.Directory;
 using Nop.Services.Directory;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
+using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
@@ -25,6 +26,7 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginService;
     private readonly IValidator<ErpInvoice> _erpInvoiceValidator;
     private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
+    private readonly ERPIntegrationCoreDataMappingSettings _dataMappingSettings;
 
     #endregion
 
@@ -39,7 +41,8 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
         IErpDataClearCacheService erpDataClearCacheService,
         IErpIntegrationPluginManager erpIntegrationPluginService,
         IValidator<ErpInvoice> erpInvoiceValidator,
-        ISyncWorkflowMessageService syncWorkflowMessageService)
+        ISyncWorkflowMessageService syncWorkflowMessageService,
+        ERPIntegrationCoreDataMappingSettings dataMappingSettings)
     {
         _currencyService = currencyService;
         _currencySettings = currencySettings;
@@ -51,6 +54,7 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
         _erpIntegrationPluginService = erpIntegrationPluginService;
         _erpInvoiceValidator = erpInvoiceValidator;
         _syncWorkflowMessageService = syncWorkflowMessageService;
+        _dataMappingSettings = dataMappingSettings;
     }
 
     #endregion
@@ -132,6 +136,12 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
             var erpInvoiceUpdateList = new List<ErpInvoice>();
             var erpInvoiceInsertList = new List<ErpInvoice>();
 
+            var propsToSkip = new HashSet<string>(
+                _dataMappingSettings.InvoicePropertiesToExclude?
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    ?? Enumerable.Empty<string>()
+            );
+
             #endregion
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
@@ -194,7 +204,7 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                             Start = start,
                             AccountNumber = erpAccount.AccountNumber,
                             Location = salesOrg.Code,
-                            DateFrom = isIncrementalSync ? erpAccount.LastTimeOrderSyncOnUtc : null
+                            LastChangedDate = isIncrementalSync ? erpAccount.LastTimeOrderSyncOnUtc : null
                         };
 
                         var response = await erpIntegrationPlugin.GetInvoiceByAccountNoFromErpAsync(erpGetRequestModel);
@@ -238,7 +248,6 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                                 oldErpInvoiceByThisAccount.DocumentDateUtc = erpInvoice.DocumentDateUtc;
                                 oldErpInvoiceByThisAccount.ErpDocumentNumber = erpInvoice.ErpDocumentNumber;
                                 oldErpInvoiceByThisAccount.ErpOrderNumber = erpInvoice.ErpOrderNumber;
-                                oldErpInvoiceByThisAccount.Description = erpInvoice.Description;
                                 oldErpInvoiceByThisAccount.ErpAccountId = erpAccount.Id;
                                 oldErpInvoiceByThisAccount.CurrencyCode = currency.CurrencyCode;
                                 oldErpInvoiceByThisAccount.PODSignedById = erpInvoice.PODSignedById;
@@ -262,25 +271,46 @@ public class ErpInvoiceSyncService : IErpInvoiceSyncService
                             }
                             else
                             {
-                                oldErpInvoiceByThisAccount.ShipmentDateUtc = erpInvoice.ShipmentDateUtc;
-                                oldErpInvoiceByThisAccount.PostingDateUtc = erpInvoice.PostingDateUtc ?? DateTime.UtcNow;
-                                oldErpInvoiceByThisAccount.DocumentDateUtc = erpInvoice.DocumentDateUtc;
-                                oldErpInvoiceByThisAccount.ErpDocumentNumber = erpInvoice.ErpDocumentNumber;
-                                oldErpInvoiceByThisAccount.ErpOrderNumber = erpInvoice.ErpOrderNumber;
-                                oldErpInvoiceByThisAccount.Description = erpInvoice.Description;
+                                if (!propsToSkip.Contains(nameof(ErpInvoiceDataModel.ShipmentDateUtc)))
+                                    oldErpInvoiceByThisAccount.ShipmentDateUtc = erpInvoice.ShipmentDateUtc;
+
+                                if (!propsToSkip.Contains(nameof(ErpInvoiceDataModel.PostingDateUtc)))
+                                    oldErpInvoiceByThisAccount.PostingDateUtc = erpInvoice.PostingDateUtc ?? DateTime.UtcNow;
+
+                                if (!propsToSkip.Contains(nameof(ErpInvoiceDataModel.DocumentDateUtc)))
+                                    oldErpInvoiceByThisAccount.DocumentDateUtc = erpInvoice.DocumentDateUtc;
+
+                                if (!propsToSkip.Contains(nameof(ErpInvoiceDataModel.ErpDocumentNumber)))
+                                    oldErpInvoiceByThisAccount.ErpDocumentNumber = erpInvoice.ErpDocumentNumber;
+
+                                if (!propsToSkip.Contains(nameof(ErpInvoiceDataModel.ErpOrderNumber)))
+                                    oldErpInvoiceByThisAccount.ErpOrderNumber = erpInvoice.ErpOrderNumber;
+
+                                if (!propsToSkip.Contains(nameof(ErpInvoiceDataModel.PODSignedById)))
+                                    oldErpInvoiceByThisAccount.PODSignedById = erpInvoice.PODSignedById;
+
+                                if (!propsToSkip.Contains(nameof(ErpInvoiceDataModel.PODSignedOnUtc)))
+                                    oldErpInvoiceByThisAccount.PODSignedOnUtc = erpInvoice.PODSignedOnUtc;
+
+                                if (!propsToSkip.Contains(nameof(ErpInvoiceDataModel.RelatedDocumentNo)))
+                                    oldErpInvoiceByThisAccount.RelatedDocumentNo = erpInvoice.RelatedDocumentNo;
+
+                                if (!propsToSkip.Contains(nameof(ErpInvoiceDataModel.DueDateUtc)))
+                                    oldErpInvoiceByThisAccount.DueDateUtc = erpInvoice?.DueDateUtc ?? DateTime.UtcNow;
+
                                 oldErpInvoiceByThisAccount.ErpAccountId = erpAccount.Id;
                                 oldErpInvoiceByThisAccount.CurrencyCode = currency.CurrencyCode;
-                                oldErpInvoiceByThisAccount.PODSignedById = erpInvoice.PODSignedById;
-                                oldErpInvoiceByThisAccount.PODSignedOnUtc = erpInvoice.PODSignedOnUtc;
-                                oldErpInvoiceByThisAccount.RelatedDocumentNo = erpInvoice.RelatedDocumentNo;
                                 oldErpInvoiceByThisAccount.ItemCount = erpInvoice?.Items?.Count ?? 0;
-                                oldErpInvoiceByThisAccount.DueDateUtc = erpInvoice?.DueDateUtc ?? DateTime.UtcNow;
 
-                                if (Enum.TryParse(erpInvoice?.DocumentType, out ErpDocumentType parsedDocumentType))
+                                if (!propsToSkip.Contains(nameof(ErpInvoiceDataModel.DocumentType)))
                                 {
-                                    oldErpInvoiceByThisAccount.DocumentType = parsedDocumentType;
+                                    if (Enum.TryParse(erpInvoice?.DocumentType, out ErpDocumentType parsedDocumentType))
+                                    {
+                                        oldErpInvoiceByThisAccount.DocumentType = parsedDocumentType;
+                                    }
+
+                                    oldErpInvoiceByThisAccount.DocumentDisplayName = parsedDocumentType.ToString();
                                 }
-                                oldErpInvoiceByThisAccount.DocumentDisplayName = parsedDocumentType.ToString();
 
                                 if (await IsvalidErpInvoiceAsync(oldErpInvoiceByThisAccount))
                                 {

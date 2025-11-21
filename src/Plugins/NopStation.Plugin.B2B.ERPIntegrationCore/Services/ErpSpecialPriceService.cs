@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Data;
@@ -16,18 +18,21 @@ public class ErpSpecialPriceService : IErpSpecialPriceService
     private readonly IRepository<ErpSpecialPrice> _erpSpecialPriceRepository;
     private readonly IRepository<ErpAccount> _erpAccountRepository;
     protected readonly IStaticCacheManager _staticCacheManager;
+    private readonly INopDataProvider _nopDataProvider;
 
     #endregion
 
     #region Ctor
 
     public ErpSpecialPriceService(IRepository<ErpSpecialPrice> erpSpecialPriceRepository,
-        IRepository<ErpAccount> erpAccountRepository, 
-        IStaticCacheManager staticCacheManager)
+        IRepository<ErpAccount> erpAccountRepository,
+        IStaticCacheManager staticCacheManager,
+        INopDataProvider nopDataProvider)
     {
         _erpSpecialPriceRepository = erpSpecialPriceRepository;
         _erpAccountRepository = erpAccountRepository;
         _staticCacheManager = staticCacheManager;
+        _nopDataProvider = nopDataProvider;
     }
 
     #endregion
@@ -164,6 +169,18 @@ public class ErpSpecialPriceService : IErpSpecialPriceService
             return false;
 
         return await GetErpSpecialPricesByErpAccountIdAndNopProductIdAsync(accountId, productId) != null;
+    }
+
+    public async Task DeleteSpecialPricesNotUpdatedSinceSyncStart(int accountId, DateTime syncStartTime)
+    {
+        if (syncStartTime == DateTime.MinValue)
+            return;
+
+        var connectionString = new SqlConnectionStringBuilder(DataSettingsManager.LoadSettings().ConnectionString);
+
+        var sqlCommand = $"Update [{connectionString.InitialCatalog}].[dbo].[Erp_Special_Price] Set [Deleted] = 1 Where [ErpAccount_Id] = {accountId} and ([UpdatedOnUtc] < '{syncStartTime:yyyy-MM-dd HH:mm:ss}' or [UpdatedOnUtc] is null)";
+
+        await _nopDataProvider.ExecuteNonQueryAsync(sqlCommand);
     }
 
     #endregion

@@ -1,0 +1,328 @@
+@model ErpAccountSettingModel
+<div class="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AccountNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="AccountNumber" />
+			<span asp-validation-for="AccountNumber"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AccountName" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="AccountName" />
+			<span asp-validation-for="AccountName"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpSalesOrgCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpSalesOrgCode" />
+			<span asp-validation-for="ErpSalesOrgCode"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="BillingSuburb" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="BillingSuburb" />
+			<span asp-validation-for="BillingSuburb"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="BillingName" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="BillingName" />
+			<span asp-validation-for="BillingName"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="VatNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="VatNumber" />
+			<span asp-validation-for="VatNumber"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="CreditLimit" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="CreditLimit" />
+			<span asp-validation-for="CreditLimit"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="CreditLimitAvailable" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="CreditLimitAvailable" />
+			<span asp-validation-for="CreditLimitAvailable"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="CurrentBalance" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="CurrentBalance" />
+			<span asp-validation-for="CurrentBalance"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AllowOverspend" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="AllowOverspend" />
+			<span asp-validation-for="AllowOverspend"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="PreFilterFacets" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="PreFilterFacets" />
+			<span asp-validation-for="PreFilterFacets"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="PaymentTypeCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="PaymentTypeCode" />
+			<span asp-validation-for="PaymentTypeCode"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="PriceGroupCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="PriceGroupCode" />
+			<span asp-validation-for="PriceGroupCode"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="PercentageOfStockAllowed" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="PercentageOfStockAllowed" />
+			<span asp-validation-for="PercentageOfStockAllowed"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Address1" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Address1" />
+			<span asp-validation-for="Address1"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Address2" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Address2" />
+			<span asp-validation-for="Address2"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Address3" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Address3" />
+			<span asp-validation-for="Address3"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="StateProvince" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="StateProvince" />
+			<span asp-validation-for="StateProvince"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="City" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="City" />
+			<span asp-validation-for="City"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Country" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Country" />
+			<span asp-validation-for="Country"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ZipPostalCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ZipPostalCode" />
+			<span asp-validation-for="ZipPostalCode"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="PhoneNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="PhoneNumber" />
+			<span asp-validation-for="PhoneNumber"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Email" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Email" />
+			<span asp-validation-for="Email"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="DeliveryRoute" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DeliveryRoute" />
+			<span asp-validation-for="DeliveryRoute"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="CompanyNo" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="CompanyNo" />
+			<span asp-validation-for="CompanyNo"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="IsActive" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="IsActive" />
+			<span asp-validation-for="IsActive"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="IsDeleted" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="IsDeleted" />
+			<span asp-validation-for="IsDeleted"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="OverrideBackOrderingConfigSetting" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="OverrideBackOrderingConfigSetting" />
+			<span asp-validation-for="OverrideBackOrderingConfigSetting"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AllowAccountsBackOrdering" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="AllowAccountsBackOrdering" />
+			<span asp-validation-for="AllowAccountsBackOrdering"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AllowAccountsAddressEditOnCheckout" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="AllowAccountsAddressEditOnCheckout" />
+			<span asp-validation-for="AllowAccountsAddressEditOnCheckout"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="LoyaltyBalance" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="LoyaltyBalance" />
+			<span asp-validation-for="LoyaltyBalance"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="MinimumOrderValue" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="MinimumOrderValue" />
+			<span asp-validation-for="MinimumOrderValue"></span>
+		</div>
+	</div>
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="LoyaltyCardNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="LoyaltyCardNumber" />
+			<span asp-validation-for="LoyaltyCardNumber"></span>
+		</div>
+	</div>
+	
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ExcludePropertySelectedValues" />
+		</div>
+		<div class="col-md-9">
+			<div class="input-group-append">
+				<div class="input-group">
+					<nop-select asp-for="ExcludePropertySelectedValues" asp-items="Model.AvailableProperties" asp-multiple="true" />
+				</div>
+			</div>
+			<script>
+				$(function() {
+					var categoryIdsInput = $('#@Html.IdFor(model => model.ExcludePropertySelectedValues)').select2({
+						closeOnSelect: false,
+				@if (!Model.AvailableProperties.Any())
+				{
+					<text>
+							disabled: true,
+							placeholder: "No properties available to select",
+					</text>
+				}
+					});
+				});
+			</script>
+		</div>
+	</div>
+</div>
+

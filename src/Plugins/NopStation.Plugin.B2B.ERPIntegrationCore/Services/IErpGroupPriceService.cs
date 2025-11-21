@@ -28,5 +28,7 @@ public interface IErpGroupPriceService
 
     Task<bool> CheckAnyErpGroupPriceExistWithProductIdAndErpGroupPriceCodeId(int prouctdId, int priceGroupCodeId);
     Task InActiveAllOldGroupPrice(DateTime syncStartTime);
+
+    Task DeleteGroupPricesNotUpdatedSinceSyncStart(int salesOrgId, DateTime syncStartTime);
 }
 

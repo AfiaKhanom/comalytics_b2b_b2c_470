@@ -1,0 +1,63 @@
+@model ErpInvoiceDataSettingsModel
+@{
+	Layout = "_AdminLayout";
+	ViewBag.PageTitle = T("Plugins.NopStation.D365Integration.MappingInvoice.Title").Text;
+	NopHtml.SetActiveMenuItemSystemName("NopStation.Plugin.Misc.B2B.ODataIntegration.MappingInvoice");
+}
+
+@{
+	var customer = await workContext.GetCurrentCustomerAsync();
+	const string hideSettingsBlockAttributeName = "MappingInvoice.hideSettingsBlock";
+	var hideSettingsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideSettingsBlockAttributeName);
+
+	const string hideOrderItemAdditionalDataSettingsBlockAttributeName = "MappingInvoice.hideOrderItemAdditionalDataSettingsBlock";
+	var hideOrderItemAdditionalDataSettingsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideOrderItemAdditionalDataSettingsBlockAttributeName);
+
+	const string hideRequestSettingsBlockAttributeName = "MappingInvoice.hideRequestSettingsBlock";
+	var hideRequestSettingsBlock = await genericAttributeService.GetAttributeAsync<bool>(customer, hideRequestSettingsBlockAttributeName);
+}
+
+<form asp-controller="D365Integration" asp-action="MappingInvoice" method="post">
+	<div class="content-header clearfix">
+		<h1 class="float-left">
+			@T("Plugins.NopStation.D365Integration.MappingInvoice.Title")
+		</h1>
+		<div class="float-right">
+			<button type="submit" name="save" class="btn btn-primary">
+				<i class="far fa-save"></i>
+				@T("Admin.Common.Save")
+			</button>
+		</div>
+	</div>
+
+	<div asp-validation-summary="All"></div>
+
+	<section class="content">
+		<div class="container-fluid">
+			<div class="form-horizontal">
+				<nop-cards id="d365-integration-cards">
+					<nop-card asp-name="d365-integration-settings"
+							  asp-icon="fas fa-warehouse"
+							  asp-title="@T("Plugins.NopStation.D365Integration.MappingInvoice.Settings")"
+							  asp-hide-block-attribute-name="@hideSettingsBlockAttributeName"
+							  asp-hide="@hideSettingsBlock"
+							  asp-advanced="false">
+						@await Html.PartialAsync("_MappingInvoice.D365IntegrationSettings", Model)
+					</nop-card>
+				</nop-cards>
+
+				<nop-cards id="d365-integration-request-cards">
+					<nop-card asp-name="d365-integration-request-settings"
+							  asp-icon="fas fa-info"
+							  asp-title="@T("Plugins.NopStation.D365Integration.ErpGetRequestSettings.Settings")"
+							  asp-hide-block-attribute-name="@hideRequestSettingsBlockAttributeName"
+							  asp-hide="@hideRequestSettingsBlock"
+							  asp-advanced="false">
+						@await Html.PartialAsync("_MappingInvoiceRequest.D365IntegrationSettings", Model)
+					</nop-card>
+				</nop-cards>
+			</div>
+		</div>
+	</section>
+</form>
+

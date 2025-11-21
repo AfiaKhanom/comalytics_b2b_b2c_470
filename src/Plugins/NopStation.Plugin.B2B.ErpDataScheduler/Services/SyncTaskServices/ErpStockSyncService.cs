@@ -2,6 +2,7 @@
 using Nop.Core.Domain.Catalog;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
+using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
@@ -19,6 +20,7 @@ public class ErpStockSyncService : IErpStockSyncService
     private readonly IErpWarehouseAdditionalDataService _erpWarehouseAdditionalDataService;
     private readonly IStaticCacheManager _staticCacheManager;
     private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
+    private readonly ERPIntegrationCoreDataMappingSettings _dataMappingSettings;
 
     #endregion
 
@@ -30,7 +32,8 @@ public class ErpStockSyncService : IErpStockSyncService
         IErpSalesOrgService erpSalesOrgService,
         IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService,
         IStaticCacheManager staticCacheManager,
-        ISyncWorkflowMessageService syncWorkflowMessageService)
+        ISyncWorkflowMessageService syncWorkflowMessageService,
+        ERPIntegrationCoreDataMappingSettings dataMappingSettings)
     {
         _erpSyncLogService = erpSyncLogService;
         _erpProductService = erpProductService;
@@ -39,6 +42,7 @@ public class ErpStockSyncService : IErpStockSyncService
         _erpWarehouseAdditionalDataService = erpWarehouseAdditionalDataService;
         _staticCacheManager = staticCacheManager;
         _syncWorkflowMessageService = syncWorkflowMessageService;
+        _dataMappingSettings = dataMappingSettings;
     }
 
     #endregion
@@ -74,6 +78,12 @@ public class ErpStockSyncService : IErpStockSyncService
                 return false;
             }
 
+            var propsToSkip = new HashSet<string>(
+                _dataMappingSettings.StockPropertiesToExclude?
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    ?? Enumerable.Empty<string>()
+            );
+
             #endregion
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
@@ -103,8 +113,8 @@ public class ErpStockSyncService : IErpStockSyncService
                         var erpGetRequestModel = new ErpGetRequestModel
                         {
                             Start = start,
-                            DateFrom = isIncrementalSync ? salesOrg.LastErpStockSyncTimeOnUtc : null,
-                            Location = warehouse.Code,
+                            LastChangedDate = isIncrementalSync ? salesOrg.LastErpStockSyncTimeOnUtc : null,
+                            WarehouseCode = warehouse.Code,
                             ProductSku = stockCode
                         };
 
@@ -139,23 +149,24 @@ public class ErpStockSyncService : IErpStockSyncService
                         var pwiToUpdate = new List<ProductWarehouseInventory>();
                         var stockQuantityHistoriesToInsert = new List<StockQuantityHistory>();
 
-                        var responseData = response.Data
-                                .Where(x => !string.IsNullOrWhiteSpace(x.Sku.Trim().ToLower()) && !string.IsNullOrWhiteSpace(x.WarehouseNameOrCode))
-                                .GroupBy(x => new { Sku = x.Sku.Trim().ToLower(), WarehouseCode = x.WarehouseNameOrCode })
-                                .Select(g => g.Last());
+                    var responseData = response.Data
+                            .Where(x => !string.IsNullOrWhiteSpace(x.Sku) && !string.IsNullOrWhiteSpace(x.WarehouseNameOrCode))
+                            .GroupBy(x => new { Sku = x.Sku.Trim().ToLower(), WarehouseCode = x.WarehouseNameOrCode })
+                            .Select(g => g.Last());
 
                         totalNotSyncedSoFar += response.Data.Count - responseData.Count();
 
-                        var products = await _erpProductService
-                            .GetProductsBySkuAsync(
-                                responseData
-                                .Select(x => x.Sku.Trim().ToLower()).ToArray(),
-                                filterOutDeleted: true
-                            );
+                    var products = await _erpProductService
+                        .GetProductsBySkuAsync(
+                            responseData
+                            .Select(x => x.Sku?.Trim()?.ToLower())?.ToArray(),
+                            filterOutDeleted: true
+                        );
 
                         if (products is null || products.Count == 0)
                         {
                             totalNotSyncedSoFar += response.Data.Count;
+                            isError = false;
                             continue;
                         }
 
@@ -205,22 +216,25 @@ public class ErpStockSyncService : IErpStockSyncService
                                     }
                                     else
                                     {
-                                        if (inventory.StockQuantity != (int)erpStock.QuantityOnHand || inventory.ReservedQuantity > 0)
+                                        if (!propsToSkip.Contains(nameof(ErpStockDataModel.QuantityOnHand)))
                                         {
-                                            var quantityAdjustment = (int)erpStock.QuantityOnHand - inventory.StockQuantity;
+                                            if (inventory.StockQuantity != (int)erpStock.QuantityOnHand || inventory.ReservedQuantity > 0)
+                                            {
+                                                var quantityAdjustment = (int)erpStock.QuantityOnHand - inventory.StockQuantity;
 
-                                            inventory.ReservedQuantity = 0;
-                                            inventory.StockQuantity = (int)erpStock.QuantityOnHand;
-                                            pwiToUpdate.Add(inventory);
+                                                inventory.ReservedQuantity = 0;
+                                                inventory.StockQuantity = (int)erpStock.QuantityOnHand;
+                                                pwiToUpdate.Add(inventory);
 
-                                            var stockQuantityHistory = new StockQuantityHistory();
-                                            stockQuantityHistory.QuantityAdjustment = quantityAdjustment;
-                                            stockQuantityHistory.StockQuantity = (int)erpStock.QuantityOnHand;
-                                            stockQuantityHistory.CreatedOnUtc = DateTime.UtcNow;
-                                            stockQuantityHistory.ProductId = inventory.ProductId;
-                                            stockQuantityHistory.WarehouseId = erpWarehouse.NopWarehouseId;
-                                            stockQuantityHistory.Message = $"Product Stock updated. The stock quantity has been updated by Erp Integration.";
-                                            stockQuantityHistoriesToInsert.Add(stockQuantityHistory);
+                                                var stockQuantityHistory = new StockQuantityHistory();
+                                                stockQuantityHistory.QuantityAdjustment = quantityAdjustment;
+                                                stockQuantityHistory.StockQuantity = (int)erpStock.QuantityOnHand;
+                                                stockQuantityHistory.CreatedOnUtc = DateTime.UtcNow;
+                                                stockQuantityHistory.ProductId = inventory.ProductId;
+                                                stockQuantityHistory.WarehouseId = erpWarehouse.NopWarehouseId;
+                                                stockQuantityHistory.Message = $"Product Stock updated. The stock quantity has been updated by Erp Integration.";
+                                                stockQuantityHistoriesToInsert.Add(stockQuantityHistory);
+                                            }
                                         }
                                     }
 

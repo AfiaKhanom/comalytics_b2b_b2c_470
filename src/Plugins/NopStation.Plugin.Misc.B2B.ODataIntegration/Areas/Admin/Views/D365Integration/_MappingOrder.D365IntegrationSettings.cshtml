@@ -1,0 +1,277 @@
+@model ErpOrderSettingsModel
+
+<div class="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AccountNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="AccountNumber" />
+			<span asp-validation-for="AccountNumber" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Location" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Location" />
+			<span asp-validation-for="Location" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="CustomOrderNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="CustomOrderNumber" />
+			<span asp-validation-for="CustomOrderNumber" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ErpOrderNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ErpOrderNumber" />
+			<span asp-validation-for="ErpOrderNumber" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="RepCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="RepCode" />
+			<span asp-validation-for="RepCode" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AddressCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="AddressCode" />
+			<span asp-validation-for="AddressCode" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="CustomerReference" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="CustomerReference" />
+			<span asp-validation-for="CustomerReference" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="DeliveryInstruction" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DeliveryInstruction" />
+			<span asp-validation-for="DeliveryInstruction" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="DeliveryMethod" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DeliveryMethod" />
+			<span asp-validation-for="DeliveryMethod" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="CustomerEmail" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="CustomerEmail" />
+			<span asp-validation-for="CustomerEmail" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="QuoteNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="QuoteNumber" />
+			<span asp-validation-for="QuoteNumber" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="OrderType" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="OrderType" />
+			<span asp-validation-for="OrderType" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="OrderTax" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="OrderTax" />
+			<span asp-validation-for="OrderTax" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="OrderSubtotalExclTax" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="OrderSubtotalExclTax" />
+			<span asp-validation-for="OrderSubtotalExclTax" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="OrderSubtotalInclTax" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="OrderSubtotalInclTax" />
+			<span asp-validation-for="OrderSubtotalInclTax" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="OrderDate" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="OrderDate" />
+			<span asp-validation-for="OrderDate" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="DeliveryDate" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DeliveryDate" />
+			<span asp-validation-for="DeliveryDate" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="DateRequired" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="DateRequired" />
+			<span asp-validation-for="DateRequired" class="text-danger"></span>
+		</div>
+	</div>
+
+	@if (Model.IsSkipOnUpdatePropertyNeeded)
+	{
+		<div class="form-group row">
+			<div class="col-md-3">
+				<nop-label asp-for="ShippingAmount" />
+			</div>
+			<div class="col-md-9">
+				<nop-editor asp-for="ShippingAmount" />
+				<span asp-validation-for="ShippingAmount" class="text-danger"></span>
+			</div>
+		</div>
+	}
+
+	@if (Model.IsAdditionalHardCodedValuesNeeded)
+	{
+		<div class="form-group row">
+			<div class="col-md-3">
+				<nop-label asp-for="AdditionalHardCodedValues" />
+			</div>
+			<div class="col-md-9">
+				<nop-textarea asp-for="AdditionalHardCodedValues" />
+				<span asp-validation-for="AdditionalHardCodedValues" class="text-danger"></span>
+			</div>
+		</div>
+	}
+
+	@if(Model.IsSkipOnUpdatePropertyNeeded){
+		<div class="form-group row">
+			<div class="col-md-3">
+				<nop-label asp-for="ExcludePropertySelectedValues" />
+			</div>
+			<div class="col-md-9">
+				<div class="input-group-append">
+					<div class="input-group">
+						<nop-select asp-for="ExcludePropertySelectedValues" asp-items="Model.AvailableProperties" asp-multiple="true" />
+					</div>
+				</div>
+				<script>
+					$(function() {
+						var categoryIdsInput = $('#@Html.IdFor(model => model.ExcludePropertySelectedValues)').select2({
+							closeOnSelect: false,
+					@if (!Model.AvailableProperties.Any())
+					{
+						<text>
+							disabled: true,
+							placeholder: "No properties available to select",
+						</text>
+					}
+						});
+					});
+				</script>
+			</div>
+		</div>
+	}
+</div>
+
+@if (Model.IsAdditionalHardCodedValuesNeeded)
+{
+	<script>
+		$(document).ready(function () {
+			const $textArea = $("#@Html.IdFor(model => model.AdditionalHardCodedValues)");
+			const placeholderText = `Add hard-coded values with key, value, and type in JSON format. Allowed types: string, int, bool, decimal, datetime. Example:
+							[
+								{ "key": "channel", "value": "web", "type": "string" },
+								{ "key": "priority", "value": "1", "type": "int" },
+								{ "key": "isTest", "value": "true", "type": "bool" },
+								{ "key": "discount", "value": "10.5", "type": "decimal" },
+								{ "key": "createdDate", "value": "2025-06-01", "type": "datetime" }
+							]`;
+			function togglePlaceholder() {
+				if ($textArea.val().trim() === "") {
+					$textArea
+						.attr("placeholder", placeholderText)
+						.addClass("with-placeholder");
+				} else {
+					$textArea
+						.removeAttr("placeholder")
+						.removeClass("with-placeholder");
+				}
+			}
+
+			togglePlaceholder();
+			$textArea.on("input change", togglePlaceholder);
+		});
+	</script>
+
+	<style>
+		.with-placeholder {
+			min-height: 200px;
+			font-style: italic;
+			color: #6c757d;
+		}
+	</style>
+}

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.Office.CustomUI;
+using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
@@ -387,15 +389,42 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
             erpPlaceOrderDataModel.OrderType = ERPIntegrationCoreDefaults.ErpB2BQuoteType;
         }
 
-        var response = await erpIntegrationPlugin.CreateOrderOnErpAsync(erpPlaceOrderDataModel);
+        var orderItems = await _erpOrderItemAdditionalDataService.GetAllErpOrderItemAdditionalDataByErpOrderIdAsync(erpOrderAdditionalData.Id);
+
+        var orderItemIds = orderItems?.Select(x => x.Id).ToList();
+
+        await _erpLogsService.InformationAsync("TestLog: Before integration method call for creating order", ErpSyncLevel.Order);
+        var response = await erpIntegrationPlugin.CreateOrderOnErpAsync(erpPlaceOrderDataModel, orderItemIds);
+
+        await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Information, ErpSyncLevel.Order, "TestLog: After integration method call for creating order: ", $"Payload :\n{JsonConvert.SerializeObject(response, Formatting.Indented)}");
 
         var message = "";
 
-        if (!response.IsError && !string.IsNullOrWhiteSpace(response.OrderNumber))
+        if (!response.ErpResponseModel.IsError && !string.IsNullOrWhiteSpace(response.ErpResponseModel.OrderNumber))
         {
-            erpOrderAdditionalData.ErpOrderNumber = response.OrderNumber;
+            if (response.Data != null)
+            {
+                erpOrderAdditionalData.IntegrationStatusType =
+                    response.Data.Values.Any(v => v == "failed")
+                        ? IntegrationStatusType.PartiallyFailed
+                        : IntegrationStatusType.Confirmed;
+
+                foreach(var item in orderItems)
+                {
+                    if (response.Data.ContainsKey(item.Id))
+                    {
+                        item.ErpOrderLineStatus = response.Data[item.Id];
+                        await _erpOrderItemAdditionalDataService.UpdateErpOrderItemAdditionalDataAsync(item);
+                    }
+                }
+            }
+            else
+            {
+                erpOrderAdditionalData.IntegrationStatusType = IntegrationStatusType.Failed;
+            }
+
+            erpOrderAdditionalData.ErpOrderNumber = response.ErpResponseModel.OrderNumber;
             erpOrderAdditionalData.ERPOrderStatus = B2BB2CFeaturesDefaults.ErpOrderStatusApproved;
-            erpOrderAdditionalData.IntegrationStatusType = IntegrationStatusType.Confirmed;
             erpOrderAdditionalData.LastERPUpdateUtc = DateTime.UtcNow;
             erpOrderAdditionalData.ChangedOnUtc = DateTime.UtcNow;
             await _erpOrderAdditionalDataService.UpdateErpOrderAdditionalDataAsync(erpOrderAdditionalData);
@@ -416,9 +445,8 @@ public class OverriddenOrderProcessingService : OrderProcessingService, IOverrid
         erpOrderAdditionalData.LastERPUpdateUtc = DateTime.UtcNow;
         erpOrderAdditionalData.ChangedOnUtc = DateTime.UtcNow;
         await _erpOrderAdditionalDataService.UpdateErpOrderAdditionalDataAsync(erpOrderAdditionalData);
-        await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Information, ErpSyncLevel.Order, $"{message}. {response.ErrorShortMessage}", response.ErrorFullMessage);
-     }
-
+        await _erpLogsService.InsertErpLogAsync(ErpLogLevel.Information, ErpSyncLevel.Order, $"{message}. {response.ErpResponseModel.ErrorShortMessage}", response.ErpResponseModel.ErrorFullMessage);
+    }
     #endregion
 
     #endregion

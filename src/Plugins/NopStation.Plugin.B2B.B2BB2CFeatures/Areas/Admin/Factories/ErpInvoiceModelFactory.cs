@@ -104,8 +104,7 @@ public class ErpInvoiceModelFactory : IErpInvoiceModelFactory
                 erpInvoiceModel.ErpAccountId = erpAccount.Id;
                 erpInvoiceModel.ErpOrderId = erpOrder.Id;
                 erpInvoiceModel.ErpAccountName = $"{erpAccount.AccountName} ({erpAccount.AccountNumber})";
-                erpInvoiceModel.DocumentDisplayName = CommonHelper.ConvertEnum(((ErpDocumentType)erpInvoice.DocumentTypeId).ToString());
-
+                erpInvoiceModel.DocumentDisplayName = await _localizationService.GetLocalizedEnumAsync(erpInvoice.DocumentType);
                 return erpInvoiceModel;
             }).Where(model => model != null);
         });
@@ -124,7 +123,7 @@ public class ErpInvoiceModelFactory : IErpInvoiceModelFactory
         if (erpAccount == null)
             return model;
 
-        model.DocumentDisplayName = CommonHelper.ConvertEnum(((ErpDocumentType)erpInvoice.DocumentTypeId).ToString());
+        model.DocumentDisplayName = await _localizationService.GetLocalizedEnumAsync(erpInvoice.DocumentType);
         model.ErpAccountName = $"{erpAccount.AccountName} ({erpAccount.AccountNumber})";
 
         return model;

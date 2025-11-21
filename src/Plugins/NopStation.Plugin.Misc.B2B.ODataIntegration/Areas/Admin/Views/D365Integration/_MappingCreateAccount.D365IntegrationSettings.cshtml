@@ -1,0 +1,199 @@
+@model ErpCreateAccountSettingsModel
+
+<div class="card-body">
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AccountName" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="AccountName" />
+			<span asp-validation-for="AccountName" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AccountNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="AccountNumber" />
+			<span asp-validation-for="AccountNumber" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Email" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Email" />
+			<span asp-validation-for="Email" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="PhoneNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="PhoneNumber" />
+			<span asp-validation-for="PhoneNumber" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="FaxNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="FaxNumber" />
+			<span asp-validation-for="FaxNumber" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ContactName" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ContactName" />
+			<span asp-validation-for="ContactName" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Address1" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Address1" />
+			<span asp-validation-for="Address1" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Address2" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Address2" />
+			<span asp-validation-for="Address2" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Address3" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Address3" />
+			<span asp-validation-for="Address3" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="City" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="City" />
+			<span asp-validation-for="City" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="County" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="County" />
+			<span asp-validation-for="County" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="Country" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="Country" />
+			<span asp-validation-for="Country" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="StateProvince" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="StateProvince" />
+			<span asp-validation-for="StateProvince" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="ZipPostalCode" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="ZipPostalCode" />
+			<span asp-validation-for="ZipPostalCode" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="VatNumber" />
+		</div>
+		<div class="col-md-9">
+			<nop-editor asp-for="VatNumber" />
+			<span asp-validation-for="VatNumber" class="text-danger"></span>
+		</div>
+	</div>
+
+	<div class="form-group row">
+		<div class="col-md-3">
+			<nop-label asp-for="AdditionalHardCodedValues" />
+		</div>
+		<div class="col-md-9">
+			<nop-textarea asp-for="AdditionalHardCodedValues" />
+			<span asp-validation-for="AdditionalHardCodedValues" class="text-danger"></span>
+		</div>
+	</div>
+</div>
+
+<script>
+	$(document).ready(function () {
+		const $textArea = $("#@Html.IdFor(model => model.AdditionalHardCodedValues)");
+		const placeholderText = `Add hard-coded values with key, value, and type in JSON format. Allowed types: string, int, bool, decimal, datetime. Example:
+						[
+							{ "key": "channel", "value": "web", "type": "string" },
+							{ "key": "priority", "value": "1", "type": "int" },
+							{ "key": "isTest", "value": "true", "type": "bool" },
+							{ "key": "discount", "value": "10.5", "type": "decimal" },
+							{ "key": "createdDate", "value": "2025-06-01", "type": "datetime" }
+						]`;
+		function togglePlaceholder() {
+			if ($textArea.val().trim() === "") {
+				$textArea
+					.attr("placeholder", placeholderText)
+					.addClass("with-placeholder");
+			} else {
+				$textArea
+					.removeAttr("placeholder")
+					.removeClass("with-placeholder");
+			}
+		}
+
+		togglePlaceholder();
+		$textArea.on("input change", togglePlaceholder);
+	});
+</script>
+
+<style>
+	.with-placeholder {
+		min-height: 200px;
+		font-style: italic;
+		color: #6c757d;
+	}
+</style>

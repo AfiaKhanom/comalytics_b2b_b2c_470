@@ -12,6 +12,7 @@ using Nop.Services.Vendors;
 using NopStation.Plugin.B2B.B2BB2CFeatures;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
+using NopStation.Plugin.B2B.ERPIntegrationCore;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
@@ -50,6 +51,7 @@ public class ErpProductSyncService : IErpProductSyncService
     private readonly IValidator<Product> _productValidator;
     private readonly IValidator<Manufacturer> _manufacturerValidator;
     private readonly IValidator<Category> _categoryValidator;
+    private readonly ERPIntegrationCoreDataMappingSettings _dataMappingSettings;
 
     #endregion
 
@@ -75,7 +77,8 @@ public class ErpProductSyncService : IErpProductSyncService
         IValidator<Manufacturer> manufacturerValidator,
         IValidator<Category> categoryValidatory,
         IStaticCacheManager staticCacheManager,
-        ISyncWorkflowMessageService syncWorkflowMessageService)
+        ISyncWorkflowMessageService syncWorkflowMessageService,
+        ERPIntegrationCoreDataMappingSettings dataMappingSettings)
     {
         _vendorService = vendorService;
         _productService = productService;
@@ -98,6 +101,7 @@ public class ErpProductSyncService : IErpProductSyncService
         _staticCacheManager = staticCacheManager;
         _syncWorkflowMessageService = syncWorkflowMessageService;
         _erpIntegrationPluginManager = erpIntegrationPluginManager;
+        _dataMappingSettings = dataMappingSettings;
     }
 
     #endregion
@@ -346,6 +350,12 @@ public class ErpProductSyncService : IErpProductSyncService
                 allProductCategories.AddRange((await _categoryService.GetProductCategoriesByCategoryIdAsync(category.Id, showHidden: true)).ToList());
             }
 
+            var propsToSkip = new HashSet<string>(
+                _dataMappingSettings.ProductPropertiesToExclude?
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    ?? Enumerable.Empty<string>()
+            );
+
             #endregion
 
             await _erpSyncLogService.SyncLogSaveOnFileAsync(
@@ -369,7 +379,7 @@ public class ErpProductSyncService : IErpProductSyncService
                         Start = start,
                         Location = salesOrg.Code,
                         ProductSku = stockCode,
-                        DateFrom = isIncrementalSync ? salesOrg.LastErpProductSyncTimeOnUtc : null
+                        LastChangedDate = isIncrementalSync ? salesOrg.LastErpProductSyncTimeOnUtc : null                        
                     };
 
                     var response = await erpIntegrationPlugin.GetProductsFromErpAsync(erpGetRequestModel);
@@ -493,36 +503,61 @@ public class ErpProductSyncService : IErpProductSyncService
                         }
                         else
                         {
-                            oldErpProduct.Sku = erpProduct.Sku;
-                            oldErpProduct.ManufacturerPartNumber = erpProduct.ManufacturerPartNumber;
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.Sku)))
+                                oldErpProduct.Sku = erpProduct.Sku;
 
-                            oldErpProduct.ShortDescription = (erpProduct.ShortDescription.Length > 400) ? erpProduct.ShortDescription[..400] : erpProduct.ShortDescription;
-                            oldErpProduct.FullDescription = lineBreakReplacer.Replace((erpProduct.FullDescription.Length > 400)
-                                ? erpProduct.FullDescription.Substring(0, 400) : erpProduct.FullDescription, "<br/>");
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.ManufacturerPartNumber)))
+                                oldErpProduct.ManufacturerPartNumber = erpProduct.ManufacturerPartNumber;
 
-                            oldErpProduct.Name = string.IsNullOrEmpty(erpProduct.Name) ? erpProduct.Sku : erpProduct.Name;
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.ShortDescription)))
+                                oldErpProduct.ShortDescription = (erpProduct.ShortDescription.Length > 400) 
+                                    ? erpProduct.ShortDescription[..400] 
+                                    : erpProduct.ShortDescription;
 
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.FullDescription)))
+                                oldErpProduct.FullDescription = lineBreakReplacer.Replace((erpProduct.FullDescription.Length > 400)
+                                ? erpProduct.FullDescription.Substring(0, 400) 
+                                : erpProduct.FullDescription, "<br/>");
+
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.Name)))
+                                oldErpProduct.Name = string.IsNullOrEmpty(erpProduct.Name) ? erpProduct.Sku : erpProduct.Name;
+
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.WarehouseNameOrCode)))
+                                oldErpProduct.WarehouseId = allWarehouses.FirstOrDefault(x => x.Name.Equals(erpProduct.WarehouseNameOrCode))?.Id ?? 0;
+
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.VendorCode)) && !propsToSkip.Contains(nameof(ErpProductDataModel.VendorName)))
+                                oldErpProduct.VendorId = allVendors.Find(x => x.Name.Equals(erpProduct.VendorCode) || x.Name.Equals(erpProduct.VendorName))?.Id ?? 0;
+
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.StockQuantity)))
+                                oldErpProduct.StockQuantity = Convert.ToInt32(Math.Min(Math.Max(Math.Round(erpProduct.StockQuantity ?? 0), int.MinValue), int.MaxValue));
+
+                            oldErpProduct.OrderMinimumQuantity = 1;
                             oldErpProduct.ProductType = ProductType.SimpleProduct;
                             oldErpProduct.VisibleIndividually = true;
                             oldErpProduct.AdminComment = $"Updated by {programName} (B2B) on {DateTime.UtcNow:u}";
                             oldErpProduct.ProductTemplateId = productTemplate?.Id ?? 0;
-
-                            oldErpProduct.WarehouseId = allWarehouses.FirstOrDefault(x => x.Name.Equals(erpProduct.WarehouseNameOrCode))?.Id ?? 0;
-                            oldErpProduct.VendorId = allVendors.Find(x => x.Name.Equals(erpProduct.VendorCode) || x.Name.Equals(erpProduct.VendorName))?.Id ?? 0;
-
-                            oldErpProduct.StockQuantity = Convert.ToInt32(Math.Min(Math.Max(Math.Round(erpProduct.StockQuantity ?? 0), int.MinValue), int.MaxValue));
-                            oldErpProduct.OrderMinimumQuantity = 1;
-
                             oldErpProduct.IsShipEnabled = true;
 
                             oldErpProduct.PreOrderAvailabilityStartDateTimeUtc = DateTime.UtcNow;
-                            oldErpProduct.Price = erpProduct.Price ?? 0;
-                            oldErpProduct.OldPrice = erpProduct.Price ?? 0;
 
-                            oldErpProduct.Weight = erpProduct.Weight ?? 0;
-                            oldErpProduct.Length = erpProduct.Length ?? 0;
-                            oldErpProduct.Height = erpProduct.Height ?? 0;
-                            oldErpProduct.Width = erpProduct.Width ?? 0;
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.Price)))
+                            {
+                                oldErpProduct.Price = erpProduct.Price ?? 0;
+                                oldErpProduct.OldPrice = erpProduct.Price ?? 0;
+                            }
+
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.Weight)))
+                                oldErpProduct.Weight = erpProduct.Weight ?? 0;
+
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.Length)))
+                                oldErpProduct.Length = erpProduct.Length ?? 0;
+
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.Height)))
+                                oldErpProduct.Height = erpProduct.Height ?? 0;
+
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.Width)))
+                                oldErpProduct.Width = erpProduct.Width ?? 0;
+
                             oldErpProduct.AvailableStartDateTimeUtc = DateTime.UtcNow;
                             oldErpProduct.DisplayOrder = 1;
 
@@ -536,15 +571,20 @@ public class ErpProductSyncService : IErpProductSyncService
                             oldErpProduct.DisplayStockQuantity = _b2BB2CFeaturesSettings.DisplayStockQuantity_DefaultValue;
                             oldErpProduct.OrderMaximumQuantity = _b2BB2CFeaturesSettings.OrderMaximumQuantity;
 
-                            oldErpProduct.Gtin = erpProduct.Gtin;
-                            oldErpProduct.ProductCost = erpProduct.ProductCost ?? 0;
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.Gtin)))
+                                oldErpProduct.Gtin = erpProduct.Gtin;
 
-                            if (!string.IsNullOrWhiteSpace(erpProduct.TaxCategoryName))
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.ProductCost)))
+                                oldErpProduct.ProductCost = erpProduct.ProductCost ?? 0;
+
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.TaxCategoryName)) && !string.IsNullOrWhiteSpace(erpProduct.TaxCategoryName))
                             {
                                 oldErpProduct.TaxCategoryId = allTaxCategories.FirstOrDefault(x => x.Name.Equals(erpProduct.TaxCategoryName))?.Id ?? 0;
                             }
 
-                            oldErpProduct.Published = erpProduct.Published;
+                            if (!propsToSkip.Contains(nameof(ErpProductDataModel.Published)))
+                                oldErpProduct.Published = erpProduct.Published;
+
                             oldErpProduct.UpdatedOnUtc = DateTime.UtcNow;
 
                             if (await IsthisProductIsValidAsync(oldErpProduct))
@@ -561,13 +601,13 @@ public class ErpProductSyncService : IErpProductSyncService
 
                         #region Categories
 
-                        if (erpProduct.Categories.Any())
+                        if (erpProduct.ProductCategories.Any())
                         {
                             var incommingCategoryIds = new List<int>();
 
                             if (erpProduct.IsUsingCategoryPathMapping)
                             {
-                                foreach (var erpCategory in erpProduct.Categories)
+                                foreach (var erpCategory in erpProduct.ProductCategories)
                                 {
                                     if (string.IsNullOrWhiteSpace(erpCategory.CategoryPath))
                                         continue;
@@ -581,7 +621,7 @@ public class ErpProductSyncService : IErpProductSyncService
                             }
                             else
                             {
-                                var categories = erpProduct.Categories.ToList();
+                                var categories = erpProduct.ProductCategories.ToList();
                                 var parentCategoryId = 0;
 
                                 for (int i = 0; i < categories.Count; i++)
@@ -694,14 +734,14 @@ public class ErpProductSyncService : IErpProductSyncService
 
                         foreach (var attribute in erpProduct.ProductAttributes)
                         {
-                            var specAttr = specificationAttributes.FirstOrDefault(sa => sa.Name == attribute.Key);
+                            var specAttr = specificationAttributes.FirstOrDefault(sa => sa.Name == attribute.Name);
                             if (specAttr is null)
                             {
                                 // If it doesn't exist yet, we create it
                                 specAttr = new SpecificationAttribute
                                 {
                                     DisplayOrder = 0,
-                                    Name = attribute.Key
+                                    Name = attribute.Name
                                 };
                                 await _specificationAttributeService.InsertSpecificationAttributeAsync(specAttr);
                                 specificationAttributes.Add(specAttr);

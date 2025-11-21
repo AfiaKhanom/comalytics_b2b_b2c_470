@@ -215,6 +215,17 @@ public class ErpGroupPriceService : IErpGroupPriceService
 
         await _nopDataProvider.ExecuteNonQueryAsync(sqlCommand);
     }
+    public async Task DeleteGroupPricesNotUpdatedSinceSyncStart(int salesOrgId, DateTime syncStartTime)
+    {
+        if (syncStartTime == DateTime.MinValue)
+            return;
+
+        var connectionString = new SqlConnectionStringBuilder(DataSettingsManager.LoadSettings().ConnectionString);
+
+        var sqlCommand = $"Update [{connectionString.InitialCatalog}].[dbo].[Erp_Group_Price] Set [IsDeleted] = 1 Where [UpdatedOnUtc] < '{syncStartTime:yyyy-MM-dd HH:mm:ss}' or [UpdatedOnUtc] is null";
+
+        await _nopDataProvider.ExecuteNonQueryAsync(sqlCommand);
+    }
 
     #endregion
 

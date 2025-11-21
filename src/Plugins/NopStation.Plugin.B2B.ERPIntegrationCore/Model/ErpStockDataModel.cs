@@ -8,5 +8,6 @@ public class ErpStockDataModel
     public string Sku { get; set; }
     public string SalesOrgCode { get; set; }
     public decimal? QuantityOnHand { get; set; }
+    public decimal? QuantityOnSalesOrder { get; set; }
     public DateTime? LastChangedDate { get; set; }
 }
