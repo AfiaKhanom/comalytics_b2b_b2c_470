@@ -992,10 +992,7 @@ public class B2BB2CCustomerController : CustomerController
                             erpNopUser.Id),
                             erpNopUser);
 
-                        var b2BB2CustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(
-                            model.IsB2BUser ? 
-                            ERPIntegrationCoreDefaults.B2BCustomerRole : 
-                            ERPIntegrationCoreDefaults.B2CCustomerRole);
+                        var b2BB2CustomerRole = await _customerService.GetCustomerRoleBySystemNameAsync(model.IsB2BUser ? ERPIntegrationCoreDefaults.B2BCustomerRoleSystemName : ERPIntegrationCoreDefaults.B2CCustomerRoleSystemName);
 
                         //prepare and save erpNopUser
                         var erpNopUserAccountMap = new ErpNopUserAccountMap
