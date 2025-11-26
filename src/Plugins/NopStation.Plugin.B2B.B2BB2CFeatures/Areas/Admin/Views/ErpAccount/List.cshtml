@@ -137,7 +137,7 @@
                                         Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.ErpSalesOrgName").Text,
                                         Width = "100",
                                         Render = new RenderLink(new DataUrl("~/Admin/ErpSalesOrg/ErpSalesOrgEdit/", nameof(ErpAccountModel.ErpSalesOrgId))),
-                                        Visible = b2BB2CFeaturesSettings.UseMultiSalesOrg ? true : false,
+                                        Visible = b2BB2CFeaturesSettings.UseMultiSalesOrg,
                                     },
                                     new ColumnProperty(nameof(ErpAccountModel.AccountNumber))
                                     {
