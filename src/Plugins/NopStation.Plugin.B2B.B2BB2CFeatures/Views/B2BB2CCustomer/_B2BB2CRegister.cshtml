@@ -140,7 +140,7 @@
         }
     </div>
 </div>
-@if (Model.CompanyEnabled)
+@if (Model.CompanyEnabled || Model.DisplayVatNumber)
 {
     <div class="fieldset reg-section-company-info">
         <div class="title">
@@ -159,6 +159,14 @@
                     <span asp-validation-for="Company"></span>
                 </div>
             }
+			@if (Model.DisplayVatNumber)
+			{
+				<div class="inputs vat-number-input">
+					<label asp-for="VatNumber" asp-postfix=":"></label>
+					<input asp-for="VatNumber" />
+					<span asp-validation-for="VatNumber"></span>
+				</div>
+			}
         </div>
     </div>
 }

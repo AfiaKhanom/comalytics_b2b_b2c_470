@@ -536,7 +536,7 @@ public class B2BB2CCustomerController : CustomerController
                             {
                                 var createAccountModel = new ErpCreateAccountModel
                                 {
-                                    VatNumber = model.VatNumber ?? "Normal",
+                                    VatNumber = model.VatNumber ?? string.Empty,
                                     StateProvince = stateProvidence == null ? string.Empty : stateProvidence.Name,
                                     Country = country == null ? " " : country.Name,
                                     County = model.County ?? string.Empty,
