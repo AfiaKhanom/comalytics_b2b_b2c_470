@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Web.Areas.Admin.Models.Customers;
@@ -16,5 +17,8 @@ public interface IErpNopUserModelFactory
     Task<ErpNopUserAccountListModel> PrepareErpNopUserAccountListModelAsync(int nopUserId, ErpNopUserSearchModel searchModel);
     Task<List<SelectListItem>> PrepareShipToAddressDropdownAsync(int accountId, int customerId = 0);
     Task<ErpNopUserModel> PrepareErpNopUserModelAsync(ErpNopUserModel model, ErpNopUser erpNopUser);
+    Task<byte[]> ExportAllErpNopUsersToXlsxAsync(ErpNopUserSearchModel searchModel);
+    Task<byte[]> ExportSelectedErpNopUsersToXlsxAsync(string ids = null);
+    Task ImportErpNopUsersFromXlsxAsync(Stream stream);
     Task<ErpNopUserAccountMapModel> PrepareErpNopUserAccountMapModelAsync(ErpNopUserAccountMapModel model, ErpNopUserAccountMap erpNopUserAccountMap);
 }

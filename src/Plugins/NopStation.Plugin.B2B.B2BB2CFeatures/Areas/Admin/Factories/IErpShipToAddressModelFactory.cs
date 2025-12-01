@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.IO;
+using System.Threading.Tasks;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpShipToAddress;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
@@ -9,4 +10,7 @@ public interface IErpShipToAddressModelFactory
     Task<ErpShipToAddressListModel> PrepareErpShipToAddressListModelAsync(ErpShipToAddressSearchModel searchModel);
     Task<ErpShipToAddressModel> PrepareErpShipToAddressModelAsync(ErpShipToAddressModel model, ErpShipToAddress erpShipToAddress, bool excludeProperties = false);
     Task<ErpShipToAddressSearchModel> PrepareErpShipToAddressSearchModelAsync(ErpShipToAddressSearchModel searchModel);
+    Task<byte[]> ExportAllErpShipToAddressesToXlsxAsync(ErpShipToAddressSearchModel searchModel);
+    Task<byte[]> ExportSelectedErpShipToAddressesToXlsxAsync(string ids);
+    Task ImportErpShipToAddressFromXlsxAsync(Stream stream);
 }

@@ -290,4 +290,83 @@ public class ErpShipToAddressController : NopStationAdminController
     }
 
     #endregion
+
+    #region exprot/excel
+
+    [HttpPost, ActionName("List")]
+    [FormValueRequired("exportexcel-all")]
+    public virtual async Task<IActionResult> ExportExcelAll(ErpShipToAddressSearchModel searchModel)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
+            return AccessDeniedView();
+
+        try
+        {
+            var bytes = await _erpShipToAddressModelFactory.ExportAllErpShipToAddressesToXlsxAsync(searchModel);
+            return File(bytes, MimeTypes.TextXlsx, "Erp_ShipToAddresses.xlsx");
+        }
+        catch (Exception exc)
+        {
+            _notificationService.ErrorNotification(exc.Message);
+            return RedirectToAction("List");
+        }
+    }
+
+    [HttpPost]
+    public virtual async Task<IActionResult> ExportExcelSelected(string selectedIds)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
+            return AccessDeniedView();
+
+        try
+        {
+            if (string.IsNullOrEmpty(selectedIds))
+            {
+                _notificationService.ErrorNotification("No accounts selected.");
+                return RedirectToAction("List");
+            }
+
+            var bytes = await _erpShipToAddressModelFactory.ExportSelectedErpShipToAddressesToXlsxAsync(selectedIds);
+            return File(bytes, MimeTypes.TextXlsx, "Erp_ShipToAddress_Selected.xlsx");
+        }
+        catch (Exception exc)
+        {
+            _notificationService.ErrorNotification(exc.Message);
+            return RedirectToAction("List");
+        }
+    }
+
+    #endregion
+
+    #region import/excel
+
+    [HttpPost]
+    public virtual async Task<IActionResult> ImportExcel(IFormFile importexcelfile)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
+            return AccessDeniedView();
+
+        try
+        {
+            if (importexcelfile != null && importexcelfile.Length > 0)
+            {
+                await _erpShipToAddressModelFactory.ImportErpShipToAddressFromXlsxAsync(importexcelfile.OpenReadStream());
+            }
+            else
+            {
+                _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Admin.Common.UploadFile"));
+                return RedirectToAction("List");
+            }
+
+            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.ErpShipToAddress.Imported"));
+            return RedirectToAction("List");
+        }
+        catch (Exception exc)
+        {
+            _notificationService.ErrorNotification(exc.Message);
+            return RedirectToAction("List");
+        }
+    }
+
+    #endregion
 }

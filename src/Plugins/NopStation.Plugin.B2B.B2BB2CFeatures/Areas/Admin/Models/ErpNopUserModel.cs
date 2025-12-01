@@ -51,6 +51,9 @@ public record ErpNopUserModel : BaseNopEntityModel
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Field.ErpShipToAddress")]
     public AddressModel ErpShipToAddress { get; set; }
 
+    [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Field.ShipToCode")]
+    public string ShipToCode { get; set; }
+
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUser.Field.BillingErpShipToAddressId")]
     public int BillingErpShipToAddressId { get; set; }
 

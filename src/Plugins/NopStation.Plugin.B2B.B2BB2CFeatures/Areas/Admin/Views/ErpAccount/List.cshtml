@@ -26,17 +26,46 @@
     var b2BB2CFeaturesSettings = await settingService.LoadSettingAsync<B2BB2CFeaturesSettings>(storeScope);
 }
 
-<div class="content-header clearfix">
-    <h1 class="float-left">
-        @T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.PageHeader.ErpAccounts")
-    </h1>
-    <div class="float-right">
-        <a asp-action="CreateErpAccount" class="btn btn-primary">
-            <i class="fas fa-plus-square"></i>
-            @T("Admin.Common.AddNew")
-        </a>
+<form asp-controller="ErpAccount" asp-action="List" method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.PageHeader.ErpAccounts")
+        </h1>
+        <div class="float-right">
+            <a asp-action="CreateErpAccount" class="btn btn-primary">
+                <i class="fas fa-plus-square"></i>
+                @T("Admin.Common.AddNew")
+            </a>
+            <button type="button" name="importexcel" class="btn bg-olive" data-toggle="modal" data-target="#importexcel-window">
+                <i class="fa fa-upload"></i>
+                @T("Admin.Common.Import")
+            </button>
+            <div class="btn-group">
+                <button type="button" class="btn btn-success">
+                    <i class="fa fa-download"></i>
+                    @T("Admin.Common.Export")
+                </button>
+                <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                    <span class="caret"></span>
+                    <span class="sr-only">&nbsp;</span>
+                </button>
+                <ul class="dropdown-menu" role="menu">
+                    <li>
+                        <button type="submit" name="exportexcel-all">
+                            <i class="fa fa-file-excel-o"></i>
+                            @T("Admin.Common.ExportToExcel.All")
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" id="exportexcel-selected">
+                            <i class="fa fa-file-excel-o"></i>
+                            @T("Admin.Common.ExportToExcel.Selected")
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
-</div>
 
 <section class="content">
     <div class="container-fluid">
@@ -132,6 +161,13 @@
                                 },
                                 ColumnCollection = new List<ColumnProperty>
                                 {
+                                    new ColumnProperty(nameof(ErpAccountModel.Id))
+                                    {
+                                        IsMasterCheckBox = true,
+                                        Render = new RenderCheckBox("checkbox_erpaccounts"),
+                                        ClassName = NopColumnClassDefaults.CenterAll,
+                                        Width = "50",
+                                    },
                                     new ColumnProperty(nameof(ErpAccountModel.ErpSalesOrgName))
                                     {
                                         Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpAccount.Field.ErpSalesOrgName").Text,
@@ -227,6 +263,65 @@
         </div>
     </div>
 </section>
+</form>
+
+@*export selected (Excel). We don't use GET approach because it's limited to 2K-4K chars and won't work for large number of entities*@
+<form asp-controller="ErpAccount" asp-action="ExportExcelSelected" method="post" id="export-excel-selected-form">
+    <input type="hidden" id="selectedIds" name="selectedIds" value="" />
+</form>
+
+<script>
+    $(document).ready(function () {
+        $('#exportexcel-selected').click(function (e) {
+            e.preventDefault();
+            var ids = selectedIds.join(",");
+            $('#export-excel-selected-form #selectedIds').val(ids);
+            $('#export-excel-selected-form').submit();
+            updateTable('#ErpAccounts-grid');
+            return false;
+        });
+    });
+</script>
+
+@*import ErpAccounts form*@
+<div id="importexcel-window" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="importexcel-window-title">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="importexcel-window-title">@T("Admin.Common.ImportFromExcel")</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <form asp-controller="ErpAccount" asp-action="ImportExcel" method="post" enctype="multipart/form-data">
+                <div class="form-horizontal">
+                    <div class="modal-body">
+                        <ul class="common-list">
+                            <li>
+                                <em>@T("Admin.Common.ImportFromExcel.ManyRecordsWarning")</em>
+                            </li>
+                        </ul>
+                        <div class="form-group">
+                            <div class="col-md-2">
+                                <div class="label-wrapper">
+                                    <label class="col-form-label">
+                                        @T("Admin.Common.ExcelFile")
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-10">
+                                <input type="file" id="importexcelfile" name="importexcelfile" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">
+                            @T("Admin.Common.ImportFromExcel")
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <script>
     function ShowEmail(data, type, row, meta) {

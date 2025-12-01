@@ -1,10 +1,21 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Data.SqlClient;
+using Nop.Core;
+using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
+using Nop.Core.Domain.Localization;
+using Nop.Data;
 using Nop.Services;
 using Nop.Services.Common;
+using Nop.Services.ExportImport.Help;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Web.Areas.Admin.Factories;
@@ -12,6 +23,7 @@ using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Web.Framework.Models.Extensions;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ExportImportService;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Helpers;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
@@ -38,6 +50,9 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
     private readonly IErpShipToAddressService _erpShipToAddressService;
     private readonly IB2BFeaturesCommonHelper _b2BFeaturesCommonHelper;
     private readonly IErpNopUserService _erpNopUserService;
+    private readonly IWorkContext _workContext;
+    private readonly IERPExportImportManager _erpExportImportManager;
+    private readonly CatalogSettings _catalogSettings;
 
     #endregion
 
@@ -57,7 +72,10 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
         IErpNopUserAccountMapService erpNopUserAccountMapService,
         IErpShipToAddressService erpShipToAddressService,
         IB2BFeaturesCommonHelper b2BFeaturesCommonHelper,
-        IErpNopUserService erpNopUserService)
+        IErpNopUserService erpNopUserService,
+        IWorkContext workContext,
+        IERPExportImportManager erpExportImportManager,
+        CatalogSettings catalogSettings)
     {
         _localizationService = localizationService;
         _dateTimeHelper = dateTimeHelper;
@@ -74,6 +92,9 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
         _erpShipToAddressService = erpShipToAddressService;
         _b2BFeaturesCommonHelper = b2BFeaturesCommonHelper;
         _erpNopUserService = erpNopUserService;
+        _workContext = workContext;
+        _erpExportImportManager = erpExportImportManager;
+        _catalogSettings = catalogSettings;
     }
 
     #endregion
@@ -370,6 +391,537 @@ public class ErpAccountModelFactory : IErpAccountModelFactory
             model.ErpShipToAddressSearchModel = await _erpShipToAddressModelFactory.PrepareErpShipToAddressSearchModelAsync(searchModel: model.ErpShipToAddressSearchModel);
 
             return model;
+        }
+    }
+
+    #endregion
+
+    #region Export/Excel
+
+    public async Task<byte[]> ExportAllErpAccountsToXlsxAsync(ErpAccountSearchModel searchModel)
+    {
+        var sql = new StringBuilder(@"
+            SELECT account.[Id], account.[AccountNumber], account.[AccountName],
+                   saleOrg.[Code] AS SalesOrgCode,
+                   bAddress.FirstName AS BillingFirstName, bAddress.LastName AS BillingLastName,
+                   bAddress.Email AS BillingEmail, bAddress.Company AS BillingCompany,
+                   bCountry.[Name] AS BillingCountry, bStateProvince.[Name] AS BillingStateProvince,
+                   bAddress.City AS BillingCity, bAddress.Address1 AS BillingAddress1,
+                   bAddress.Address2 AS BillingAddress2, account.[BillingSuburb],
+                   bAddress.ZipPostalCode AS BillingZipPostalCode, bAddress.PhoneNumber AS BillingPhoneNumber,
+                   account.[VatNumber], account.[CreditLimit], account.[CurrentBalance], 
+                   account.[CreditLimitAvailable], account.[AllowOverspend],
+                   account.[TotalSavingsForthisYear], priceGroup.[Code] AS PriceGroupCode,
+                   account.[PreFilterFacets], account.[PaymentTypeCode],
+                   account.[OverrideBackOrderingConfigSetting], account.[AllowAccountsBackOrdering], account.[OverrideStockDisplayFormatConfigSetting],
+                   account.[OverrideAddressEditOnCheckoutConfigSetting], account.[AllowAccountsAddressEditOnCheckout],
+                   account.[StockDisplayFormatTypeId], account.[ErpAccountStatusTypeId],
+                   account.[PercentageOfStockAllowed], account.[LastErpAccountSyncDate],
+                   account.[LastPriceRefresh], account.[IsActive], account.[IsDeleted],
+                   account.[CreatedOnUtc], account.[CreatedById], account.[UpdatedOnUtc], account.[UpdatedById],
+                   account.[IsDefaultPaymentAccount]
+            FROM [dbo].[Erp_Account] account
+            LEFT JOIN [dbo].[Erp_Sales_Org] saleOrg ON account.ErpSalesOrgId = saleOrg.Id
+            LEFT JOIN [dbo].[Erp_Group_Price_Code] priceGroup ON account.B2BPriceGroupCodeId = priceGroup.Id
+            LEFT JOIN [dbo].[Address] bAddress ON account.[BillingAddressId] = bAddress.[Id]
+            LEFT JOIN [dbo].[Country] bCountry ON bAddress.CountryId = bCountry.[Id]
+            LEFT JOIN [dbo].[StateProvince] bStateProvince ON bAddress.StateProvinceId = bStateProvince.[Id]
+            WHERE 1=1
+        ");
+
+        // Append filters
+        bool? showHidden = searchModel.ShowInActive == 0 ? null : (searchModel.ShowInActive == 2);
+        if (showHidden.HasValue)
+            sql.Append(showHidden.Value ? " AND account.IsActive = 0" : " AND account.IsActive = 1");
+
+        if (!string.IsNullOrWhiteSpace(searchModel.AccountNumber))
+            sql.Append(" AND account.AccountNumber LIKE '%' + @erpAccountNo + '%'");
+
+        if (searchModel.ErpSalesOrgId > 0)
+            sql.Append(" AND account.ErpSalesOrgId = @salesOrgId");
+
+        if (!string.IsNullOrWhiteSpace(searchModel.AccountName))
+            sql.Append(" AND account.AccountName LIKE '%' + @accountName + '%'");
+
+        sql.Append(" AND account.IsDeleted = 0");
+
+        if (!string.IsNullOrWhiteSpace(searchModel.Email))
+            sql.Append(" AND bAddress.Email LIKE '%' + @email + '%'");
+
+        sql.Append(" ORDER BY account.Id");
+
+        var parameters = new
+        {
+            erpAccountNo = searchModel.AccountNumber,
+            salesOrgId = searchModel.ErpSalesOrgId,
+            accountName = searchModel.AccountName,
+            email = searchModel.Email
+        };
+
+        var dataTable = await _erpExportImportManager.GetXLWorkbookByQuery(sql.ToString(), parameters);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("ErpAccounts");
+
+        worksheet.Cell(1, 1).InsertTable(dataTable); // Load data into the worksheet
+        using var stream = new MemoryStream(); // Return the workbook as a byte array
+        workbook.SaveAs(stream);
+
+        return stream.ToArray();
+    }
+
+    public async Task<byte[]> ExportSelectedErpAccountsToXlsxAsync(string ids)
+    {
+        if (ids == null || !ids.Any())
+            return null; 
+
+        var sql = @"
+        SELECT account.[Id], account.[AccountNumber], account.[AccountName],
+               saleOrg.[Code] AS SalesOrgCode,
+               bAddress.FirstName AS BillingFirstName, bAddress.LastName AS BillingLastName,
+               bAddress.Email AS BillingEmail, bAddress.Company AS BillingCompany,
+               bCountry.[Name] AS BillingCountry, bStateProvince.[Name] AS BillingStateProvince,
+               bAddress.City AS BillingCity, bAddress.Address1 AS BillingAddress1,
+               bAddress.Address2 AS BillingAddress2, account.[BillingSuburb],
+               bAddress.ZipPostalCode AS BillingZipPostalCode, bAddress.PhoneNumber AS BillingPhoneNumber,
+               account.[VatNumber], account.[CreditLimit], account.[CurrentBalance], 
+               account.[CreditLimitAvailable], account.[AllowOverspend],
+               account.[TotalSavingsForthisYear], priceGroup.[Code] AS PriceGroupCode,
+               account.[PreFilterFacets], account.[PaymentTypeCode],
+               account.[OverrideBackOrderingConfigSetting], account.[AllowAccountsBackOrdering], account.[OverrideStockDisplayFormatConfigSetting],
+               account.[OverrideAddressEditOnCheckoutConfigSetting], account.[AllowAccountsAddressEditOnCheckout],
+               account.[StockDisplayFormatTypeId], account.[ErpAccountStatusTypeId],
+               account.[PercentageOfStockAllowed], account.[LastErpAccountSyncDate],
+               account.[LastPriceRefresh], account.[IsActive], account.[IsDeleted],
+               account.[CreatedOnUtc], account.[CreatedById], account.[UpdatedOnUtc], account.[UpdatedById],
+               account.[IsDefaultPaymentAccount]
+        FROM [dbo].[Erp_Account] account
+        LEFT JOIN [dbo].[Erp_Sales_Org] saleOrg ON account.ErpSalesOrgId = saleOrg.Id
+        LEFT JOIN [dbo].[Erp_Group_Price_Code] priceGroup ON account.B2BPriceGroupCodeId = priceGroup.Id
+        LEFT JOIN [dbo].[Address] bAddress ON account.[BillingAddressId] = bAddress.[Id]
+        LEFT JOIN [dbo].[Country] bCountry ON bAddress.CountryId = bCountry.[Id]
+        LEFT JOIN [dbo].[StateProvince] bStateProvince ON bAddress.StateProvinceId = bStateProvince.[Id]
+        WHERE account.Id IN @Ids
+        ORDER BY account.Id";
+
+        if (!string.IsNullOrEmpty(ids))
+        {
+            sql = sql.Replace("@Ids", $"({ids})");
+        }
+        var dataTable = await _erpExportImportManager.GetXLWorkbookByQuery(sql, null);
+
+        using var workbook = new XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("ErpAccounts_Selected");
+
+        worksheet.Cell(1, 1).InsertTable(dataTable); // Load data into the worksheet       
+        using var stream = new MemoryStream(); // Return the workbook as a byte array
+        workbook.SaveAs(stream);
+
+        return stream.ToArray();
+    }
+
+    #endregion
+
+    #region Import/Excel
+
+    public static async Task<IList<PropertyByName<T, Language>>> GetPropertiesByExcelCellsAsync<T>(IXLWorksheet workbook)
+    {
+        var properties = new List<PropertyByName<T, Language>>();
+        var poz = 1;
+        while (true)
+        {
+            try
+            {
+                var x = workbook;
+                var y = x.Cell(1, poz).Value;
+
+                if (string.IsNullOrEmpty(y.ToString()))
+                    break;
+
+                poz += 1;
+                properties.Add(new PropertyByName<T, Language>(y.ToString()));
+
+            }
+            catch
+            {
+                break;
+            }
+        }
+
+        return properties;
+    }
+
+    protected virtual async Task<ErpAccountExportImportModel> GetModelFromXlsxAsync(
+   PropertyManager<ErpAccountExportImportModel, Language> manager, IXLWorksheet worksheet, int iRow)
+    {
+        manager.ReadDefaultFromXlsx(worksheet, iRow);
+        var model = new ErpAccountExportImportModel();
+
+        foreach (var property in manager.GetDefaultProperties)
+        {
+            switch (property.PropertyName)
+            {
+                case "AccountNumber":
+                    model.AccountNumber = property.StringValue;
+                    break;
+                case "AccountName":
+                    model.AccountName = property.StringValue;
+                    break;
+                case "SalesOrgCode":
+                    model.SalesOrganisationCode = property.StringValue;
+                    break;
+                case "BillingFirstName":
+                    model.BillingFirstName = property.StringValue;
+                    break;
+                case "BillingLastName":
+                    model.BillingLastName = property.StringValue;
+                    break;
+                case "BillingEmail":
+                    model.BillingEmail = property.StringValue;
+                    break;
+                case "BillingCompany":
+                    model.BillingCompany = property.StringValue;
+                    break;
+                case "BillingCountry":
+                    model.BillingCountry = property.StringValue;
+                    break;
+                case "BillingStateProvince":
+                    model.BillingStateProvince = property.StringValue;
+                    break;
+                case "BillingCity":
+                    model.BillingCity = property.StringValue;
+                    break;
+                case "BillingAddress1":
+                    model.BillingAddress1 = property.StringValue;
+                    break;
+                case "BillingAddress2":
+                    model.BillingAddress2 = property.StringValue;
+                    break;
+                case "BillingSuburb":
+                    model.BillingSuburb = property.StringValue;
+                    break;
+                case "BillingZipPostalCode":
+                    model.BillingZipPostalCode = property.StringValue;
+                    break;
+                case "BillingPhoneNumber":
+                    model.BillingPhoneNumber = property.StringValue;
+                    break;
+                case "VatNumber":
+                    model.VatNumber = property.StringValue;
+                    break;
+                case "CreditLimit":
+                    model.CreditLimit = property.StringValue;
+                    break;
+                case "CreditLimitAvailable":
+                    model.CreditLimitAvailable = property.StringValue;
+                    break;
+                case "CurrentBalance":
+                    model.CurrentBalance = property.StringValue;
+                    break;
+                case "AllowOverspend":
+                    model.AllowOverspend = property.StringValue;
+                    break;
+                case "PriceGroupCode":
+                    model.PriceGroupCode = property.StringValue;
+                    break;
+                case "PreFilterFacets":
+                    model.PreFilterFacets = property.StringValue;
+                    break;
+                case "PaymentTypeCode":
+                    model.PaymentTypeCode = property.StringValue;
+                    break;
+                case "OverrideBackOrderingConfigSetting":
+                    model.OverrideBackOrderingConfigSetting = property.StringValue;
+                    break;
+                case "AllowAccountsBackOrdering":
+                    model.AllowAccountsBackOrdering = property.StringValue;
+                    break;
+                case "OverrideStockDisplayFormatConfigSetting":
+                    model.OverrideStockDisplayFormatConfigSetting = property.StringValue;
+                    break;
+                case "OverrideAddressEditOnCheckoutConfigSetting":
+                    model.OverrideAddressEditOnCheckoutConfigSetting = property.StringValue;
+                    break;
+                case "AllowAccountsAddressEditOnCheckout":
+                    model.AllowAccountsAddressEditOnCheckout = property.StringValue;
+                    break;
+                case "StockDisplayFormatTypeId":
+                    model.StockDisplayFormatTypeId = property.StringValue;
+                    break;
+                case "ErpAccountStatusTypeId":
+                    model.ErpAccountStatusTypeId = property.StringValue;
+                    break;
+                case "PercentageOfStockAllowed":
+                    model.PercentageOfStockAllowed = property.StringValue;
+                    break;
+                case "LastErpAccountSyncDate":
+                    model.LastAccountRefresh = property.StringValue;
+                    break;
+                case "LastPriceRefresh":
+                    model.LastPriceRefresh = property.StringValue;
+                    break;
+                case "IsActive":
+                    model.IsActive = property.StringValue;
+                    break;
+                case "IsDefaultPaymentAccount":
+                    model.IsDefaultPaymentAccount = property.StringValue;
+                    break;
+            }
+        }
+
+        return model;
+    }
+
+    public async Task ImportErpAccountsFromXlsxAsync(Stream stream)
+    {
+        var dataTable = new DataTable();
+        using (var workbook = new XLWorkbook(stream))
+        {
+            var worksheet = workbook.Worksheets.FirstOrDefault();
+            if (worksheet == null)
+                throw new NopException("No workbook found");
+            var properties = await GetPropertiesByExcelCellsAsync<ErpAccountExportImportModel>(worksheet);
+
+            // Pass the resolved list to the PropertyManager
+            var manager = new PropertyManager<ErpAccountExportImportModel, Language>(properties, _catalogSettings);
+
+            var iRow = 2;
+
+            dataTable.Columns.Add(new DataColumn("AccountNumber", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("AccountName", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("SalesOrgCode", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("BillingFirstName", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("BillingLastName", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("BillingEmail", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("BillingCompany", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("BillingCountry", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("BillingStateProvince", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("BillingCity", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("BillingAddress1", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("BillingAddress2", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("BillingSuburb", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("BillingZipPostalCode", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("BillingPhoneNumber", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("VatNumber", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("CreditLimit", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("CreditLimitAvailable", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("CurrentBalance", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("AllowOverspend", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("PriceGroupCode", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("PreFilterFacets", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("PaymentTypeCode", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("OverrideBackOrderingConfigSetting", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("AllowAccountsBackOrdering", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("OverrideStockDisplayFormatConfigSetting", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("OverrideAddressEditOnCheckoutConfigSetting", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("AllowAccountsAddressEditOnCheckout", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("StockDisplayFormatTypeId", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("ErpAccountStatusTypeId", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("PercentageOfStockAllowed", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("LastErpAccountSyncDate", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("LastPriceRefresh", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("IsActive", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("IsDefaultPaymentAccount", typeof(string)));
+
+            while (true)
+            {
+                var allColumnsAreEmpty = manager.GetDefaultProperties
+                .Select(property => worksheet.Cell(iRow, property.PropertyOrderPosition))
+                .All(cell => cell == null || string.IsNullOrEmpty(cell.GetValue<string>()));
+
+                if (allColumnsAreEmpty)
+                    break;
+
+                var model = await GetModelFromXlsxAsync(manager, worksheet, iRow);
+                var row = dataTable.NewRow();
+                row[dataTable.Columns.IndexOf("AccountNumber")] = model.AccountNumber;
+                row[dataTable.Columns.IndexOf("AccountName")] = model.AccountName;
+                row[dataTable.Columns.IndexOf("SalesOrgCode")] = model.SalesOrganisationCode;
+                row[dataTable.Columns.IndexOf("BillingFirstName")] = model.BillingFirstName;
+                row[dataTable.Columns.IndexOf("BillingLastName")] = model.BillingLastName;
+                row[dataTable.Columns.IndexOf("BillingEmail")] = model.BillingEmail;
+                row[dataTable.Columns.IndexOf("BillingCompany")] = model.BillingCompany;
+                row[dataTable.Columns.IndexOf("BillingCountry")] = model.BillingCountry;
+                row[dataTable.Columns.IndexOf("BillingStateProvince")] = model.BillingStateProvince;
+                row[dataTable.Columns.IndexOf("BillingCity")] = model.BillingCity;
+                row[dataTable.Columns.IndexOf("BillingAddress1")] = model.BillingAddress1;
+                row[dataTable.Columns.IndexOf("BillingAddress2")] = model.BillingAddress2;
+                row[dataTable.Columns.IndexOf("BillingSuburb")] = model.BillingSuburb;
+                row[dataTable.Columns.IndexOf("BillingZipPostalCode")] = model.BillingZipPostalCode;
+                row[dataTable.Columns.IndexOf("BillingPhoneNumber")] = model.BillingPhoneNumber;
+                row[dataTable.Columns.IndexOf("VatNumber")] = model.VatNumber;
+                row[dataTable.Columns.IndexOf("CreditLimit")] = model.CreditLimit;
+                row[dataTable.Columns.IndexOf("CreditLimitAvailable")] = model.CreditLimitAvailable;
+                row[dataTable.Columns.IndexOf("CurrentBalance")] = model.CurrentBalance;
+                row[dataTable.Columns.IndexOf("AllowOverspend")] = model.AllowOverspend;
+                row[dataTable.Columns.IndexOf("PriceGroupCode")] = model.PriceGroupCode;
+                row[dataTable.Columns.IndexOf("PreFilterFacets")] = model.PreFilterFacets;
+                row[dataTable.Columns.IndexOf("PaymentTypeCode")] = model.PaymentTypeCode;
+                row[dataTable.Columns.IndexOf("OverrideBackOrderingConfigSetting")] = model.OverrideBackOrderingConfigSetting;
+                row[dataTable.Columns.IndexOf("AllowAccountsBackOrdering")] = model.AllowAccountsBackOrdering;
+                row[dataTable.Columns.IndexOf("OverrideStockDisplayFormatConfigSetting")] = model.OverrideStockDisplayFormatConfigSetting;
+                row[dataTable.Columns.IndexOf("OverrideAddressEditOnCheckoutConfigSetting")] = model.OverrideAddressEditOnCheckoutConfigSetting;
+                row[dataTable.Columns.IndexOf("AllowAccountsAddressEditOnCheckout")] = model.AllowAccountsAddressEditOnCheckout;
+                row[dataTable.Columns.IndexOf("StockDisplayFormatTypeId")] = model.StockDisplayFormatTypeId;
+                row[dataTable.Columns.IndexOf("ErpAccountStatusTypeId")] = model.ErpAccountStatusTypeId;
+                row[dataTable.Columns.IndexOf("PercentageOfStockAllowed")] = model.PercentageOfStockAllowed;
+                row[dataTable.Columns.IndexOf("LastErpAccountSyncDate")] = model.LastAccountRefresh;
+                row[dataTable.Columns.IndexOf("LastPriceRefresh")] = model.LastPriceRefresh;
+                row[dataTable.Columns.IndexOf("IsActive")] = model.IsActive;
+                row[dataTable.Columns.IndexOf("IsDefaultPaymentAccount")] = model.IsDefaultPaymentAccount;
+
+                dataTable.Rows.Add(row);
+
+                iRow++;
+            }
+
+        }
+
+        string connectionString = DataSettingsManager.LoadSettings().ConnectionString;
+        using (var connection = new SqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            using (var truncateCmd = new SqlCommand("TRUNCATE TABLE [dbo].[ErpAccountImport]", connection))
+            {
+                await truncateCmd.ExecuteNonQueryAsync();
+            }
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                DateTime? lastAccountRefresh = null;
+                DateTime tempDate;
+
+                if (DateTime.TryParse(row["LastErpAccountSyncDate"].ToString(), out tempDate))
+                    lastAccountRefresh = tempDate;
+
+                DateTime? lastPriceRefresh = null;
+                if (DateTime.TryParse(row["LastPriceRefresh"].ToString(), out tempDate))
+                    lastPriceRefresh = tempDate;
+
+                using (var insertCmd = new SqlCommand(@"
+                    INSERT INTO [dbo].[ErpAccountImport]
+                    (AccountNumber,
+                    AccountName,
+                    SalesOrganisationCode,
+                    BillingFirstName,
+                    BillingLastName,
+                    BillingEmail,
+                    BillingCompany,
+                    BillingCountry,
+                    BillingStateProvince,
+                    BillingCity,
+                    BillingAddress1,
+                    BillingAddress2,
+                    BillingSuburb,
+                    BillingZipPostalCode,
+                    BillingPhoneNumber,
+                    VatNumber,
+                    CreditLimit,
+                    CreditLimitAvailable,
+                    CurrentBalance,
+                    AllowOverspend,
+                    PriceGroupCode,
+                    PreFilterFacets,
+                    PaymentTypeCode,
+                    OverrideBackOrderingConfigSetting,
+                    AllowAccountsBackOrdering,
+                    OverrideStockDisplayFormatConfigSetting,
+                    OverrideAddressEditOnCheckoutConfigSetting,
+                    AllowAccountsAddressEditOnCheckout,
+                    StockDisplayFormatTypeId,
+                    ErpAccountStatusTypeId,
+                    PercentageOfStockAllowed,
+                    LastAccountRefresh,
+                    LastPriceRefresh,
+                    IsActive,
+                    IsDefaultPaymentAccount)
+                    VALUES (@AccountNumber,
+                    @AccountName,
+                    @SalesOrganisationCode,
+                    @BillingFirstName,
+                    @BillingLastName,
+                    @BillingEmail,
+                    @BillingCompany,
+                    @BillingCountry,
+                    @BillingStateProvince,
+                    @BillingCity,
+                    @BillingAddress1,
+                    @BillingAddress2,
+                    @BillingSuburb,
+                    @BillingZipPostalCode,
+                    @BillingPhoneNumber,
+                    @VatNumber,
+                    @CreditLimit,
+                    @CreditLimitAvailable,
+                    @CurrentBalance,
+                    @AllowOverspend,
+                    @PriceGroupCode,
+                    @PreFilterFacets,
+                    @PaymentTypeCode,
+                    @OverrideBackOrderingConfigSetting,
+                    @AllowAccountsBackOrdering,
+                    @OverrideStockDisplayFormatConfigSetting,
+                    @OverrideAddressEditOnCheckoutConfigSetting,
+                    @AllowAccountsAddressEditOnCheckout,
+                    @StockDisplayFormatTypeId,
+                    @ErpAccountStatusTypeId,
+                    @PercentageOfStockAllowed,
+                    @LastAccountRefresh,
+                    @LastPriceRefresh,
+                    @IsActive,
+                    @IsDefaultPaymentAccount
+                    )",
+                    connection))
+                    {
+                        insertCmd.Parameters.AddWithValue("@AccountNumber", row["AccountNumber"]);
+                        insertCmd.Parameters.AddWithValue("@AccountName", row["AccountName"]);
+                        insertCmd.Parameters.AddWithValue("@SalesOrganisationCode", row["SalesOrgCode"]);
+                        insertCmd.Parameters.AddWithValue("@BillingFirstName", row["BillingFirstName"]);
+                        insertCmd.Parameters.AddWithValue("@BillingLastName", row["BillingLastName"]);
+                        insertCmd.Parameters.AddWithValue("@BillingEmail", row["BillingEmail"]);
+                        insertCmd.Parameters.AddWithValue("@BillingCompany", row["BillingCompany"]);
+                        insertCmd.Parameters.AddWithValue("@BillingCountry", row["BillingCountry"]);
+                        insertCmd.Parameters.AddWithValue("@BillingStateProvince", row["BillingStateProvince"]);
+                        insertCmd.Parameters.AddWithValue("@BillingCity", row["BillingCity"]);
+                        insertCmd.Parameters.AddWithValue("@BillingAddress1", row["BillingAddress1"]);
+                        insertCmd.Parameters.AddWithValue("@BillingAddress2", row["BillingAddress2"]);
+                        insertCmd.Parameters.AddWithValue("@BillingSuburb", row["BillingSuburb"]);
+                        insertCmd.Parameters.AddWithValue("@BillingZipPostalCode", row["BillingZipPostalCode"]);
+                        insertCmd.Parameters.AddWithValue("@BillingPhoneNumber", row["BillingPhoneNumber"]);
+                        insertCmd.Parameters.AddWithValue("@VatNumber", row["VatNumber"]);
+                        insertCmd.Parameters.AddWithValue("@CreditLimit", row["CreditLimit"]);
+                        insertCmd.Parameters.AddWithValue("@CreditLimitAvailable", row["CreditLimitAvailable"]);
+                        insertCmd.Parameters.AddWithValue("@CurrentBalance", row["CurrentBalance"]);
+                        insertCmd.Parameters.AddWithValue("@AllowOverspend", row["AllowOverspend"]);
+                        insertCmd.Parameters.AddWithValue("@PriceGroupCode", row["PriceGroupCode"]);
+                        insertCmd.Parameters.AddWithValue("@PreFilterFacets", row["PreFilterFacets"]);
+                        insertCmd.Parameters.AddWithValue("@PaymentTypeCode", row["PaymentTypeCode"]);
+                        insertCmd.Parameters.AddWithValue("@OverrideBackOrderingConfigSetting", row["OverrideBackOrderingConfigSetting"]);
+                        insertCmd.Parameters.AddWithValue("@AllowAccountsBackOrdering", row["AllowAccountsBackOrdering"]);
+                        insertCmd.Parameters.AddWithValue("@OverrideStockDisplayFormatConfigSetting", row["OverrideStockDisplayFormatConfigSetting"]);
+                        insertCmd.Parameters.AddWithValue("@OverrideAddressEditOnCheckoutConfigSetting", row["OverrideAddressEditOnCheckoutConfigSetting"]);
+                        insertCmd.Parameters.AddWithValue("@AllowAccountsAddressEditOnCheckout", row["AllowAccountsAddressEditOnCheckout"]);
+                        insertCmd.Parameters.AddWithValue("@StockDisplayFormatTypeId", row["StockDisplayFormatTypeId"]);
+                        insertCmd.Parameters.AddWithValue("@ErpAccountStatusTypeId", row["ErpAccountStatusTypeId"]);
+                        insertCmd.Parameters.AddWithValue("@PercentageOfStockAllowed", row["PercentageOfStockAllowed"]);
+                        insertCmd.Parameters.AddWithValue("@LastAccountRefresh", (object)lastAccountRefresh ?? DBNull.Value);
+                        insertCmd.Parameters.AddWithValue("@LastPriceRefresh", (object)lastPriceRefresh ?? DBNull.Value);
+                        insertCmd.Parameters.AddWithValue("@IsActive", row["IsActive"]);
+                        insertCmd.Parameters.AddWithValue("@IsDefaultPaymentAccount", row["IsDefaultPaymentAccount"]);
+
+                        await insertCmd.ExecuteNonQueryAsync();
+                    }
+            }
+
+            // Call the stored procedure
+            using (var spCmd = new SqlCommand("[dbo].[ErpAccountImportProcedure]", connection))
+            {
+                spCmd.CommandType = CommandType.StoredProcedure;
+                spCmd.Parameters.AddWithValue("@CurrentUserId", ((await _workContext.GetCurrentCustomerAsync()).Id));
+
+                await spCmd.ExecuteNonQueryAsync();
+            }
         }
     }
 

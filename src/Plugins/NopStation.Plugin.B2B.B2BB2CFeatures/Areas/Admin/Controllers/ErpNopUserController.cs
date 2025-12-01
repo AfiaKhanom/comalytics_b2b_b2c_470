@@ -598,5 +598,87 @@ public class ErpNopUserController : NopStationAdminController
         return Json(new { Result = true });
     }
 
+    #endregion ErpAccount List of Nop User
+
+    #region exprot/excel
+
+    [HttpPost, ActionName("List")]
+    [FormValueRequired("exportexcel-all")]
+    public virtual async Task<IActionResult> ExportExcelAll(ErpNopUserSearchModel searchModel)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
+            return AccessDeniedView();
+
+        try
+        {
+            var bytes = await _erpNopUserModelFactory.ExportAllErpNopUsersToXlsxAsync(searchModel);
+            return File(bytes, MimeTypes.TextXlsx, "ErpNopUsers.xlsx");
+        }
+        catch (Exception exc)
+        {
+            _notificationService.ErrorNotification(exc.Message);
+            return RedirectToAction("List");
+        }
+    }
+
+    [HttpPost]
+    public virtual async Task<IActionResult> ExportExcelSelected(string selectedIds)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
+            return AccessDeniedView();
+
+        try
+        {
+            if (string.IsNullOrEmpty(selectedIds))
+            {
+                _notificationService.ErrorNotification("No users selected.");
+                return RedirectToAction("List");
+            }
+
+            var bytes = await _erpNopUserModelFactory.ExportSelectedErpNopUsersToXlsxAsync(selectedIds);
+            return File(bytes, MimeTypes.TextXlsx, "ErpNopUsers_Selected.xlsx");
+        }
+        catch (Exception exc)
+        {
+            _notificationService.ErrorNotification(exc.Message);
+            return RedirectToAction("List");
+        }
+    }
+
+    #endregion
+
+    #region import/excel
+
+    [HttpPost]
+    public virtual async Task<IActionResult> ImportExcel(IFormFile importexcelfile)
+    {
+        if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
+            return AccessDeniedView();
+        try
+        {
+            if (
+                 importexcelfile != null
+                 && importexcelfile.Length > 0)
+            {
+                    await _erpNopUserModelFactory.ImportErpNopUsersFromXlsxAsync(
+                        importexcelfile.OpenReadStream()
+                    );
+            }
+            else
+            {
+                _notificationService.ErrorNotification(await _localizationService.GetResourceAsync("Admin.Common.UploadFile"));
+                return RedirectToAction("List");
+            }
+
+            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("NopStation.Plugin.B2B.B2BB2CFeatures.ErpNopUser.Imported"));
+            return RedirectToAction("List");
+        }
+        catch (Exception exc)
+        {
+            _notificationService.ErrorNotification(exc.Message);
+            return RedirectToAction("List");
+        }
+    }
+
     #endregion
 }
