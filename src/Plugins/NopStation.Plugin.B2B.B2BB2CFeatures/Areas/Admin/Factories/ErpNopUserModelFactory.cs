@@ -1,19 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Data.SqlClient;
 using Nop.Core;
+using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Localization;
 using Nop.Data;
 using Nop.Services;
 using Nop.Services.Attributes;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Directory;
+using Nop.Services.ExportImport.Help;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Web.Areas.Admin.Factories;
@@ -23,6 +30,7 @@ using Nop.Web.Areas.Admin.Models.Customers;
 using Nop.Web.Framework.Factories;
 using Nop.Web.Framework.Models.Extensions;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ExportImportService;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Helpers;
 using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpCustomerFunctionality;
 using NopStation.Plugin.B2B.ERPIntegrationCore;
@@ -58,7 +66,10 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
     private readonly IRepository<ErpNopUser> _erpNopUserRepository;
     private readonly IRepository<CustomerCustomerRoleMapping> _customerCustomerRoleMappingRepository;
     private readonly IOverridenCustomerModelFactory _overridenCustomerModelFactory;
+    private readonly IERPExportImportManager _erpExportImportManager;
     private readonly IRepository<ErpSalesRep> _erpSalesRepRepository;
+    private readonly IWorkContext _workContext;
+    private readonly CatalogSettings _catalogSettings;
 
     #endregion
 
@@ -86,6 +97,9 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
         IRepository<ErpNopUser> erpNopUserRepository,
         IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMappingRepository,
         IOverridenCustomerModelFactory overridenCustomerModelFactory,
+        IERPExportImportManager erpExportImportManager,
+        IWorkContext workContext,
+        CatalogSettings catalogSettings,
         IRepository<ErpSalesRep> erpSalesRepRepository)
     {
         _localizationService = localizationService;
@@ -110,6 +124,9 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
         _erpNopUserRepository = erpNopUserRepository;
         _customerCustomerRoleMappingRepository = customerCustomerRoleMappingRepository;
         _overridenCustomerModelFactory = overridenCustomerModelFactory;
+        _erpExportImportManager = erpExportImportManager;
+        _workContext = workContext;
+        _catalogSettings = catalogSettings;
         _erpSalesRepRepository = erpSalesRepRepository;
     }
 
@@ -394,7 +411,6 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
         );
 
         searchModel.AvailableErpShipToAddresses = await PrepareShipToAddressDropdownAsync(searchModel.AccountId);
-
         searchModel.ShowInActiveOption = await _b2BFeaturesCommonHelper.PrepareActiveFilterOptionsAsync();
 
         var availableRoles = await _customerService.GetAllCustomerRolesAsync(showHidden: true);
@@ -425,6 +441,7 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
             accountId: searchModel.AccountId,
             name: searchModel.Name,
             erpShipToAddressId: searchModel.ErpShipToAddressId,
+            shipToCode: searchModel.ShipToCode,
             userType: searchModel.ErpNopUserTypeId,
             salesOrgId: searchModel.SalesOrgId
         );
@@ -501,6 +518,7 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
                         ErpSalesOrgInfo = $"{erpSalesOrg.Name} - ({erpSalesOrg.Code})",
                         ErpShipToAddressId = erpNopUser.ErpShipToAddressId,
                         ErpShipToAddress = addressModelOfShipToAddress,
+                        ShipToCode = erpShipToAddress.ShipToCode,
                         BillingErpShipToAddressId = erpNopUser.BillingErpShipToAddressId,
                         BillingErpShipToAddress = billingErpShipToAddressModel,
                         ShippingErpShipToAddressId = erpNopUser.ShippingErpShipToAddressId,
@@ -807,6 +825,294 @@ public class ErpNopUserModelFactory : IErpNopUserModelFactory
         );
 
         return model;
+    }
+
+    #endregion
+
+    #region Export/Excel
+
+    public async Task<byte[]> ExportSelectedErpNopUsersToXlsxAsync(string ids =  null)
+    {
+        var sql = @"SELECT erpuser.[Id],
+                           customer.[Email],
+                           account.[AccountNumber],
+                           account.[AccountName],
+                           saleOrg.[Code] AS AccountSalesOrganisationCode,
+                           shipto.[ShipToCode],
+                           shipto.[ShipToName],
+                           erpuser.[IsActive]
+                    FROM [dbo].[Erp_Nop_User] erpuser
+                    LEFT JOIN [dbo].[Customer] customer 
+                        ON erpuser.[NopCustomerId] = customer.[Id]
+                    LEFT JOIN [dbo].[Erp_Account] account 
+                        ON erpuser.[ErpAccountId] = account.[Id]
+                    LEFT JOIN [dbo].[Erp_Sales_Org] saleOrg 
+                        ON account.[ErpSalesOrgId] = saleOrg.[Id]
+                    LEFT JOIN [dbo].[Erp_ShipToAddress] shipto 
+                        ON erpuser.[ErpShipToAddressId] = shipto.[Id]
+                    WHERE erpuser.[Id] > 0
+                      AND erpuser.[IsDeleted] = 0
+                      AND customer.[Active] = 1
+                      AND customer.[Deleted] = 0
+                      AND erpuser.ErpUserTypeId = 5
+                      AND erpuser.Id IN @Ids
+                      ORDER BY account.Id";
+
+        if (!string.IsNullOrEmpty(ids))
+        {
+            sql = sql.Replace("@Ids", $"({ids})");
+        }
+
+        var dataTable = await _erpExportImportManager.GetXLWorkbookByQuery(sql, null);
+
+        using (var workbook = new XLWorkbook())
+        {
+            var worksheet = workbook.Worksheets.Add("ErpNopUsers");
+
+            worksheet.Cell(1, 1).InsertTable(dataTable); // Load data into the worksheet
+
+            using (var stream = new MemoryStream())
+            {
+                workbook.SaveAs(stream);
+                return stream.ToArray();
+            }
+        }
+    }
+
+    public async Task<byte[]> ExportAllErpNopUsersToXlsxAsync(ErpNopUserSearchModel searchModel)
+    {
+        var sql = new StringBuilder(@"SELECT erpuser.[Id],
+                           customer.[Email],
+                           account.[AccountNumber],
+                           account.[AccountName],
+                           saleOrg.[Code] AS AccountSalesOrganisationCode,
+                           shipto.[ShipToCode],
+                           shipto.[ShipToName],
+                           erpuser.[IsActive]
+                    FROM [dbo].[Erp_Nop_User] erpuser
+                    LEFT JOIN [dbo].[Customer] customer 
+                        ON erpuser.[NopCustomerId] = customer.[Id]
+                    LEFT JOIN [dbo].[Erp_Account] account 
+                        ON erpuser.[ErpAccountId] = account.[Id]
+                    LEFT JOIN [dbo].[Erp_Sales_Org] saleOrg 
+                        ON account.[ErpSalesOrgId] = saleOrg.[Id]
+                    LEFT JOIN [dbo].[Erp_ShipToAddress] shipto 
+                        ON erpuser.[ErpShipToAddressId] = shipto.[Id]
+                    WHERE erpuser.[Id] > 0
+                      AND erpuser.[IsDeleted] = 0
+                      AND customer.[Active] = 1
+                      AND customer.[Deleted] = 0
+                      AND erpuser.ErpUserTypeId = 5");
+
+        // Append filters
+        bool? showHidden = searchModel.ShowInActive == 0 ? null : (searchModel.ShowInActive == 2);
+        if (showHidden.HasValue)
+            sql.Append(showHidden.Value ? " AND erpuser.IsActive = 0" : " AND erpuser.IsActive = 1");
+
+        if (searchModel.AccountId > 0)
+            sql.Append(" AND erpuser.ErpAccountId = @erpAccountId");
+
+        if (!string.IsNullOrWhiteSpace(searchModel.FirstName))
+            sql.Append(" AND customer.FirstName LIKE '%' + @firstName + '%'");
+
+        if (!string.IsNullOrWhiteSpace(searchModel.LastName))
+            sql.Append(" AND customer.LastName LIKE '%' + @lastName + '%'");
+
+        if (!string.IsNullOrWhiteSpace(searchModel.Email))
+            sql.Append(" AND customer.Email LIKE '%' + @email + '%'");
+
+        if (!string.IsNullOrWhiteSpace(searchModel.ShipToCode))
+            sql.Append(" AND shipto.ShipToCode LIKE '%' + @shipToCode + '%'");
+
+        if (searchModel.ErpShipToAddressId > 0)
+            sql.Append(" AND erpuser.ErpShipToAddressId = @erpShipToAddressId");
+
+        sql.Append(" ORDER BY account.Id");
+
+        var parameters = new
+        {
+            erpAccountId = searchModel.AccountId,
+            firstName = searchModel.FirstName,
+            lastName = searchModel.LastName,
+            email = searchModel.Email,
+            shipToCode = searchModel.ShipToCode,
+            erpShipToAddressId = searchModel.ErpShipToAddressId
+        };
+
+        var dataTable = await _erpExportImportManager.GetXLWorkbookByQuery(sql.ToString(), parameters);
+
+        using (var workbook = new XLWorkbook())
+        {
+            var worksheet = workbook.Worksheets.Add("ErpNopUsers");
+
+            worksheet.Cell(1, 1).InsertTable(dataTable); // Load data into the worksheet
+
+            using (var stream = new MemoryStream())
+            {
+                workbook.SaveAs(stream);
+                return stream.ToArray();
+            }
+        }
+    }
+
+    #endregion
+
+    #region Import/Excel
+
+    public static async Task<IList<PropertyByName<T, Language>>> GetPropertiesByExcelCellsAsync<T>(IXLWorksheet workbook)
+    {
+        var properties = new List<PropertyByName<T, Language>>();
+        var poz = 1;
+
+        while (true)
+        {
+            try
+            {
+                var x = workbook;
+                var y = x.Cell(1, poz).Value;
+
+                if (string.IsNullOrEmpty(y.ToString()))
+                    break;
+
+                poz += 1;
+                properties.Add(new PropertyByName<T, Language>(y.ToString()));
+
+            }
+            catch
+            {
+                break;
+            }
+        }
+
+        return properties;
+    }
+
+    protected virtual async Task<ErpNopUserExportImportModel> GetModelFromXlsxAsync(
+   PropertyManager<ErpNopUserExportImportModel, Language> manager, IXLWorksheet worksheet, int iRow)
+    {
+        manager.ReadDefaultFromXlsx(worksheet, iRow);
+        var model = new ErpNopUserExportImportModel();
+
+        foreach (var property in manager.GetDefaultProperties)
+        {
+            switch (property.PropertyName)
+            {
+                case "Email":
+                    model.Email = property.StringValue;
+                    break;
+                case "AccountNumber":
+                    model.AccountNumber = property.StringValue;
+                    break;
+                case "AccountName":
+                    model.AccountName = property.StringValue;
+                    break;
+                case "AccountSalesOrganisationCode":
+                    model.AccountSalesOrganisationCode = property.StringValue;
+                    break;
+                case "ShipToCode":
+                    model.ShipToCode = property.StringValue;
+                    break;
+                case "ShipToName":
+                    model.ShipToName = property.StringValue;
+                    break;
+                case "IsActive":
+                    model.IsActive = property.StringValue;
+                    break;
+            }
+        }
+
+        return model;
+    }
+
+    public async Task ImportErpNopUsersFromXlsxAsync(Stream stream)
+    {
+        var dataTable = new DataTable();
+
+        using (var workbook = new XLWorkbook(stream))
+        {
+            var worksheet = workbook.Worksheets.FirstOrDefault();
+            if (worksheet == null)
+                throw new NopException("No workbook found");
+            var properties = await GetPropertiesByExcelCellsAsync<ErpNopUserExportImportModel>(worksheet);
+
+            // Pass the resolved list to the PropertyManager
+            var manager = new PropertyManager<ErpNopUserExportImportModel, Language>(properties, _catalogSettings);
+
+            var iRow = 2;
+            dataTable.Columns.Add(new DataColumn("Email", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("AccountNumber", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("AccountName", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("AccountSalesOrganisationCode", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("ShipToCode", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("ShipToName", typeof(string)));
+            dataTable.Columns.Add(new DataColumn("IsActive", typeof(string)));
+
+            while (true)
+            {
+                var allColumnsAreEmpty = manager.GetDefaultProperties
+                .Select(property => worksheet.Cell(iRow, property.PropertyOrderPosition))
+                .All(cell => cell == null || string.IsNullOrEmpty(cell.GetValue<string>()));
+
+                if (allColumnsAreEmpty)
+                    break;
+
+                var model = await GetModelFromXlsxAsync(manager, worksheet, iRow);
+                var row = dataTable.NewRow();
+                row[dataTable.Columns.IndexOf("Email")] = model.Email;
+                row[dataTable.Columns.IndexOf("AccountNumber")] = model.AccountNumber;
+                row[dataTable.Columns.IndexOf("AccountName")] = model.AccountName;
+                row[dataTable.Columns.IndexOf("AccountSalesOrganisationCode")] = model.AccountSalesOrganisationCode;
+                row[dataTable.Columns.IndexOf("ShipToCode")] = model.ShipToCode;
+                row[dataTable.Columns.IndexOf("ShipToName")] = model.ShipToName;
+                row[dataTable.Columns.IndexOf("IsActive")] = model.IsActive;
+                dataTable.Rows.Add(row);
+                iRow++;
+            }
+        }
+
+        string connectionString = DataSettingsManager.LoadSettings().ConnectionString;
+
+        using (var connection = new SqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            using (var truncateCmd = new SqlCommand("TRUNCATE TABLE [dbo].[ErpNopUserImport]", connection))
+            {
+                truncateCmd.CommandTimeout = 300;
+                await truncateCmd.ExecuteNonQueryAsync();
+            }
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                using (var insertCmd = new SqlCommand(@"
+                INSERT INTO [dbo].[ErpNopUserImport]
+                (Email, AccountNumber, AccountName, AccountSalesOrganisationCode, ShipToCode, ShipToName, IsActive, ErpUserType)
+                VALUES (@Email, @AccountNumber, @AccountName, @AccountSalesOrganisationCode, @ShipToCode, @ShipToName, @IsActive, @ErpUserType)",
+                    connection))
+                {
+                    insertCmd.Parameters.AddWithValue("@Email",row["Email"]);
+                    insertCmd.Parameters.AddWithValue("@AccountNumber",row["AccountNumber"]);
+                    insertCmd.Parameters.AddWithValue("@AccountName", row["AccountName"]);
+                    insertCmd.Parameters.AddWithValue("@AccountSalesOrganisationCode", row["AccountSalesOrganisationCode"]);
+                    insertCmd.Parameters.AddWithValue("@ShipToCode", row["ShipToCode"]);
+                    insertCmd.Parameters.AddWithValue("@ShipToName", row["ShipToName"]);
+                    insertCmd.Parameters.AddWithValue("@IsActive", row["IsActive"]);
+                    insertCmd.Parameters.AddWithValue("@ErpUserType", "B2BUser");
+
+                    await insertCmd.ExecuteNonQueryAsync();
+                }
+            }
+
+            // Call the stored procedure
+            using (var spCmd = new SqlCommand("[dbo].[ErpNopUserImportProcedure]", connection))
+            {
+                spCmd.CommandType = CommandType.StoredProcedure;
+                spCmd.CommandTimeout = 300;
+                spCmd.Parameters.AddWithValue("@CurrentUserId", ((await _workContext.GetCurrentCustomerAsync()).Id));
+
+                await spCmd.ExecuteNonQueryAsync();
+            }
+        }
     }
 
     #endregion

@@ -47,6 +47,9 @@ public record ErpNopUserSearchModel : BaseSearchModel
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUserSearchModel.ErpUserTypeId")]
     public int ErpNopUserTypeId { get; set; }
 
+    [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUserSearchModel.ShipToCode")]
+    public string ShipToCode { get; set; }
+
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUserSearchModel.Show")]
     public int ShowInActive { get; set; }
 

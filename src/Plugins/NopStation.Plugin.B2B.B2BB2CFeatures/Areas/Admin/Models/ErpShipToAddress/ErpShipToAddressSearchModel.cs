@@ -46,6 +46,9 @@ namespace NopStation.Plugin.B2B.B2BB2CFeatures.Areas.Admin.Models.ErpShipToAddre
         [NopResourceDisplayName("B2BB2CFeatures.ErpShipToAddress.Fields.Show")]
         public int ShowInActive { get; set; }
 
+        [NopResourceDisplayName("B2BB2CFeatures.ErpShipToAddress.Fields.SalesOrganisation")]
+        public int ErpSalesOrganisationId { get; set; }
+
         public IList<SelectListItem> ShowInActiveOption { get; set; }
         public IList<SelectListItem> AvailableErpAccounts { get; set; }
 

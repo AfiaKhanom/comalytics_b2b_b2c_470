@@ -513,6 +513,14 @@
         <Value>Last Sync Date of Erp ShipToAddress</Value>
     </LocaleResource>
 
+    <LocaleResource Name="B2BB2CFeatures.ErpShipToAddress.Fields.SalesOrganisation">
+      <Value>Sales organisation</Value>
+    </LocaleResource>
+  
+    <LocaleResource Name="B2BB2CFeatures.ErpShipToAddress.Fields.SalesOrganisation.Hint">
+      <Value>Search by Sales organisation Code</Value>
+    </LocaleResource>
+  
     <LocaleResource Name="B2BB2CFeatures.Admin.ErpShipToAddress">
         <Value>Account branch </Value>
     </LocaleResource>
@@ -1736,6 +1744,14 @@
 
     <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUserSearchModel.Show.Hint">
         <Value>Show all/active/inactive</Value>
+    </LocaleResource>
+  
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUserSearchModel.ShipToCode">
+      <Value>Ship to code</Value>
+    </LocaleResource>
+
+    <LocaleResource Name="Plugin.Misc.NopStation.ERPIntegrationCore.ErpNopUserSearchModel.ShipToCode.Hint">
+      <Value>Code identifier for this ship-to address</Value>
     </LocaleResource>
 
     <!-- Erp Nop User Search end-->
@@ -6244,5 +6260,26 @@
     </LocaleResource>
     <LocaleResource Name="Plugin.Misc.NopStation.B2BB2CFeaturesErpNopUser.Fields.SearchActiveId">
         <Value>Active</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.ErpAccount.Imported">
+      <Value>Erp Account have been imported successfully.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.ErpNopUser.Imported">
+      <Value>Erp Nop User have been imported successfully.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.ErpShipToAddress.Imported">
+      <Value>Erp Ship To Address have been imported successfully.</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.B2B.All">
+      <Value>Export to Excel (All) (Only B2B)</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.B2B.Selected">
+      <Value>Export to Excel (Selected) (Only B2B)</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.B2B.Selected">
+      <Value>Export to Excel (Selected) (Only B2B)</Value>
+    </LocaleResource>
+    <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Import">
+      <Value>Import (Only B2B)</Value>
     </LocaleResource>
 </Language>
