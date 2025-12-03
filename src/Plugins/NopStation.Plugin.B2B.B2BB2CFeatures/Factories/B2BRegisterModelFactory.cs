@@ -99,7 +99,6 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
 
     #region Utilities
 
-    /// <returns>A task that represents the asynchronous operation</returns>
     protected virtual async Task<GdprConsentModel> PrepareGdprConsentModelAsync(GdprConsent consent, bool accepted)
     {
         ArgumentNullException.ThrowIfNull(consent);
@@ -117,7 +116,6 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
 
     protected virtual async Task PrepareB2BSalesOrganisationsAsync(B2BRegisterModel model)
     {
-        //get list of sales org here and prepare the dropdown data
         var salesOrganizations = await _erpSalesOrgService.GetAllErpSalesOrgAsync(showHidden: false);
         if (salesOrganizations.Count == 1)
         {
@@ -138,28 +136,14 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
         }
     }
 
-    protected virtual void SetCustomerAddressFieldsAsRequired(B2BRegisterModel model)
-    {
-        model.PhoneEnabled = true;
-        model.PhoneRequired = true;
-        model.StreetAddressRequired = true;
-        model.StreetAddressEnabled = true;
-        model.StreetAddress2Enabled = true;
-        model.StreetAddress2Required = true;
-        model.ZipPostalCodeEnabled = true;
-        model.ZipPostalCodeRequired = true;
-        model.CountryEnabled = true;
-        model.CountryRequired = true;
-        model.CityEnabled = true;
-        model.CityRequired = true;
-    }
-
     #endregion
 
     #region Methods
 
-    public virtual async Task<B2BRegisterModel> PrepareB2BRegisterModelAsync(B2BRegisterModel model, bool excludeProperties,
-        string overrideCustomCustomerAttributesXml = "", bool setDefaultValues = false)
+    public virtual async Task<B2BRegisterModel> PrepareB2BRegisterModelAsync(B2BRegisterModel model, 
+        bool excludeProperties,
+        string overrideCustomCustomerAttributesXml = "", 
+        bool setDefaultValues = false)
     {
         ArgumentNullException.ThrowIfNull(model);
 
@@ -167,14 +151,19 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
 
         model.AllowCustomersToSetTimeZone = _dateTimeSettings.AllowCustomersToSetTimeZone;
         foreach (var tzi in _dateTimeHelper.GetSystemTimeZones())
-            model.AvailableTimeZones.Add(new SelectListItem { Text = tzi.DisplayName, Value = tzi.Id, Selected = (excludeProperties ? tzi.Id == model.TimeZoneId : tzi.Id == (await _dateTimeHelper.GetCurrentTimeZoneAsync()).Id) });
+        {
+            model.AvailableTimeZones.Add(new SelectListItem 
+            { 
+                Text = tzi.DisplayName, 
+                Value = tzi.Id, 
+                Selected = excludeProperties ? tzi.Id == model.TimeZoneId : tzi.Id == (await _dateTimeHelper.GetCurrentTimeZoneAsync()).Id 
+            });
+        }
 
-        //VAT
         model.DisplayVatNumber = _taxSettings.EuVatEnabled;
         if (_taxSettings.EuVatEnabled && _taxSettings.EuVatEnabledForGuests)
             model.VatNumber = customer.VatNumber;
 
-        //form fields
         model.FirstNameEnabled = _customerSettings.FirstNameEnabled;
         model.LastNameEnabled = _customerSettings.LastNameEnabled;
         model.FirstNameRequired = _customerSettings.FirstNameRequired;
@@ -230,7 +219,11 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
         //countries and states
         if (_customerSettings.CountryEnabled || !model.IsB2BUser)
         {
-            model.AvailableCountries.Add(new SelectListItem { Text = await _localizationService.GetResourceAsync("Address.SelectCountry"), Value = "0" });
+            model.AvailableCountries.Add(new SelectListItem 
+            { 
+                Text = await _localizationService.GetResourceAsync("Address.SelectCountry"), 
+                Value = "0" 
+            });
             var currentLanguage = await _workContext.GetWorkingLanguageAsync();
             foreach (var c in await _countryService.GetAllCountriesAsync(currentLanguage.Id))
             {
@@ -248,11 +241,20 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
                 var states = (await _stateProvinceService.GetStateProvincesByCountryIdAsync(model.CountryId, currentLanguage.Id)).ToList();
                 if (states.Count != 0)
                 {
-                    model.AvailableStates.Add(new SelectListItem { Text = await _localizationService.GetResourceAsync("Address.SelectState"), Value = "0" });
+                    model.AvailableStates.Add(new SelectListItem 
+                    { 
+                        Text = await _localizationService.GetResourceAsync("Address.SelectState"), 
+                        Value = "0" 
+                    });
 
                     foreach (var s in states)
                     {
-                        model.AvailableStates.Add(new SelectListItem { Text = await _localizationService.GetLocalizedAsync(s, x => x.Name), Value = s.Id.ToString(), Selected = (s.Id == model.StateProvinceId) });
+                        model.AvailableStates.Add(new SelectListItem 
+                        { 
+                            Text = await _localizationService.GetLocalizedAsync(s, x => x.Name), 
+                            Value = $"{s.Id}", 
+                            Selected = s.Id == model.StateProvinceId
+                        });
                     }
                 }
                 else
@@ -284,10 +286,7 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
         }
 
         // B2B - Prepare available sales orgs
-        await PrepareB2BSalesOrganisationsAsync(model);
-
-        if (!model.IsB2BUser)
-            SetCustomerAddressFieldsAsRequired(model);
+        await PrepareB2BSalesOrganisationsAsync(model);        
 
         return model;
     }
@@ -312,8 +311,6 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
 
             if (attribute.ShouldHaveValues)
             {
-                //values
-
                 var attributeValues = await _customerAttributeService.GetAttributeValuesAsync(attribute.Id);
 
                 foreach (var attributeValue in attributeValues)
@@ -388,7 +385,9 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
         return result;
     }
 
-    public virtual async Task<ErpAccountCustomerRegistrationFormModel> PrepareErpAccountCustomerRegistrationFormModelAsync(ErpAccountCustomerRegistrationFormModel model, bool setDefaultValues = false)
+    public virtual async Task<ErpAccountCustomerRegistrationFormModel> PrepareErpAccountCustomerRegistrationFormModelAsync(
+        ErpAccountCustomerRegistrationFormModel model, 
+        bool setDefaultValues = false)
     {
         ArgumentNullException.ThrowIfNull(model);
         await PrepareROAddressModelAsync(model.RegisteredOfficeAddress, null, false, _addressSettings, loadCountries: async () => await _countryService.GetAllCountriesAsync((await _workContext.GetWorkingLanguageAsync()).Id));
@@ -560,6 +559,7 @@ public class B2BRegisterModelFactory : IB2BRegisterModelFactory
             model.PhoneNumber_PTA = customer.Phone;
             model.FaxNumber_PTA = customer.Fax;
         }
+
         //countries and states
         if (addressSettings.CountryEnabled && loadCountries != null)
         {
