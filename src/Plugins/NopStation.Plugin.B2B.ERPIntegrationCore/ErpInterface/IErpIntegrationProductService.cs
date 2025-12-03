@@ -26,4 +26,6 @@ public interface IErpIntegrationProductService
     Task<ErpResponseData<IList<ErpPriceSpecialPricingDataModel>>> GetProductSpecialPricesFromErpAsync(ErpGetRequestModel erpRequest);
 
     Task ProductListLiveStockDataAsync(ErpAccount erpAccount, IList<Product> products, IProductService productService);
+
+    Task<ErpResponseData<IList<ErpPriceSpecialPricingDataModel>>> ProductListLivePriceSync(ErpGetRequestModel erpGetRequest);
 }
