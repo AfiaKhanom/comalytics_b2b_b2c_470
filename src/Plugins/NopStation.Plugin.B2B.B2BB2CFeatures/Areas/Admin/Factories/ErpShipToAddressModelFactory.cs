@@ -122,7 +122,7 @@ public class ErpShipToAddressModelFactory : IErpShipToAddressModelFactory
             repEmail: searchModel.SearchRepEmail,
             pageIndex: searchModel.Page - 1,
             pageSize: searchModel.PageSize,
-            showHidden: searchModel.ShowInActive == 0 ? null : searchModel.ShowInActive == 2,
+            showHidden: searchModel.ShowInActive == 0 ? null : (bool?)(searchModel.ShowInActive == 2),
             emailAddresses: searchModel.SearchEmailAddresses);
 
         //prepare list model

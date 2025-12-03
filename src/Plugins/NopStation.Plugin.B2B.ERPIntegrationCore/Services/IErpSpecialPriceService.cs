@@ -27,6 +27,5 @@ public interface IErpSpecialPriceService
     Task<ErpSpecialPrice> GetErpSpecialPricesByErpAccountIdAndNopProductIdAsync(int accountId, int nopProductId);
 
     Task<bool> CheckAnySpecialPriceExistWithAccountIdAndProductId(int accountId, int productId);
-
     Task DeleteSpecialPricesNotUpdatedSinceSyncStart(int accountId, DateTime syncStartTime);
 }

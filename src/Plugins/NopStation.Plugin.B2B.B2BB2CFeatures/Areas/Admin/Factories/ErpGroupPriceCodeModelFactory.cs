@@ -18,18 +18,22 @@ public class ErpGroupPriceCodeModelFactory : IErpGroupPriceCodeModelFactory
 
     private readonly ILocalizationService _localizationService;
     private readonly IErpGroupPriceCodeService _erpGroupPriceCodeService;
+    private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly IB2BFeaturesCommonHelper _b2BFeaturesCommonHelper;
 
     #endregion
 
     #region Ctor
 
-    public ErpGroupPriceCodeModelFactory(ILocalizationService localizationService,
+    public ErpGroupPriceCodeModelFactory(
+        ILocalizationService localizationService,
         IErpGroupPriceCodeService erpGroupPriceCodeService,
+        IErpSalesOrgService erpSalesOrgService,
         IB2BFeaturesCommonHelper b2BFeaturesCommonHelper)
     {
         _localizationService = localizationService;
         _erpGroupPriceCodeService = erpGroupPriceCodeService;
+        _erpSalesOrgService = erpSalesOrgService;
         _b2BFeaturesCommonHelper = b2BFeaturesCommonHelper;
     }
 
@@ -51,9 +55,6 @@ public class ErpGroupPriceCodeModelFactory : IErpGroupPriceCodeModelFactory
         {
             return erpGroupPriceCodes.Select(priceGroup =>
             {
-                if (string.IsNullOrWhiteSpace(priceGroup.Code))
-                    return null;
-
                 var priceGroupModel = new ErpGroupPriceCodeModel
                 {
                     Id = priceGroup.Id,
@@ -63,9 +64,8 @@ public class ErpGroupPriceCodeModelFactory : IErpGroupPriceCodeModelFactory
                 };
 
                 return priceGroupModel;
-            }).Where(model => model != null);
+            });
         });
-
         return model;
     }
 
@@ -79,7 +79,6 @@ public class ErpGroupPriceCodeModelFactory : IErpGroupPriceCodeModelFactory
             model.IsActive = erpGroupPriceCode.IsActive;
             model.LastPriceUpdatedOnUTC = erpGroupPriceCode.LastUpdateTime;
         }
-
         return model;
     }
 
@@ -107,10 +106,23 @@ public class ErpGroupPriceCodeModelFactory : IErpGroupPriceCodeModelFactory
             await PrepareDefaultItem(items);
     }
 
+    public async Task PrepareErpSalesOrgs(IList<SelectListItem> availableErpSalesOrgs, bool withSpecialDefaultItem = false)
+    {
+        ArgumentNullException.ThrowIfNull(availableErpSalesOrgs);
+
+        var availableSalesOrg = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
+        foreach (var salesOrg in availableSalesOrg)
+        {
+            availableErpSalesOrgs.Add(new SelectListItem { Value = salesOrg.Id.ToString(), Text = salesOrg.Name + "_" + salesOrg.Code });
+        }
+
+        if (withSpecialDefaultItem)
+            await PrepareDefaultItem(availableErpSalesOrgs);
+    }
+
     protected async Task PrepareDefaultItem(IList<SelectListItem> items)
     {
         ArgumentNullException.ThrowIfNull(items);
-
         const string value = "0";
         var defaultItemText = await _localizationService.GetResourceAsync("Admin.Common.All");
         items.Insert(0, new SelectListItem { Text = defaultItemText, Value = value });

@@ -429,7 +429,7 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
                         }
 
                         var oldErpGroupPrice = await _erpGroupPriceService.GetErpGroupPriceByErpPriceGroupCodeAndProductId
-                            (productId: product.Id, priceGroupCodeId: oldErpGroupPriceCode.Id);
+                            (salesOrgId: erpAccount.ErpSalesOrgId, productId: product.Id, priceGroupCodeId: oldErpGroupPriceCode.Id);
 
                         if (oldErpGroupPrice == null)
                         {
@@ -488,7 +488,7 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
                                 }
 
                                 var oldErpGroupPrice = await _erpGroupPriceService.GetErpGroupPriceByErpPriceGroupCodeAndProductId
-                                                                    (productId: product.Id, priceGroupCodeId: oldErpGroupPriceCode.Id);
+                                                                    (salesOrgId: erpAccount.ErpSalesOrgId, productId: product.Id, priceGroupCodeId: oldErpGroupPriceCode.Id);
                                 if (oldErpGroupPrice == null)
                                 {
                                     oldErpGroupPrice = new ErpGroupPrice();

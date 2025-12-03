@@ -25,7 +25,11 @@ public class ErpSpecialPriceBuilder : NopEntityBuilder<ErpSpecialPrice>
             .WithColumn(nameof(ErpSpecialPrice.VolumeDiscount)).AsBoolean().Nullable()
             .WithColumn(nameof(ErpSpecialPrice.DiscountPerc)).AsDecimal(18, 4).Nullable()
             .WithColumn(nameof(ErpSpecialPrice.PricingNote)).AsString().Nullable()
-            .WithColumn(nameof(ErpSpecialPrice.ErpAccountId)).AsInt32().ForeignKey<ErpAccount>(onDelete: Rule.None);
+            .WithColumn(nameof(ErpSpecialPrice.Deleted)).AsBoolean().Nullable()
+            .WithColumn(nameof(ErpSpecialPrice.UpdatedOnUtc)).AsDateTime2().Nullable()
+            .WithColumn(nameof(ErpSpecialPrice.CreatedOnUtc)).AsDateTime2().Nullable()
+            .WithColumn(NameCompatibilityManager.GetColumnName(typeof(ErpSpecialPrice), nameof(ErpSpecialPrice.ErpAccountId))).AsInt32()
+                .ForeignKey<ErpAccount>(onDelete: Rule.None);
     }
 
     #endregion

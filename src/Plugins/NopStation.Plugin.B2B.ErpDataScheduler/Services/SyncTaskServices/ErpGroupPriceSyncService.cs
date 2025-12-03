@@ -167,7 +167,7 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
                         Location = salesOrg.Code,
                         PriceCode = priceCode,
                         ProductSku = stockCode,
-                        LastChangedDate = isIncrementalSync ? salesOrg.LastErpGroupPriceSyncTimeOnUtc : null,
+                        LastChangedDate = isIncrementalSync ? salesOrg?.LastErpGroupPriceSyncTimeOnUtc : null,
                         DateFrom = DateTime.UtcNow,
                         DateTo = DateTime.UtcNow,
                     };
@@ -225,6 +225,11 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
 
                     foreach (var erpGroupPrice in responseData)
                     {
+                        if (salesOrg.Code.Trim().ToLower() != erpGroupPrice.SalesOrgCode.Trim().ToLower())
+                        {
+                            totalNotSyncedSoFar++;
+                            continue;
+                        }
                         var product = products.FirstOrDefault(x => x.Sku.Trim().ToLower() == erpGroupPrice.Sku.Trim().ToLower());
 
                         if (product is null)
@@ -283,7 +288,7 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
                             if (await IsValidErpGroupPriceCode(oldErpGroupPriceCode))
                             {
                                 var oldErpGroupPrice = await _erpGroupPriceService.GetErpGroupPriceByErpPriceGroupCodeAndProductId
-                                    (productId: product.Id, priceGroupCodeId: oldErpGroupPriceCode.Id);
+                                    (salesOrgId: salesOrg?.Id ?? 0, productId: product.Id, priceGroupCodeId: oldErpGroupPriceCode.Id);
 
                                 if (oldErpGroupPrice == null)
                                 {
@@ -297,6 +302,7 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
                                     oldErpGroupPrice.UpdatedOnUtc = DateTime.UtcNow;
                                     oldErpGroupPrice.IsActive = true;
                                     oldErpGroupPrice.IsDeleted = false;
+                                    oldErpGroupPrice.ErpSalesOrgId = salesOrg.Code.Trim().ToLower() == erpGroupPrice.SalesOrgCode.Trim().ToLower() ? salesOrg.Id : 0;
 
                                     if (await IsValidErpGroupPrice(oldErpGroupPrice))
                                     {
@@ -312,6 +318,7 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
 
                                     oldErpGroupPrice.UpdatedById = oldErpGroupPriceCode.UpdatedById;
                                     oldErpGroupPrice.UpdatedOnUtc = DateTime.UtcNow;
+                                    oldErpGroupPrice.ErpSalesOrgId = salesOrg.Code.Trim().ToLower() == erpGroupPrice.SalesOrgCode.Trim().ToLower() ? salesOrg.Id : 0;
 
                                     if (await IsValidErpGroupPrice(oldErpGroupPrice))
                                     {
@@ -373,20 +380,18 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
                                     if (await IsValidErpGroupPriceCode(oldErpGroupPriceCode))
                                     {
                                         var oldErpGroupPrice = await _erpGroupPriceService
-                                        .GetErpGroupPriceByErpPriceGroupCodeAndProductId(productId: product.Id, priceGroupCodeId: oldErpGroupPriceCode.Id);
+                                        .GetErpGroupPriceByErpPriceGroupCodeAndProductId(salesOrgId: salesOrg.Id, productId: product.Id, priceGroupCodeId: oldErpGroupPriceCode.Id);
 
                                         if (oldErpGroupPrice == null)
                                         {
                                             oldErpGroupPrice = new ErpGroupPrice();
                                             oldErpGroupPrice.ErpNopGroupPriceCodeId = oldErpGroupPriceCode.Id;
                                             oldErpGroupPrice.NopProductId = product.Id;
-                                            oldErpGroupPrice.Price = erpGroupPrice.Price ?? 0;
+                                            oldErpGroupPrice.Price = erpGroupPrice?.Price ?? 0;
                                             oldErpGroupPrice.CreatedById = oldErpGroupPriceCode.CreatedById;
                                             oldErpGroupPrice.CreatedOnUtc = DateTime.UtcNow;
-                                            oldErpGroupPrice.UpdatedById = oldErpGroupPriceCode.UpdatedById;
-                                            oldErpGroupPrice.UpdatedOnUtc = DateTime.UtcNow;
                                             oldErpGroupPrice.IsActive = true;
-                                            oldErpGroupPrice.IsDeleted = false;
+                                            oldErpGroupPrice.ErpSalesOrgId = salesOrg.Code.Trim().ToLower() == erpGroupPrice.SalesOrgCode.Trim().ToLower() ? salesOrg.Id : 0;
 
                                             if (await IsValidErpGroupPrice(oldErpGroupPrice))
                                             {
@@ -398,10 +403,11 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
                                         else
                                         {
                                             if (!propsToSkip.Contains(nameof(ErpPriceGroupPricingDataModel.Price)))
-                                                oldErpGroupPrice.Price = erpGroupPrice.Price ?? 0;
+                                                oldErpGroupPrice.Price = erpGroupPrice?.Price ?? 0;
 
                                             oldErpGroupPrice.UpdatedById = oldErpGroupPriceCode.UpdatedById;
                                             oldErpGroupPrice.UpdatedOnUtc = DateTime.UtcNow;
+                                            oldErpGroupPrice.ErpSalesOrgId = salesOrg.Code.Trim().ToLower() == erpGroupPrice.SalesOrgCode.Trim().ToLower() ? salesOrg.Id : 0;
 
                                             if (await IsValidErpGroupPrice(oldErpGroupPrice))
                                             {
@@ -470,7 +476,7 @@ public class ErpGroupPriceSyncService : IErpGroupPriceSyncService
                     await _erpSyncLogService.SyncLogSaveOnFileAsync(
                         ErpDataSchedulerDefaults.ErpGroupPriceSyncTaskName,
                         ErpSyncLevel.GroupPrice,
-                        $"Erp Group Price sync successful for Sales Org - ({salesOrg.Code}) {salesOrg.Name}. " 
+                        $"Erp Group Price sync successful for Sales Org - ({salesOrg.Code}) {salesOrg.Name}. "
                         /*+ $"The group prices which were updated before {syncStartTime} are deactivated."*/);
                 }
                 else

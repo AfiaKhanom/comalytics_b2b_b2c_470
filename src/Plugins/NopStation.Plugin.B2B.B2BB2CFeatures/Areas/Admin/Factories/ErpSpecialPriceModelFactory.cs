@@ -70,6 +70,7 @@ public class ErpSpecialPriceModelFactory : IErpSpecialPriceModelFactory
                     Id = productPricing.Id,
                     ProductId = productPricing.NopProductId,
                     Price = productPricing.Price,
+                    ListPrice = productPricing.ListPrice,
                     PricingNote = productPricing.PricingNote,
                     DiscountPerc = productPricing.DiscountPerc,
                     PercentageOfAllocatedStock = productPricing.PercentageOfAllocatedStock
@@ -92,6 +93,9 @@ public class ErpSpecialPriceModelFactory : IErpSpecialPriceModelFactory
                 return pricingModel;
             }).Where(x => x.ErpAccountId > 0 && x.ErpAccountSalesOrgId > 0);
         });
+
+        model.Data = model.Data.OrderBy(x => x.ErpAccountNumber);
+
         return model;
     }
 
@@ -105,6 +109,7 @@ public class ErpSpecialPriceModelFactory : IErpSpecialPriceModelFactory
             model.Id = erpProductPricing.Id;
             model.ProductId = erpProductPricing.NopProductId;
             model.Price = erpProductPricing.Price;
+            model.ListPrice = erpProductPricing.ListPrice;
             model.DiscountPerc = erpProductPricing.DiscountPerc;
             model.PricingNote = erpProductPricing.PricingNote;
             model.PercentageOfAllocatedStock = erpProductPricing.PercentageOfAllocatedStock;

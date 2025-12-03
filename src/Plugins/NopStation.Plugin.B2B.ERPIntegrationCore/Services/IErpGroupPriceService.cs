@@ -20,15 +20,14 @@ public interface IErpGroupPriceService
 
     Task<ErpGroupPrice> GetErpGroupPriceByIdWithActiveAsync(int id);
 
-    Task<IPagedList<ErpGroupPrice>> GetAllErpGroupPricesAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false, bool getOnlyTotalCount = false, bool? overridePublished = false, int productId = 0, string groupCode = null);
+    Task<IPagedList<ErpGroupPrice>> GetAllErpGroupPricesAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false, bool getOnlyTotalCount = false, bool? overridePublished = false, int productId = 0, string groupCode = null, int salesOrgId = 0);
 
     Task<IList<ErpGroupPrice>> GetErpGroupPriceByProductIdAsync(int productId);
 
-    Task<ErpGroupPrice> GetErpGroupPriceByErpPriceGroupCodeAndProductId(int priceGroupCodeId, int productId);
+    Task<ErpGroupPrice> GetErpGroupPriceByErpPriceGroupCodeAndProductId(int salesOrgId, int priceGroupCodeId, int productId);
 
-    Task<bool> CheckAnyErpGroupPriceExistWithProductIdAndErpGroupPriceCodeId(int prouctdId, int priceGroupCodeId);
+    Task<bool> CheckAnyErpGroupPriceExistWithProductIdAndErpGroupPriceCodeId(int salesOrgId, int prouctdId, int priceGroupCodeId);
     Task InActiveAllOldGroupPrice(DateTime syncStartTime);
-
     Task DeleteGroupPricesNotUpdatedSinceSyncStart(int salesOrgId, DateTime syncStartTime);
 }
 

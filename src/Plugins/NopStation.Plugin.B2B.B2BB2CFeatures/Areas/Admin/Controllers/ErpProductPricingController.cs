@@ -332,7 +332,7 @@ public class ErpProductPricingController : NopStationAdminController
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel))
             return AccessDeniedView();
 
-        if (await _erpGroupPriceService.CheckAnyErpGroupPriceExistWithProductIdAndErpGroupPriceCodeId(model.ProductId, model.ErpGroupPriceCodeId))
+        if (await _erpGroupPriceService.CheckAnyErpGroupPriceExistWithProductIdAndErpGroupPriceCodeId(model.ErpSalesOrgId, model.ProductId, model.ErpGroupPriceCodeId))
         {
             ModelState.AddModelError("ErpGroupPriceCodeId", await _localizationService.GetResourceAsync("Plugin.Misc.NopStation.ERPIntegrationCore.ErpGroupPrice.ActivityLog.ErpPriceGroupProductPricing.AlreadyExist"));
         }
@@ -344,10 +344,13 @@ public class ErpProductPricingController : NopStationAdminController
             {
                 NopProductId = productId,
                 ErpNopGroupPriceCodeId = model.ErpGroupPriceCodeId,
+                ErpSalesOrgId = model.ErpSalesOrgId,
                 Price = model.Price,
                 IsActive = true,
                 CreatedById = customer.Id,
+                UpdatedById = customer.Id,
                 CreatedOnUtc = DateTime.UtcNow,
+                UpdatedOnUtc = DateTime.UtcNow
             };
             await _erpGroupPriceService.InsertErpGroupPriceAsync(erpProductPricing);
 

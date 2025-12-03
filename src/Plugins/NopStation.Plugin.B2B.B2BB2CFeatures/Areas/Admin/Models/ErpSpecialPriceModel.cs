@@ -26,7 +26,6 @@ public record ErpSpecialPriceModel : BaseNopEntityModel
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.ErpAccountNumber")]
     public string ErpAccountNumber { get; set; }
 
-
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpSpecialPrice.Fields.ErpGroupPriceCode")]
     public int ErpGroupPriceCodeId { get; set; }
 
