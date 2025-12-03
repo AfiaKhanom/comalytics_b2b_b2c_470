@@ -79,6 +79,18 @@ public class ErpSpecialPriceService : IErpSpecialPriceService
         }
     }
 
+    public async Task DeleteSpecialPricesNotUpdatedSinceSyncStart(int accountId, DateTime syncStartTime)
+    {
+        if (syncStartTime == DateTime.MinValue)
+            return;
+
+        var connectionString = new SqlConnectionStringBuilder(DataSettingsManager.LoadSettings().ConnectionString);
+
+        var sqlCommand = $"Update [{connectionString.InitialCatalog}].[dbo].[Erp_Special_Price] Set [Deleted] = 1 Where [ErpAccount_Id] = {accountId} and ([UpdatedOnUtc] < '{syncStartTime:yyyy-MM-dd HH:mm:ss}' or [UpdatedOnUtc] is null)";
+
+        await _nopDataProvider.ExecuteNonQueryAsync(sqlCommand);
+    }
+
     #endregion
 
     #region Read
@@ -88,7 +100,7 @@ public class ErpSpecialPriceService : IErpSpecialPriceService
         if (id == 0)
             return null;
 
-        return await _erpSpecialPriceRepository.GetByIdAsync(id, cache => default);
+        return await _erpSpecialPriceRepository.GetByIdAsync(id, cache => default, includeDeleted: false);
     }
 
     public async Task<IPagedList<ErpSpecialPrice>> GetAllErpSpecialPricesAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, bool? overridePublished = null, int productId = 0, int accountId = 0, bool onlyIncludeActiveErpAccountsMappedPrices = false)
@@ -114,7 +126,7 @@ public class ErpSpecialPriceService : IErpSpecialPriceService
             query = query.OrderBy(ei => ei.Id);
 
             return query;
-        }, pageIndex, pageSize, getOnlyTotalCount);
+        }, pageIndex, pageSize, getOnlyTotalCount, includeDeleted: false);
 
         return erpSpecialPrice;
     }
@@ -129,8 +141,7 @@ public class ErpSpecialPriceService : IErpSpecialPriceService
             query = query.Where(ei => ei.ErpAccountId == erpAcoountId);
             query = query.OrderBy(ei => ei.Id);
             return query;
-
-        });
+        }, includeDeleted: false);
 
         return erpSpecialPrices;
     }
@@ -146,7 +157,7 @@ public class ErpSpecialPriceService : IErpSpecialPriceService
                    where sp.NopProductId == nopProductId
                    orderby sp.Id descending
                    select sp;
-        }, cache => cache.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpProductPricingSpecialPriceByProductCacheKey, nopProductId));
+        }, cache => cache.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpProductPricingSpecialPriceByProductCacheKey, nopProductId), includeDeleted: false);
 
         return erpSpecialPrices;
     }
@@ -158,7 +169,7 @@ public class ErpSpecialPriceService : IErpSpecialPriceService
 
         var key = _staticCacheManager.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpProductPricingSpecialPriceByProductIdAndAccountCacheKey, nopProductId, accountId);
 
-        var query = _erpSpecialPriceRepository.Table.Where(b => b.ErpAccountId == accountId && b.NopProductId == nopProductId);
+        var query = _erpSpecialPriceRepository.Table.Where(b => b.ErpAccountId == accountId && b.NopProductId == nopProductId && !b.Deleted);
 
         return await _staticCacheManager.GetAsync(key, async () => await query.FirstOrDefaultAsync());
     }
@@ -169,18 +180,6 @@ public class ErpSpecialPriceService : IErpSpecialPriceService
             return false;
 
         return await GetErpSpecialPricesByErpAccountIdAndNopProductIdAsync(accountId, productId) != null;
-    }
-
-    public async Task DeleteSpecialPricesNotUpdatedSinceSyncStart(int accountId, DateTime syncStartTime)
-    {
-        if (syncStartTime == DateTime.MinValue)
-            return;
-
-        var connectionString = new SqlConnectionStringBuilder(DataSettingsManager.LoadSettings().ConnectionString);
-
-        var sqlCommand = $"Update [{connectionString.InitialCatalog}].[dbo].[Erp_Special_Price] Set [Deleted] = 1 Where [ErpAccount_Id] = {accountId} and ([UpdatedOnUtc] < '{syncStartTime:yyyy-MM-dd HH:mm:ss}' or [UpdatedOnUtc] is null)";
-
-        await _nopDataProvider.ExecuteNonQueryAsync(sqlCommand);
     }
 
     #endregion

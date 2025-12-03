@@ -2,6 +2,7 @@
 using FluentMigrator.Builders.Create.Table;
 using Nop.Core.Domain.Catalog;
 using Nop.Data.Extensions;
+using Nop.Data.Mapping;
 using Nop.Data.Mapping.Builders;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
@@ -18,9 +19,10 @@ public class ErpGroupPriceBuilder : NopEntityBuilder<ErpGroupPrice>
     public override void MapEntity(CreateTableExpressionBuilder table)
     {
         table
-            .WithColumn(nameof(ErpGroupPrice.ErpNopGroupPriceCodeId)).AsInt32().ForeignKey<ErpGroupPriceCode>(onDelete: Rule.None)
-            .WithColumn(nameof(ErpGroupPrice.NopProductId)).AsInt32().ForeignKey<Product>(onDelete: Rule.None)
-            .WithColumn(nameof(ErpGroupPrice.Price)).AsDecimal(18, 4); 
+            .WithColumn(NameCompatibilityManager.GetColumnName(typeof(ErpGroupPrice), nameof(ErpGroupPrice.ErpNopGroupPriceCodeId))).AsInt32().ForeignKey<ErpGroupPriceCode>(onDelete: Rule.None)
+            .WithColumn(NameCompatibilityManager.GetColumnName(typeof(ErpGroupPrice), nameof(ErpGroupPrice.NopProductId))).AsInt32().ForeignKey<Product>(onDelete: Rule.None)
+            .WithColumn(nameof(ErpGroupPrice.ErpSalesOrgId)).AsInt32().Nullable()
+            .WithColumn(nameof(ErpGroupPrice.Price)).AsDecimal(18, 4);
     }
 
     #endregion

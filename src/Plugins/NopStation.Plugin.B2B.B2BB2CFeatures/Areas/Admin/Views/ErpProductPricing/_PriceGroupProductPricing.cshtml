@@ -30,6 +30,15 @@
                                 <nop-editor asp-for="SearchErpPriceGroupCode" />
                             </div>
                         </div>
+
+                        <div class="form-group row">
+                            <div class="col-md-4">
+                                <nop-label asp-for="ErpSalesOrgId" />
+                            </div>
+                            <div class="col-md-8">
+                                <nop-select asp-for="ErpSalesOrgId" asp-items="Model.AvailableErpSalesOrgs" />
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="form-group row">
@@ -61,6 +70,13 @@
                             new FilterParameter(nameof(Model.SearchErpPriceGroupCode))
                         }
                     };
+
+                    groupProductPricingGridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpPriceGroupProductPricingModel.ErpSalesOrgCode))
+                    {
+                        Title = T("Plugin.Misc.NopStation.ERPIntegrationCore.ErpGroupPrice.Fields.ErpSalesOrgCode").Text,
+                        Width = "0",
+                        ClassName = NopColumnClassDefaults.CenterAll
+                    });
 
                     groupProductPricingGridModel.ColumnCollection.Add(new ColumnProperty(nameof(ErpPriceGroupProductPricingModel.ErpGroupPriceCodeId))
                     {
@@ -113,6 +129,15 @@
                             {
                                 <div class="form-group row">
                                     <div class="col-md-3">
+                                        <nop-label asp-for="@Model.AddErpPriceGroupProductPricing.ErpSalesOrgId" />
+                                    </div>
+                                    <div class="col-md-9">
+                                        <nop-select asp-for="@Model.AddErpPriceGroupProductPricing.ErpSalesOrgId" asp-items="@Model.AddErpPriceGroupProductPricing.AvailableErpSalesOrgs" />
+                                        <span asp-validation-for="@Model.AddErpPriceGroupProductPricing.ErpSalesOrgId"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-md-3">
                                         <nop-label asp-for="@Model.AddErpPriceGroupProductPricing.ErpGroupPriceCodeId" />
                                     </div>
                                     <div class="col-md-9">
@@ -146,6 +171,7 @@
                                 $('#addPriceGroupProductPricing').click(function () {
                                     $('#addPriceGroupProductPricing').attr('disabled', true);
                                     var postData = {
+                                        ErpSalesOrgId: $("#@Html.IdFor(model => model.AddErpPriceGroupProductPricing.ErpSalesOrgId)").val(),
                                         ErpGroupPriceCodeId: $("#@Html.IdFor(model => model.AddErpPriceGroupProductPricing.ErpGroupPriceCodeId)").val(),
                                         Price: $("#@Html.IdFor(model => model.AddErpPriceGroupProductPricing.Price)").val()
                                     };

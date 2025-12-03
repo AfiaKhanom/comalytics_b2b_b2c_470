@@ -10,6 +10,7 @@ public record ErpPriceGroupProductPricingModel : BaseNopEntityModel
     public ErpPriceGroupProductPricingModel()
     {
         AvailableErpPriceGroupCodes = new List<SelectListItem>();
+        AvailableErpSalesOrgs = new List<SelectListItem>();
     }
 
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpGroupPrice.Fields.Product")]
@@ -17,6 +18,12 @@ public record ErpPriceGroupProductPricingModel : BaseNopEntityModel
 
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpGroupPrice.Fields.Product")]
     public string ProductSku { get; set; }
+
+    [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpGroupPrice.Fields.ErpSalesOrg")]
+    public int ErpSalesOrgId { get; set; }
+
+    [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpGroupPrice.Fields.ErpSalesOrgCode")]
+    public string ErpSalesOrgCode { get; set; }
 
     [NopResourceDisplayName("Plugin.Misc.NopStation.ERPIntegrationCore.ErpGroupPrice.Fields.PriceGroupCode")]
     public int ErpGroupPriceCodeId { get; set; }
@@ -31,4 +38,5 @@ public record ErpPriceGroupProductPricingModel : BaseNopEntityModel
     public bool IsActive { get; set; }
 
     public IList<SelectListItem> AvailableErpPriceGroupCodes { get; set; }
+    public IList<SelectListItem> AvailableErpSalesOrgs { get; set; }
 }

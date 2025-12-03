@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
+using NopStation.Plugin.B2B.B2BB2CFeatures;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncLogServices;
 using NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncWorkflowMessage;
 using NopStation.Plugin.B2B.ERPIntegrationCore;
@@ -9,6 +10,7 @@ using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Validators.Helpers;
+using System;
 
 namespace NopStation.Plugin.B2B.ErpDataScheduler.Services.SyncTaskServices;
 
@@ -27,6 +29,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
     private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
     private readonly IValidator<ErpSpecialPrice> _erpSpecialPriceValidator;
     private readonly ERPIntegrationCoreDataMappingSettings _dataMappingSettings;
+    private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
 
     #endregion
 
@@ -42,7 +45,8 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
         IValidator<ErpSpecialPrice> erpSpecialPriceValidator,
         IStaticCacheManager staticCacheManager,
         ISyncWorkflowMessageService syncWorkflowMessageService,
-        ERPIntegrationCoreDataMappingSettings dataMappingSettings)
+        ERPIntegrationCoreDataMappingSettings dataMappingSettings,
+        B2BB2CFeaturesSettings b2BB2CFeaturesSettings)
     {
         _erpProductService = erpProductService;
         _erpSyncLogService = erpSyncLogService;
@@ -55,6 +59,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
         _syncWorkflowMessageService = syncWorkflowMessageService;
         _erpSpecialPriceValidator = erpSpecialPriceValidator;
         _dataMappingSettings = dataMappingSettings;
+        _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
     }
 
     #endregion
@@ -241,7 +246,7 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
 
                         products = (List<Product>?)await _erpProductService
                             .GetProductsBySkuAsync(
-                                responseData.Select(x => x.Sku.Trim().ToLower()).ToArray(), 
+                                responseData.Select(x => x.Sku.Trim().ToLower()).ToArray(),
                                 filterOutDeleted: true,
                                 filterOutUnpublished: true);
 
@@ -266,6 +271,9 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                                 oldSpecialPrice.PercentageOfAllocatedStock = 0;
                                 oldSpecialPrice.PercentageOfAllocatedStockResetTimeUtc = DateTime.MinValue;
                                 oldSpecialPrice.VolumeDiscount = true;
+                                oldSpecialPrice.UpdatedOnUtc = DateTime.UtcNow;
+                                oldSpecialPrice.CreatedOnUtc = DateTime.UtcNow;
+                                oldSpecialPrice.Deleted = false;
                                 oldSpecialPrice.PricingNote = erpSpecialPrice.PricingNotes;
                                 oldSpecialPrice.DiscountPerc = erpSpecialPrice.DiscountPercentage ?? 0;                                
 
@@ -278,6 +286,8 @@ public class ErpSpecialPriceSyncService : IErpSpecialPriceSyncService
                             }
                             else
                             {
+                                oldSpecialPrice.UpdatedOnUtc = DateTime.UtcNow;
+                                oldSpecialPrice.Deleted = false;
                                 if (!propsToSkip.Contains(nameof(ErpPriceSpecialPricingDataModel.SpecialPrice)))
                                     oldSpecialPrice.Price = erpSpecialPrice.SpecialPrice ?? 0;
 

@@ -87,7 +87,7 @@ public class OverridenPriceCalculationService : PriceCalculationService
     private async Task<(decimal, decimal)> GetGroupPriceAsync(ErpAccount erpAccount, int productId)
     {
         var priceGroupProductPricing = await _erpGroupPriceService
-            .GetErpGroupPriceByErpPriceGroupCodeAndProductId(erpAccount.B2BPriceGroupCodeId ?? 0, productId);
+            .GetErpGroupPriceByErpPriceGroupCodeAndProductId(erpAccount.ErpSalesOrgId, erpAccount.B2BPriceGroupCodeId ?? 0, productId);
 
         if (priceGroupProductPricing != null && priceGroupProductPricing.Id > 0)
         {

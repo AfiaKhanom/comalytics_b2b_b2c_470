@@ -15,6 +15,7 @@ public class ErpGroupPriceModelFactory : IErpGroupPriceModelFactory
     private readonly IErpGroupPriceService _erpGroupPriceService;
     private readonly IErpGroupPriceCodeService _erpPriceGroupCodeService;
     private readonly IErpGroupPriceCodeModelFactory _erpPriceGroupCodeModelFactory;
+    private readonly IErpSalesOrgService _erpSalesOrgService;
 
     #endregion
 
@@ -23,11 +24,13 @@ public class ErpGroupPriceModelFactory : IErpGroupPriceModelFactory
     public ErpGroupPriceModelFactory(
         IErpGroupPriceService erpGroupPriceService,
         IErpGroupPriceCodeService erpPriceGroupCodeService,
-        IErpGroupPriceCodeModelFactory erpPriceGroupCodeModelFactory)
+        IErpGroupPriceCodeModelFactory erpPriceGroupCodeModelFactory,
+        IErpSalesOrgService erpSalesOrgService)
     {
         _erpGroupPriceService = erpGroupPriceService;
         _erpPriceGroupCodeService = erpPriceGroupCodeService;
         _erpPriceGroupCodeModelFactory = erpPriceGroupCodeModelFactory;
+        _erpSalesOrgService = erpSalesOrgService;
     }
 
     #endregion
@@ -40,6 +43,7 @@ public class ErpGroupPriceModelFactory : IErpGroupPriceModelFactory
 
         searchModel.ProductId = productId;
         searchModel.SetGridPageSize();
+        await _erpPriceGroupCodeModelFactory.PrepareErpSalesOrgs(searchModel.AvailableErpSalesOrgs, false);
         await PrepareErpProductPricingModel(searchModel.AddErpPriceGroupProductPricing, null);
         return searchModel;
     }
@@ -48,22 +52,17 @@ public class ErpGroupPriceModelFactory : IErpGroupPriceModelFactory
     {
         ArgumentNullException.ThrowIfNull(searchModel);
 
-        var erpProductPricings = await _erpGroupPriceService.GetAllErpGroupPricesAsync(
-            pageIndex: searchModel.Page - 1, 
-            pageSize: searchModel.PageSize, 
-            showHidden: false, 
-            getOnlyTotalCount: false, 
-            overridePublished: false, 
-            productId: searchModel.ProductId, 
-            groupCode: searchModel.SearchErpPriceGroupCode);
+        var erpProductPricings = await _erpGroupPriceService.GetAllErpGroupPricesAsync(pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize, showHidden: false, getOnlyTotalCount: false, overridePublished: false, productId: searchModel.ProductId, groupCode: searchModel.SearchErpPriceGroupCode, salesOrgId: searchModel.ErpSalesOrgId);
 
         var erpGroupPriceCodes = await _erpPriceGroupCodeService.GetAllErpGroupPriceCodesAsync();
+        var erpSalesOrgs = await _erpSalesOrgService.GetAllErpSalesOrgsAsync();
 
         var model = new ErpPriceGroupProductPricingListModel().PrepareToGrid(searchModel, erpProductPricings, () =>
         {
             return erpProductPricings.Select(productPricing =>
             {
                 var erpGroupPriceCodeCheck = erpGroupPriceCodes.FirstOrDefault(f => f.Id == productPricing.ErpNopGroupPriceCodeId);
+                var erpSalesOrgCheck = erpSalesOrgs.FirstOrDefault(f => f.Id == productPricing.ErpSalesOrgId);
 
                 if (erpGroupPriceCodeCheck is null)
                 {
@@ -73,13 +72,14 @@ public class ErpGroupPriceModelFactory : IErpGroupPriceModelFactory
                 {
                     Id = productPricing.Id,
                     ProductId = productPricing.NopProductId,
+                    ErpSalesOrgId = productPricing.ErpSalesOrgId,
+                    ErpSalesOrgCode = erpSalesOrgCheck?.Code ?? string.Empty,
                     ErpGroupPriceCodeId = productPricing.ErpNopGroupPriceCodeId,
                     ErpGroupPriceCode = erpGroupPriceCodeCheck.Code,
                     Price = productPricing.Price
                 };
-
                 return pricingModel;
-            }).Where(x => x != null);
+            });
         });
         return model;
     }
@@ -93,12 +93,15 @@ public class ErpGroupPriceModelFactory : IErpGroupPriceModelFactory
             model ??= new ErpPriceGroupProductPricingModel();
             model.Id = erpProductPricing.Id;
             model.ProductId = erpProductPricing.NopProductId;
+            model.ErpSalesOrgId = erpProductPricing.ErpSalesOrgId;
             model.ErpGroupPriceCodeId = erpProductPricing.ErpNopGroupPriceCodeId;
             model.ErpGroupPriceCode = erpGroupPriceCode.Code;
             model.Price = erpProductPricing.Price;
         }
 
-        _erpPriceGroupCodeModelFactory.PrepareErpGroupPriceCodes(model.AvailableErpPriceGroupCodes, false);
+        await _erpPriceGroupCodeModelFactory.PrepareErpGroupPriceCodes(model.AvailableErpPriceGroupCodes, false);
+        await _erpPriceGroupCodeModelFactory.PrepareErpSalesOrgs(model.AvailableErpSalesOrgs, false);
+
         return model;
     }
 

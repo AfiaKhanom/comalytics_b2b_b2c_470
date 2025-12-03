@@ -105,6 +105,24 @@
                     </div>
                     <div class="form-group row">
                         <div class="col-md-3">
+                            <nop-label asp-for="ListPrice" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="ListPrice" asp-required="true" />
+                            <span asp-validation-for="ListPrice"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="DiscountPerc" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="DiscountPerc" asp-required="true" />
+                            <span asp-validation-for="DiscountPerc"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
                             <nop-label asp-for="PricingNote" />
                         </div>
                         <div class="col-md-9">

@@ -12,4 +12,5 @@ public interface IErpGroupPriceCodeModelFactory
     Task<ErpGroupPriceCodeListModel> PrepareErpGroupPriceCodeListModelAsync(ErpGroupPriceCodeSearchModel searchModel);
     Task<ErpGroupPriceCodeModel> PrepareErpGroupPriceCodeModelAsync(ErpGroupPriceCodeModel model, ErpGroupPriceCode erpGroupPriceCode);
     Task PrepareErpGroupPriceCodes(IList<SelectListItem> items, bool withSpecialDefaultItem = false);
+    Task PrepareErpSalesOrgs(IList<SelectListItem> availableErpSalesOrgs, bool withSpecialDefaultItem = false);
 }

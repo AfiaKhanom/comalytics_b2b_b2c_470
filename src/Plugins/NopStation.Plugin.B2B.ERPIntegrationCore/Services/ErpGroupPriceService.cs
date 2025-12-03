@@ -80,6 +80,18 @@ public class ErpGroupPriceService : IErpGroupPriceService
         }
     }
 
+    public async Task DeleteGroupPricesNotUpdatedSinceSyncStart(int salesOrgId, DateTime syncStartTime)
+    {
+        if (syncStartTime == DateTime.MinValue)
+            return;
+
+        var connectionString = new SqlConnectionStringBuilder(DataSettingsManager.LoadSettings().ConnectionString);
+
+        var sqlCommand = $"Update [{connectionString.InitialCatalog}].[dbo].[Erp_Group_Price] Set [IsDeleted] = 1 Where [ErpSalesOrgId] = {salesOrgId} and [UpdatedOnUtc] < '{syncStartTime:yyyy-MM-dd HH:mm:ss}' or [UpdatedOnUtc] is null";
+
+        await _nopDataProvider.ExecuteNonQueryAsync(sqlCommand);
+    }
+
     #endregion
 
     #region Read
@@ -137,7 +149,7 @@ public class ErpGroupPriceService : IErpGroupPriceService
     /// The task result contains all the ErpGroupPrices
     /// </returns>
     public async Task<IPagedList<ErpGroupPrice>> GetAllErpGroupPricesAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false, bool getOnlyTotalCount = false, bool? overridePublished = false,
-        int productId = 0, string groupCode = null)
+        int productId = 0, string groupCode = null, int salesOrgId = 0)
     {
         var erpGroupPrices = await _erpGroupPriceRepository.GetAllPagedAsync(query =>
         {
@@ -146,6 +158,9 @@ public class ErpGroupPriceService : IErpGroupPriceService
 
             if (productId > 0)
                 query = query.Where(egp => egp.NopProductId == productId);
+
+            if (salesOrgId > 0)
+                query = query.Where(egp => egp.ErpSalesOrgId == salesOrgId);
 
             if (!string.IsNullOrEmpty(groupCode))
             {
@@ -183,25 +198,25 @@ public class ErpGroupPriceService : IErpGroupPriceService
     }
 
 
-    public async Task<ErpGroupPrice> GetErpGroupPriceByErpPriceGroupCodeAndProductId(int priceGroupCodeId, int productId)
+    public async Task<ErpGroupPrice> GetErpGroupPriceByErpPriceGroupCodeAndProductId(int salesOrgId, int priceGroupCodeId, int productId)
     {
-        if (productId == 0 || priceGroupCodeId == 0)
+        if (productId == 0 || priceGroupCodeId == 0 || salesOrgId == 0)
             return null;
 
         var key = _staticCacheManager.PrepareKeyForDefaultCache(ERPIntegrationCoreDefaults.ErpProductPricingGroupPriceByProductIdAndPriceGroupIdCacheKey, productId, priceGroupCodeId);
 
         var query = _erpGroupPriceRepository.Table
-            .Where(egp => egp.NopProductId == productId && egp.ErpNopGroupPriceCodeId == priceGroupCodeId && !egp.IsDeleted && egp.IsActive);
+            .Where(egp => egp.ErpSalesOrgId == salesOrgId && egp.NopProductId == productId && egp.ErpNopGroupPriceCodeId == priceGroupCodeId && !egp.IsDeleted && egp.IsActive);
 
         return await _staticCacheManager.GetAsync(key, async () => await query.FirstOrDefaultAsync());
     }
 
-    public async Task<bool> CheckAnyErpGroupPriceExistWithProductIdAndErpGroupPriceCodeId(int prouctdId, int priceGroupCodeId)
+    public async Task<bool> CheckAnyErpGroupPriceExistWithProductIdAndErpGroupPriceCodeId(int salesOrgId, int prouctdId, int priceGroupCodeId)
     {
         if (prouctdId == 0 || priceGroupCodeId == 0)
             return false;
 
-        return await GetErpGroupPriceByErpPriceGroupCodeAndProductId(priceGroupCodeId, prouctdId) != null;
+        return await GetErpGroupPriceByErpPriceGroupCodeAndProductId(salesOrgId, priceGroupCodeId, prouctdId) != null;
     }
 
     public async Task InActiveAllOldGroupPrice(DateTime syncStartTime)
@@ -212,17 +227,6 @@ public class ErpGroupPriceService : IErpGroupPriceService
         var connectionString = new SqlConnectionStringBuilder(DataSettingsManager.LoadSettings().ConnectionString);
 
         var sqlCommand = $"Update [{connectionString.InitialCatalog}].[dbo].[Erp_Group_Price] Set [IsActive] = 0 Where [UpdatedOnUtc] < '{syncStartTime:yyyy-MM-dd HH:mm:ss}'";
-
-        await _nopDataProvider.ExecuteNonQueryAsync(sqlCommand);
-    }
-    public async Task DeleteGroupPricesNotUpdatedSinceSyncStart(int salesOrgId, DateTime syncStartTime)
-    {
-        if (syncStartTime == DateTime.MinValue)
-            return;
-
-        var connectionString = new SqlConnectionStringBuilder(DataSettingsManager.LoadSettings().ConnectionString);
-
-        var sqlCommand = $"Update [{connectionString.InitialCatalog}].[dbo].[Erp_Group_Price] Set [IsDeleted] = 1 Where [UpdatedOnUtc] < '{syncStartTime:yyyy-MM-dd HH:mm:ss}' or [UpdatedOnUtc] is null";
 
         await _nopDataProvider.ExecuteNonQueryAsync(sqlCommand);
     }
