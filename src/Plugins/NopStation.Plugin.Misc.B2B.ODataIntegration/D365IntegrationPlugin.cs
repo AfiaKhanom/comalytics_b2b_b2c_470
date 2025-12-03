@@ -1445,6 +1445,11 @@ namespace NopStation.Plugin.Misc.B2B.ODataIntegration
             throw new NotImplementedException();
         }
 
+        public Task<ErpResponseData<IList<ErpPriceSpecialPricingDataModel>>> ProductListLivePriceSync(ErpGetRequestModel erpGetRequest)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
     }
 }

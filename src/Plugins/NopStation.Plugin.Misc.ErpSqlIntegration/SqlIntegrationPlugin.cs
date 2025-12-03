@@ -677,6 +677,11 @@ public class SqlIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegratio
         throw new NotImplementedException();
     }
 
+    public Task<ErpResponseData<IList<ErpPriceSpecialPricingDataModel>>> ProductListLivePriceSync(ErpGetRequestModel erpGetRequest)
+    {
+        throw new NotImplementedException();
+    }
+
     #endregion
 
     #endregion

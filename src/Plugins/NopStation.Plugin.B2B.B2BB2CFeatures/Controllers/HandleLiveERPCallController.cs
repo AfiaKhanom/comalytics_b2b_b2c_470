@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Nop.Core;
+using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Orders;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
@@ -12,6 +15,9 @@ using Nop.Services.Orders;
 using Nop.Web.Controllers;
 using Nop.Web.Framework.Mvc;
 using NopStation.Plugin.B2B.B2BB2CFeatures;
+using NopStation.Plugin.B2B.B2BB2CFeatures.Services.ErpPriceSyncFunctionality;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
+using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Services;
 
@@ -30,7 +36,12 @@ public class HandleLiveErpCallController : BasePublicController
     private readonly IDateTimeHelper _dateTimeHelper;
     private readonly IErpAccountService _erpAccountService;
     private readonly ILocalizationService _localizationService;
-    private readonly IErpIntegrationPluginManager _erpIntegrationPluginService;
+    private readonly IErpIntegrationPluginManager _erpIntegrationPluginManager;
+    private readonly IErpSalesOrgService _erpSalesOrgService;
+    private readonly IErpLogsService _erpLogsService;
+    private readonly ICategoryService _categoryService;
+    private readonly IErpSpecialPriceService _erpSpecialPriceService;
+    private readonly IErpPriceSyncFunctionalityService _erpPriceSyncFunctionalityService;
 
     #endregion
 
@@ -45,7 +56,12 @@ public class HandleLiveErpCallController : BasePublicController
         IDateTimeHelper dateTimeHelper,
         IErpAccountService erpAccountService,
         ILocalizationService localizationService,
-        IErpIntegrationPluginManager erpIntegrationPluginService)
+        IErpIntegrationPluginManager erpIntegrationPluginManager,
+        IErpSalesOrgService erpSalesOrgService,
+        IErpLogsService erpLogsService,
+        ICategoryService categoryService,
+        IErpSpecialPriceService erpSpecialPriceService,
+        IErpPriceSyncFunctionalityService erpPriceSyncFunctionalityService)
     {
         _genericAttributeService = genericAttributeService;
         _storeContext = storeContext;
@@ -56,15 +72,184 @@ public class HandleLiveErpCallController : BasePublicController
         _dateTimeHelper = dateTimeHelper;
         _erpAccountService = erpAccountService;
         _localizationService = localizationService;
-        _erpIntegrationPluginService = erpIntegrationPluginService;
+        _erpIntegrationPluginManager = erpIntegrationPluginManager;
+        _erpSalesOrgService = erpSalesOrgService;
+        _erpLogsService = erpLogsService;
+        _categoryService = categoryService;
+        _erpSpecialPriceService = erpSpecialPriceService;
+        _erpPriceSyncFunctionalityService = erpPriceSyncFunctionalityService;
+    }
+
+    #endregion
+
+    #region Utilities
+
+    private async Task<ErpResponseData<ErpPriceSpecialPricingDataModel>> CallErpIntegrationPluginToLivePriceCheck(ErpAccount b2BAccount, ErpSalesOrg accountSalesOrg, Product product)
+    {
+        try
+        {
+            var erpIntegrationPlugin = await _erpIntegrationPluginManager.LoadActiveERPIntegrationPlugin();
+            var result = await erpIntegrationPlugin.GetProductSpecialPriceFromErpAsync(new ErpGetRequestModel
+            {
+                Location = accountSalesOrg.Code,
+                AccountNumber = b2BAccount.AccountNumber,
+                ProductSku = product.Sku,
+            });
+            return result;
+        }
+        catch (Exception ex)
+        {
+            await _erpLogsService.InsertErpLogAsync(
+                    ErpLogLevel.Error,
+                    ErpSyncLevel.SpecialPrice,
+                    $"ERP Integration Product List Live Price Sync: Request failed, Error Occured for "
+                    + $"Account Number: {b2BAccount.AccountNumber} and Id: {b2BAccount.Id} and Product sku: {product.Sku}",
+                    ex.StackTrace
+                );
+            return null;
+        }
+    }
+
+    private async Task<string> ProductListLivePriceSync(ErpAccount b2BAccount, IList<Product> products)
+    {
+        if (b2BAccount == null || products == null || !products.Any())
+            return string.Empty;
+
+        var erpIntegrationPlugin = await _erpIntegrationPluginManager.LoadActiveERPIntegrationPlugin();
+        if (erpIntegrationPlugin is null)
+        {
+            await _erpLogsService.InformationAsync(
+                   $"Live price check failed. No Erp Integration Plugin is found.",
+                   ErpSyncLevel.SpecialPrice);
+            return string.Empty;
+        }
+
+        var accountSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(b2BAccount.ErpSalesOrgId);
+        var priceChangedProductsSkus = string.Empty;
+
+        if (accountSalesOrg != null && !string.IsNullOrEmpty(accountSalesOrg.Code))
+        {
+            var mpn_skus = products
+                .Where(x => !string.IsNullOrEmpty(x.ManufacturerPartNumber))
+                .Select(x => $"{x.ManufacturerPartNumber}|{x.Sku}")
+                .ToList();
+
+            var skucommaSeparatedString = string.Join(',', mpn_skus);
+
+            if (string.IsNullOrEmpty(skucommaSeparatedString))
+                return string.Empty;
+
+            try
+            {
+                var erpResponseData = new List<ErpPriceSpecialPricingDataModel>();
+
+                foreach (var product in products)
+                {
+                    var result = await CallErpIntegrationPluginToLivePriceCheck(b2BAccount, accountSalesOrg, product);
+
+                    if (
+                       result == null
+                       || result.ErpResponseModel == null
+                       || result.Data == null
+                        || result.ErpResponseModel.IsError
+                       )
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        erpResponseData.Add(result.Data);
+                    }
+
+                    var json = JsonConvert.SerializeObject(result, Formatting.Indented);
+                    await _erpLogsService.InformationAsync(
+                       $"LIVE PIRCE SYNC: Account Number: {b2BAccount.AccountNumber}, " +
+                       $"Account Id: {b2BAccount.Id}, " +
+                       $"Product sku: {product.Sku}, \n" +
+                       $"Response Data: {json}",
+                       ErpSyncLevel.SpecialPrice);
+                }
+
+                if (erpResponseData.Any())
+                {
+                    var priceChangedProductsList = new List<string>();
+
+                    foreach (var product in products)
+                    {
+                        var productResponseModel = erpResponseData
+                            .FirstOrDefault(x => x.Sku == product.Sku);
+                        if (productResponseModel != null)
+                        {
+                            var categoryIds = _b2BB2CFeaturesSettings.SkipLivePriceCheckCategoryIds.Split(',').Select(int.Parse).ToList();
+                            var productCategories = await _categoryService.GetProductCategoriesByProductIdAsync(product.Id, true);
+                            var skipProduct = false;
+                            foreach (var cat in productCategories)
+                            {
+                                if (categoryIds.Any(a => a == cat.CategoryId))
+                                    skipProduct = true;
+                            }
+                            if (skipProduct)
+                                continue;
+
+                            var accountPrice = productResponseModel.SpecialPrice;
+                            if (accountPrice.HasValue)
+                            {
+                                var productPricing = await _erpSpecialPriceService.GetErpSpecialPricesByErpAccountIdAndNopProductIdAsync(b2BAccount.Id, product.Id);
+
+
+                                if (productPricing != null)
+                                {
+                                    if (accountPrice.Value != productPricing.Price)
+                                    {
+                                        productPricing.Price = accountPrice.Value;
+                                        productPricing.PricingNote = productResponseModel.PricingNotes;
+
+                                        //cr7676
+                                        productPricing.DiscountPerc =
+                                            productResponseModel.DiscountPercentage.HasValue
+                                                ? productResponseModel.DiscountPercentage.Value
+                                                : 0;
+
+                                        //productPricing.CustomerUoM = productResponseModel.UnitofMeasure;
+                                        await _erpSpecialPriceService.UpdateErpSpecialPriceAsync(productPricing);
+
+                                        priceChangedProductsList.Add(productResponseModel.Sku);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (priceChangedProductsList.Count > 0)
+                    {
+                        priceChangedProductsSkus = string.Join(',', priceChangedProductsList);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await _erpLogsService.InsertErpLogAsync(
+                    ErpLogLevel.Error,
+                    ErpSyncLevel.SpecialPrice,
+                    $"ERP Integration Product List Live Price Sync: Request failed, Error Occured for "
+                    + $"Account Number: {b2BAccount.AccountNumber} and Id: {b2BAccount.Id} and Product skus: {skucommaSeparatedString}",
+                    ex.StackTrace
+                );
+            }
+        }
+
+        return priceChangedProductsSkus;
     }
 
     #endregion
 
     #region Methods
 
-    protected async Task<string> UpdateCartItemProductLivePrice()
+    protected async Task<string> UpdateCartItemProductLivePrice(ErpAccount erpAccount)
     {
+        if (erpAccount is null)
+            return string.Empty;
+
         var currStore = await _storeContext.GetCurrentStoreAsync();
         var cart = await _shoppingCartService.GetShoppingCartAsync(await _workContext.GetCurrentCustomerAsync(), ShoppingCartType.ShoppingCart, currStore.Id);
 
@@ -74,7 +259,7 @@ public class HandleLiveErpCallController : BasePublicController
         var productIds = cart.Select(x => x.ProductId).ToList();
         var products = await _productService.GetProductsByIdsAsync(productIds.ToArray());
 
-        return string.Join(',', products.Select(x => x.Sku));
+        return await ProductListLivePriceSync(erpAccount, products);
     }
 
     public async Task<IActionResult> CurrentCartItemsLiveStockCheck()
@@ -86,9 +271,9 @@ public class HandleLiveErpCallController : BasePublicController
 
         var currStore = await _storeContext.GetCurrentStoreAsync();
         var currCustomer = await _workContext.GetCurrentCustomerAsync();
-        var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
+        var erpAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
 
-        if (b2BAccount == null)
+        if (erpAccount == null)
         {
             return new NullJsonResult();
         }
@@ -101,23 +286,12 @@ public class HandleLiveErpCallController : BasePublicController
         var productIds = cart.Select(x => x.ProductId).ToList();
         var products = await _productService.GetProductsByIdsAsync(productIds.ToArray());
 
-        var erpIntegrationPlugin = await _erpIntegrationPluginService.LoadActiveERPIntegrationPlugin();
-
-        if (erpIntegrationPlugin is null)
-        {
-            return Json(new
-            {
-                success = false,
-                message = "No active erp integration method found."
-            });
-        }
-
-        await erpIntegrationPlugin.ProductListLiveStockDataAsync(b2BAccount, products, _productService);
+        var result = await _erpPriceSyncFunctionalityService.ProductListLiveStockSyncAsync(erpAccount, products);
 
         return Json(new
         {
-            success = true,
-            message = "Product list live stock sync successful."
+            success = result.success,
+            message = result.message
         });
     }
 
@@ -130,26 +304,26 @@ public class HandleLiveErpCallController : BasePublicController
 
         var currCustomer = await _workContext.GetCurrentCustomerAsync();
         var currStore = await _storeContext.GetCurrentStoreAsync();
-        var b2BAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
+        var erpAccount = await _erpAccountService.GetActiveErpAccountByCustomerIdAsync(currCustomer.Id);
 
-        if (b2BAccount == null)
+        if (erpAccount == null)
         {
             return new NullJsonResult();
         }
 
         var updatedPriceProductSkus = string.Empty;
 
-        if (!b2BAccount.LastPriceRefresh.HasValue)
+        if (!erpAccount.LastPriceRefresh.HasValue)
         {
-            updatedPriceProductSkus = await UpdateCartItemProductLivePrice();
+            updatedPriceProductSkus = await UpdateCartItemProductLivePrice(erpAccount);
         }
         else
         {
-            var priceUpdateOnLocalTime = _dateTimeHelper.ConvertToUtcTime(b2BAccount.LastPriceRefresh.Value, DateTimeKind.Utc);
+            var priceUpdateOnLocalTime = _dateTimeHelper.ConvertToUtcTime(erpAccount.LastPriceRefresh.Value, DateTimeKind.Utc);
 
             if (priceUpdateOnLocalTime < DateTime.UtcNow)
             {
-                updatedPriceProductSkus = await UpdateCartItemProductLivePrice();
+                updatedPriceProductSkus = await UpdateCartItemProductLivePrice(erpAccount);
             }
         }
 

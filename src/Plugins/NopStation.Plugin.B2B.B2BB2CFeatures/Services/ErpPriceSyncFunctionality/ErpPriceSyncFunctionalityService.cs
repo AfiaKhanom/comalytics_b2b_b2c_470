@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Nop.Core;
+using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Stores;
 using Nop.Services.Catalog;
 using Nop.Services.Common;
 using Nop.Services.Customers;
 using Nop.Services.Helpers;
+using Nop.Services.Localization;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Model;
@@ -34,6 +37,9 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly IErpSpecialPriceService _erpSpecialPriceService;
     private readonly IErpGroupPriceService _erpGroupPriceService;
+    private readonly ILocalizationService _localizationService;
+    private readonly IErpWarehouseSalesOrgMapService _erpWarehouseSalesOrgMapService;
+    private readonly IErpWarehouseAdditionalDataService _erpWarehouseAdditionalDataService;
 
     #endregion Fields
 
@@ -52,7 +58,10 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
         IProductService productService,
         IErpSalesOrgService erpSalesOrgService,
         IErpSpecialPriceService erpSpecialPriceService,
-        IErpGroupPriceService erpGroupPriceService)
+        IErpGroupPriceService erpGroupPriceService,
+        ILocalizationService localizationService,
+        IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMapService,
+        IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService)
     {
         _customerService = customerService;
         _erpAccountService = erpAccountService;
@@ -68,6 +77,9 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
         _erpSalesOrgService = erpSalesOrgService;
         _erpSpecialPriceService = erpSpecialPriceService;
         _erpGroupPriceService = erpGroupPriceService;
+        _localizationService = localizationService;
+        _erpWarehouseSalesOrgMapService = erpWarehouseSalesOrgMapService;
+        _erpWarehouseAdditionalDataService = erpWarehouseAdditionalDataService;
     }
 
     #endregion Ctor
@@ -535,6 +547,75 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
         }
     }
 
+    private KeyValuePair<string, string> GetMasterProductAndBatchCodeFromProduct(Product product)
+    {
+        return new KeyValuePair<string, string>(
+            string.IsNullOrEmpty(product.ManufacturerPartNumber)
+                ? product.Sku
+                : product.ManufacturerPartNumber,
+            string.IsNullOrEmpty(product.ManufacturerPartNumber)
+                ? ""
+                : product.Sku.Replace(product.ManufacturerPartNumber, "")
+        );
+    }
+
+    private async Task UpdateProductWarehouseInventoryFromERPResponseAsync(
+        ErpStockDataModel responseModel,
+        ProductWarehouseInventory pwi,
+        Product product,
+        ErpAccount b2BAccount,
+        string message
+    )
+    {
+        if (responseModel == null || pwi == null || product == null || b2BAccount == null)
+            return;
+
+        if (pwi.StockQuantity != responseModel.QuantityOnHand)
+        {
+            var previousStockQuantity = pwi.StockQuantity;
+            pwi.StockQuantity = (int)responseModel.QuantityOnHand;
+            pwi.ReservedQuantity = 0;
+            await _productService.UpdateProductWarehouseInventoryAsync(pwi);
+
+            //quantity change history
+            await _productService.AddStockQuantityHistoryEntryAsync(
+                product,
+                pwi.StockQuantity - previousStockQuantity,
+                pwi.StockQuantity,
+                pwi.WarehouseId,
+                message + " by ERP Integration."
+            );
+        }
+    }
+
+    private async Task<ErpResponseData<ErpStockDataModel>> CallErpIntegrationPluginToLiveStockCheck(Product product, ErpAccount erpAccount, ErpWarehouseAdditionalData erpWarehouseAdditionalData)
+    {
+        try
+        {
+            var erpIntegrationPlugin = await _erpIntegrationPluginManager.LoadActiveERPIntegrationPlugin();
+            var result = await erpIntegrationPlugin.GetStockByItemNoFromErpAsync(
+                new ErpGetRequestModel
+                {
+                    AccountNumber = erpAccount.AccountNumber,
+                    ProductSku = product.Sku,
+                    WarehouseCode = erpWarehouseAdditionalData.Code,
+                }
+            );
+            return result;
+        }
+        catch (Exception ex)
+        {
+            await _erpLogsService.InsertErpLogAsync(
+                ErpLogLevel.Error,
+                ErpSyncLevel.Stock,
+                $"ERP Integration Product List Live Stock Sync: Request failed, Error Occured for "
+                + $"Account Number: {erpAccount.AccountNumber} and Id: {erpAccount.Id} and Product sku: {product.Sku}",
+                ex.StackTrace
+            );
+            return null;
+        }
+    }
+
     #endregion Utilities
 
     #region Methods
@@ -594,6 +675,171 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
     public async Task<bool> IsCartProductB2BPriceSyncRequiredAsync()
     {
         throw new NotImplementedException();
+    }
+
+    public async Task<(bool success, string message)> ProductListLiveStockSyncAsync(
+        ErpAccount erpAccount,
+        IList<Product> products
+    )
+    {
+        if (erpAccount == null || products == null || !products.Any())
+            return (false, string.Empty);
+
+        var erpIntegrationPlugin =
+            await _erpIntegrationPluginManager.LoadActiveERPIntegrationPlugin();
+
+        if (erpIntegrationPlugin == null)
+        {
+            return (false, "Live price sync failed. ERP integration plugin not found.");
+        }
+        var skucommaSeparatedString = string.Empty;
+
+        try
+        {
+            var accountSalesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdWithActiveAsync(
+                erpAccount.ErpSalesOrgId
+            );
+
+            if (accountSalesOrg == null || accountSalesOrg.Code == null)
+            {
+                return (
+                    false,
+                    $"ERP Integration Product List Live Stock Sync: Issue Occured. " +
+                    $"Sales orgs credential is not provided for " +
+                    $"Account Number: {erpAccount.AccountNumber} (Id: {erpAccount.Id})"
+                );
+            }
+
+            var skus = new List<string>();
+            foreach (var product in products)
+            {
+                if (string.IsNullOrEmpty(product.Sku))
+                    continue;
+                var masterProductData = GetMasterProductAndBatchCodeFromProduct(product);
+                skus.Add(masterProductData.Key + "|" + masterProductData.Value);
+            }
+
+            skucommaSeparatedString = string.Join(',', skus);
+
+            if (string.IsNullOrEmpty(skucommaSeparatedString))
+                return (false, string.Empty);
+
+            //quantity change history message
+            var message =
+                $"{await _localizationService.GetResourceAsync("Admin.StockQuantityHistory.Messages.MultipleWarehouses")} {await _localizationService.GetResourceAsync("Admin.StockQuantityHistory.Messages.Edit")}";
+
+            var b2bSalesOrgWarehouses =
+                await _erpWarehouseSalesOrgMapService.GetErpWarehouseSalesOrgMapsBySalesOrgIdAsync(
+                    erpAccount.ErpSalesOrgId
+                );
+
+            var hasAnyError = false;
+            var errorMessages = new List<string>();
+
+            foreach (var b2bSalesOrgWarehouse in b2bSalesOrgWarehouses)
+            {
+                var erpWarehouseAdditionalData = await _erpWarehouseAdditionalDataService.GetErpWarehouseAdditionalDataByIdAsync(b2bSalesOrgWarehouse.ErpWarehouseId);
+
+                if (b2bSalesOrgWarehouse == null)
+                    continue;
+
+                if (
+                    b2bSalesOrgWarehouse == null
+                    || string.IsNullOrEmpty(erpWarehouseAdditionalData.Code)
+                )
+                    continue;
+
+                var stockResult = new List<ErpStockDataModel>();
+                foreach (var product in products)
+                {
+                    var result = await CallErpIntegrationPluginToLiveStockCheck(product, erpAccount, erpWarehouseAdditionalData);
+
+                    if ( result == null || result.ErpResponseModel == null || result.Data == null || result.ErpResponseModel.IsError)
+                    {
+                        hasAnyError = true;
+
+                        if(result != null && result.ErpResponseModel != null)
+                        {
+                            errorMessages.Add(
+                                $"Error for SKU: {product.Sku}, Warehouse: {erpWarehouseAdditionalData.Code}, Status Code : {result.ErpResponseModel.StatusCode}, Error Short Message : {result.ErpResponseModel.ErrorShortMessage}, Error Full Message : {result.ErpResponseModel.ErrorFullMessage}"
+                            );
+                        }
+                        else
+                        {
+                            errorMessages.Add(
+                               $"Error for SKU: {product.Sku}, Warehouse: {erpWarehouseAdditionalData.Code}"
+                               );
+                        }
+
+                        continue;
+                    }
+                    else
+                    {
+                        stockResult.Add(result.Data);
+                    }
+
+                    var json = JsonConvert.SerializeObject(result, Formatting.Indented);
+                    await _erpLogsService.InsertErpLogAsync(
+                        ErpLogLevel.Debug,
+                        ErpSyncLevel.Stock,
+                        $"After GetStocksFromErpAsync BAPI call for live stock sync of Sales Org: {accountSalesOrg.Code}, " +
+                        $"Account Number: {erpAccount.AccountNumber} ," +
+                        $"Erp warehouse code: {erpWarehouseAdditionalData.Code}. Click here to see details.",
+                        $"Sku: {product.Sku}\n" +
+                        $"Result: {json}"
+                    );
+                }
+
+                if (stockResult.Any())
+                {
+                    foreach (var product in products)
+                    {
+                        var productwarehouseInventories =
+                            await _productService.GetAllProductWarehouseInventoryRecordsAsync(
+                                product.Id
+                            );
+                        var pwi = productwarehouseInventories
+                            .Where(x => x.WarehouseId == b2bSalesOrgWarehouse.NopWarehouseId)
+                            .FirstOrDefault();
+                        if (pwi == null)
+                        {
+                            continue;
+                        }
+
+                        var productResponseModel = stockResult.FirstOrDefault(x =>
+                            x.Sku == product.Sku
+                        );
+
+                        await UpdateProductWarehouseInventoryFromERPResponseAsync(
+                            productResponseModel,
+                            pwi,
+                            product,
+                            erpAccount,
+                            message
+                        );
+                    }
+                }
+            }
+            if (hasAnyError)
+            {
+                var err = string.Join("; ", errorMessages);
+                return (false, "ERP Integration ProductList LiveStock: Issue Occured. " + err);
+            }
+
+            return (true, "ERP Integration ProductList LiveStock: Product list live stock sync successful.");
+        }
+        catch (Exception ex)
+        {
+            await _erpLogsService.InsertErpLogAsync(
+                ErpLogLevel.Error,
+                ErpSyncLevel.Stock,
+                $"ERP Integration Product List Live Stock Sync: Request failed, Error Occured for "
+                + $"Account Number: {erpAccount.AccountNumber} and Id: {erpAccount.Id} and Product skus: {skucommaSeparatedString}",
+                ex.StackTrace
+            );
+
+            return (false, "Live stock failed, error Occured.");
+        }
     }
 
     #endregion Methods

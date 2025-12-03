@@ -29,5 +29,6 @@ public class ErpGetRequestModel
     public bool SkipTransform { get; set; }
 
     public string CompanyPassword { get; set; }
+
     public string WarehouseCode { get; set; }
 }
