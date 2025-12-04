@@ -17,7 +17,7 @@ public class ErpStockSyncService : IErpStockSyncService
     private readonly IErpProductService _erpProductService;
     private readonly IErpIntegrationPluginManager _erpIntegrationPluginService;
     private readonly IErpSalesOrgService _erpSalesOrgService;
-    private readonly IErpWarehouseAdditionalDataService _erpWarehouseAdditionalDataService;
+    private readonly IErpWarehouseSalesOrgMapService _erpWarehouseSalesOrgMapService;
     private readonly IStaticCacheManager _staticCacheManager;
     private readonly ISyncWorkflowMessageService _syncWorkflowMessageService;
     private readonly ERPIntegrationCoreDataMappingSettings _dataMappingSettings;
@@ -30,7 +30,7 @@ public class ErpStockSyncService : IErpStockSyncService
         IErpProductService erpProductService,
         IErpIntegrationPluginManager erpIntegrationPluginService,
         IErpSalesOrgService erpSalesOrgService,
-        IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService,
+        IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMapService,
         IStaticCacheManager staticCacheManager,
         ISyncWorkflowMessageService syncWorkflowMessageService,
         ERPIntegrationCoreDataMappingSettings dataMappingSettings)
@@ -39,7 +39,7 @@ public class ErpStockSyncService : IErpStockSyncService
         _erpProductService = erpProductService;
         _erpIntegrationPluginService = erpIntegrationPluginService;
         _erpSalesOrgService = erpSalesOrgService;
-        _erpWarehouseAdditionalDataService = erpWarehouseAdditionalDataService;
+        _erpWarehouseSalesOrgMapService = erpWarehouseSalesOrgMapService;
         _staticCacheManager = staticCacheManager;
         _syncWorkflowMessageService = syncWorkflowMessageService;
         _dataMappingSettings = dataMappingSettings;
@@ -93,20 +93,21 @@ public class ErpStockSyncService : IErpStockSyncService
 
             foreach (var salesOrg in salesOrgs)
             {
-                var erpSalesOrgWarehouseMaps = await _erpWarehouseAdditionalDataService.GetSaleOrgWarehousebySalesOrgIdAsync(salesOrg.Id);
+                var erpSalesOrgWarehouseMaps = await _erpWarehouseSalesOrgMapService.GetErpWarehouseSalesOrgMapsBySalesOrgIdAsync(salesOrg.Id);
                 if (erpSalesOrgWarehouseMaps == null || erpSalesOrgWarehouseMaps.Count == 0)
                     continue;
+                var mapsByCode = erpSalesOrgWarehouseMaps
+                    .Where(m => !string.IsNullOrWhiteSpace(m.WarehouseCode))
+                    .GroupBy(m => m.WarehouseCode.Trim().ToLower())
+                    .ToDictionary(g => g.Key, g => g.Last());
 
-                var erpSalesOrgWarehouses = await _erpWarehouseAdditionalDataService.GetErpWarehouseAdditionalDataByIdsAsync(erpSalesOrgWarehouseMaps.Select(x => x.ErpWarehouseId).ToList());
-
-                foreach (var warehouse in erpSalesOrgWarehouses)
+                foreach (var salesOrgWarehouseMap in mapsByCode.Values)
                 {
                     var start = "0";
                     var isError = false;
                     var lastErpProductStockSynced = string.Empty;
                     var totalSyncedSoFar = 0;
                     var totalNotSyncedSoFar = 0;
-                    var wareHouseMap = erpSalesOrgWarehouseMaps.Find(x => x.ErpWarehouseId == warehouse.Id);
 
                     while (true)
                     {
@@ -114,7 +115,7 @@ public class ErpStockSyncService : IErpStockSyncService
                         {
                             Start = start,
                             LastChangedDate = isIncrementalSync ? salesOrg.LastErpStockSyncTimeOnUtc : null,
-                            WarehouseCode = warehouse.Code,
+                            WarehouseCode = salesOrgWarehouseMap.WarehouseCode,
                             ProductSku = stockCode
                         };
 
@@ -170,7 +171,7 @@ public class ErpStockSyncService : IErpStockSyncService
                             continue;
                         }
 
-                        var inventories = await _erpProductService.GetProductWarehouseInventoryByProductIdsAndNopWarehouseIdsAsync(products.Select(x => x.Id).ToArray(), wareHouseMap?.NopWarehouseId ?? 0);
+                        var inventories = await _erpProductService.GetProductWarehouseInventoryByProductIdsAndNopWarehouseIdsAsync(products.Select(x => x.Id).ToArray(), salesOrgWarehouseMap?.NopWarehouseId ?? 0);
 
                         foreach (var erpStock in responseData)
                         {
@@ -189,17 +190,15 @@ public class ErpStockSyncService : IErpStockSyncService
 
                             if (!string.IsNullOrEmpty(erpStock.WarehouseNameOrCode))
                             {
-                                var erpWarehouse = await _erpWarehouseAdditionalDataService.GetErpWarehouseAdditionalDataByCodeAsync(erpStock.WarehouseNameOrCode.Trim());
-
-                                if (erpWarehouse != null && erpWarehouse.NopWarehouseId > 0)
+                                if (mapsByCode.TryGetValue(erpStock.WarehouseNameOrCode.Trim(), out var codeMap) && codeMap.NopWarehouseId > 0)
                                 {
-                                    var inventory = inventories.Find(x => x.ProductId == product.Id && x.WarehouseId == erpWarehouse.NopWarehouseId);
+                                    var inventory = inventories.Find(x => x.ProductId == product.Id && x.WarehouseId == codeMap.NopWarehouseId);
                                     if (inventory == null)
                                     {
                                         inventory = new ProductWarehouseInventory
                                         {
                                             ProductId = product.Id,
-                                            WarehouseId = erpWarehouse.NopWarehouseId,
+                                            WarehouseId = codeMap.NopWarehouseId,
                                             StockQuantity = (int)erpStock.QuantityOnHand,
                                             ReservedQuantity = 0
                                         };
@@ -210,7 +209,7 @@ public class ErpStockSyncService : IErpStockSyncService
                                         stockQuantityHistory.StockQuantity = (int)erpStock.QuantityOnHand;
                                         stockQuantityHistory.CreatedOnUtc = DateTime.UtcNow;
                                         stockQuantityHistory.ProductId = inventory.ProductId;
-                                        stockQuantityHistory.WarehouseId = erpWarehouse.NopWarehouseId;
+                                        stockQuantityHistory.WarehouseId = codeMap.NopWarehouseId;
                                         stockQuantityHistory.Message = $"Product Stock updated. The stock quantity has been updated by Erp Integration.";
                                         stockQuantityHistoriesToInsert.Add(stockQuantityHistory);
                                     }
@@ -231,7 +230,7 @@ public class ErpStockSyncService : IErpStockSyncService
                                                 stockQuantityHistory.StockQuantity = (int)erpStock.QuantityOnHand;
                                                 stockQuantityHistory.CreatedOnUtc = DateTime.UtcNow;
                                                 stockQuantityHistory.ProductId = inventory.ProductId;
-                                                stockQuantityHistory.WarehouseId = erpWarehouse.NopWarehouseId;
+                                                stockQuantityHistory.WarehouseId = codeMap.NopWarehouseId;
                                                 stockQuantityHistory.Message = $"Product Stock updated. The stock quantity has been updated by Erp Integration.";
                                                 stockQuantityHistoriesToInsert.Add(stockQuantityHistory);
                                             }

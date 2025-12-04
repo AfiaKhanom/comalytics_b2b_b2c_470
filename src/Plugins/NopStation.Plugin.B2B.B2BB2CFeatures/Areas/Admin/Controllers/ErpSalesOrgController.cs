@@ -39,7 +39,6 @@ public class ErpSalesOrgController : NopStationAdminController
     private readonly IB2BB2CWorkContext _b2BB2CWorkContext;
     private readonly IErpLogsService _erpLogsService;
     private readonly IErpCustomerFunctionalityService _erpCustomerFunctionalityService;
-    private readonly IErpWarehouseAdditionalDataService _erpWarehouseAdditionalDataService;
     private readonly IErpWarehouseSalesOrgMapService _erpWarehouseSalesOrgMapService;
     private readonly IErpActivityLogsService _erpActivityLogsService;
     private readonly B2BB2CFeaturesSettings _b2BB2CFeaturesSettings;
@@ -57,7 +56,6 @@ public class ErpSalesOrgController : NopStationAdminController
         IB2BB2CWorkContext b2BB2CWorkContext,
         IErpLogsService erpLogsService,
         IErpCustomerFunctionalityService erpCustomerFunctionalityService,
-        IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService,
         IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMapService,
         IErpActivityLogsService erpActivityLogsService,
         B2BB2CFeaturesSettings b2BB2CFeaturesSettings)
@@ -71,7 +69,6 @@ public class ErpSalesOrgController : NopStationAdminController
         _b2BB2CWorkContext = b2BB2CWorkContext;
         _erpLogsService = erpLogsService;
         _erpCustomerFunctionalityService = erpCustomerFunctionalityService;
-        _erpWarehouseAdditionalDataService = erpWarehouseAdditionalDataService;
         _erpWarehouseSalesOrgMapService = erpWarehouseSalesOrgMapService;
         _erpActivityLogsService = erpActivityLogsService;
         _b2BB2CFeaturesSettings = b2BB2CFeaturesSettings;
@@ -381,21 +378,12 @@ public class ErpSalesOrgController : NopStationAdminController
         {
             try
             {
-                var salesOrgWarehouse = new ErpWarehouseAdditionalData
-                {
-                    Code = model.ErpWarehouseCode,
-                    IsActive = true,
-                    CreatedById = (await _b2BB2CWorkContext.GetCurrentCustomerAsync()).Id,
-                    CreatedOnUtc = DateTime.UtcNow,
-                };
-
-                await _erpWarehouseAdditionalDataService.InsertErpWarehouseAdditionalDataAsync(salesOrgWarehouse);
-
                 var salesOrgWarehouseMap = new ErpWarehouseSalesOrgMap
                 {
                     NopWarehouseId = model.WarehouseId,
-                    ErpWarehouseId = salesOrgWarehouse.Id,
-                    ErpSalesOrgId = salesOrgId
+                    ErpSalesOrgId = salesOrgId,
+                    WarehouseCode = model.ErpWarehouseCode,
+                    LastSyncedOnUtc = DateTime.UtcNow
                 };
 
                 await _erpWarehouseSalesOrgMapService.InsertErpWarehouseSalesOrgMapAsync(salesOrgWarehouseMap);
@@ -434,22 +422,15 @@ public class ErpSalesOrgController : NopStationAdminController
 
         if (erpSalesOrgWarehouseMap != null)
         {
-            var erpSalesOrgWarehouse = await _erpWarehouseAdditionalDataService.GetErpWarehouseAdditionalDataByIdAsync(erpSalesOrgWarehouseMap.ErpWarehouseId);
-
-            if (erpSalesOrgWarehouse == null)
-                return RedirectToAction("Edit", new { id = model.ErpSalesOrgId });
-
             if (!ModelState.IsValid)
             {
                 return ErrorJson(ModelState.SerializeErrors());
             }
 
-            erpSalesOrgWarehouse.Code = model.ErpWarehouseCode;
-            erpSalesOrgWarehouse.UpdatedById = (await _b2BB2CWorkContext.GetCurrentCustomerAsync()).Id;
-            erpSalesOrgWarehouse.UpdatedOnUtc = DateTime.UtcNow;
-            erpSalesOrgWarehouse.LastUpdateTime = DateTime.UtcNow;
+            erpSalesOrgWarehouseMap.WarehouseCode = model.ErpWarehouseCode;
+            erpSalesOrgWarehouseMap.LastSyncedOnUtc = DateTime.UtcNow;
 
-            await _erpWarehouseAdditionalDataService.UpdateErpWarehouseAdditionalDataAsync(erpSalesOrgWarehouse);
+            await _erpWarehouseSalesOrgMapService.UpdateErpWarehouseSalesOrgMapAsync(erpSalesOrgWarehouseMap);
 
             //erp activity log
             await _erpActivityLogsService.InsertErpActivityAsync("Erp_EditErpSalesOrgWarehouse",
@@ -476,10 +457,6 @@ public class ErpSalesOrgController : NopStationAdminController
             ?? throw new ArgumentException("No ERP Sales Org Warehouse found with the specified id", nameof(id));
 
         await _erpWarehouseSalesOrgMapService.DeleteErpWarehouseSalesOrgMapByIdAsync(erpWarehouseMap.Id);
-
-        var erpSalesOrgWarehouse = await _erpWarehouseAdditionalDataService.GetErpWarehouseAdditionalDataByIdAsync(erpWarehouseMap.ErpWarehouseId);
-
-        await _erpWarehouseAdditionalDataService.DeleteErpWarehouseAdditionalDataByIdAsync(erpSalesOrgWarehouse.Id);
 
         //erp activity log
         await _erpActivityLogsService.InsertErpActivityAsync("Erp_DeleteErpSalesOrgWarehouse",

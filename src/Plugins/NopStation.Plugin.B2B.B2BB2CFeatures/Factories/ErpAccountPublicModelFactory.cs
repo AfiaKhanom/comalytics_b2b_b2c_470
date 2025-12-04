@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Nop.Core;
@@ -42,7 +42,6 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
     private readonly IErpInvoiceService _erpInvoiceService;
     private readonly IErpOrderAdditionalDataService _erpOrderAdditionalDataService;
     private readonly IShippingService _shippingService;
-    private readonly IErpWarehouseAdditionalDataService _erpWarehouseAdditionalDataService;
     private readonly IErpWarehouseSalesOrgMapService _erpWarehouseSalesOrgMapService;
     private readonly IErpCustomerFunctionalityService _erpCustomerFunctionalityService;
     private readonly IErpNopUserService _erpNopUserService;
@@ -67,7 +66,6 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
         IErpInvoiceService erpInvoiceService,
         IErpOrderAdditionalDataService erpOrderAdditionalDataService,
         IShippingService shippingService,
-        IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService,
         IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMapService,
         IErpCustomerFunctionalityService erpCustomerFunctionalityService,
         IErpNopUserService erpNopUserService,
@@ -88,7 +86,6 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
         _erpInvoiceService = erpInvoiceService;
         _erpOrderAdditionalDataService = erpOrderAdditionalDataService;
         _shippingService = shippingService;
-        _erpWarehouseAdditionalDataService = erpWarehouseAdditionalDataService;
         _erpWarehouseSalesOrgMapService = erpWarehouseSalesOrgMapService;
         _erpCustomerFunctionalityService = erpCustomerFunctionalityService;
         _erpNopUserService = erpNopUserService;
@@ -390,10 +387,7 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
                     .GetTotalNumberOfInvoicesAndNumOfShippedItemsByErpAccountIdERPOrderNumber(searchModel.ErpAccountId, erpOrderAdditionalData.ErpOrderNumber);
                 var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpOrderAdditionalData.ErpAccountId);
                 var salesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount?.ErpSalesOrgId ?? 0);
-                var warehouse = await _erpWarehouseAdditionalDataService.GetErpWarehouseAdditionalDataBySalesOrgIdAsync(salesOrg?.Id ?? 0);
-                var map = new ErpWarehouseSalesOrgMap();
-                if (warehouse != null && warehouse.Id > 0)
-                    map = (await _erpWarehouseSalesOrgMapService.GetWarehouseSalesOrgMapByNopWarehouseIdAsync(warehouse.Id)).FirstOrDefault();
+                var map = (await _erpWarehouseSalesOrgMapService.GetErpWarehouseSalesOrgMapsBySalesOrgIdAsync(salesOrg?.Id ?? 0))?.FirstOrDefault();
 
                 var b2BAccountOrder = new ErpAccountOrderDetailsModel
                 {
@@ -498,9 +492,7 @@ public class ErpAccountPublicModelFactory : IErpAccountPublicModelFactory
                 var nopOrder = await _orderService.GetOrderByIdAsync(erpOrderAdditionalData.NopOrderId);
                 var erpAccount = await _erpAccountService.GetErpAccountByIdAsync(erpOrderAdditionalData.ErpAccountId);
                 var salesOrg = await _erpSalesOrgService.GetErpSalesOrgByIdAsync(erpAccount?.ErpSalesOrgId ?? 0);
-                var warehouse = await _erpWarehouseAdditionalDataService.GetErpWarehouseAdditionalDataBySalesOrgIdAsync(salesOrg?.Id ?? 0);
-                var map = (await _erpWarehouseSalesOrgMapService
-                    .GetWarehouseSalesOrgMapByNopWarehouseIdAsync(warehouse?.Id ?? 0))?.FirstOrDefault();
+                var map = (await _erpWarehouseSalesOrgMapService.GetErpWarehouseSalesOrgMapsBySalesOrgIdAsync(salesOrg?.Id ?? 0))?.FirstOrDefault();
 
                 var quoteOrderModel = new ErpQuoteOrderModel
                 {

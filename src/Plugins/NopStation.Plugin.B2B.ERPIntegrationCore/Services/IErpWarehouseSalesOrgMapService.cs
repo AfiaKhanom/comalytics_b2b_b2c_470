@@ -16,8 +16,6 @@ namespace NopStation.Plugin.B2B.ERPIntegrationCore.Services
         Task<ErpWarehouseSalesOrgMap> GetErpWarehouseSalesOrgMapByIdAsync(int id);
 
         Task<IList<ErpWarehouseSalesOrgMap>> GetErpWarehouseSalesOrgMapsBySalesOrgIdAsync(int salesOrgId);
-
-        Task<IList<ErpWarehouseSalesOrgMap>> GetWarehouseSalesOrgMapByErpWarehouseIdAsync(int erpWarehouseId);
         Task<IList<ErpWarehouseSalesOrgMap>> GetWarehouseSalesOrgMapByNopWarehouseIdAsync(int nopWarehouseId);
 
         Task<IPagedList<ErpWarehouseSalesOrgMap>> GetAllErpWarehouseSalesOrgMapsAsync(int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false, int salesOrgId = 0);

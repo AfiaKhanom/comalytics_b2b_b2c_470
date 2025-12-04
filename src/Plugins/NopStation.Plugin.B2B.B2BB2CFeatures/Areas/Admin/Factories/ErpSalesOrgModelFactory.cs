@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Nop.Core.Domain.Common;
@@ -28,7 +28,6 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
     private readonly IErpSalesOrgService _erpSalesOrgService;
     private readonly IErpWarehouseSalesOrgMapService _erpWarehouseSalesOrgMapService;
     private readonly IShippingService _shippingService;
-    private readonly IErpWarehouseAdditionalDataService _erpWarehouseAdditionalDataService;
     private readonly IB2BFeaturesCommonHelper _b2BFeaturesCommonHelper;
 
     #endregion
@@ -43,7 +42,6 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
         IErpSalesOrgService erpSalesOrgService,
         IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMapService,
         IShippingService shippingService,
-        IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService,
         IB2BFeaturesCommonHelper b2BFeaturesCommonHelper)
     {
         _baseAdminModelFactory = baseAdminModelFactory;
@@ -54,7 +52,6 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
         _erpSalesOrgService = erpSalesOrgService;
         _erpWarehouseSalesOrgMapService = erpWarehouseSalesOrgMapService;
         _shippingService = shippingService;
-        _erpWarehouseAdditionalDataService = erpWarehouseAdditionalDataService;
         _b2BFeaturesCommonHelper = b2BFeaturesCommonHelper;
     }
 
@@ -202,9 +199,7 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
             return erpSalesOrgWarehouses.SelectAwait(async saleOrgWarehouse =>
             {
                 var warehouse = await _shippingService.GetWarehouseByIdAsync(saleOrgWarehouse.NopWarehouseId);
-                var erpWarehouse = await _erpWarehouseAdditionalDataService.GetErpWarehouseAdditionalDataByIdAsync(saleOrgWarehouse.ErpWarehouseId);
-
-                if (warehouse == null || erpWarehouse == null || erpWarehouse.IsDeleted)
+                if (warehouse == null)
                     return null;
 
                 var salesOrgWarehouseModel = new ErpSalesOrgWarehouseModel
@@ -213,8 +208,8 @@ public class ErpSalesOrgModelFactory : IErpSalesOrgModelFactory
                     WarehouseId = saleOrgWarehouse.NopWarehouseId,
                     WarehouseName = warehouse.Name,
                     ErpSalesOrgId = saleOrgWarehouse.ErpSalesOrgId,
-                    ErpWarehouseCode = erpWarehouse.Code,
-                    LastUpdateTime = (await _dateTimeHelper.ConvertToUserTimeAsync(erpWarehouse.LastUpdateTime, DateTimeKind.Utc)).ToString(),
+                    ErpWarehouseCode = saleOrgWarehouse.WarehouseCode,
+                    LastUpdateTime = saleOrgWarehouse.LastSyncedOnUtc.HasValue ? (await _dateTimeHelper.ConvertToUserTimeAsync(saleOrgWarehouse.LastSyncedOnUtc.Value, DateTimeKind.Utc)).ToString() : string.Empty,
                 };
 
                 return salesOrgWarehouseModel;

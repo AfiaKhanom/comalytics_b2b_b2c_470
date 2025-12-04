@@ -1,4 +1,4 @@
-﻿using FluentMigrator.Builders.Create.Table;
+using FluentMigrator.Builders.Create.Table;
 using Nop.Data.Extensions;
 using Nop.Data.Mapping.Builders;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
@@ -18,8 +18,10 @@ public class ErpWarehouseSalesOrgMapBuilder : NopEntityBuilder<ErpWarehouseSales
     {
         table
             .WithColumn(nameof(ErpWarehouseSalesOrgMap.NopWarehouseId)).AsInt32()
-            .WithColumn(nameof(ErpWarehouseSalesOrgMap.ErpWarehouseId)).AsInt32().ForeignKey<ErpWarehouseAdditionalData>(onDelete: Rule.None)
-            .WithColumn(nameof(ErpWarehouseSalesOrgMap.ErpSalesOrgId)).AsInt32().ForeignKey<ErpSalesOrg>(onDelete: Rule.None);
+            .WithColumn(nameof(ErpWarehouseSalesOrgMap.ErpSalesOrgId)).AsInt32().ForeignKey<ErpSalesOrg>(onDelete: Rule.None)
+            .WithColumn(nameof(ErpWarehouseSalesOrgMap.WarehouseCode)).AsString()
+            .WithColumn(nameof(ErpWarehouseSalesOrgMap.LastSyncedOnUtc)).AsDateTime2().Nullable()
+            .WithColumn(nameof(ErpWarehouseSalesOrgMap.IsB2CWarehouse)).AsBoolean();
     }
 
     #endregion

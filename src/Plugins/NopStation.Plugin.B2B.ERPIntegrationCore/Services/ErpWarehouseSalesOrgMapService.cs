@@ -82,27 +82,13 @@ public class ErpWarehouseSalesOrgMapService : IErpWarehouseSalesOrgMapService
         return erpWarehouseSalesOrgMap;
     }
 
-    public async Task<IList<ErpWarehouseSalesOrgMap>> GetWarehouseSalesOrgMapByErpWarehouseIdAsync(int erpWarehouseId)
-    {
-        if (erpWarehouseId == 0)
-            return null;
-        var erpWarehouseOrgMap = await _erpWarehouseSalesOrgMapRepository.GetAllAsync(query =>
-        {
-            query = query.Where(v => v.ErpWarehouseId == erpWarehouseId);
-            query = query.OrderBy(ea => ea.Id);
-            return query;
-        });
-
-        return erpWarehouseOrgMap;
-    }
-
     public async Task<IList<ErpWarehouseSalesOrgMap>> GetWarehouseSalesOrgMapByNopWarehouseIdAsync(int nopWarehouseId)
     {
         if (nopWarehouseId == 0)
             return null;
         var erpWarehouseOrgMap = await _erpWarehouseSalesOrgMapRepository.GetAllAsync(query =>
         {
-            query = query.Where(v => v.ErpWarehouseId == nopWarehouseId);
+            query = query.Where(v => v.NopWarehouseId == nopWarehouseId);
             query = query.OrderBy(ea => ea.Id);
             return query;
         });

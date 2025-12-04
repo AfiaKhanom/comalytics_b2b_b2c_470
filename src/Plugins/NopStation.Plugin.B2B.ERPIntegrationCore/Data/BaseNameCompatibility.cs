@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Nop.Data.Mapping;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
@@ -23,7 +23,6 @@ public class BaseNameCompatibility : INameCompatibility
         { typeof(ErpSalesRepErpAccountMap), "Erp_Sales_Rep_Erp_Account_Map" },
         { typeof(ErpShipToAddress), "Erp_ShipToAddress" },
         { typeof(ErpSpecialPrice), "Erp_Special_Price" },
-        { typeof(ErpWarehouseAdditionalData), "Erp_Warehouse_Additional_Data" },
         { typeof(ErpWarehouseSalesOrgMap), "Erp_Warehouse_Sales_Org_Map" },
         { typeof(ErpLogs), "Erp_Logs" },
         { typeof(QuickOrderTemplate), "Erp_Quick_Order_Template" },

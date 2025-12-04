@@ -13,7 +13,6 @@ public class ErpSalesOrgService : IErpSalesOrgService
 
     private readonly IRepository<ErpSalesOrg> _erpErpSalesOrgRepository;
     private readonly IRepository<ErpAccount> _erpAccountRepository;
-    private readonly IRepository<ErpWarehouseAdditionalData> _erpWarehouseAdditionalDataRepository;
     private readonly IRepository<ErpWarehouseSalesOrgMap> _erpWarehouseSalesOrgMapRepository;
 
     #endregion Fields
@@ -22,12 +21,10 @@ public class ErpSalesOrgService : IErpSalesOrgService
 
     public ErpSalesOrgService(IRepository<ErpSalesOrg> erpSalesOrgRepository,
         IRepository<ErpAccount> erpAccountRepository,
-        IRepository<ErpWarehouseAdditionalData> erpWarehouseAdditionalDataRepository,
         IRepository<ErpWarehouseSalesOrgMap> erpWarehouseSalesOrgMapRepository)
     {
         _erpErpSalesOrgRepository = erpSalesOrgRepository;
         _erpAccountRepository = erpAccountRepository;
-        _erpWarehouseAdditionalDataRepository = erpWarehouseAdditionalDataRepository;
         _erpWarehouseSalesOrgMapRepository = erpWarehouseSalesOrgMapRepository;
     }
 
@@ -171,14 +168,12 @@ public class ErpSalesOrgService : IErpSalesOrgService
         if (string.IsNullOrEmpty(warehouseCode))
             return null;
 
-        warehouseCode = warehouseCode.Trim();
+        warehouseCode = warehouseCode.Trim().ToLower();
 
-        return await (from warehouse in _erpWarehouseAdditionalDataRepository.Table
-                           where warehouse.IsActive && !warehouse.IsDeleted && warehouse.Code.Trim() == warehouseCode
-                       join map in _erpWarehouseSalesOrgMapRepository.Table
-                           on warehouse.Id equals map.ErpWarehouseId
+        return await (from map in _erpWarehouseSalesOrgMapRepository.Table
                        join salesOrg in _erpErpSalesOrgRepository.Table
                            on map.ErpSalesOrgId equals salesOrg.Id
+                       where map.WarehouseCode.Trim().ToLower() == warehouseCode
                        select salesOrg).FirstOrDefaultAsync();
     }
 

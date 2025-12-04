@@ -1,4 +1,4 @@
-﻿using FluentMigrator;
+using FluentMigrator;
 using Nop.Data.Extensions;
 using Nop.Data.Migrations;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
@@ -31,7 +31,6 @@ public class SchemaMigration : AutoReversingMigration
             Create.TableFor<ErpSalesRepSalesOrgMap>();
             Create.TableFor<ErpSalesRepErpAccountMap>();
             Create.TableFor<ErpSpecialPrice>();
-            Create.TableFor<ErpWarehouseAdditionalData>();
             Create.TableFor<ErpWarehouseSalesOrgMap>();
             Create.TableFor<QuickOrderTemplate>();
             Create.TableFor<QuickOrderItem>();
