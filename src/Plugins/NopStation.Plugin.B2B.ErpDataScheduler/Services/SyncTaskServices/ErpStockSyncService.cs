@@ -151,7 +151,9 @@ public class ErpStockSyncService : IErpStockSyncService
                         var stockQuantityHistoriesToInsert = new List<StockQuantityHistory>();
 
                     var responseData = response.Data
-                            .Where(x => !string.IsNullOrWhiteSpace(x.Sku) && !string.IsNullOrWhiteSpace(x.WarehouseNameOrCode))
+                            .Where(x => !string.IsNullOrWhiteSpace(x.Sku.Trim().ToLower()) &&
+                                                            !string.IsNullOrWhiteSpace(x.WarehouseNameOrCode) &&
+                                                            x.WarehouseNameOrCode == salesOrgWarehouseMap.WarehouseCode)
                             .GroupBy(x => new { Sku = x.Sku.Trim().ToLower(), WarehouseCode = x.WarehouseNameOrCode })
                             .Select(g => g.Last());
 
