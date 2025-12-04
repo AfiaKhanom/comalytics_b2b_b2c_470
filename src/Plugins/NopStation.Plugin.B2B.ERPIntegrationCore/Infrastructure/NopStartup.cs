@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,7 +45,6 @@ public class NopStartup : INopStartup
         services.AddScoped<IErpSalesRepService, ErpSalesRepService>();
         services.AddScoped<IErpShipToAddressService, ErpShipToAddressService>();
         services.AddScoped<IErpSpecialPriceService, ErpSpecialPriceService>();
-        services.AddScoped<IErpWarehouseAdditionalDataService, ErpWarehouseAdditionalDataService>();
         services.AddScoped<IErpWarehouseSalesOrgMapService, ErpWarehouseSalesOrgMapService>();
         services.AddScoped<IErpActivityLogsService, ErpActivityLogsService>();
 
