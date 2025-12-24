@@ -39,7 +39,6 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
     private readonly IErpGroupPriceService _erpGroupPriceService;
     private readonly ILocalizationService _localizationService;
     private readonly IErpWarehouseSalesOrgMapService _erpWarehouseSalesOrgMapService;
-    private readonly IErpWarehouseAdditionalDataService _erpWarehouseAdditionalDataService;
 
     #endregion Fields
 
@@ -60,8 +59,7 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
         IErpSpecialPriceService erpSpecialPriceService,
         IErpGroupPriceService erpGroupPriceService,
         ILocalizationService localizationService,
-        IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMapService,
-        IErpWarehouseAdditionalDataService erpWarehouseAdditionalDataService)
+        IErpWarehouseSalesOrgMapService erpWarehouseSalesOrgMapService)
     {
         _customerService = customerService;
         _erpAccountService = erpAccountService;
@@ -79,7 +77,6 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
         _erpGroupPriceService = erpGroupPriceService;
         _localizationService = localizationService;
         _erpWarehouseSalesOrgMapService = erpWarehouseSalesOrgMapService;
-        _erpWarehouseAdditionalDataService = erpWarehouseAdditionalDataService;
     }
 
     #endregion Ctor
@@ -588,7 +585,7 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
         }
     }
 
-    private async Task<ErpResponseData<ErpStockDataModel>> CallErpIntegrationPluginToLiveStockCheck(Product product, ErpAccount erpAccount, ErpWarehouseAdditionalData erpWarehouseAdditionalData)
+    private async Task<ErpResponseData<ErpStockDataModel>> CallErpIntegrationPluginToLiveStockCheck(Product product, ErpAccount erpAccount, string warehouseCode)
     {
         try
         {
@@ -598,7 +595,7 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
                 {
                     AccountNumber = erpAccount.AccountNumber,
                     ProductSku = product.Sku,
-                    WarehouseCode = erpWarehouseAdditionalData.Code,
+                    WarehouseCode = warehouseCode,
                 }
             );
             return result;
@@ -738,21 +735,19 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
 
             foreach (var b2bSalesOrgWarehouse in b2bSalesOrgWarehouses)
             {
-                var erpWarehouseAdditionalData = await _erpWarehouseAdditionalDataService.GetErpWarehouseAdditionalDataByIdAsync(b2bSalesOrgWarehouse.ErpWarehouseId);
-
                 if (b2bSalesOrgWarehouse == null)
                     continue;
 
                 if (
                     b2bSalesOrgWarehouse == null
-                    || string.IsNullOrEmpty(erpWarehouseAdditionalData.Code)
+                    || string.IsNullOrEmpty(b2bSalesOrgWarehouse.WarehouseCode)
                 )
                     continue;
 
                 var stockResult = new List<ErpStockDataModel>();
                 foreach (var product in products)
                 {
-                    var result = await CallErpIntegrationPluginToLiveStockCheck(product, erpAccount, erpWarehouseAdditionalData);
+                    var result = await CallErpIntegrationPluginToLiveStockCheck(product, erpAccount, b2bSalesOrgWarehouse.WarehouseCode);
 
                     if ( result == null || result.ErpResponseModel == null || result.Data == null || result.ErpResponseModel.IsError)
                     {
@@ -761,13 +756,13 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
                         if(result != null && result.ErpResponseModel != null)
                         {
                             errorMessages.Add(
-                                $"Error for SKU: {product.Sku}, Warehouse: {erpWarehouseAdditionalData.Code}, Status Code : {result.ErpResponseModel.StatusCode}, Error Short Message : {result.ErpResponseModel.ErrorShortMessage}, Error Full Message : {result.ErpResponseModel.ErrorFullMessage}"
+                                $"Error for SKU: {product.Sku}, Warehouse: {b2bSalesOrgWarehouse.WarehouseCode}, Status Code : {result.ErpResponseModel.StatusCode}, Error Short Message : {result.ErpResponseModel.ErrorShortMessage}, Error Full Message : {result.ErpResponseModel.ErrorFullMessage}"
                             );
                         }
                         else
                         {
                             errorMessages.Add(
-                               $"Error for SKU: {product.Sku}, Warehouse: {erpWarehouseAdditionalData.Code}"
+                               $"Error for SKU: {product.Sku}, Warehouse: {b2bSalesOrgWarehouse.WarehouseCode}"
                                );
                         }
 
@@ -784,7 +779,7 @@ public class ErpPriceSyncFunctionalityService : IErpPriceSyncFunctionalityServic
                         ErpSyncLevel.Stock,
                         $"After GetStocksFromErpAsync BAPI call for live stock sync of Sales Org: {accountSalesOrg.Code}, " +
                         $"Account Number: {erpAccount.AccountNumber} ," +
-                        $"Erp warehouse code: {erpWarehouseAdditionalData.Code}. Click here to see details.",
+                        $"Erp warehouse code: {b2bSalesOrgWarehouse.WarehouseCode}. Click here to see details.",
                         $"Sku: {product.Sku}\n" +
                         $"Result: {json}"
                     );

@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using FluentMigrator.Builders.Create.Table;
 using Nop.Data.Extensions;
+using Nop.Data.Mapping;
 using Nop.Data.Mapping.Builders;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
