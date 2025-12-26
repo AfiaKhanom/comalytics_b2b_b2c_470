@@ -82,7 +82,7 @@ section.homepage-content {
 
 .item-box .picture a img {
   height: auto;
-  width: 100%;
+  width: -webkit-fill-available;
   min-height: 100%;
 }
 
@@ -755,6 +755,7 @@ button.accordion::before {
 .order-summary-title {
   margin-bottom: 20px;
   font-weight: bold;
+  font-size: 20px;
 }
 
 .order-progress {
@@ -785,8 +786,7 @@ form#ErpShiptoAddressForm .section.special-instructions {
 
 .title.delivery-date-title,
 .title.special-instructions-title,
-.title.quote-customer-reference-title {
-  border-bottom: 1px solid;
+.title.quote-customer-reference-title { 
   padding-bottom: 5px;
 }
 
@@ -800,9 +800,7 @@ label#shipping-address-select {
   margin-top: 30px !important;
 }
 
-.checkout-page .checkout-title {
-  border-bottom: 1px solid;
-}
+ 
 
 .checkout-page .checkout-data .section.payment-info .info {
   margin-right: 15px;
@@ -2060,7 +2058,7 @@ div[aria-describedby="qouteOrderListConvertConfirmAcceptDialog"] {
         display: none !important;
       }
 
-      #ErpShiptoAddressForm .checkout-left-section ~ .section.order-summary .buttons {
+      #ErpShiptoAddressForm .checkout-left-section ~ .section.order-summary .buttons{
         position: relative;
         top: -79px;
       }
@@ -2095,7 +2093,7 @@ div[aria-describedby="qouteOrderListConvertConfirmAcceptDialog"] {
     position: static;
   }
 
-#ErpShiptoAddressForm .totals {
+#ErpShiptoAddressForm .totals, #b2bCheckoutPaymentInfo .totals {
   padding-bottom: 100px !important;
 }
 
@@ -2201,6 +2199,7 @@ form[action="/checkout/paymentmethod"] .buttons {
 
 .page.checkout-page.order-completed-page .button-2.print-order-button {
   margin-bottom: 0px !important;
+  padding:0px!important; 
 }
 
 .page.checkout-page.order-completed-page .order-details-products {
@@ -2492,7 +2491,7 @@ form[action="/checkout/paymentmethod"] .buttons {
     margin-right: 10px;
     font-size: 17px;
     vertical-align: bottom;
-    font-family: "emporium-icons";
+    font-family: "emporium-icons" !important;
     color: #8c8c8c;
     font-weight: normal;
     text-transform: none;
@@ -2673,6 +2672,8 @@ table.cart td.uom {
   width: calc(30% - 20px);
   float: right;
   padding-bottom: 20px;
+  position: relative;
+  top: -79px
 }
 
 .page.category-page .breadcrumb ul li:last-child {
@@ -2827,4 +2828,11 @@ form[action="/backinstocksubscriptions/manage"] .select-boxes label {
 
 #erp-accounts-dropdown, .header-selectors-wrapper {
   font-size: 14px !important;
+}
+.fa::before, .far::before, .fas::before {
+  font-family: "Font Awesome 5 Free";
+}
+
+.fa, .fas {
+  font-weight: 900 !important;
 }
