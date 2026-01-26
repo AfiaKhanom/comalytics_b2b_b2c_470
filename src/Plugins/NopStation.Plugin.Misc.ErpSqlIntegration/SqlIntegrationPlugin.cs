@@ -44,7 +44,7 @@ public class SqlIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegratio
     #endregion
 
     #region Ctor
-    
+
     public SqlIntegrationPlugin(
         ILocalizationService localizationService,
         ISettingService settingService,
@@ -672,9 +672,15 @@ public class SqlIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegratio
         throw new NotImplementedException();
     }
 
-    public Task<ErpResponseData<Dictionary<int, string>>> CreateOrderOnErpAsync(ErpPlaceOrderDataModel erpRequest, List<int> orderItemIds = null)
+
+    public async Task<ErpResponseData<Dictionary<int, string>>> CreateOrderOnErpAsync(ErpPlaceOrderDataModel erpRequest, List<int> orderItemIds = null)
     {
-        throw new NotImplementedException();
+        var erpResponseData = new ErpResponseData<Dictionary<int, string>>
+        {
+            ErpResponseModel = await _erpOrderService.CreateOrderOnErpAsync(erpRequest)
+        };
+        return erpResponseData;
+
     }
 
     public Task<ErpResponseData<IList<ErpPriceSpecialPricingDataModel>>> ProductListLivePriceSync(ErpGetRequestModel erpGetRequest)
