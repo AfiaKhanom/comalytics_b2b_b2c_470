@@ -202,6 +202,9 @@ public class SqlIntegrationPlugin : BasePlugin, IAdminMenuPlugin, IErpIntegratio
             new KeyValuePair<string, string>("NopStation.Plugin.Misc.ErpSqlIntegration.Fields.BaseUrl", "Base URL"),
             new KeyValuePair<string, string>("NopStation.Plugin.Misc.ErpSqlIntegration.Fields.BaseUrl.Hint", "The base URL for the ERP SQL integration API"),
 
+            new KeyValuePair<string, string>("NopStation.Plugin.Misc.ErpSqlIntegration.Fields.SalesOrderPlaceEndPoint", "End Point (Sales Order Place)"),
+            new KeyValuePair<string, string>("NopStation.Plugin.Misc.ErpSqlIntegration.Fields.SalesOrderPlaceEndPoint.Hint", "The End Point for Placing Sales Order"),
+
             new KeyValuePair<string, string>("NopStation.Plugin.Misc.ErpSqlIntegration.Fields.AuthUserName", "Auth Username"),
             new KeyValuePair<string, string>("NopStation.Plugin.Misc.ErpSqlIntegration.Fields.AuthUserName.Hint", "The username used for authenticating with the ERP SQL integration API"),
 

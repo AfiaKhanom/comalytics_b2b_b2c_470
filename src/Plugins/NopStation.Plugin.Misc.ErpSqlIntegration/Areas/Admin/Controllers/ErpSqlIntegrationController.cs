@@ -154,6 +154,7 @@ public class ErpSqlIntegrationController : NopStationAdminController
         model.HttpCallRestTimeInSeconds = sqlIntegrationSettings.HttpCallRestTimeInSeconds;
         model.ConnectionString = sqlIntegrationSettings.ConnectionString;
         model.BaseUrl = sqlIntegrationSettings.BaseUrl;
+        model.SalesOrderPlaceEndPoint = sqlIntegrationSettings.SalesOrderPlaceEndPoint;
         model.AuthUserName = sqlIntegrationSettings.AuthUserName;
         model.AuthPassword = sqlIntegrationSettings.AuthPassword;
         model.IntegrationSecretKey = sqlIntegrationSettings.IntegrationSecretKey;
@@ -179,7 +180,8 @@ public class ErpSqlIntegrationController : NopStationAdminController
         sqlIntegrationSettings.HttpCallMaxRetries = model.HttpCallMaxRetries;
         sqlIntegrationSettings.HttpCallRestTimeInSeconds = model.HttpCallRestTimeInSeconds;
         sqlIntegrationSettings.ConnectionString = model.ConnectionString;
-        sqlIntegrationSettings.BaseUrl = model.BaseUrl;
+        sqlIntegrationSettings.BaseUrl = string.IsNullOrWhiteSpace(model.BaseUrl) ? string.Empty : model.BaseUrl.Trim();
+        sqlIntegrationSettings.SalesOrderPlaceEndPoint = string.IsNullOrWhiteSpace(model.SalesOrderPlaceEndPoint) ? string.Empty : model.SalesOrderPlaceEndPoint.Trim();
         sqlIntegrationSettings.AuthPassword = model.AuthPassword;
         sqlIntegrationSettings.AuthUserName = model.AuthUserName;
         sqlIntegrationSettings.IntegrationSecretKey = model.IntegrationSecretKey;
@@ -188,6 +190,7 @@ public class ErpSqlIntegrationController : NopStationAdminController
         await _settingService.SaveSettingAsync(sqlIntegrationSettings, settings => settings.HttpCallRestTimeInSeconds, storeId, clearCache: false);
         await _settingService.SaveSettingAsync(sqlIntegrationSettings, settings => settings.ConnectionString, storeId, clearCache: false);
         await _settingService.SaveSettingAsync(sqlIntegrationSettings, settings => settings.BaseUrl, storeId, clearCache: false);
+        await _settingService.SaveSettingAsync(sqlIntegrationSettings, settings=> settings.SalesOrderPlaceEndPoint, storeId, clearCache: false);
         await _settingService.SaveSettingAsync(sqlIntegrationSettings, settings => settings.AuthPassword, storeId, clearCache: false);
         await _settingService.SaveSettingAsync(sqlIntegrationSettings, settings => settings.AuthUserName, storeId, clearCache: false);
         await _settingService.SaveSettingAsync(sqlIntegrationSettings, settings => settings.IntegrationSecretKey, storeId, clearCache: false);
