@@ -9,6 +9,7 @@ public class SqlIntegrationSettings : ISettings
     public int HttpCallRestTimeInSeconds { get; set; }
     public string ConnectionString { get; set; }
     public string BaseUrl { get; set; }
+    public string SalesOrderPlaceEndPoint { get; set; }
     public string WarehouseCode { get; set; }
     public string AuthPassword { get; set; }
     public string AuthUserName { get; set; }

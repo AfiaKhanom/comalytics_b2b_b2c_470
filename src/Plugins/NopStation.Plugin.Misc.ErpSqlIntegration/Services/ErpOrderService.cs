@@ -115,7 +115,11 @@ public class ErpOrderService : IErpOrderService
             {
                 baseUrl += "/";
             }
-            var fullUrl = new Uri(new Uri(baseUrl), "UVPVP/SDK/Rest/SalesOrderPlaceOrder").ToString();
+            var endpoint = sqlIntegrationSettings.SalesOrderPlaceEndPoint;
+            if(endpoint.StartsWith("/"))
+                endpoint = endpoint.Substring(1);
+
+            var fullUrl = new Uri(new Uri(baseUrl), endpoint).ToString();
 
             var response = await _sqlClient.HttpCall(reqBody, ErpSyncLevel.Order, fullUrl);
             if (!response.IsSuccessStatusCode)

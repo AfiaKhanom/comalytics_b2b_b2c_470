@@ -17,6 +17,9 @@ public class ConfigurationModel
     [NopResourceDisplayName("NopStation.Plugin.Misc.ErpSqlIntegration.Fields.BaseUrl")]
     public string BaseUrl { get; set; }
 
+    [NopResourceDisplayName("NopStation.Plugin.Misc.ErpSqlIntegration.Fields.SalesOrderPlaceEndPoint")]
+    public string SalesOrderPlaceEndPoint { get; set; }
+
     [NopResourceDisplayName("NopStation.Plugin.Misc.ErpSqlIntegration.Fields.AuthUserName")]
     public string AuthUserName { get; set; }
 
