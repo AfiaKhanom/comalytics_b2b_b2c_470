@@ -32,6 +32,9 @@ We have our own Gitflow policy that implements the best practices for versioning
 ## PR Review Guideline
 follow the [PR Guideline](PR_Review_Guideline.md) to create and Reveiw Pull Requests.
 
+## PR Tracking Sheet
+Please maintain this [PR Tracking Sheet](https://brainstationo365-my.sharepoint.com/:x:/g/personal/nopbs_brainstation-23_com/IQDvgftAvpgcQ6mAnJ5kyCEzAToCWAiWgHDNFz1yPofYR08?e=H8UeNS) to inform your reviewers to approve individual pull requests.
+
 ## Coding Style
 
 We adhere to the following coding styles and best practices:
