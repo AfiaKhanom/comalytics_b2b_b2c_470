@@ -42,6 +42,7 @@ public class MapperConfiguration : Profile, IOrderedMapperProfile
             .ForMember(model => model.EnableLiveCreditChecks_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.StockDisplayFormat_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.EnableQuoteFunctionality_OverrideForStore, options => options.Ignore())
+            .ForMember(model => model.SendNotificationAfterPlacingQuote_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.DisplayAddToQuickListFavouriteButton_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.AllowAddressEditOnCheckoutForAll_OverrideForStore, options => options.Ignore())
             .ForMember(model => model.DeliveryDays_OverrideForStore, options => options.Ignore())

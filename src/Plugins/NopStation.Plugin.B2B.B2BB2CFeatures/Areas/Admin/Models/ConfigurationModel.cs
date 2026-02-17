@@ -94,6 +94,10 @@ public record ConfigurationModel : BaseNopModel, ISettingsModel
     public bool EnableQuoteFunctionality { get; set; }
     public bool EnableQuoteFunctionality_OverrideForStore { get; set; }
 
+    [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.SendNotificationAfterPlacingQuote")]
+    public bool SendNotificationAfterPlacingQuote { get; set; }
+    public bool SendNotificationAfterPlacingQuote_OverrideForStore { get; set; }
+
     [NopResourceDisplayName("B2BB2CFeatures.Configuration.Fields.PreFilterFacetSpecificationAttribute")]
     public int PreFilterFacetSpecificationAttributeId { get; set; }
     public bool PreFilterFacetSpecificationAttributeId_OverrideForStore { get; set; }

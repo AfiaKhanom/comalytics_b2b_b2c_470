@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Nop.Services.Customers;
@@ -191,10 +191,8 @@ public class ErpOrderModelFactory : IErpOrderModelFactory
             model.IntegrationStatusTypeId = erpOrderAdditionalData.IntegrationStatusTypeId;
             model.IntegrationStatusType = await _localizationService.GetLocalizedEnumAsync(erpOrderAdditionalData.IntegrationStatusType);
             model.IntegrationError = erpOrderAdditionalData.IntegrationError;
-            model.IntegrationRetries = erpOrderAdditionalData.IntegrationRetries ?? 0;
-
-            model.IntegrationErrorDateTime = !erpOrderAdditionalData.IntegrationErrorDateTimeUtc.HasValue 
-                ? model.IntegrationErrorDateTime 
+            model.IntegrationRetries = erpOrderAdditionalData.IntegrationRetries;
+            model.IntegrationErrorDateTime = !erpOrderAdditionalData.IntegrationErrorDateTimeUtc.HasValue ? model.IntegrationErrorDateTime
                 : await _dateTimeHelper.ConvertToUserTimeAsync(erpOrderAdditionalData.IntegrationErrorDateTimeUtc.Value, DateTimeKind.Utc);
 
             model.LastERPUpdate = !erpOrderAdditionalData.LastERPUpdateUtc.HasValue 

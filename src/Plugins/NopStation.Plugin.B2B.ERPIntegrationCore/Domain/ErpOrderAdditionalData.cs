@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Nop.Core;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Enums;
 
@@ -54,7 +54,7 @@ public partial class ErpOrderAdditionalData : BaseEntity
 
     public string IntegrationError { get; set; }
 
-    public int? IntegrationRetries { get; set; }
+    public int IntegrationRetries { get; set; }
 
     public DateTime? IntegrationErrorDateTimeUtc { get; set; }
 

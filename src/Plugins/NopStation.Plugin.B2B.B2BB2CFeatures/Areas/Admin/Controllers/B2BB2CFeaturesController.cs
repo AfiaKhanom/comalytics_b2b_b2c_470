@@ -224,6 +224,7 @@ public class B2BB2CFeaturesController : NopStationAdminController
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.EnableLivePriceChecks, model.EnableLivePriceChecks_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.StockDisplayFormatId, model.StockDisplayFormat_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.EnableQuoteFunctionality, model.EnableQuoteFunctionality_OverrideForStore, storeScope, false);
+            await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.SendNotificationAfterPlacingQuote, model.SendNotificationAfterPlacingQuote_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.DisplayAddToQuickListFavouriteButton, model.DisplayAddToQuickListFavouriteButton_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.AllowAddressEditOnCheckoutForAll, model.AllowAddressEditOnCheckoutForAll_OverrideForStore, storeScope, false);
             await _settingService.SaveSettingOverridablePerStoreAsync(settings, x => x.DeliveryDays, model.DeliveryDays_OverrideForStore, storeScope, false);

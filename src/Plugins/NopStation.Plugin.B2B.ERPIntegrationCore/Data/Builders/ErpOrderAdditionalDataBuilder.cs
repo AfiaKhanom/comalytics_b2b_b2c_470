@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using FluentMigrator.Builders.Create.Table;
 using Nop.Data.Extensions;
 using Nop.Data.Mapping.Builders;
@@ -32,7 +32,7 @@ public class ErpOrderAdditionalDataBuilder : NopEntityBuilder<ErpOrderAdditional
             .WithColumn(nameof( ErpOrderAdditionalData.DeliveryDate)).AsDateTime2().Nullable()
             .WithColumn(nameof( ErpOrderAdditionalData.IntegrationStatusTypeId)).AsInt32()
             .WithColumn(nameof( ErpOrderAdditionalData.IntegrationError)).AsString().Nullable()
-            .WithColumn(nameof( ErpOrderAdditionalData.IntegrationRetries)).AsInt32().Nullable()
+            .WithColumn(nameof( ErpOrderAdditionalData.IntegrationRetries)).AsInt32().NotNullable()
             .WithColumn(nameof( ErpOrderAdditionalData.IntegrationErrorDateTimeUtc)).AsDateTime2().Nullable()
             .WithColumn(nameof( ErpOrderAdditionalData.LastERPUpdateUtc)).AsDateTime2().Nullable()
             .WithColumn(nameof( ErpOrderAdditionalData.IsShippingAddressModified)).AsBoolean()

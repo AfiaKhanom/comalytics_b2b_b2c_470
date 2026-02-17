@@ -141,6 +141,7 @@ public partial class B2BB2CFeaturesSettings : ISettings
     public int PercentageOfStockAllowed { get; set; }
 
     public bool IsErpAccountCustomerRegisterAllowed { get; set; }
+    public bool SendNotificationAfterPlacingQuote { get; set; }
 
     public bool EnableAccountStatementDownload { get; internal set; }
 }

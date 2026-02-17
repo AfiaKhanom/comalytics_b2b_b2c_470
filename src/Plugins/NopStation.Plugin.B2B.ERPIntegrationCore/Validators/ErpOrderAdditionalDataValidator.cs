@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Nop.Web.Framework.Validators;
 using NopStation.Plugin.B2B.ERPIntegrationCore.Domain;
 
@@ -45,8 +45,7 @@ public class ErpOrderAdditionalDataValidator : BaseNopValidator<ErpOrderAddition
             .When(x => x.ErpShipToAddressId.HasValue);
 
         RuleFor(x => x.IntegrationRetries)
-            .GreaterThanOrEqualTo(0)
-            .When(x => x.IntegrationRetries.HasValue);
+            .GreaterThanOrEqualTo(0);
 
         // Required string fields
         RuleFor(x => x.ErpOrderNumber)
