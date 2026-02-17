@@ -6293,4 +6293,20 @@
     <LocaleResource Name="NopStation.Plugin.B2B.B2BB2CFeatures.Import">
       <Value>Import (Only B2B)</Value>
     </LocaleResource>
+
+    <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.SendNotificationAfterPlacingQuote">
+        <Value>Notification After Quote</Value>
+    </LocaleResource>
+
+    <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.SendNotificationAfterPlacingQuote.Hint">
+        <Value>Send Notification After Placing Quote</Value>
+    </LocaleResource>
+
+    <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.SendNotificationAfterPlacingQuote">
+        <Value>Notification After Quote</Value>
+    </LocaleResource>
+
+    <LocaleResource Name="B2BB2CFeatures.Configuration.Fields.SendNotificationAfterPlacingQuote.Hint">
+        <Value>Send Notification After Placing Quote</Value>
+    </LocaleResource>
 </Language>

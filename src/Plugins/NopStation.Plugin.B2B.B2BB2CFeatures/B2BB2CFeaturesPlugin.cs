@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
+using MimeKit.Encodings;
 using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Localization;
@@ -87,6 +88,38 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
     #endregion
 
     #region Utilities
+
+    private async Task InsertOrUpdateMessageTemplatesAsync()
+    {
+        var emailAccount = (await _emailAccountService.GetAllEmailAccountsAsync()).FirstOrDefault();
+        if (emailAccount is not null)
+        {
+            var messageTemplates = await _messageTemplateService.GetMessageTemplatesByNameAsync(
+                    MessageTemplateSystemNames.ORDER_PLACED_CUSTOMER_NOTIFICATION);
+
+            var messageTemplate = messageTemplates.FirstOrDefault();
+
+            if (messageTemplate != null && messageTemplate.Name == MessageTemplateSystemNames.ORDER_PLACED_CUSTOMER_NOTIFICATION)
+            {
+                messageTemplate.Subject = "%ErpOrderAdditionalData.OrderType% receipt from %Store.Name%.";
+                messageTemplate.Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Hello %Order.CustomerFullName%,{Environment.NewLine}<br />{Environment.NewLine}Thanks for buying from <a href=\"%Store.URL%\">%Store.Name%</a>. Below is the summary of the %ErpOrderAdditionalData.OrderType%.{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}%ErpOrderAdditionalData.OrderType% Number: %Order.OrderNumber%{Environment.NewLine}<br />{Environment.NewLine}%ErpOrderAdditionalData.OrderType% Details: <a target=\"_blank\" href=\"%Order.OrderURLForCustomer%\">%Order.OrderURLForCustomer%</a>{Environment.NewLine}<br />{Environment.NewLine}Date Ordered: %Order.CreatedOn%{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Billing Address{Environment.NewLine}<br />{Environment.NewLine}%Order.BillingFirstName% %Order.BillingLastName%{Environment.NewLine}<br />{Environment.NewLine}%Order.BillingAddress1%{Environment.NewLine}<br />{Environment.NewLine}%Order.BillingAddress2%{Environment.NewLine}<br />{Environment.NewLine}%Order.BillingCity% %Order.BillingZipPostalCode%{Environment.NewLine}<br />{Environment.NewLine}%Order.BillingStateProvince% %Order.BillingCountry%{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}%if (%Order.Shippable%) Shipping Address{Environment.NewLine}<br />{Environment.NewLine}%Order.ShippingFirstName% %Order.ShippingLastName%{Environment.NewLine}<br />{Environment.NewLine}%Order.ShippingAddress1%{Environment.NewLine}<br />{Environment.NewLine}%Order.ShippingAddress2%{Environment.NewLine}<br />{Environment.NewLine}%Order.ShippingCity% %Order.ShippingZipPostalCode%{Environment.NewLine}<br />{Environment.NewLine}%Order.ShippingStateProvince% %Order.ShippingCountry%{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Shipping Method: %Order.ShippingMethod%{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine} endif% %Order.Product(s)%{Environment.NewLine}</p>{Environment.NewLine}";
+
+                await _messageTemplateService.UpdateMessageTemplateAsync(messageTemplate);
+            }
+            messageTemplates = await _messageTemplateService.GetMessageTemplatesByNameAsync(
+                    MessageTemplateSystemNames.ORDER_PLACED_CUSTOMER_NOTIFICATION);
+
+            messageTemplate = messageTemplates.FirstOrDefault();
+
+            if (messageTemplate != null && messageTemplate.Name == MessageTemplateSystemNames.ORDER_PLACED_STORE_OWNER_NOTIFICATION)
+            {
+                messageTemplate.Subject = "%Store.Name%. Purchase Receipt for %ErpOrderAdditionalData.OrderType% #%Order.OrderNumber%";
+                messageTemplate.Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}%Order.CustomerFullName% (%Order.CustomerEmail%) has just placed an %ErpOrderAdditionalData.OrderType% from your store. Below is the summary of the %ErpOrderAdditionalData.OrderType%.{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}%ErpOrderAdditionalData.OrderType% Number: %Order.OrderNumber%{Environment.NewLine}<br />{Environment.NewLine}Date Ordered: %Order.CreatedOn%{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Billing Address{Environment.NewLine}<br />{Environment.NewLine}%Order.BillingFirstName% %Order.BillingLastName%{Environment.NewLine}<br />{Environment.NewLine}%Order.BillingAddress1%{Environment.NewLine}<br />{Environment.NewLine}%Order.BillingAddress2%{Environment.NewLine}<br />{Environment.NewLine}%Order.BillingCity% %Order.BillingZipPostalCode%{Environment.NewLine}<br />{Environment.NewLine}%Order.BillingStateProvince% %Order.BillingCountry%{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}%if (%Order.Shippable%) Shipping Address{Environment.NewLine}<br />{Environment.NewLine}%Order.ShippingFirstName% %Order.ShippingLastName%{Environment.NewLine}<br />{Environment.NewLine}%Order.ShippingAddress1%{Environment.NewLine}<br />{Environment.NewLine}%Order.ShippingAddress2%{Environment.NewLine}<br />{Environment.NewLine}%Order.ShippingCity% %Order.ShippingZipPostalCode%{Environment.NewLine}<br />{Environment.NewLine}%Order.ShippingStateProvince% %Order.ShippingCountry%{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Shipping Method: %Order.ShippingMethod%{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine} endif% %Order.Product(s)%{Environment.NewLine}</p>{Environment.NewLine}";
+
+                await _messageTemplateService.UpdateMessageTemplateAsync(messageTemplate);
+            }
+        }
+    }
 
     private Language GetDefaultEnglishLanguage()
     {
@@ -255,6 +288,8 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
             });
         }
 
+        await InsertOrUpdateMessageTemplatesAsync();
+
         #endregion
 
         await this.InstallPluginAsync();
@@ -299,9 +334,10 @@ public class B2BB2CFeaturesPlugin : BasePlugin, IAdminMenuPlugin, IMiscPlugin, I
 
     public override async Task UpdateAsync(string currentVersion, string targetVersion)
     {
-        if (targetVersion != currentVersion && targetVersion == "4.70.2.50")
-        {            
+        if (targetVersion != currentVersion && targetVersion == "4.70.2.70")
+        {
             //await InstalLocalResourseStringFromXmlFileAsync();
+            await InsertOrUpdateMessageTemplatesAsync();
         }
 
         await base.UpdateAsync(currentVersion, targetVersion);

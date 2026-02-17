@@ -212,7 +212,19 @@ public class EventConsumer :
             eventMessage.Tokens.Add(new Token("ErpOrderAdditionalData.ErpOrderPlaceByCustomerType", Enum.GetName(typeof(ErpUserType), erpOrderAdditionalData.ErpOrderPlaceByCustomerTypeId)));
             eventMessage.Tokens.Add(new Token("ErpOrderAdditionalData.ChangedOnUtc", erpOrderAdditionalData.ChangedOnUtc.HasValue ? erpOrderAdditionalData.ChangedOnUtc.Value.ToString("d") : ""));
             eventMessage.Tokens.Add(new Token("ErpOrderAdditionalData.ChangedById", erpOrderAdditionalData.ChangedById.ToString()));
+            eventMessage.Tokens.Add(new Token("ErpOrderAdditionalData.OrderType", GetOrderType(erpOrderAdditionalData)));
         }
+    }
+
+    private string GetOrderType(ErpOrderAdditionalData erpOrderAdditionalData)
+    {
+        if (erpOrderAdditionalData?.ErpOrderType == ErpOrderType.B2BQuote || 
+            erpOrderAdditionalData?.ErpOrderType == ErpOrderType.B2CQuote)
+        {
+            return "Quote";
+        }
+        
+        return "Order";
     }
 
     public async Task HandleEventAsync(EntityInsertedEvent<ErpNopUser> eventMessage)

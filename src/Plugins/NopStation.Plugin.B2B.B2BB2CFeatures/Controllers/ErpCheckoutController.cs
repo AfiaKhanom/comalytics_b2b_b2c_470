@@ -1106,8 +1106,6 @@ public class ErpCheckoutController : CheckoutController
                 {
                     if (b2BAccount != null && b2BUser != null)
                         await _overriddenOrderProcessingService.PlaceErpOrderAtNopAsync(placeOrderResult.PlacedOrder, ErpOrderType.B2BQuote);
-                    else if (b2BAccount != null && b2CUser != null)
-                        await _overriddenOrderProcessingService.PlaceErpOrderAtNopAsync(placeOrderResult.PlacedOrder, ErpOrderType.B2CQuote);
 
                     await ClearGenericAttributeForQuoteOrderAsync();
 
@@ -1372,8 +1370,6 @@ public class ErpCheckoutController : CheckoutController
                     {
                         if (b2BAccount != null && b2BUser != null)
                             await _overriddenOrderProcessingService.PlaceErpOrderAtNopAsync(placeOrderResult.PlacedOrder, ErpOrderType.B2BQuote);
-                        else if (b2BAccount != null && b2CUser != null)
-                            await _overriddenOrderProcessingService.PlaceErpOrderAtNopAsync(placeOrderResult.PlacedOrder, ErpOrderType.B2CQuote);
 
                         //erp activity log
                         await _erpActivityLogsService.InsertErpActivityAsync(customer, "Erp_ErpOrderPlacement",
@@ -1422,10 +1418,6 @@ public class ErpCheckoutController : CheckoutController
                             if (b2BUser != null && b2BUser.Id > 0)
                             {                               
                                 await _overriddenOrderProcessingService.PlaceErpOrderAtNopAsync(placeOrderResult.PlacedOrder, ErpOrderType.B2BSalesOrder);
-                            }
-                            else if (b2CUser != null && b2CUser.Id > 0)
-                            {
-                                await _overriddenOrderProcessingService.PlaceErpOrderAtNopAsync(placeOrderResult.PlacedOrder, ErpOrderType.B2CSalesOrder);
                             }
                         }
 
@@ -1570,8 +1562,6 @@ public class ErpCheckoutController : CheckoutController
                 {
                     if (b2BAccount != null && b2BUser != null)
                         await _overriddenOrderProcessingService.PlaceErpOrderAtNopAsync(placeOrderResult.PlacedOrder, ErpOrderType.B2BQuote);
-                    else if (b2BAccount != null && b2CUser != null)
-                        await _overriddenOrderProcessingService.PlaceErpOrderAtNopAsync(placeOrderResult.PlacedOrder, ErpOrderType.B2CQuote);
 
                     await ClearGenericAttributeForQuoteOrderAsync();
 
@@ -1627,10 +1617,6 @@ public class ErpCheckoutController : CheckoutController
                     if (b2BAccount != null && b2BUser != null)
                     {
                         await _overriddenOrderProcessingService.PlaceErpOrderAtNopAsync(placeOrderResult.PlacedOrder, ErpOrderType.B2BSalesOrder);
-                    }
-                    if (b2BAccount != null && b2CUser != null)
-                    {
-                        await _overriddenOrderProcessingService.PlaceErpOrderAtNopAsync(placeOrderResult.PlacedOrder, ErpOrderType.B2CSalesOrder);
                     }
 
                     //erp activity log
@@ -2559,8 +2545,6 @@ public class ErpCheckoutController : CheckoutController
                 {
                     if (erpAccount != null && b2BUser != null)
                         await _overriddenOrderProcessingService.PlaceErpOrderAtNopAsync(placeOrderResult.PlacedOrder, ErpOrderType.B2BQuote);
-                    else if (erpAccount != null && b2CUser != null)
-                        await _overriddenOrderProcessingService.PlaceErpOrderAtNopAsync(placeOrderResult.PlacedOrder, ErpOrderType.B2CQuote);
 
                     //erp activity log
                     await _erpActivityLogsService.InsertErpActivityAsync(currCustomer, "Erp_ErpOrderPlacement",
