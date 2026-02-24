@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
 using Nop.Plugin.Shipping.GeofenceDelivery.Models;
 
@@ -8,13 +9,16 @@ public class GeofenceValidationService : IGeofenceValidationService
 {
     protected readonly IGeofenceZoneService _zoneService;
     protected readonly GeofenceDeliverySettings _settings;
+    protected readonly ILogger<GeofenceValidationService> _logger;
 
     public GeofenceValidationService(
         IGeofenceZoneService zoneService,
-        GeofenceDeliverySettings settings)
+        GeofenceDeliverySettings settings,
+        ILogger<GeofenceValidationService> logger)
     {
         _zoneService = zoneService;
         _settings = settings;
+        _logger = logger;
     }
 
     public async Task<GeofenceValidationResult> ValidateLocationAsync(decimal latitude, decimal longitude)
@@ -36,12 +40,13 @@ public class GeofenceValidationService : IGeofenceValidationService
                     continue;
 
                 var polygon = BuildPolygon(coordinates);
-                if (polygon != null && (polygon.Contains(point) || polygon.Boundary.Contains(point) || polygon.Intersects(point)))
+                // polygon.Covers(point) returns true for both interior and boundary points
+                if (polygon != null && polygon.Covers(point))
                     matchingZones.Add((zone, true));
             }
-            catch
+            catch (Exception ex)
             {
-                // Skip zones with invalid coordinate data to allow other valid zones to be evaluated
+                _logger.LogWarning(ex, "Failed to evaluate zone {ZoneId} ({ZoneName}) during geofence validation", zone.Id, zone.Name);
             }
         }
 
@@ -64,7 +69,7 @@ public class GeofenceValidationService : IGeofenceValidationService
         };
     }
 
-    private static List<CoordinateDto> DeserializeCoordinates(string json)
+    private List<CoordinateDto> DeserializeCoordinates(string json)
     {
         if (string.IsNullOrWhiteSpace(json))
             return new List<CoordinateDto>();
@@ -72,9 +77,10 @@ public class GeofenceValidationService : IGeofenceValidationService
         {
             return JsonSerializer.Deserialize<List<CoordinateDto>>(json) ?? new List<CoordinateDto>();
         }
-        catch
+        catch (Exception ex)
         {
-            // Return empty list on deserialization failure; invalid JSON coordinates are treated as an empty zone
+            // Return empty list on deserialization failure; log for diagnostics
+            _logger.LogWarning(ex, "Failed to deserialize coordinates JSON: {Json}", json);
             return new List<CoordinateDto>();
         }
     }

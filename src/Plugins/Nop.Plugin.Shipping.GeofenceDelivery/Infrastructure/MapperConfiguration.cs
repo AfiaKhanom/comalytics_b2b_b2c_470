@@ -30,9 +30,9 @@ public class MapperConfiguration : Profile, IOrderedMapperProfile
         {
             return JsonSerializer.Deserialize<List<CoordinateDto>>(json) ?? new List<CoordinateDto>();
         }
-        catch
+        catch (JsonException)
         {
-            // Return empty list on deserialization failure; invalid JSON coordinates are treated as an empty zone
+            // Return empty list when coordinates JSON is malformed; this is handled gracefully downstream
             return new List<CoordinateDto>();
         }
     }

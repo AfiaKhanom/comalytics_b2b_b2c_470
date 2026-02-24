@@ -66,7 +66,7 @@ public class GeofenceDeliveryController : BasePluginController
             DefaultCountryId = _settings.DefaultCountryId,
             AvailableCountries = countries.Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() }).ToList()
         };
-        model.AvailableCountries.Insert(0, new SelectListItem { Text = "-- Select Country --", Value = "0" });
+        model.AvailableCountries.Insert(0, new SelectListItem { Text = await _localizationService.GetResourceAsync("Admin.Common.All"), Value = "0" });
 
         return View("~/Plugins/Shipping.GeofenceDelivery/Areas/Admin/Views/Configure.cshtml", model);
     }
