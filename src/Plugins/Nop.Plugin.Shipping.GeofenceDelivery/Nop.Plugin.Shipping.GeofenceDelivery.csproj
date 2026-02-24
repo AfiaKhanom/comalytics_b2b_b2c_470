@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Copyright>Copyright © nopCommerce</Copyright>
+    <Company>nopCommerce</Company>
+    <Authors>nopCommerce</Authors>
+    <PackageProjectUrl>https://www.nopcommerce.com/</PackageProjectUrl>
+    <OutputPath>..\..\Presentation\Nop.Web\Plugins\Shipping.GeofenceDelivery</OutputPath>
+    <OutDir>$(OutputPath)</OutDir>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="plugin.json" />
+    <None Remove="Areas\Admin\Views\Configure.cshtml" />
+    <None Remove="Areas\Admin\Views\_CreateOrUpdate.cshtml" />
+    <None Remove="Areas\Admin\Views\_ZoneList.cshtml" />
+    <None Remove="Areas\Admin\Views\_MapEditor.cshtml" />
+    <None Remove="Areas\Admin\Views\_CoordinateImport.cshtml" />
+    <None Remove="Areas\Admin\Views\_OverlapWarning.cshtml" />
+    <None Remove="Views\Shared\Components\GeofenceAddress\Default.cshtml" />
+    <None Remove="Localization\resources.en-us.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="plugin.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Areas\Admin\Views\Configure.cshtml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Areas\Admin\Views\_CreateOrUpdate.cshtml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Areas\Admin\Views\_ZoneList.cshtml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Areas\Admin\Views\_MapEditor.cshtml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Areas\Admin\Views\_CoordinateImport.cshtml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Areas\Admin\Views\_OverlapWarning.cshtml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Views\Shared\Components\GeofenceAddress\Default.cshtml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Localization\resources.en-us.xml" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NetTopologySuite" Version="2.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Presentation\Nop.Web.Framework\Nop.Web.Framework.csproj" />
+    <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\Build\ClearPluginAssemblies.proj" />
+  </ItemGroup>
+
+  <Target Name="NopTarget" AfterTargets="Build">
+    <MSBuild Projects="@(ClearPluginAssemblies)" Properties="PluginPath=$(MSBuildProjectDirectory)\$(OutDir)" Targets="NopClear" />
+  </Target>
+
+</Project>

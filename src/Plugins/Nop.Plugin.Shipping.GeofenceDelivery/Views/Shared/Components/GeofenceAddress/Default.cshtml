@@ -1,0 +1,44 @@
+@model string
+
+@{
+    var apiKey = Model;
+}
+
+<div id="geofence-address-validator" data-api-key="@apiKey"></div>
+
+<script>
+    // Initialize Google Maps for address autocomplete
+    function initAddressAutocomplete() {
+        var inputs = document.querySelectorAll('input[name*="Address"], input[id*="address"]');
+        inputs.forEach(function(input) {
+            var autocomplete = new google.maps.places.Autocomplete(input);
+            autocomplete.addListener('place_changed', function() {
+                var place = autocomplete.getPlace();
+                if (place.geometry) {
+                    validateAddress(
+                        place.geometry.location.lat(),
+                        place.geometry.location.lng()
+                    );
+                }
+            });
+        });
+    }
+
+    function validateAddress(lat, lng) {
+        fetch('/geofence/validate-address', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ latitude: lat, longitude: lng })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(result) {
+            var container = document.getElementById('geofence-address-validator');
+            if (!result.isValid) {
+                container.innerHTML = '<div class="alert alert-danger">' + (result.errorMessage || 'Address is outside delivery zone') + '</div>';
+            } else {
+                container.innerHTML = '<div class="alert alert-success">Delivery available: ' + result.zoneName + '</div>';
+            }
+        });
+    }
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=@apiKey&libraries=places,drawing&callback=initAddressAutocomplete" async defer></script>

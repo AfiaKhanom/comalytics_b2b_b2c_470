@@ -1,0 +1,58 @@
+@model GeofenceZoneModel
+
+<div class="card card-default">
+    <div class="card-body">
+        <div class="form-group row">
+            <div class="col-md-3">
+                <nop-label asp-for="Name" />
+            </div>
+            <div class="col-md-9">
+                <nop-editor asp-for="Name" />
+                <span asp-validation-for="Name"></span>
+            </div>
+        </div>
+        <div class="form-group row">
+            <div class="col-md-3">
+                <nop-label asp-for="IsActive" />
+            </div>
+            <div class="col-md-9">
+                <nop-editor asp-for="IsActive" />
+            </div>
+        </div>
+        <div class="form-group row">
+            <div class="col-md-3">
+                <nop-label asp-for="IsCollectionOnly" />
+            </div>
+            <div class="col-md-9">
+                <nop-editor asp-for="IsCollectionOnly" />
+            </div>
+        </div>
+        <div class="form-group row">
+            <div class="col-md-3">
+                <nop-label asp-for="DeliveryFee" />
+            </div>
+            <div class="col-md-9">
+                <nop-editor asp-for="DeliveryFee" />
+                <span asp-validation-for="DeliveryFee"></span>
+            </div>
+        </div>
+        <div class="form-group row">
+            <div class="col-md-3">
+                <nop-label asp-for="DisplayOrder" />
+            </div>
+            <div class="col-md-9">
+                <nop-editor asp-for="DisplayOrder" />
+            </div>
+        </div>
+        <div class="form-group row">
+            <div class="col-md-3">
+                <nop-label asp-for="CoordinatesJson" />
+            </div>
+            <div class="col-md-9">
+                <nop-editor asp-for="CoordinatesJson" />
+                <span asp-validation-for="CoordinatesJson"></span>
+            </div>
+        </div>
+        @await Html.PartialAsync("_MapEditor", Model)
+    </div>
+</div>

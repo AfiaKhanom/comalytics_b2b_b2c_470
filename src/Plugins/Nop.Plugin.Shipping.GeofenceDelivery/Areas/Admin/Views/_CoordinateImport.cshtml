@@ -1,0 +1,52 @@
+<div class="card card-default">
+    <div class="card-header">
+        <h3 class="card-title">Import Coordinates</h3>
+    </div>
+    <div class="card-body">
+        <div class="form-group">
+            <label>Paste CSV (lat,lng per line) or JSON array:</label>
+            <textarea id="coordinate-import-data" class="form-control" rows="6" placeholder="40.712776,-74.005974&#10;40.713776,-74.006974&#10;..."></textarea>
+        </div>
+        <div class="form-group">
+            <button type="button" class="btn btn-secondary" onclick="importCoordinates()">Import</button>
+        </div>
+        <div id="coordinate-import-message" style="display:none;"></div>
+    </div>
+</div>
+
+<script>
+    function importCoordinates() {
+        var data = document.getElementById('coordinate-import-data').value.trim();
+        if (!data) return;
+
+        var coords = [];
+        // Try JSON first
+        try {
+            coords = JSON.parse(data);
+        } catch(e) {
+            // Try CSV
+            var lines = data.split('\n');
+            lines.forEach(function(line, index) {
+                var parts = line.trim().split(',');
+                if (parts.length >= 2) {
+                    var lat = parseFloat(parts[0]);
+                    var lng = parseFloat(parts[1]);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        coords.push({ lat: lat, lng: lng, seq: index });
+                    }
+                }
+            });
+        }
+
+        var msgContainer = document.getElementById('coordinate-import-message');
+        if (coords.length > 0) {
+            document.getElementById('CoordinatesJson').value = JSON.stringify(coords);
+            msgContainer.className = 'alert alert-success mt-2';
+            msgContainer.textContent = 'Imported ' + coords.length + ' coordinates successfully.';
+        } else {
+            msgContainer.className = 'alert alert-danger mt-2';
+            msgContainer.textContent = 'No valid coordinates found. Please check your input format.';
+        }
+        msgContainer.style.display = 'block';
+    }
+</script>
