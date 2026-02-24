@@ -8,28 +8,28 @@ namespace Nop.Plugin.Shipping.GeofenceDelivery.Services;
 /// </summary>
 public class CoordinateImportService : ICoordinateImportService
 {
-    public async Task<IList<CoordinateDto>> ParseCoordinatesFromJsonAsync(string json)
+    public Task<IList<CoordinateDto>> ParseCoordinatesFromJsonAsync(string json)
     {
         if (string.IsNullOrWhiteSpace(json))
-            return new List<CoordinateDto>();
+            return Task.FromResult<IList<CoordinateDto>>(new List<CoordinateDto>());
 
         try
         {
             var coordinates = JsonSerializer.Deserialize<List<CoordinateDto>>(json,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-            return coordinates ?? new List<CoordinateDto>();
+            return Task.FromResult<IList<CoordinateDto>>(coordinates ?? new List<CoordinateDto>());
         }
         catch
         {
-            return new List<CoordinateDto>();
+            return Task.FromResult<IList<CoordinateDto>>(new List<CoordinateDto>());
         }
     }
 
-    public async Task<IList<CoordinateDto>> ParseCoordinatesFromCsvAsync(string csv)
+    public Task<IList<CoordinateDto>> ParseCoordinatesFromCsvAsync(string csv)
     {
         if (string.IsNullOrWhiteSpace(csv))
-            return new List<CoordinateDto>();
+            return Task.FromResult<IList<CoordinateDto>>(new List<CoordinateDto>());
 
         var result = new List<CoordinateDto>();
         var lines = csv.Split('\n', StringSplitOptions.RemoveEmptyEntries);
@@ -48,10 +48,10 @@ public class CoordinateImportService : ICoordinateImportService
             }
         }
 
-        return result;
+        return Task.FromResult<IList<CoordinateDto>>(result);
     }
 
-    public string SerializeCoordinatesAsync(IList<CoordinateDto> coordinates)
+    public string SerializeCoordinates(IList<CoordinateDto> coordinates)
     {
         if (coordinates == null || !coordinates.Any())
             return "[]";

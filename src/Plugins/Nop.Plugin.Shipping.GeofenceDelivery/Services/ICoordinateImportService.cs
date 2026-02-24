@@ -9,5 +9,5 @@ public interface ICoordinateImportService
 {
     Task<IList<CoordinateDto>> ParseCoordinatesFromJsonAsync(string json);
     Task<IList<CoordinateDto>> ParseCoordinatesFromCsvAsync(string csv);
-    string SerializeCoordinatesAsync(IList<CoordinateDto> coordinates);
+    string SerializeCoordinates(IList<CoordinateDto> coordinates);
 }

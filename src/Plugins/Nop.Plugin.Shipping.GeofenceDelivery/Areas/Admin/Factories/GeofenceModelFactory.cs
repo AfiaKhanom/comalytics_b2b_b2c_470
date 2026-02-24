@@ -54,7 +54,7 @@ public class GeofenceModelFactory : IGeofenceModelFactory
         return model;
     }
 
-    public async Task<GeofenceZoneModel> PrepareGeofenceZoneModelAsync(GeofenceZoneModel model, GeofenceZone zone)
+    public Task<GeofenceZoneModel> PrepareGeofenceZoneModelAsync(GeofenceZoneModel model, GeofenceZone zone)
     {
         if (zone != null)
         {
@@ -68,6 +68,6 @@ public class GeofenceModelFactory : IGeofenceModelFactory
             model.IsCollectionOnly = zone.IsCollectionOnly;
         }
 
-        return model ?? new GeofenceZoneModel { IsActive = true };
+        return Task.FromResult(model ?? new GeofenceZoneModel { IsActive = true });
     }
 }
