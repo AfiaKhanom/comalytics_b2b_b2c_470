@@ -10,6 +10,7 @@
         <div class="form-group">
             <button type="button" class="btn btn-secondary" onclick="importCoordinates()">Import</button>
         </div>
+        <div id="coordinate-import-message" style="display:none;"></div>
     </div>
 </div>
 
@@ -37,11 +38,15 @@
             });
         }
 
+        var msgContainer = document.getElementById('coordinate-import-message');
         if (coords.length > 0) {
             document.getElementById('CoordinatesJson').value = JSON.stringify(coords);
-            alert('Imported ' + coords.length + ' coordinates successfully.');
+            msgContainer.className = 'alert alert-success mt-2';
+            msgContainer.textContent = 'Imported ' + coords.length + ' coordinates successfully.';
         } else {
-            alert('No valid coordinates found. Please check your input format.');
+            msgContainer.className = 'alert alert-danger mt-2';
+            msgContainer.textContent = 'No valid coordinates found. Please check your input format.';
         }
+        msgContainer.style.display = 'block';
     }
 </script>

@@ -20,8 +20,9 @@ public class CoordinateImportService : ICoordinateImportService
 
             return Task.FromResult<IList<CoordinateDto>>(coordinates ?? new List<CoordinateDto>());
         }
-        catch
+        catch (JsonException)
         {
+            // Return empty list for invalid JSON input; callers should handle this gracefully
             return Task.FromResult<IList<CoordinateDto>>(new List<CoordinateDto>());
         }
     }

@@ -51,7 +51,7 @@
                     paths.forEach(function(p) { bounds.extend(p); });
                     map.fitBounds(bounds);
                 }
-            } catch(e) { }
+            } catch(e) { console.error('Failed to load existing zone coordinates:', e); }
         }
     }
 
