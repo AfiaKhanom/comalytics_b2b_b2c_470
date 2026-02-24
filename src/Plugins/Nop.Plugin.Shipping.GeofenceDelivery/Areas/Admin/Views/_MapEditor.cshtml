@@ -1,0 +1,67 @@
+@model GeofenceZoneModel
+
+<div class="form-group row">
+    <div class="col-md-12">
+        <div id="geofence-map" style="height: 400px; width: 100%;"></div>
+        <small class="text-muted">Draw a polygon on the map to define the delivery zone. Coordinates will be saved automatically.</small>
+    </div>
+</div>
+
+<script>
+    var map;
+    var drawingManager;
+    var currentPolygon;
+
+    function initGeofenceMap() {
+        map = new google.maps.Map(document.getElementById('geofence-map'), {
+            zoom: 12,
+            center: { lat: 51.5074, lng: -0.1278 }
+        });
+
+        drawingManager = new google.maps.drawing.DrawingManager({
+            drawingMode: google.maps.drawing.OverlayType.POLYGON,
+            drawingControl: true,
+            drawingControlOptions: {
+                position: google.maps.ControlPosition.TOP_CENTER,
+                drawingModes: [google.maps.drawing.OverlayType.POLYGON]
+            }
+        });
+
+        drawingManager.setMap(map);
+
+        google.maps.event.addListener(drawingManager, 'polygoncomplete', function(polygon) {
+            if (currentPolygon) {
+                currentPolygon.setMap(null);
+            }
+            currentPolygon = polygon;
+            saveCoordinates(polygon);
+        });
+
+        // Load existing coordinates if any
+        var existingCoords = document.getElementById('CoordinatesJson').value;
+        if (existingCoords && existingCoords.length > 2) {
+            try {
+                var coords = JSON.parse(existingCoords);
+                if (coords && coords.length > 0) {
+                    var paths = coords.map(function(c) { return { lat: c.lat, lng: c.lng }; });
+                    currentPolygon = new google.maps.Polygon({ paths: paths });
+                    currentPolygon.setMap(map);
+
+                    var bounds = new google.maps.LatLngBounds();
+                    paths.forEach(function(p) { bounds.extend(p); });
+                    map.fitBounds(bounds);
+                }
+            } catch(e) { }
+        }
+    }
+
+    function saveCoordinates(polygon) {
+        var path = polygon.getPath();
+        var coords = [];
+        for (var i = 0; i < path.getLength(); i++) {
+            var latLng = path.getAt(i);
+            coords.push({ lat: latLng.lat(), lng: latLng.lng(), seq: i });
+        }
+        document.getElementById('CoordinatesJson').value = JSON.stringify(coords);
+    }
+</script>

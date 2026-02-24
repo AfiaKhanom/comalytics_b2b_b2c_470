@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Language Name="English" IsDefault="false" IsRightToLeft="false">
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Fields.GoogleMapsApiKey">
+    <Value>Google Maps API Key</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Fields.GoogleMapsApiKey.Hint">
+    <Value>Enter your Google Maps API key for geocoding and map display.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Fields.IsEnabled">
+    <Value>Enabled</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Fields.ValidateOnRegistration">
+    <Value>Validate on Registration</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Fields.ValidateOnCheckout">
+    <Value>Validate on Checkout</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Fields.OutsideZoneErrorMessage">
+    <Value>Outside Zone Error Message</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Fields.Name">
+    <Value>Name</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Fields.IsActive">
+    <Value>Active</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Fields.DisplayOrder">
+    <Value>Display Order</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Fields.CoordinatesJson">
+    <Value>Coordinates (JSON)</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Fields.DeliveryFee">
+    <Value>Delivery Fee</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Fields.IsCollectionOnly">
+    <Value>Collection Only</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Zone.Created">
+    <Value>Delivery zone created successfully.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Zone.Updated">
+    <Value>Delivery zone updated successfully.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Zone.Deleted">
+    <Value>Delivery zone deleted successfully.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Configuration">
+    <Value>Configuration</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.Zones">
+    <Value>Delivery Zones</Value>
+  </LocaleResource>
+  <LocaleResource Name="Plugins.Shipping.GeofenceDelivery.AddNewZone">
+    <Value>Add New Zone</Value>
+  </LocaleResource>
+</Language>
