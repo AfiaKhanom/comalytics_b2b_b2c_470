@@ -1,0 +1,11 @@
+{
+  "Group": "Shipping rate computation",
+  "FriendlyName": "Geofence Delivery",
+  "SystemName": "Shipping.GeofenceDelivery",
+  "Version": "1.0.0",
+  "SupportedVersions": [ "4.70" ],
+  "Author": "Comalytics",
+  "DisplayOrder": 1,
+  "FileName": "Nop.Plugin.Shipping.GeofenceDelivery.dll",
+  "Description": "Shipping plugin that uses geofencing to determine delivery zones and fees"
+}
