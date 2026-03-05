@@ -1,0 +1,101 @@
+@model Nop.Plugin.Shipping.GeofenceDelivery.GeofenceDeliverySettings
+@{
+    var mapsApiKey = Model.GoogleMapsApiKey;
+}
+
+<div class="geofence-address-widget">
+    <div class="form-group">
+        <label for="address-input">Street Address</label>
+        <input id="address-input" type="text" class="form-control" placeholder="Start typing your address...">
+    </div>
+    <button type="button" id="use-current-location" class="btn btn-outline-secondary btn-sm mb-2">
+        📍 @T("Plugins.Shipping.GeofenceDelivery.UseCurrentLocation")
+    </button>
+    <div id="geofence-map" style="height:400px; width:100%; border:1px solid #ccc; margin-bottom:10px;"></div>
+    <div id="coordinates-display" class="text-muted small mb-2">@T("Plugins.Shipping.GeofenceDelivery.CoordinatesNotSet")</div>
+    <div id="validation-overlay" class="alert" style="display:none;"></div>
+    <input type="hidden" id="latitude" name="Latitude">
+    <input type="hidden" id="longitude" name="Longitude">
+    <input type="hidden" id="is-validated" name="IsGeofenceValidated">
+</div>
+
+<script>
+    var geofenceValidateUrl = '@Url.Action("ValidateLocation", "GeofenceDeliveryPublic")';
+    var debounceTimer;
+
+    function initGeofenceMap() {
+        var map = new google.maps.Map(document.getElementById('geofence-map'), {
+            center: { lat: 0, lng: 0 },
+            zoom: 10
+        });
+
+        var marker = new google.maps.Marker({
+            map: map,
+            draggable: true
+        });
+
+        var autocomplete = new google.maps.places.Autocomplete(
+            document.getElementById('address-input'));
+        autocomplete.bindTo('bounds', map);
+
+        autocomplete.addListener('place_changed', function () {
+            var place = autocomplete.getPlace();
+            if (!place.geometry) return;
+            map.setCenter(place.geometry.location);
+            map.setZoom(15);
+            marker.setPosition(place.geometry.location);
+            updateCoordinates(place.geometry.location.lat(), place.geometry.location.lng());
+        });
+
+        marker.addListener('dragend', function () {
+            var pos = marker.getPosition();
+            updateCoordinates(pos.lat(), pos.lng());
+        });
+
+        document.getElementById('use-current-location').addEventListener('click', function () {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (pos) {
+                    var latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+                    map.setCenter(latLng);
+                    map.setZoom(15);
+                    marker.setPosition(latLng);
+                    updateCoordinates(pos.coords.latitude, pos.coords.longitude);
+                });
+            }
+        });
+    }
+
+    function updateCoordinates(lat, lng) {
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+        document.getElementById('coordinates-display').textContent = 'Coordinates: Lat ' + lat.toFixed(7) + ', Lng ' + lng.toFixed(7);
+
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function () { validateLocation(lat, lng); }, 500);
+    }
+
+    function validateLocation(lat, lng) {
+        fetch(geofenceValidateUrl + '?latitude=' + lat + '&longitude=' + lng)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var overlay = document.getElementById('validation-overlay');
+                overlay.style.display = 'block';
+                overlay.className = 'alert';
+                if (data.isValid) {
+                    if (data.isCollectionOnly) {
+                        overlay.className += ' alert-warning';
+                        overlay.textContent = '⚠ Collection only available';
+                    } else {
+                        overlay.className += ' alert-success';
+                        overlay.textContent = '✓ Delivery available - ' + data.zoneName + ' ($' + data.deliveryFee + ')';
+                    }
+                    document.getElementById('is-validated').value = 'true';
+                } else {
+                    overlay.className += ' alert-danger';
+                    overlay.textContent = '✗ ' + data.message;
+                    document.getElementById('is-validated').value = 'false';
+                }
+            });
+    }
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=@mapsApiKey&libraries=places&callback=initGeofenceMap"></script>
