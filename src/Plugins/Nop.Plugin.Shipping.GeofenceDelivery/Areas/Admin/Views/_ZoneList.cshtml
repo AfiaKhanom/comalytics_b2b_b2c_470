@@ -1,63 +1,65 @@
-@model Nop.Plugin.Shipping.GeofenceDelivery.Areas.Admin.Models.GeofenceZoneSearchModel
-@{
-    var gridModel = new DataTablesModel
-    {
-        Name = "geofencezone-grid",
-        UrlRead = new DataUrl("ZoneList", "GeofenceDelivery", null),
-        UrlDelete = new DataUrl("Delete", "GeofenceDelivery", null),
-        IsServerSide = true,
-        SearchButtonId = "search-zones",
-        Filters = new List<FilterParameter>
-        {
-            new FilterParameter(nameof(Model.SearchName)),
-            new FilterParameter(nameof(Model.SearchIsActive))
-        },
-        ColumnCollection = new List<ColumnProperty>
-        {
-            new ColumnProperty(nameof(Nop.Plugin.Shipping.GeofenceDelivery.Areas.Admin.Models.GeofenceZoneModel.Name))
-            {
-                Title = T("Plugins.Shipping.GeofenceDelivery.Zone.Name").Text
-            },
-            new ColumnProperty(nameof(Nop.Plugin.Shipping.GeofenceDelivery.Areas.Admin.Models.GeofenceZoneModel.IsActive))
-            {
-                Title = T("Plugins.Shipping.GeofenceDelivery.Zone.IsActive").Text,
-                Render = new RenderBoolean()
-            },
-            new ColumnProperty(nameof(Nop.Plugin.Shipping.GeofenceDelivery.Areas.Admin.Models.GeofenceZoneModel.DeliveryFee))
-            {
-                Title = T("Plugins.Shipping.GeofenceDelivery.Zone.DeliveryFee").Text
-            },
-            new ColumnProperty(nameof(Nop.Plugin.Shipping.GeofenceDelivery.Areas.Admin.Models.GeofenceZoneModel.IsCollectionOnly))
-            {
-                Title = T("Plugins.Shipping.GeofenceDelivery.Zone.IsCollectionOnly").Text,
-                Render = new RenderBoolean()
-            },
-            new ColumnProperty(nameof(Nop.Plugin.Shipping.GeofenceDelivery.Areas.Admin.Models.GeofenceZoneModel.Id))
-            {
-                Title = T("Admin.Common.Edit").Text,
-                Width = "100",
-                ClassName = NopColumnClassDefaults.Button,
-                Render = new RenderButtonEdit(new DataUrl("Edit", "GeofenceDelivery", null))
-            },
-            new ColumnProperty(nameof(Nop.Plugin.Shipping.GeofenceDelivery.Areas.Admin.Models.GeofenceZoneModel.Id))
-            {
-                Title = T("Admin.Common.Delete").Text,
-                Width = "100",
-                Render = new RenderButtonRemove(T("Admin.Common.Delete").Text)
-            }
-        }
-    };
-}
+@model GeofenceZoneSearchModel
 
-<div class="panel-body">
-    <div class="row search-row">
-        <div class="search-text">@T("Plugins.Shipping.GeofenceDelivery.Zone.Name")</div>
-        <div class="input-group col-md-3">
-            <input type="search" id="SearchName" name="SearchName" class="form-control" />
-        </div>
-        <button type="button" id="search-zones" class="btn btn-primary btn-search">
-            @T("Admin.Common.Search")
-        </button>
+<div class="card card-default">
+    <div class="card-header">
+        <h3 class="card-title">@T("Plugins.Shipping.GeofenceDelivery.Zones")</h3>
     </div>
-    @await Html.PartialAsync("Table", gridModel)
+    <div class="card-body">
+        <p>
+            <a href="@Url.Action("CreateZone", "GeofenceDelivery")" class="btn btn-primary">
+                @T("Plugins.Shipping.GeofenceDelivery.AddNewZone")
+            </a>
+        </p>
+        @await Html.PartialAsync("Table", new DataTablesModel
+        {
+            Name = "geofence-zones-grid",
+            UrlRead = new DataUrl("ZoneList", "GeofenceDelivery"),
+            SearchButtonId = "search-zones",
+            Length = Model.PageSize,
+            LengthMenu = Model.AvailablePageSizes,
+            Filters = new List<FilterParameter>
+            {
+                new FilterParameter(nameof(Model.SearchName))
+            },
+            ColumnCollection = new List<ColumnProperty>
+            {
+                new ColumnProperty(nameof(GeofenceZoneModel.Name))
+                {
+                    Title = T("Plugins.Shipping.GeofenceDelivery.Fields.Name").Text
+                },
+                new ColumnProperty(nameof(GeofenceZoneModel.DeliveryFee))
+                {
+                    Title = T("Plugins.Shipping.GeofenceDelivery.Fields.DeliveryFee").Text
+                },
+                new ColumnProperty(nameof(GeofenceZoneModel.IsActive))
+                {
+                    Title = T("Plugins.Shipping.GeofenceDelivery.Fields.IsActive").Text,
+                    Render = new RenderBoolean()
+                },
+                new ColumnProperty(nameof(GeofenceZoneModel.IsCollectionOnly))
+                {
+                    Title = T("Plugins.Shipping.GeofenceDelivery.Fields.IsCollectionOnly").Text,
+                    Render = new RenderBoolean()
+                },
+                new ColumnProperty(nameof(GeofenceZoneModel.DisplayOrder))
+                {
+                    Title = T("Plugins.Shipping.GeofenceDelivery.Fields.DisplayOrder").Text,
+                    Width = "100"
+                },
+                new ColumnProperty(nameof(GeofenceZoneModel.Id))
+                {
+                    Title = T("Admin.Common.Edit").Text,
+                    Width = "100",
+                    ClassName = NopColumnClassDefaults.Button,
+                    Render = new RenderButtonEdit(new DataUrl("EditZone", "GeofenceDelivery"))
+                },
+                new ColumnProperty(nameof(GeofenceZoneModel.Id))
+                {
+                    Title = T("Admin.Common.Delete").Text,
+                    Width = "100",
+                    Render = new RenderButtonRemove(T("Admin.Common.Delete").Text)
+                }
+            }
+        })
+    </div>
 </div>

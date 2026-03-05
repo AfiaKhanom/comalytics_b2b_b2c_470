@@ -6,47 +6,35 @@ using Nop.Plugin.Shipping.GeofenceDelivery.Infrastructure.Cache;
 
 namespace Nop.Plugin.Shipping.GeofenceDelivery.Services;
 
+/// <summary>
+/// Geofence zone service
+/// </summary>
 public class GeofenceZoneService : IGeofenceZoneService
 {
-    protected readonly IRepository<GeofenceZone> _zoneRepository;
-    protected readonly IStaticCacheManager _staticCacheManager;
+    private readonly IRepository<GeofenceZone> _geofenceZoneRepository;
+    private readonly IStaticCacheManager _staticCacheManager;
 
-    public GeofenceZoneService(
-        IRepository<GeofenceZone> zoneRepository,
+    public GeofenceZoneService(IRepository<GeofenceZone> geofenceZoneRepository,
         IStaticCacheManager staticCacheManager)
     {
-        _zoneRepository = zoneRepository;
+        _geofenceZoneRepository = geofenceZoneRepository;
         _staticCacheManager = staticCacheManager;
     }
 
-    public async Task<GeofenceZone> GetZoneByIdAsync(int id)
+    public async Task<GeofenceZone> GetByIdAsync(int id)
     {
-        return await _zoneRepository.GetByIdAsync(id,
-            cache => cache.PrepareKeyForDefaultCache(GeofenceCacheDefaults.ZoneByIdCacheKey, id));
+        return await _geofenceZoneRepository.GetByIdAsync(id, cache => default);
     }
 
-    public async Task<IList<GeofenceZone>> GetAllZonesAsync(bool activeOnly = true)
+    public async Task<IPagedList<GeofenceZone>> GetAllZonesAsync(bool showInactive = false, int pageIndex = 0, int pageSize = int.MaxValue)
     {
-        return await _staticCacheManager.GetAsync(GeofenceCacheDefaults.AllZonesCacheKey, async () =>
+        return await _geofenceZoneRepository.GetAllPagedAsync(query =>
         {
-            return await _zoneRepository.GetAllAsync(query =>
-            {
-                if (activeOnly)
-                    query = query.Where(z => z.IsActive);
-                return query.OrderBy(z => z.DisplayOrder).ThenBy(z => z.Name);
-            });
-        });
-    }
+            if (!showInactive)
+                query = query.Where(z => z.IsActive);
 
-    public async Task<IPagedList<GeofenceZone>> GetPagedZonesAsync(string name = null, bool? isActive = null, int pageIndex = 0, int pageSize = int.MaxValue)
-    {
-        return await _zoneRepository.GetAllPagedAsync(query =>
-        {
-            if (!string.IsNullOrWhiteSpace(name))
-                query = query.Where(z => z.Name.Contains(name));
-            if (isActive.HasValue)
-                query = query.Where(z => z.IsActive == isActive.Value);
-            return query.OrderBy(z => z.DisplayOrder).ThenBy(z => z.Name);
+            query = query.OrderBy(z => z.DisplayOrder).ThenBy(z => z.Name);
+            return query;
         }, pageIndex, pageSize);
     }
 
@@ -55,22 +43,32 @@ public class GeofenceZoneService : IGeofenceZoneService
         ArgumentNullException.ThrowIfNull(zone);
         zone.CreatedOnUtc = DateTime.UtcNow;
         zone.UpdatedOnUtc = DateTime.UtcNow;
-        await _zoneRepository.InsertAsync(zone);
-        await _staticCacheManager.RemoveByPrefixAsync(GeofenceCacheDefaults.GeofenceZonesPrefix);
+        await _geofenceZoneRepository.InsertAsync(zone);
+        await _staticCacheManager.RemoveByPrefixAsync(GeofenceCacheDefaults.ZonePrefix);
     }
 
     public async Task UpdateZoneAsync(GeofenceZone zone)
     {
         ArgumentNullException.ThrowIfNull(zone);
         zone.UpdatedOnUtc = DateTime.UtcNow;
-        await _zoneRepository.UpdateAsync(zone);
-        await _staticCacheManager.RemoveByPrefixAsync(GeofenceCacheDefaults.GeofenceZonesPrefix);
+        await _geofenceZoneRepository.UpdateAsync(zone);
+        await _staticCacheManager.RemoveByPrefixAsync(GeofenceCacheDefaults.ZonePrefix);
     }
 
     public async Task DeleteZoneAsync(GeofenceZone zone)
     {
         ArgumentNullException.ThrowIfNull(zone);
-        await _zoneRepository.DeleteAsync(zone);
-        await _staticCacheManager.RemoveByPrefixAsync(GeofenceCacheDefaults.GeofenceZonesPrefix);
+        await _geofenceZoneRepository.DeleteAsync(zone);
+        await _staticCacheManager.RemoveByPrefixAsync(GeofenceCacheDefaults.ZonePrefix);
+    }
+
+    public async Task<IList<GeofenceZone>> GetActiveZonesAsync()
+    {
+        var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(GeofenceCacheDefaults.ActiveZonesKey);
+        return await _staticCacheManager.GetAsync(cacheKey, async () =>
+        {
+            return (await _geofenceZoneRepository.GetAllAsync(query =>
+                query.Where(z => z.IsActive).OrderBy(z => z.DisplayOrder))).ToList();
+        });
     }
 }

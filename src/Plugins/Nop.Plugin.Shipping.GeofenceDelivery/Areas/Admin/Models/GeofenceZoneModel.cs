@@ -1,28 +1,28 @@
-using Nop.Plugin.Shipping.GeofenceDelivery.Models;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Shipping.GeofenceDelivery.Areas.Admin.Models;
 
+/// <summary>
+/// Represents a geofence zone model
+/// </summary>
 public record GeofenceZoneModel : BaseNopEntityModel
 {
-    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Zone.Name")]
+    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.Name")]
     public string Name { get; set; }
 
-    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Zone.IsActive")]
+    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.IsActive")]
     public bool IsActive { get; set; }
 
-    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Zone.DisplayOrder")]
+    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.DisplayOrder")]
     public int DisplayOrder { get; set; }
 
-    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Zone.DeliveryFee")]
-    public decimal DeliveryFee { get; set; }
-
-    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Zone.IsCollectionOnly")]
-    public bool IsCollectionOnly { get; set; }
-
-    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Zone.CoordinatesJson")]
+    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.CoordinatesJson")]
     public string CoordinatesJson { get; set; }
 
-    public IList<CoordinateDto> Coordinates { get; set; } = new List<CoordinateDto>();
+    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.DeliveryFee")]
+    public decimal DeliveryFee { get; set; }
+
+    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.IsCollectionOnly")]
+    public bool IsCollectionOnly { get; set; }
 }

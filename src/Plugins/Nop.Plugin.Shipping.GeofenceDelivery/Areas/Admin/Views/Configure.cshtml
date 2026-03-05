@@ -1,107 +1,37 @@
-@model Nop.Plugin.Shipping.GeofenceDelivery.Areas.Admin.Models.ConfigurationModel
+@model ConfigurationModel
+
 @{
     Layout = "_AdminLayout";
-    ViewBag.PageTitle = T("Plugins.Shipping.GeofenceDelivery.Configure").Text;
+    ViewBag.Title = T("Plugins.Shipping.GeofenceDelivery.Configuration").Text;
     NopHtml.SetActiveMenuItemSystemName("Shipping.GeofenceDelivery");
 }
 
-@using (Html.BeginForm("Configure", "GeofenceDelivery", FormMethod.Post))
-{
-    @Html.AntiForgeryToken()
+@await Component.InvokeAsync(typeof(Nop.Web.Areas.Admin.Components.StoreScopeConfigurationViewComponent))
+
+<form asp-controller="GeofenceDelivery" asp-action="Configure" method="post">
     <div class="content-header clearfix">
-        <h1 class="float-left">@T("Plugins.Shipping.GeofenceDelivery.Configure")</h1>
-    </div>
-    <div class="content">
-        <div class="form-horizontal">
-            <div class="panel-group">
-                <div class="panel panel-default">
-                    <div class="panel-body">
-                        <div class="form-group row">
-                            <div class="col-md-3">
-                                <nop-label asp-for="Enabled" />
-                            </div>
-                            <div class="col-md-9">
-                                <nop-editor asp-for="Enabled" />
-                                <span asp-validation-for="Enabled"></span>
-                            </div>
-                        </div>
-                        <div class="form-group row">
-                            <div class="col-md-3">
-                                <nop-label asp-for="DisplayName" />
-                            </div>
-                            <div class="col-md-9">
-                                <nop-editor asp-for="DisplayName" />
-                                <span asp-validation-for="DisplayName"></span>
-                            </div>
-                        </div>
-                        <div class="form-group row">
-                            <div class="col-md-3">
-                                <nop-label asp-for="GoogleMapsApiKey" />
-                            </div>
-                            <div class="col-md-9">
-                                <nop-editor asp-for="GoogleMapsApiKey" />
-                                <span asp-validation-for="GoogleMapsApiKey"></span>
-                            </div>
-                        </div>
-                        <div class="form-group row">
-                            <div class="col-md-3">
-                                <nop-label asp-for="OutsideZoneMessage" />
-                            </div>
-                            <div class="col-md-9">
-                                <nop-editor asp-for="OutsideZoneMessage" />
-                                <span asp-validation-for="OutsideZoneMessage"></span>
-                            </div>
-                        </div>
-                        <div class="form-group row">
-                            <div class="col-md-3">
-                                <nop-label asp-for="BlockNonServiceableRegistration" />
-                            </div>
-                            <div class="col-md-9">
-                                <nop-editor asp-for="BlockNonServiceableRegistration" />
-                                <span asp-validation-for="BlockNonServiceableRegistration"></span>
-                            </div>
-                        </div>
-                        <div class="form-group row">
-                            <div class="col-md-3">
-                                <nop-label asp-for="MaxCoordinatesPerZone" />
-                            </div>
-                            <div class="col-md-9">
-                                <nop-editor asp-for="MaxCoordinatesPerZone" />
-                                <span asp-validation-for="MaxCoordinatesPerZone"></span>
-                            </div>
-                        </div>
-                        <div class="form-group row">
-                            <div class="col-md-3">
-                                <nop-label asp-for="TotalCoordinatesLimit" />
-                            </div>
-                            <div class="col-md-9">
-                                <nop-editor asp-for="TotalCoordinatesLimit" />
-                                <span asp-validation-for="TotalCoordinatesLimit"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="panel-group">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">@T("Plugins.Shipping.GeofenceDelivery.Zones")</h3>
-                    </div>
-                    <div class="panel-body">
-                        <p>
-                            <a asp-action="Create" asp-controller="GeofenceDelivery" class="btn btn-primary">
-                                @T("Plugins.Shipping.GeofenceDelivery.Zone.Add")
-                            </a>
-                        </p>
-                        @await Html.PartialAsync("~/Plugins/Shipping.GeofenceDelivery/Areas/Admin/Views/_ZoneList.cshtml", new Nop.Plugin.Shipping.GeofenceDelivery.Areas.Admin.Models.GeofenceZoneSearchModel())
-                    </div>
-                </div>
-            </div>
-            <div class="form-group row">
-                <div class="col-md-9 offset-md-3">
-                    <button type="submit" name="save" class="btn btn-primary">@T("Admin.Common.Save")</button>
-                </div>
-            </div>
+        <h1 class="float-left">
+            @T("Plugins.Shipping.GeofenceDelivery.Configuration")
+        </h1>
+        <div class="float-right">
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.Save")
+            </button>
         </div>
     </div>
-}
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="form-horizontal">
+                @await Html.PartialAsync("_CreateOrUpdate", Model)
+            </div>
+        </div>
+    </section>
+</form>
+
+<div class="content">
+    <div class="container-fluid">
+        @await Html.PartialAsync("_ZoneList", Model.GeofenceZoneSearchModel)
+    </div>
+</div>

@@ -1,103 +1,112 @@
-using System.Text.Json;
-using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
 using Nop.Plugin.Shipping.GeofenceDelivery.Models;
+using System.Text.Json;
 
 namespace Nop.Plugin.Shipping.GeofenceDelivery.Services;
 
+/// <summary>
+/// Geofence validation service using NetTopologySuite for point-in-polygon calculations
+/// </summary>
 public class GeofenceValidationService : IGeofenceValidationService
 {
-    protected readonly IGeofenceZoneService _zoneService;
-    protected readonly GeofenceDeliverySettings _settings;
-    protected readonly ILogger<GeofenceValidationService> _logger;
+    private readonly IGeofenceZoneService _geofenceZoneService;
+    private readonly IGoogleMapsService _googleMapsService;
 
-    public GeofenceValidationService(
-        IGeofenceZoneService zoneService,
-        GeofenceDeliverySettings settings,
-        ILogger<GeofenceValidationService> logger)
+    public GeofenceValidationService(IGeofenceZoneService geofenceZoneService,
+        IGoogleMapsService googleMapsService)
     {
-        _zoneService = zoneService;
-        _settings = settings;
-        _logger = logger;
+        _geofenceZoneService = geofenceZoneService;
+        _googleMapsService = googleMapsService;
     }
 
     public async Task<GeofenceValidationResult> ValidateLocationAsync(decimal latitude, decimal longitude)
     {
-        var zones = await _zoneService.GetAllZonesAsync(activeOnly: true);
-        if (!zones.Any())
-            return new GeofenceValidationResult { IsValid = false, Message = _settings.OutsideZoneMessage };
-
-        var point = new GeometryFactory().CreatePoint(new Coordinate((double)longitude, (double)latitude));
-
-        var matchingZones = new List<(Data.Domain.GeofenceZone Zone, bool Inside)>();
+        var zones = await _geofenceZoneService.GetActiveZonesAsync();
 
         foreach (var zone in zones)
         {
-            try
-            {
-                var coordinates = DeserializeCoordinates(zone.CoordinatesJson);
-                if (coordinates.Count < 3)
-                    continue;
+            if (string.IsNullOrEmpty(zone.CoordinatesJson))
+                continue;
 
-                var polygon = BuildPolygon(coordinates);
-                // polygon.Covers(point) returns true for both interior and boundary points
-                if (polygon != null && polygon.Covers(point))
-                    matchingZones.Add((zone, true));
-            }
-            catch (Exception ex)
+            var coordinates = JsonSerializer.Deserialize<List<CoordinateDto>>(zone.CoordinatesJson);
+            if (coordinates == null || coordinates.Count < 3)
+                continue;
+
+            if (IsPointInZone(latitude, longitude, coordinates))
             {
-                _logger.LogWarning(ex, "Failed to evaluate zone {ZoneId} ({ZoneName}) during geofence validation", zone.Id, zone.Name);
+                return new GeofenceValidationResult
+                {
+                    IsValid = true,
+                    ZoneId = zone.Id,
+                    ZoneName = zone.Name,
+                    DeliveryFee = zone.DeliveryFee,
+                    IsCollectionOnly = zone.IsCollectionOnly
+                };
             }
         }
-
-        if (!matchingZones.Any())
-            return new GeofenceValidationResult { IsValid = false, Message = _settings.OutsideZoneMessage };
-
-        // Apply lowest fee rule for overlapping zones
-        var bestMatch = matchingZones
-            .OrderBy(m => m.Zone.DeliveryFee)
-            .First();
 
         return new GeofenceValidationResult
         {
-            IsValid = true,
-            AssignedZone = bestMatch.Zone,
-            IsCollectionOnly = bestMatch.Zone.IsCollectionOnly,
-            Message = bestMatch.Zone.IsCollectionOnly
-                ? "Collection only available"
-                : $"Delivery available - {bestMatch.Zone.Name} (${bestMatch.Zone.DeliveryFee})"
+            IsValid = false,
+            ErrorMessage = "Address is outside all delivery zones"
         };
     }
 
-    private List<CoordinateDto> DeserializeCoordinates(string json)
+    public async Task<GeofenceValidationResult> ValidateAddressAsync(AddressValidationRequest request)
     {
-        if (string.IsNullOrWhiteSpace(json))
-            return new List<CoordinateDto>();
-        try
+        decimal latitude;
+        decimal longitude;
+
+        if (request.Latitude.HasValue && request.Longitude.HasValue)
         {
-            return JsonSerializer.Deserialize<List<CoordinateDto>>(json) ?? new List<CoordinateDto>();
+            latitude = request.Latitude.Value;
+            longitude = request.Longitude.Value;
         }
-        catch (Exception ex)
+        else
         {
-            // Return empty list on deserialization failure; log for diagnostics
-            _logger.LogWarning(ex, "Failed to deserialize coordinates JSON: {Json}", json);
-            return new List<CoordinateDto>();
+            var addressString = $"{request.Address1}, {request.City}, {request.ZipPostalCode}, {request.Country}";
+            var locationResult = await _googleMapsService.GeocodeAddressAsync(addressString);
+
+            if (!locationResult.Success)
+            {
+                return new GeofenceValidationResult
+                {
+                    IsValid = false,
+                    ErrorMessage = locationResult.ErrorMessage ?? "Failed to geocode address"
+                };
+            }
+
+            latitude = locationResult.Latitude;
+            longitude = locationResult.Longitude;
         }
+
+        return await ValidateLocationAsync(latitude, longitude);
     }
 
-    private static Polygon BuildPolygon(List<CoordinateDto> coordinates)
+    public bool IsPointInZone(decimal latitude, decimal longitude, IList<CoordinateDto> coordinates)
     {
-        var ordered = coordinates.OrderBy(c => c.Seq).ToList();
-        var coords = ordered.Select(c => new Coordinate((double)c.Lng, (double)c.Lat)).ToList();
+        if (coordinates == null || coordinates.Count < 3)
+            return false;
 
-        // Ensure polygon is closed (first = last)
-        if (coords.Count > 0 && (coords[0].X != coords[^1].X || coords[0].Y != coords[^1].Y))
-            coords.Add(coords[0]);
+        var factory = new GeometryFactory();
+        var orderedCoords = coordinates.OrderBy(c => c.Seq).ToList();
 
-        if (coords.Count < 4) // need at least 4 (3 unique + closing point)
-            return null;
+        // Build the polygon ring - must close the polygon
+        var ringCoords = orderedCoords
+            .Select(c => new Coordinate((double)c.Lng, (double)c.Lat))
+            .ToList();
 
-        var ring = new GeometryFactory().CreateLinearRing(coords.ToArray());
-        return new GeometryFactory().CreatePolygon(ring);
+        // Close the polygon if not already closed
+        if (!ringCoords[0].Equals2D(ringCoords[ringCoords.Count - 1]))
+            ringCoords.Add(ringCoords[0]);
+
+        if (ringCoords.Count < 4)
+            return false;
+
+        var ring = factory.CreateLinearRing(ringCoords.ToArray());
+        var polygon = factory.CreatePolygon(ring);
+        var point = factory.CreatePoint(new Coordinate((double)longitude, (double)latitude));
+
+        return polygon.Contains(point) || polygon.Touches(point);
     }
 }

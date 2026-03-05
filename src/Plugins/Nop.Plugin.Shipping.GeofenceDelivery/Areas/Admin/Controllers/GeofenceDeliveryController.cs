@@ -1,18 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.Extensions.DependencyInjection;
+using Nop.Plugin.Shipping.GeofenceDelivery.Areas.Admin.Factories;
 using Nop.Plugin.Shipping.GeofenceDelivery.Areas.Admin.Models;
 using Nop.Plugin.Shipping.GeofenceDelivery.Data.Domain;
 using Nop.Plugin.Shipping.GeofenceDelivery.Services;
 using Nop.Services.Configuration;
-using Nop.Services.Directory;
 using Nop.Services.Localization;
 using Nop.Services.Messages;
 using Nop.Services.Security;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
-using Nop.Web.Framework.Models.Extensions;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Plugin.Shipping.GeofenceDelivery.Areas.Admin.Controllers;
@@ -22,30 +18,26 @@ namespace Nop.Plugin.Shipping.GeofenceDelivery.Areas.Admin.Controllers;
 [AutoValidateAntiforgeryToken]
 public class GeofenceDeliveryController : BasePluginController
 {
-    protected readonly IGeofenceZoneService _zoneService;
-    protected readonly ISettingService _settingService;
-    protected readonly ICountryService _countryService;
-    protected readonly IPermissionService _permissionService;
-    protected readonly ILocalizationService _localizationService;
-    protected readonly INotificationService _notificationService;
-    protected readonly GeofenceDeliverySettings _settings;
+    private readonly IGeofenceModelFactory _geofenceModelFactory;
+    private readonly IGeofenceZoneService _geofenceZoneService;
+    private readonly ILocalizationService _localizationService;
+    private readonly INotificationService _notificationService;
+    private readonly IPermissionService _permissionService;
+    private readonly ISettingService _settingService;
 
-    public GeofenceDeliveryController(
-        IGeofenceZoneService zoneService,
-        ISettingService settingService,
-        ICountryService countryService,
-        IPermissionService permissionService,
+    public GeofenceDeliveryController(IGeofenceModelFactory geofenceModelFactory,
+        IGeofenceZoneService geofenceZoneService,
         ILocalizationService localizationService,
         INotificationService notificationService,
-        GeofenceDeliverySettings settings)
+        IPermissionService permissionService,
+        ISettingService settingService)
     {
-        _zoneService = zoneService;
-        _settingService = settingService;
-        _countryService = countryService;
-        _permissionService = permissionService;
+        _geofenceModelFactory = geofenceModelFactory;
+        _geofenceZoneService = geofenceZoneService;
         _localizationService = localizationService;
         _notificationService = notificationService;
-        _settings = settings;
+        _permissionService = permissionService;
+        _settingService = settingService;
     }
 
     public async Task<IActionResult> Configure()
@@ -53,21 +45,7 @@ public class GeofenceDeliveryController : BasePluginController
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
             return AccessDeniedView();
 
-        var countries = await _countryService.GetAllCountriesAsync();
-        var model = new ConfigurationModel
-        {
-            Enabled = _settings.Enabled,
-            DisplayName = _settings.DisplayName,
-            GoogleMapsApiKey = _settings.GoogleMapsApiKey,
-            OutsideZoneMessage = _settings.OutsideZoneMessage,
-            BlockNonServiceableRegistration = _settings.BlockNonServiceableRegistration,
-            MaxCoordinatesPerZone = _settings.MaxCoordinatesPerZone,
-            TotalCoordinatesLimit = _settings.TotalCoordinatesLimit,
-            DefaultCountryId = _settings.DefaultCountryId,
-            AvailableCountries = countries.Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() }).ToList()
-        };
-        model.AvailableCountries.Insert(0, new SelectListItem { Text = await _localizationService.GetResourceAsync("Admin.Common.All"), Value = "0" });
-
+        var model = await _geofenceModelFactory.PrepareConfigurationModelAsync();
         return View("~/Plugins/Shipping.GeofenceDelivery/Areas/Admin/Views/Configure.cshtml", model);
     }
 
@@ -77,15 +55,13 @@ public class GeofenceDeliveryController : BasePluginController
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
             return AccessDeniedView();
 
-        _settings.Enabled = model.Enabled;
-        _settings.DisplayName = model.DisplayName;
-        _settings.GoogleMapsApiKey = model.GoogleMapsApiKey;
-        _settings.OutsideZoneMessage = model.OutsideZoneMessage;
-        _settings.BlockNonServiceableRegistration = model.BlockNonServiceableRegistration;
-        _settings.MaxCoordinatesPerZone = model.MaxCoordinatesPerZone;
-        _settings.TotalCoordinatesLimit = model.TotalCoordinatesLimit;
-        _settings.DefaultCountryId = model.DefaultCountryId;
-        await _settingService.SaveSettingAsync(_settings);
+        var settings = await _settingService.LoadSettingAsync<GeofenceDeliverySettings>();
+        settings.GoogleMapsApiKey = model.GoogleMapsApiKey;
+        settings.IsEnabled = model.IsEnabled;
+        settings.ValidateOnRegistration = model.ValidateOnRegistration;
+        settings.ValidateOnCheckout = model.ValidateOnCheckout;
+        settings.OutsideZoneErrorMessage = model.OutsideZoneErrorMessage;
+        await _settingService.SaveSettingAsync(settings);
 
         _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));
 
@@ -98,47 +74,21 @@ public class GeofenceDeliveryController : BasePluginController
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
             return await AccessDeniedDataTablesJson();
 
-        bool? isActive = null;
-        if (searchModel.SearchIsActive == 1) isActive = true;
-        else if (searchModel.SearchIsActive == 2) isActive = false;
-
-        var zones = await _zoneService.GetPagedZonesAsync(
-            searchModel.SearchName,
-            isActive,
-            searchModel.Page - 1,
-            searchModel.PageSize);
-
-        var model = new GeofenceZoneListModel().PrepareToGrid(searchModel, zones, () =>
-            zones.Select(z => new GeofenceZoneModel
-            {
-                Id = z.Id,
-                Name = z.Name,
-                IsActive = z.IsActive,
-                DisplayOrder = z.DisplayOrder,
-                DeliveryFee = z.DeliveryFee,
-                IsCollectionOnly = z.IsCollectionOnly,
-                CoordinatesJson = z.CoordinatesJson
-            }));
-
+        var model = await _geofenceModelFactory.PrepareGeofenceZoneListModelAsync(searchModel);
         return Json(model);
     }
 
-    public async Task<IActionResult> Create()
+    public async Task<IActionResult> CreateZone()
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
             return AccessDeniedView();
 
-        var model = new GeofenceZoneModel
-        {
-            IsActive = true,
-            CoordinatesJson = "[]"
-        };
-
+        var model = await _geofenceModelFactory.PrepareGeofenceZoneModelAsync(null, null);
         return View("~/Plugins/Shipping.GeofenceDelivery/Areas/Admin/Views/_CreateOrUpdate.cshtml", model);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(GeofenceZoneModel model)
+    public async Task<IActionResult> CreateZone(GeofenceZoneModel model)
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
             return AccessDeniedView();
@@ -150,48 +100,39 @@ public class GeofenceDeliveryController : BasePluginController
                 Name = model.Name,
                 IsActive = model.IsActive,
                 DisplayOrder = model.DisplayOrder,
+                CoordinatesJson = model.CoordinatesJson,
                 DeliveryFee = model.DeliveryFee,
-                IsCollectionOnly = model.IsCollectionOnly,
-                CoordinatesJson = model.CoordinatesJson ?? "[]"
+                IsCollectionOnly = model.IsCollectionOnly
             };
-            await _zoneService.InsertZoneAsync(zone);
-            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));
+            await _geofenceZoneService.InsertZoneAsync(zone);
+
+            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Plugins.Shipping.GeofenceDelivery.Zone.Created"));
             return RedirectToAction("Configure");
         }
 
         return View("~/Plugins/Shipping.GeofenceDelivery/Areas/Admin/Views/_CreateOrUpdate.cshtml", model);
     }
 
-    public async Task<IActionResult> Edit(int id)
+    public async Task<IActionResult> EditZone(int id)
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
             return AccessDeniedView();
 
-        var zone = await _zoneService.GetZoneByIdAsync(id);
+        var zone = await _geofenceZoneService.GetByIdAsync(id);
         if (zone == null)
             return RedirectToAction("Configure");
 
-        var model = new GeofenceZoneModel
-        {
-            Id = zone.Id,
-            Name = zone.Name,
-            IsActive = zone.IsActive,
-            DisplayOrder = zone.DisplayOrder,
-            DeliveryFee = zone.DeliveryFee,
-            IsCollectionOnly = zone.IsCollectionOnly,
-            CoordinatesJson = zone.CoordinatesJson
-        };
-
+        var model = await _geofenceModelFactory.PrepareGeofenceZoneModelAsync(null, zone);
         return View("~/Plugins/Shipping.GeofenceDelivery/Areas/Admin/Views/_CreateOrUpdate.cshtml", model);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Edit(GeofenceZoneModel model)
+    public async Task<IActionResult> EditZone(GeofenceZoneModel model)
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
             return AccessDeniedView();
 
-        var zone = await _zoneService.GetZoneByIdAsync(model.Id);
+        var zone = await _geofenceZoneService.GetByIdAsync(model.Id);
         if (zone == null)
             return RedirectToAction("Configure");
 
@@ -200,11 +141,12 @@ public class GeofenceDeliveryController : BasePluginController
             zone.Name = model.Name;
             zone.IsActive = model.IsActive;
             zone.DisplayOrder = model.DisplayOrder;
+            zone.CoordinatesJson = model.CoordinatesJson;
             zone.DeliveryFee = model.DeliveryFee;
             zone.IsCollectionOnly = model.IsCollectionOnly;
-            zone.CoordinatesJson = model.CoordinatesJson ?? "[]";
-            await _zoneService.UpdateZoneAsync(zone);
-            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));
+            await _geofenceZoneService.UpdateZoneAsync(zone);
+
+            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Plugins.Shipping.GeofenceDelivery.Zone.Updated"));
             return RedirectToAction("Configure");
         }
 
@@ -212,30 +154,18 @@ public class GeofenceDeliveryController : BasePluginController
     }
 
     [HttpPost]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> DeleteZone(int id)
     {
         if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
             return AccessDeniedView();
 
-        var zone = await _zoneService.GetZoneByIdAsync(id);
+        var zone = await _geofenceZoneService.GetByIdAsync(id);
         if (zone != null)
-            await _zoneService.DeleteZoneAsync(zone);
-
-        return new NullJsonResult();
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> ValidateLocation(decimal latitude, decimal longitude)
-    {
-        var validationService = HttpContext.RequestServices.GetRequiredService<IGeofenceValidationService>();
-        var result = await validationService.ValidateLocationAsync(latitude, longitude);
-        return Json(new
         {
-            isValid = result.IsValid,
-            message = result.Message,
-            isCollectionOnly = result.IsCollectionOnly,
-            zoneName = result.AssignedZone?.Name,
-            deliveryFee = result.AssignedZone?.DeliveryFee
-        });
+            await _geofenceZoneService.DeleteZoneAsync(zone);
+            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Plugins.Shipping.GeofenceDelivery.Zone.Deleted"));
+        }
+
+        return RedirectToAction("Configure");
     }
 }

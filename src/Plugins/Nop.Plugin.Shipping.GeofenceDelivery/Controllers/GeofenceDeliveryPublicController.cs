@@ -1,29 +1,28 @@
 using Microsoft.AspNetCore.Mvc;
+using Nop.Plugin.Shipping.GeofenceDelivery.Models;
 using Nop.Plugin.Shipping.GeofenceDelivery.Services;
-using Nop.Web.Framework.Controllers;
 
 namespace Nop.Plugin.Shipping.GeofenceDelivery.Controllers;
 
-public class GeofenceDeliveryPublicController : BasePluginController
+/// <summary>
+/// Public controller for geofence delivery operations
+/// </summary>
+public class GeofenceDeliveryPublicController : Controller
 {
-    protected readonly IGeofenceValidationService _validationService;
+    private readonly IGeofenceValidationService _geofenceValidationService;
 
-    public GeofenceDeliveryPublicController(IGeofenceValidationService validationService)
+    public GeofenceDeliveryPublicController(IGeofenceValidationService geofenceValidationService)
     {
-        _validationService = validationService;
+        _geofenceValidationService = geofenceValidationService;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> ValidateLocation(decimal latitude, decimal longitude)
+    [HttpPost]
+    public async Task<IActionResult> ValidateAddress([FromBody] AddressValidationRequest request)
     {
-        var result = await _validationService.ValidateLocationAsync(latitude, longitude);
-        return Json(new
-        {
-            isValid = result.IsValid,
-            message = result.Message,
-            isCollectionOnly = result.IsCollectionOnly,
-            zoneName = result.AssignedZone?.Name,
-            deliveryFee = result.AssignedZone?.DeliveryFee
-        });
+        if (request == null)
+            return BadRequest();
+
+        var result = await _geofenceValidationService.ValidateAddressAsync(request);
+        return Json(result);
     }
 }

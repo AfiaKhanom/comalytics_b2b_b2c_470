@@ -1,33 +1,27 @@
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Shipping.GeofenceDelivery.Areas.Admin.Models;
 
+/// <summary>
+/// Represents the plugin configuration model
+/// </summary>
 public record ConfigurationModel : BaseNopModel
 {
-    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.Enabled")]
-    public bool Enabled { get; set; }
-
-    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.DisplayName")]
-    public string DisplayName { get; set; }
-
     [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.GoogleMapsApiKey")]
     public string GoogleMapsApiKey { get; set; }
 
-    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.OutsideZoneMessage")]
-    public string OutsideZoneMessage { get; set; }
+    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.IsEnabled")]
+    public bool IsEnabled { get; set; }
 
-    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.BlockNonServiceableRegistration")]
-    public bool BlockNonServiceableRegistration { get; set; }
+    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.ValidateOnRegistration")]
+    public bool ValidateOnRegistration { get; set; }
 
-    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.MaxCoordinatesPerZone")]
-    public int MaxCoordinatesPerZone { get; set; }
+    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.ValidateOnCheckout")]
+    public bool ValidateOnCheckout { get; set; }
 
-    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.TotalCoordinatesLimit")]
-    public int TotalCoordinatesLimit { get; set; }
+    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.OutsideZoneErrorMessage")]
+    public string OutsideZoneErrorMessage { get; set; }
 
-    [NopResourceDisplayName("Plugins.Shipping.GeofenceDelivery.Fields.DefaultCountry")]
-    public int DefaultCountryId { get; set; }
-    public IList<SelectListItem> AvailableCountries { get; set; } = new List<SelectListItem>();
+    public GeofenceZoneSearchModel GeofenceZoneSearchModel { get; set; }
 }
